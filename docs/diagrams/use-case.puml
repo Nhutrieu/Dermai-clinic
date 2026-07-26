@@ -1,0 +1,35 @@
+@startuml
+left to right direction
+actor Patient
+actor Receptionist
+actor Doctor
+actor Admin
+rectangle "DermAI Clinic" {
+ usecase "Đăng nhập / OTP" as Auth
+ usecase "Quản lý hồ sơ cá nhân" as Profile
+ usecase "Đặt, đổi, hủy lịch" as Booking
+ usecase "Nhận gợi ý bác sĩ/slot" as Recommend
+ usecase "Tiếp nhận và xác nhận lịch" as Reception
+ usecase "Quản lý lịch làm/nghỉ" as Schedule
+ usecase "Khám và ký hồ sơ" as Record
+ usecase "Ký đơn thuốc" as Rx
+ usecase "Xem AI + Grad-CAM" as AI
+ usecase "Tra cứu kiến thức RAG" as RAG
+ usecase "Quản trị RBAC/danh mục" as Manage
+ usecase "Xem dashboard/audit" as Dashboard
+}
+Patient --> Auth
+Patient --> Profile
+Patient --> Booking
+Patient --> RAG
+Booking .> Recommend : <<include>>
+Receptionist --> Reception
+Reception .> Recommend : <<include>>
+Doctor --> Schedule
+Doctor --> Record
+Doctor --> Rx
+Doctor --> AI
+Admin --> Manage
+Admin --> Dashboard
+@enduml
+

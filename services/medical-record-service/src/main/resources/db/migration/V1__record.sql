@@ -1,0 +1,2 @@
+CREATE TABLE medical_records(id uuid PRIMARY KEY,appointment_id uuid NOT NULL UNIQUE,patient_id uuid NOT NULL,patient_identity_id uuid NOT NULL,doctor_id uuid NOT NULL,final_diagnosis varchar(2000) NOT NULL,clinical_notes varchar(10000),treatment_plan varchar(5000),severity varchar(20) NOT NULL,follow_up_at timestamptz,signed_at timestamptz NOT NULL,version bigint NOT NULL DEFAULT 0);
+CREATE INDEX ix_record_patient ON medical_records(patient_id,signed_at DESC);

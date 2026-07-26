@@ -1,0 +1,7 @@
+server.port: 8086
+spring:
+  datasource: {url: "${DB_URL:jdbc:postgresql://postgres:5432/dermai?currentSchema=medical_record}", username: "${DB_USER:dermai}", password: "${DB_PASSWORD:change-me}"}
+  jpa: {open-in-view: false, hibernate.ddl-auto: validate, properties.hibernate.default_schema: medical_record}
+  flyway: {schemas: medical_record, create-schemas: true}
+management.endpoints.web.exposure.include: health,info
+services.appointment-url: ${APPOINTMENT_URL:http://appointment-service:8085}

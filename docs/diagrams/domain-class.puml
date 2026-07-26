@@ -1,0 +1,58 @@
+@startuml
+class Patient {
+ +UUID id
+ +MedicalHistory history
+ +List<Allergy> allergies
+}
+class Doctor {
+ +UUID id
+ +Specialty specialty
+ +isAvailable(Interval): boolean
+}
+class Appointment {
+ +UUID id
+ +Interval interval
+ +AppointmentStatus status
+ +transitionTo(next)
+ +cancel(reason)
+}
+enum AppointmentStatus {
+ PENDING
+ ASSIGNED
+ CONFIRMED
+ IN_PROGRESS
+ COMPLETED
+ FOLLOW_UP_REQUIRED
+ CANCELLED
+}
+class SchedulingEngine {
+ +recommend(criteria): List<Recommendation>
+}
+class Recommendation {
+ +double score
+ +List<String> reasons
+}
+class MedicalRecord {
+ +String finalDiagnosis
+ +String clinicalNotes
+ +Severity severity
+ +sign(doctor)
+}
+class Prescription {
+ +List<PrescriptionItem> items
+ +sign(doctor)
+}
+class AiPrediction {
+ +List<RankedPrediction> top3
+ +String modelVersion
+ +URI gradCam
+}
+Patient "1" -- "*" Appointment
+Doctor "0..1" -- "*" Appointment
+Appointment --> AppointmentStatus
+SchedulingEngine ..> Recommendation
+Appointment "1" -- "0..1" MedicalRecord
+MedicalRecord "1" -- "0..*" Prescription
+MedicalRecord "1" -- "0..*" AiPrediction : references
+@enduml
+

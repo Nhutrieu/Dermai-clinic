@@ -1,0 +1,25 @@
+@startuml
+start
+:Patient submits request;
+if (Doctor selected?) then (yes)
+  :Check selected doctor availability;
+else (no)
+  :Score doctors and slots;
+  :Receptionist selects recommendation;
+endif
+if (Conflict on final check?) then (yes)
+  :Return new alternatives;
+else (no)
+  :PENDING -> ASSIGNED -> CONFIRMED;
+  :Doctor starts consultation;
+  :Create medical record;
+  :Doctor optionally signs prescription;
+  if (Follow-up needed?) then (yes)
+    :FOLLOW_UP_REQUIRED;
+  else (no)
+    :COMPLETED;
+  endif
+endif
+stop
+@enduml
+

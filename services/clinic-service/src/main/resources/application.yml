@@ -1,0 +1,12 @@
+server.port: 8081
+spring:
+  application.name: clinic-service
+  datasource:
+    url: ${DB_URL:jdbc:postgresql://postgres:5432/dermai}
+    username: ${DB_USER:dermai}
+    password: ${DB_PASSWORD:change-me}
+  jpa:
+    open-in-view: false
+    hibernate.ddl-auto: validate
+  flyway.enabled: true
+management.endpoints.web.exposure.include: health,info

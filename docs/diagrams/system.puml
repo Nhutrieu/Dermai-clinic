@@ -1,0 +1,34 @@
+@startuml
+skinparam componentStyle rectangle
+actor Patient
+actor Receptionist
+actor Doctor
+actor Admin
+component "React Web" as Web
+component "Spring Cloud Gateway" as GW
+component "Auth Service" as Auth
+component "Clinic Service\nPatient/Doctor/Appointment/\nRecord/Prescription" as Clinic
+component "AI Service\nCV + RAG" as AI
+component "Notification Service" as Notify
+component "Analytics Service" as Analytics
+queue RabbitMQ
+database PostgreSQL
+Patient --> Web
+Receptionist --> Web
+Doctor --> Web
+Admin --> Web
+Web --> GW
+GW --> Auth
+GW --> Clinic
+GW --> AI
+GW --> Analytics
+Clinic --> RabbitMQ
+RabbitMQ --> Notify
+RabbitMQ --> Analytics
+Auth --> PostgreSQL
+Clinic --> PostgreSQL
+Notify --> PostgreSQL
+Analytics --> PostgreSQL
+AI --> PostgreSQL
+@enduml
+

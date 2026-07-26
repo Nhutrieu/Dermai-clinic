@@ -1,0 +1,13 @@
+package com.dermai.appointment;
+import jakarta.validation.Valid;import jakarta.validation.constraints.*;import org.springframework.http.*;import org.springframework.web.bind.annotation.*;import org.springframework.web.server.ResponseStatusException;import java.time.*;import java.util.*;
+@RestController @RequestMapping("/api/v1/appointments/reviews")
+class ClinicReviewController{
+ private final ClinicReviewRepository reviews;private final AppointmentRepository appointments;ClinicReviewController(ClinicReviewRepository r,AppointmentRepository a){reviews=r;appointments=a;}
+ record ReviewBody(@Min(1)@Max(5)short rating,@NotBlank@Size(max=1000)String comment,@NotBlank@Size(max=120)String displayName){}record Moderate(@NotNull ClinicReview.Status status){}
+ @GetMapping("/public")List<ClinicReview> publicReviews(){return reviews.findTop6ByStatusOrderByCreatedAtDesc(ClinicReview.Status.APPROVED);}
+ @GetMapping("/mine")List<ClinicReview> mine(@RequestHeader("X-User-Id")UUID user,@RequestHeader("X-User-Role")String role){require(role,"PATIENT");return reviews.findAllByOrderByCreatedAtDesc().stream().filter(x->x.patientIdentityId.equals(user)).toList();}
+ @PutMapping("/{appointmentId}")ClinicReview save(@PathVariable UUID appointmentId,@RequestHeader("X-User-Id")UUID user,@RequestHeader("X-User-Role")String role,@Valid@RequestBody ReviewBody body){require(role,"PATIENT");var appointment=appointments.findById(appointmentId).orElseThrow(NoSuchElementException::new);if(!user.equals(appointment.patientIdentityId)||appointment.status!=AppointmentStatus.COMPLETED)throw new ResponseStatusException(HttpStatus.CONFLICT,"Chỉ có thể đánh giá lịch khám đã hoàn thành.");if(reviews.findByAppointmentId(appointmentId).isPresent())throw new ResponseStatusException(HttpStatus.CONFLICT,"Lịch khám này đã được đánh giá.");return reviews.save(new ClinicReview(appointment,body.displayName(),body.rating(),body.comment()));}
+ @GetMapping List<ClinicReview> all(@RequestHeader("X-User-Role")String role){require(role,"ADMIN");return reviews.findAllByOrderByCreatedAtDesc();}
+ @PatchMapping("/{id}")ClinicReview moderate(@PathVariable UUID id,@RequestHeader("X-User-Role")String role,@Valid@RequestBody Moderate body){require(role,"ADMIN");if(body.status()==ClinicReview.Status.PENDING)throw new ResponseStatusException(HttpStatus.BAD_REQUEST);var x=reviews.findById(id).orElseThrow(NoSuchElementException::new);x.status=body.status();x.updatedAt=Instant.now();return reviews.save(x);}
+ private void require(String got,String expected){if(!expected.equals(got))throw new ResponseStatusException(HttpStatus.FORBIDDEN);}
+}

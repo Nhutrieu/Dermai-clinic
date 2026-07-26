@@ -1,0 +1,105 @@
+name: dermai-clinic
+services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-dermai}
+      POSTGRES_USER: ${POSTGRES_USER:-dermai}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-change-me}
+    volumes: [postgres_data:/var/lib/postgresql/data]
+    healthcheck: {test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER}"], interval: 10s, timeout: 5s, retries: 5}
+  rabbitmq:
+    image: rabbitmq:3.13-management-alpine
+    ports: ["15672:15672"]
+    healthcheck: {test: ["CMD", "rabbitmq-diagnostics", "-q", "ping"], interval: 15s, timeout: 5s, retries: 5}
+  redis:
+    image: redis:7-alpine
+    command: ["redis-server", "--appendonly", "yes"]
+  auth-service:
+    build: {context: ., dockerfile: services/Dockerfile, args: {SERVICE: auth-service}}
+    environment:
+      DB_URL: jdbc:postgresql://postgres:5432/${POSTGRES_DB:-dermai}?currentSchema=auth
+      DB_USER: ${POSTGRES_USER:-dermai}
+      DB_PASSWORD: ${POSTGRES_PASSWORD:-change-me}
+      JWT_SECRET: ${JWT_SECRET:-replace-with-at-least-32-random-characters}
+      BOOTSTRAP_TOKEN: ${BOOTSTRAP_TOKEN:-}
+      SERVICE_TOKEN: ${SERVICE_TOKEN:-}
+      SMTP_HOST: mailhog
+      SMTP_PORT: 1025
+    depends_on: {postgres: {condition: service_healthy}, mailhog: {condition: service_started}}
+  patient-service:
+    build: {context: ., dockerfile: services/Dockerfile, args: {SERVICE: patient-service}}
+    environment:
+      DB_URL: jdbc:postgresql://postgres:5432/${POSTGRES_DB:-dermai}?currentSchema=patient
+      DB_USER: ${POSTGRES_USER:-dermai}
+      DB_PASSWORD: ${POSTGRES_PASSWORD:-change-me}
+    depends_on: {postgres: {condition: service_healthy}}
+  doctor-service:
+    build: {context: ., dockerfile: services/Dockerfile, args: {SERVICE: doctor-service}}
+    environment:
+      DB_URL: jdbc:postgresql://postgres:5432/${POSTGRES_DB:-dermai}?currentSchema=doctor
+      DB_USER: ${POSTGRES_USER:-dermai}
+      DB_PASSWORD: ${POSTGRES_PASSWORD:-change-me}
+    depends_on: {postgres: {condition: service_healthy}}
+  appointment-service:
+    build: {context: ., dockerfile: services/Dockerfile, args: {SERVICE: appointment-service}}
+    environment:
+      DB_URL: jdbc:postgresql://postgres:5432/${POSTGRES_DB:-dermai}?currentSchema=appointment
+      DB_USER: ${POSTGRES_USER:-dermai}
+      DB_PASSWORD: ${POSTGRES_PASSWORD:-change-me}
+      RABBITMQ_HOST: rabbitmq
+      DOCTOR_URL: http://doctor-service:8084
+    depends_on: {postgres: {condition: service_healthy}, rabbitmq: {condition: service_healthy}}
+  medical-record-service:
+    build: {context: ., dockerfile: services/Dockerfile, args: {SERVICE: medical-record-service}}
+    environment: {DB_URL: "jdbc:postgresql://postgres:5432/${POSTGRES_DB:-dermai}?currentSchema=medical_record", DB_USER: "${POSTGRES_USER:-dermai}", DB_PASSWORD: "${POSTGRES_PASSWORD:-change-me}", APPOINTMENT_URL: "http://appointment-service:8085"}
+    depends_on: {postgres: {condition: service_healthy}}
+  prescription-service:
+    build: {context: ., dockerfile: services/Dockerfile, args: {SERVICE: prescription-service}}
+    environment: {DB_URL: "jdbc:postgresql://postgres:5432/${POSTGRES_DB:-dermai}?currentSchema=prescription", DB_USER: "${POSTGRES_USER:-dermai}", DB_PASSWORD: "${POSTGRES_PASSWORD:-change-me}", MEDICAL_RECORD_URL: "http://medical-record-service:8086"}
+    depends_on: {postgres: {condition: service_healthy}}
+  notification-service:
+    build: {context: ., dockerfile: services/Dockerfile, args: {SERVICE: notification-service}}
+    environment:
+      DB_URL: jdbc:postgresql://postgres:5432/${POSTGRES_DB:-dermai}?currentSchema=notification
+      DB_USER: ${POSTGRES_USER:-dermai}
+      DB_PASSWORD: ${POSTGRES_PASSWORD:-change-me}
+      RABBITMQ_HOST: rabbitmq
+      SMTP_HOST: mailhog
+      AUTH_URL: http://auth-service:8082
+      SERVICE_TOKEN: ${SERVICE_TOKEN:-}
+    depends_on: {postgres: {condition: service_healthy}, rabbitmq: {condition: service_healthy}, auth-service: {condition: service_started}, mailhog: {condition: service_started}}
+  ai-service:
+    build: ./ai-service
+    ports: ["8000:8000"]
+    environment:
+      MODEL_PATH: /models/best_model.pth
+      RAG_INDEX_PATH: /rag-index
+      GEMINI_API_KEY: ${GEMINI_API_KEY:-}
+      GEMINI_MODEL: ${GEMINI_MODEL:-gemini-3.5-flash}
+    volumes:
+      - ./ai-service/app:/app/app:ro
+      - ./ai-service/models:/models:ro
+      - ./ai-service/rag/index:/rag-index:ro
+  gateway:
+    build: {context: ., dockerfile: services/Dockerfile, args: {SERVICE: gateway}}
+    environment:
+      AUTH_URL: http://auth-service:8082
+      PATIENT_URL: http://patient-service:8083
+      DOCTOR_URL: http://doctor-service:8084
+      APPOINTMENT_URL: http://appointment-service:8085
+      MEDICAL_RECORD_URL: http://medical-record-service:8086
+      PRESCRIPTION_URL: http://prescription-service:8087
+      AI_URL: http://ai-service:8000
+      JWT_SECRET: ${JWT_SECRET:-replace-with-at-least-32-random-characters}
+    ports: ["8080:8080"]
+    depends_on: [auth-service, patient-service, doctor-service, appointment-service, medical-record-service, prescription-service, ai-service, redis]
+  frontend:
+    build: ./frontend
+    ports: ["3000:80"]
+    depends_on: [gateway]
+  mailhog:
+    image: mailhog/mailhog:v1.0.1
+    ports: ["8025:8025"]
+volumes:
+  postgres_data:

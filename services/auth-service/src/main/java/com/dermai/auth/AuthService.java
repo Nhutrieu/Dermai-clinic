@@ -1,0 +1,94 @@
+package com.dermai.auth;
+import com.dermai.auth.domain.*;
+import io.jsonwebtoken.Jwts;
+import io.jsonwebtoken.security.Keys;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.mail.SimpleMailMessage;
+import org.springframework.mail.javamail.JavaMailSender;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+import java.nio.charset.StandardCharsets;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
+import java.security.SecureRandom;
+import java.time.*;
+import java.util.*;
+
+@Service @Transactional
+public class AuthService {
+ private final IdentityRepository users; private final RefreshTokenRepository refreshes;
+ private final PasswordOtpRepository otps; private final BCryptPasswordEncoder encoder=new BCryptPasswordEncoder(12);
+ private final JavaMailSender mail;
+ private final SecureRandom random=new SecureRandom(); private final byte[] secret;
+ public AuthService(IdentityRepository u,RefreshTokenRepository r,PasswordOtpRepository o,JavaMailSender mail,@Value("${security.jwt.secret}") String key){
+  users=u;refreshes=r;otps=o;this.mail=mail;secret=key.getBytes(StandardCharsets.UTF_8);
+  if(secret.length<32) throw new IllegalArgumentException("JWT_SECRET phải có ít nhất 32 byte");
+ }
+ public Identity register(String email,String password){
+  if(users.findByEmailIgnoreCase(email).isPresent()) throw new IllegalStateException("EMAIL_EXISTS");
+  return users.save(new Identity(email,encoder.encode(password)));
+ }
+ public Identity createStaff(String email,String password,Identity.Role role){
+  if(users.findByEmailIgnoreCase(email).isPresent())throw new IllegalStateException("EMAIL_EXISTS");
+  return users.save(Identity.staff(email,encoder.encode(password),role));
+ }
+ public Identity bootstrapAdmin(String email,String password){
+  if(users.count()!=0)throw new IllegalStateException("BOOTSTRAP_CLOSED");
+  return users.save(Identity.staff(email,encoder.encode(password),Identity.Role.ADMIN));
+ }
+ @Transactional(readOnly=true) public Optional<Identity> findIdentity(UUID id){return users.findById(id);}
+ public Tokens login(String email,String password){
+  var user=users.findByEmailIgnoreCase(email).orElseThrow(()->new IllegalArgumentException("BAD_CREDENTIALS"));
+  if(user.status!=Identity.Status.ACTIVE || !encoder.matches(password,user.passwordHash)) throw new IllegalArgumentException("BAD_CREDENTIALS");
+  return issue(user);
+ }
+ public Tokens refresh(String raw){
+  var stored=refreshes.findByTokenHash(hash(raw)).orElseThrow(()->new IllegalArgumentException("INVALID_REFRESH"));
+  if(stored.revokedAt!=null || stored.expiresAt.isBefore(Instant.now())) throw new IllegalArgumentException("INVALID_REFRESH");
+  stored.revokedAt=Instant.now();
+  var user=users.findById(stored.identityId).orElseThrow();
+  if(user.status!=Identity.Status.ACTIVE) throw new IllegalArgumentException("ACCOUNT_BLOCKED");
+  return issue(user);
+ }
+ public void logout(String raw){refreshes.findByTokenHash(hash(raw)).ifPresent(t->t.revokedAt=Instant.now());}
+ @Transactional(readOnly=true) public Identity patientAccount(UUID id){
+  var user=users.findById(id).orElseThrow(()->new NoSuchElementException("IDENTITY_NOT_FOUND"));
+  if(user.role!=Identity.Role.PATIENT)throw new IllegalArgumentException("NOT_PATIENT");
+  return user;
+ }
+ public Identity setPatientBlocked(UUID id,boolean blocked){
+  var user=patientAccount(id);
+  user.status=blocked?Identity.Status.LOCKED:Identity.Status.ACTIVE;
+  if(blocked){
+   var now=Instant.now();
+   refreshes.findAllByIdentityId(id).forEach(token->token.revokedAt=now);
+  }
+  return user;
+ }
+ public String createOtp(String email){
+  var user=users.findByEmailIgnoreCase(email).orElse(null);
+  if(user==null) return null;
+  String code="%06d".formatted(random.nextInt(1_000_000));
+  otps.save(new PasswordOtp(user.id,encoder.encode(code)));
+  var message=new SimpleMailMessage();message.setTo(user.email);message.setFrom("no-reply@dermai.local");message.setSubject("Mã xác nhận đặt lại mật khẩu DermAI");message.setText("Mã OTP của bạn là: "+code+"\n\nMã có hiệu lực trong thời gian giới hạn. Không chia sẻ mã này với người khác.");mail.send(message);return code;
+ }
+ public void reset(String email,String code,String password){
+  var user=users.findByEmailIgnoreCase(email).orElseThrow(()->new IllegalArgumentException("INVALID_OTP"));
+  var otp=otps.findTopByIdentityIdOrderByExpiresAtDesc(user.id).orElseThrow(()->new IllegalArgumentException("INVALID_OTP"));
+  otp.attempts++;
+  if(otp.usedAt!=null || otp.expiresAt.isBefore(Instant.now()) || otp.attempts>5 || !encoder.matches(code,otp.otpHash))
+   throw new IllegalArgumentException("INVALID_OTP");
+  otp.usedAt=Instant.now();user.passwordHash=encoder.encode(password);
+ }
+ private Tokens issue(Identity user){
+  Instant now=Instant.now();
+  String access=Jwts.builder().subject(user.id.toString()).claim("role",user.role.name()).issuedAt(Date.from(now))
+   .expiration(Date.from(now.plusSeconds(900))).signWith(Keys.hmacShaKeyFor(secret)).compact();
+  String raw=Base64.getUrlEncoder().withoutPadding().encodeToString(random.generateSeed(48));
+  refreshes.save(new RefreshToken(user.id,hash(raw),now.plus(Duration.ofDays(14))));
+  return new Tokens(access,raw,900,user.role.name());
+ }
+ private String hash(String value){try{return HexFormat.of().formatHex(MessageDigest.getInstance("SHA-256").digest(value.getBytes(StandardCharsets.UTF_8)));}catch(NoSuchAlgorithmException e){throw new IllegalStateException(e);}}
+ public record Tokens(String accessToken,String refreshToken,long expiresIn,String role){}
+}

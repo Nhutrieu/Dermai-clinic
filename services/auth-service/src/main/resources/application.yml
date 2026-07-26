@@ -1,0 +1,20 @@
+server.port: 8082
+spring:
+  datasource:
+    url: ${DB_URL:jdbc:postgresql://postgres:5432/dermai?currentSchema=auth}
+    username: ${DB_USER:dermai}
+    password: ${DB_PASSWORD:change-me}
+  jpa:
+    open-in-view: false
+    hibernate.ddl-auto: validate
+    properties.hibernate.default_schema: auth
+  flyway:
+    schemas: auth
+    create-schemas: true
+  mail:
+    host: ${SMTP_HOST:mailhog}
+    port: ${SMTP_PORT:1025}
+security.jwt.secret: ${JWT_SECRET:replace-with-at-least-32-random-characters}
+security.bootstrap-token: ${BOOTSTRAP_TOKEN:}
+security.service-token: ${SERVICE_TOKEN:}
+management.endpoints.web.exposure.include: health,info

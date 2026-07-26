@@ -1,0 +1,24 @@
+@startuml
+actor Patient
+participant Gateway
+participant "Clinic Service" as Clinic
+database PostgreSQL as DB
+queue RabbitMQ as MQ
+participant Notification
+Patient -> Gateway: POST /recommendations
+Gateway -> Clinic: authenticated request
+Clinic -> DB: work schedules + leave + bookings
+Clinic --> Patient: ranked slots + reasons
+Patient -> Gateway: POST /appointments + Idempotency-Key
+Gateway -> Clinic: booking command
+Clinic -> DB: BEGIN + lock/check + INSERT
+alt conflict
+  DB --> Clinic: exclusion violation
+  Clinic --> Patient: 409 SLOT_CONFLICT
+else reserved
+  Clinic -> MQ: AppointmentCreated (outbox)
+  Clinic --> Patient: 201 PENDING
+  MQ -> Notification: email confirmation request
+end
+@enduml
+

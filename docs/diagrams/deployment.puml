@@ -1,0 +1,20 @@
+@startuml
+node "Client" { artifact Browser }
+node "Docker Host / Kubernetes" {
+  node "Frontend" { component Nginx }
+  node "Java Runtime" { component Gateway\ncomponent Clinic\ncomponent Auth\ncomponent Notification\ncomponent Analytics }
+  node "Python Runtime" { component "AI API"\nartifact "best_model.pth"\nartifact "FAISS index" }
+  database PostgreSQL
+  queue RabbitMQ
+  component Redis
+}
+Browser --> Nginx
+Nginx --> Gateway
+Gateway --> Clinic
+Gateway --> Auth
+Gateway --> "AI API"
+Clinic --> PostgreSQL
+Clinic --> RabbitMQ
+Gateway --> Redis
+@enduml
+
