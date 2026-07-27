@@ -1,0 +1,77 @@
+import { FormEvent, useEffect, useState } from "react";
+import { CalendarDays, X } from "lucide-react";
+import { request } from "../../core/api";
+import type { Appointment, Doctor, Patient, Recommendation, RecommendationResult, ReminderAction, ReminderItem } from "../../core/types";
+import { CancelControl, RescheduleControl } from "../../components/AppointmentList";
+import { State } from "../../components/Ui";
+type PatientPage = { content: Patient[]; totalElements: number };
+function formatAppointmentTime(iso: string) {
+    if (!iso) return "";
+    const d = new Date(iso);
+    const time = d.toLocaleTimeString("vi-VN", { hour: "2-digit", minute: "2-digit", hour12: false });
+    const date = d.toLocaleDateString("vi-VN", { day: "2-digit", month: "2-digit", year: "numeric" });
+    return `${time} · ${date}`;
+}
+
+function getStatusBadge(status: string) {
+    switch (status) {
+        case "PENDING": return { label: "Chờ tiếp nhận", badgeClass: "badge-pending" };
+        case "ASSIGNED": return { label: "Đã xếp bác sĩ", badgeClass: "badge-assigned" };
+        case "CONFIRMED": return { label: "Đã xác nhận", badgeClass: "badge-confirmed" };
+        case "IN_PROGRESS": return { label: "Đang khám", badgeClass: "badge-in-progress" };
+        case "COMPLETED": return { label: "Đã hoàn thành", badgeClass: "badge-completed" };
+        case "CANCELLED": return { label: "Đã hủy", badgeClass: "badge-cancelled" };
+        case "FOLLOW_UP_REQUIRED": return { label: "Yêu cầu tái khám", badgeClass: "badge-followup" };
+        default: return { label: status, badgeClass: "badge-default" };
+    }
+}
+
+export default function ReceptionPanel({ token, tab }: { token: string; tab: string }) {
+    const [query, setQuery] = useState(""); const [patients, setPatients] = useState<Patient[]>([]); const [doctors, setDoctors] = useState<Doctor[]>([]); const [queue, setQueue] = useState<Appointment[]>([]); const [reminders, setReminders] = useState<ReminderItem[]>([]); const [recommendations, setRecommendations] = useState<Recommendation[]>([]); const [recommendFor, setRecommendFor] = useState(""); const [patientId, setPatientId] = useState(""); const [message, setMessage] = useState("");
+    async function loadQueue() { const from = new Date(); from.setDate(from.getDate() - 1); const to = new Date(); to.setDate(to.getDate() + 30); const items = await request<Appointment[]>(`/appointments/queue?from=${encodeURIComponent(from.toISOString())}&to=${encodeURIComponent(to.toISOString())}`, token); setQueue(items); const ids = [...new Set(items.map(x => x.patientId))]; const loaded = await Promise.all(ids.map(id => request<Patient>(`/patients/${id}`, token))); setPatients(current => [...new Map([...current, ...loaded].map(x => [x.id, x])).values()]) }
+    async function search(q?: string) {
+        const searchTerm = (q !== undefined ? q : query).trim();
+        try {
+            setMessage("");
+            const page = await request<PatientPage>(`/patients?query=${encodeURIComponent(searchTerm)}`, token);
+            setPatients(page.content || []);
+        } catch (x) {
+            setMessage((x as Error).message);
+        }
+    }
+    async function loadReminders() { setReminders(await request<ReminderItem[]>("/appointments/reminders", token)) }
+    useEffect(() => { Promise.all([request<Doctor[]>("/doctors", token).then(setDoctors), search()]).then(() => Promise.all([loadQueue(), loadReminders()])).catch(x => setMessage((x as Error).message)) }, []);
+    useEffect(() => { const refresh = () => { Promise.all([loadQueue(), loadReminders()]).catch(x => setMessage((x as Error).message)) }; window.addEventListener("reception-appointments-changed", refresh); return () => window.removeEventListener("reception-appointments-changed", refresh) }, []);
+    useEffect(() => { if(patientId)sessionStorage.setItem("reception-support-patient",patients.find(p=>p.id===patientId)?.identityId||"") }, [patientId,patients]);
+    async function confirm(id: string) { try { await request(`/appointments/${id}/confirm`, token, { method: "POST" }); await Promise.all([loadQueue(), loadReminders()]) } catch (x) { setMessage((x as Error).message) } }
+    async function cancel(id: string, cancelReason: string) { try { await request(`/appointments/${id}/cancel`, token, { method: "POST", body: JSON.stringify({ reason: cancelReason.trim() }) }); await Promise.all([loadQueue(), loadReminders()]) } catch (x) { setMessage((x as Error).message) } }
+    async function noShow(id: string) { try { await request(`/appointments/${id}/no-show`, token, { method: "POST" }); setMessage("Đã ghi nhận bệnh nhân không đến khám."); await Promise.all([loadQueue(), loadReminders()]) } catch (x) { setMessage((x as Error).message) } }
+    async function remind(id: string, action: ReminderAction["actionType"]) { try { await request(`/appointments/${id}/reminder-actions`, token, { method: "POST", body: JSON.stringify({ action }) }); setMessage(action === "CALLED" ? "Đã lưu trạng thái gọi xác nhận." : action === "RESENT" ? "Đã gửi thông báo nhắc lại cho bệnh nhân." : "Đã lưu trạng thái không liên hệ được."); await loadReminders() } catch (x) { setMessage((x as Error).message) } }
+    async function recommend(x: Appointment) { try { const result = await request<RecommendationResult>("/appointments/recommendations", token, { method: "POST", body: JSON.stringify({ patientId: x.patientId, preferredStart: x.startAt, durationMinutes: Math.round((new Date(x.endAt).getTime() - new Date(x.startAt).getTime()) / 60000), limit: 5 }) }); setRecommendFor(x.id); setRecommendations(result.items); setMessage(result.items.length ? "Đề xuất được tính từ dữ liệu lịch làm, nghỉ phép, xung đột và tải hiện tại." : "Không có slot phù hợp trong 7 ngày.") } catch (e) { setMessage((e as Error).message) } }
+    async function assign(id: string, slot: Recommendation) { try { await request(`/appointments/${id}/assign`, token, { method: "POST", body: JSON.stringify({ doctorId: slot.doctorId, doctorIdentityId: slot.doctorIdentityId, startAt: slot.startAt, endAt: slot.endAt }) }); setRecommendations([]); setRecommendFor(""); setMessage("Đã phân công đúng slot do Scheduling Engine đề xuất."); await loadQueue() } catch (x) { setMessage((x as Error).message) } }
+    async function reschedule(id: string, value: string) { const from = new Date(value); try { await request(`/appointments/${id}/reschedule`, token, { method: "POST", headers: { "Idempotency-Key": crypto.randomUUID() }, body: JSON.stringify({ startAt: from.toISOString(), endAt: new Date(from.getTime() + 30 * 60000).toISOString() }) }); await loadQueue() } catch (x) { setMessage((x as Error).message) } }
+    const [acceptedSearch, setAcceptedSearch] = useState("");
+    const [acceptedStatus, setAcceptedStatus] = useState("ALL");
+    const [acceptedDate, setAcceptedDate] = useState("ALL");
+
+    const incoming = queue.filter(x => ["PENDING", "ASSIGNED"].includes(x.status));
+    const accepted = queue.filter(x => ["CONFIRMED", "IN_PROGRESS", "COMPLETED", "FOLLOW_UP_REQUIRED", "NO_SHOW"].includes(x.status));
+    const patientName = (x: Appointment) => patients.find(p => p.id === x.patientId)?.fullName || x.patientId;
+    const doctorName = (x: Appointment) => x.doctorId ? doctors.find(d => d.id === x.doctorId)?.fullName || "Bác sĩ đã chọn" : "Chưa chọn bác sĩ";
+
+    const filteredAccepted = accepted.filter(x => {
+        const pName = patientName(x).toLowerCase();
+        const dName = doctorName(x).toLowerCase();
+        const rText = (x.reason || "").toLowerCase();
+        const kw = acceptedSearch.trim().toLowerCase();
+        if (kw && !pName.includes(kw) && !dName.includes(kw) && !rText.includes(kw)) return false;
+        if (acceptedStatus !== "ALL" && x.status !== acceptedStatus) return false;
+        if (acceptedDate === "TODAY" && new Date(x.startAt).toDateString() !== new Date().toDateString()) return false;
+        if (acceptedDate === "UPCOMING" && new Date(x.startAt).getTime() < Date.now()) return false;
+        return true;
+    });
+
+    if (tab === "profile") { const selectedPatient=patients.find(p=>p.id===patientId);const patientAppointments=queue.filter(x=>x.patientId===patientId).sort((a,b)=>new Date(b.startAt).getTime()-new Date(a.startAt).getTime());return <section className="panel management"><h2>Tra cứu bệnh nhân</h2><p>Chọn bệnh nhân để xem thông tin xác minh và hỗ trợ lịch khám.</p>{message && <p className="booking-message">{message}</p>}<div className="inline"><input value={query} onChange={e => setQuery(e.target.value)} onKeyDown={e=>{if(e.key==="Enter"){e.preventDefault();search();}}} placeholder="Nhập họ tên hoặc số điện thoại" /><button type="button" onClick={() => search()}>Tìm</button></div><div className="patient-search-layout"><div className="patient-search-results">{patients.length===0?<State text="Không tìm thấy bệnh nhân."/>:patients.map(p => <button className={`result ${patientId===p.id?"selected":""}`} key={p.id} onClick={() => setPatientId(p.id)}><b>{p.fullName}</b><small>{p.phone||"Chưa có số điện thoại"}</small></button>)}</div>{selectedPatient&&<article className="reception-patient-detail"><header><div><small>THÔNG TIN BỆNH NHÂN</small><h3>{selectedPatient.fullName}</h3></div><button onClick={()=>setPatientId("")}><X/></button></header><dl><dt>Số điện thoại</dt><dd>{selectedPatient.phone||"Chưa khai báo"}</dd><dt>Ngày sinh</dt><dd>{selectedPatient.dob?new Date(selectedPatient.dob).toLocaleDateString("vi-VN"):"Chưa khai báo"}</dd></dl><div className="patient-recent"><b>Lịch khám gần đây</b>{patientAppointments.length===0?<p>Chưa có lịch trong phạm vi tra cứu.</p>:patientAppointments.slice(0,3).map(x=><p key={x.id}>{formatAppointmentTime(x.startAt)} · {doctorName(x)} · {getStatusBadge(x.status).label}</p>)}</div><button className="primary" onClick={()=>window.dispatchEvent(new Event("open-support-chat"))}>Mở chat hỗ trợ</button></article>}</div></section>}
+    if (tab === "appointments") return <section className="panel real-list"><h2>Yêu cầu đặt lịch từ bệnh nhân</h2><p>Thời gian và lý do bên dưới do bệnh nhân gửi. Lễ tân chỉ kiểm tra, phân công và xác nhận.</p>{message && <p>{message}</p>}{incoming.length === 0 ? <State text="Không có yêu cầu mới trong database." /> : incoming.map(x => { const { label, badgeClass } = getStatusBadge(x.status); return <div key={x.id}><article className="appointment-card"><div className="appointment-icon-wrapper"><CalendarDays /></div><div className="appointment-details"><b className="appointment-time">{patientName(x)}</b><p className="appointment-reason">Mong muốn: {formatAppointmentTime(x.startAt)}</p><small>{x.reason} · {doctorName(x)}</small></div><div className="actions"><span className={`status-badge ${badgeClass}`}>{label}</span>{x.status === "PENDING" && <button onClick={() => recommend(x)}>Đề xuất bác sĩ</button>}{x.status === "ASSIGNED" && <button onClick={() => confirm(x.id)}>Xác nhận gửi bác sĩ</button>}<CancelControl submit={reason => cancel(x.id, reason)} /></div></article>{recommendFor === x.id && recommendations.map(slot => <article className="result" key={`${slot.doctorId}-${slot.startAt}`}><div><b>{slot.doctorName}</b><p>{formatAppointmentTime(slot.startAt)} · {Math.round(slot.score * 100)}/100</p><small>{slot.reasons.join(" · ")}</small></div><button onClick={() => assign(x.id, slot)}>Chọn bác sĩ và slot</button></article>)}</div>; })}</section>;
+    return <div className="reception-accepted"><section className="panel reminder-board"><div className="reminder-heading"><div><small>HÔM NAY & NGÀY MAI</small><h2>Lịch cần nhắc</h2></div><b>{reminders.length}</b></div>{reminders.length === 0 ? <div className="reminder-empty">Không có lịch cần nhắc trong hai ngày tới.</div> : reminders.map(item => { const x = item.appointment; const label = item.latestAction?.actionType === "CALLED" ? "Đã gọi xác nhận" : item.latestAction?.actionType === "RESENT" ? "Đã gửi nhắc lại" : item.latestAction?.actionType === "UNREACHABLE" ? "Không liên hệ được" : "Chưa nhắc"; return <article className="reminder-row" key={x.id}><div className="reminder-time"><b>{new Date(x.startAt).toLocaleTimeString("vi-VN", { hour: "2-digit", minute: "2-digit" })}</b><small>{new Date(x.startAt).toLocaleDateString("vi-VN", { day: "2-digit", month: "2-digit" })}</small></div><div><b>{patientName(x)}</b><p>{doctorName(x)} · {x.reason}</p><small className={`reminder-status status-${item.latestAction?.actionType?.toLowerCase() || "new"}`}>{label}{item.latestAction ? ` · ${new Date(item.latestAction.createdAt).toLocaleTimeString("vi-VN", { hour: "2-digit", minute: "2-digit" })}` : ""}</small></div><div className="reminder-actions"><button onClick={() => remind(x.id, "CALLED")}>Đã gọi</button><button onClick={() => remind(x.id, "RESENT")}>Gửi nhắc lại</button><button onClick={() => remind(x.id, "UNREACHABLE")}>Không liên hệ được</button></div></article> })}</section><section className="panel real-list"><h2>Lịch đã được tiếp nhận</h2>{accepted.length > 0 && <div className="list-filter-bar"><div className="filter-group keyword-search"><input type="text" value={acceptedSearch} onChange={e => setAcceptedSearch(e.target.value)} placeholder="Tìm tên bệnh nhân, bác sĩ, lý do..." />{acceptedSearch && <button type="button" className="clear-filter" onClick={() => setAcceptedSearch("")}>×</button>}</div><div className="filter-group"><label>Trạng thái:</label><select value={acceptedStatus} onChange={e => setAcceptedStatus(e.target.value)}><option value="ALL">Tất cả ({accepted.length})</option><option value="CONFIRMED">Đã xác nhận</option><option value="IN_PROGRESS">Đang khám</option><option value="COMPLETED">Đã hoàn thành</option><option value="FOLLOW_UP_REQUIRED">Yêu cầu tái khám</option><option value="NO_SHOW">Không đến khám</option></select></div><div className="filter-group"><label>Thời gian:</label><select value={acceptedDate} onChange={e => setAcceptedDate(e.target.value)}><option value="ALL">Tất cả ngày</option><option value="TODAY">Hôm nay</option><option value="UPCOMING">Sắp tới</option></select></div>{(acceptedSearch || acceptedStatus !== "ALL" || acceptedDate !== "ALL") && <button type="button" className="reset-filters-btn" onClick={() => { setAcceptedSearch(""); setAcceptedStatus("ALL"); setAcceptedDate("ALL"); }}>Xóa lọc</button>}<span className="filter-result-count">Hiển thị {filteredAccepted.length}/{accepted.length} lịch</span></div>}{filteredAccepted.length === 0 ? <State text={accepted.length === 0 ? "Chưa có lịch đã xác nhận trong database." : "Không có lịch khám phù hợp với bộ lọc."} /> : filteredAccepted.map(x => { const { label, badgeClass } = getStatusBadge(x.status); return <article key={x.id} className="appointment-card"><div className="appointment-icon-wrapper"><CalendarDays /></div><div className="appointment-details"><b className="appointment-time">{patientName(x)}</b><p className="appointment-reason">{formatAppointmentTime(x.startAt)} · {doctorName(x)}</p><small>{x.reason}</small></div><div className="actions"><span className={`status-badge ${badgeClass}`}>{label}</span>{x.status === "CONFIRMED" && <RescheduleControl token={token} appointment={x} submit={value => reschedule(x.id, value)} />}{x.status === "CONFIRMED" && <CancelControl submit={reason => cancel(x.id, reason)} />}{x.status === "CONFIRMED" && Date.now() >= new Date(x.startAt).getTime() + 30 * 60_000 && <button onClick={() => noShow(x.id)}>Không đến khám</button>}</div></article>; })}</section></div>
+}

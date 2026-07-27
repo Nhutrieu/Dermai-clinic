@@ -1,0 +1,62 @@
+/* Motion and depth layer for the public experience. */
+.home-page{--scroll-progress:0;isolation:isolate;overflow:visible;overflow-x:clip}
+.home-page:before{content:"";position:fixed;z-index:100;left:0;top:0;width:100%;height:3px;background:linear-gradient(90deg,#d8ef79,#65b69d);transform:scaleX(var(--scroll-progress));transform-origin:left;pointer-events:none}
+.home-page .home-nav{position:sticky;top:0;transition:height .35s ease,box-shadow .35s ease,background .35s ease,border-color .35s ease;backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px)}
+.home-page .home-nav.is-scrolled{height:70px;background:#fffffff0;border-color:transparent;box-shadow:0 12px 36px #123f3512}
+.home-nav nav a{position:relative;transition:color .25s ease}
+.home-nav nav a:after{content:"";position:absolute;left:0;right:0;bottom:-9px;height:2px;border-radius:2px;background:#6f925d;transform:scaleX(0);transition:transform .25s ease;transform-origin:right}
+.home-nav nav a:hover,.home-nav nav a.is-active{color:#123f35}
+.home-nav nav a:hover:after,.home-nav nav a.is-active:after{transform:scaleX(1);transform-origin:left}
+.home-page button,.home-page .hero-actions a,.home-page .doctor-info button{transition:transform .22s ease,box-shadow .22s ease,background .22s ease,color .22s ease,border-color .22s ease}
+.home-page button:not(.menu-button):not(.nav-login):hover{transform:translateY(-2px);box-shadow:0 12px 28px #123f3522}
+.home-page button:active{transform:translateY(0) scale(.98)!important}
+.home-page .nav-book,.home-page .hero-actions button,.home-page .home-services button,.home-page .home-cta button{position:relative;overflow:hidden}
+.home-page .nav-book:after,.home-page .hero-actions button:after,.home-page .home-services button:after,.home-page .home-cta button:after{content:"";position:absolute;inset:-100% -45%;background:linear-gradient(110deg,transparent 42%,#ffffff45 50%,transparent 58%);transform:translateX(-80%) rotate(8deg);transition:transform .65s ease}
+.home-page .nav-book:hover:after,.home-page .hero-actions button:hover:after,.home-page .home-services button:hover:after,.home-page .home-cta button:hover:after{transform:translateX(80%) rotate(8deg)}
+.home-hero{position:relative;background:linear-gradient(120deg,#f5f3ea 0%,#f5f3ea 55%,#eef3e8 100%)}
+.hero-copy{position:relative;z-index:1}
+.hero-copy:before{content:"";position:absolute;z-index:-1;width:380px;height:380px;border-radius:50%;left:-210px;top:80px;background:#d8ef7940;filter:blur(70px);animation:ambient-drift 9s ease-in-out infinite alternate}
+.hero-copy>*{animation:hero-rise .75s cubic-bezier(.2,.8,.2,1) both}
+.hero-copy>*:nth-child(2){animation-delay:.08s}.hero-copy>*:nth-child(3){animation-delay:.16s}.hero-copy>*:nth-child(4){animation-delay:.24s}.hero-copy>*:nth-child(5){animation-delay:.32s}
+.hero-copy h1 i{display:inline-block;position:relative}
+.hero-copy h1 i:after{content:"";position:absolute;left:2%;right:0;bottom:-5px;height:7px;border-radius:50%;background:#d8ef79aa;transform:scaleX(0);transform-origin:left;animation:underline-draw .7s .75s ease forwards}
+.hero-visual{--pointer-x:0;--pointer-y:0;perspective:1100px}
+.hero-visual:before{content:"";position:absolute;width:210px;height:210px;border-radius:50%;right:-65px;top:-55px;background:#d8ef7930;filter:blur(8px);animation:ambient-drift 8s ease-in-out infinite alternate-reverse}
+.hero-medical{transform:rotateY(calc(var(--pointer-x) * 5deg)) rotateX(calc(var(--pointer-y) * -5deg)) translate3d(calc(var(--pointer-x) * 12px),calc(var(--pointer-y) * 12px),20px);transition:transform .25s ease-out,box-shadow .35s ease;box-shadow:inset 0 1px #ffffff22,0 32px 70px #061c1740}
+.hero-visual:hover .hero-medical{box-shadow:inset 0 1px #ffffff35,0 42px 90px #061c1760}
+.orbit-one{animation:orbit-spin 24s linear infinite}.orbit-two{animation:orbit-spin 18s linear infinite reverse}
+.hero-orbit:before,.hero-orbit:after{content:"";position:absolute;width:9px;height:9px;border-radius:50%;background:#d8ef79;box-shadow:0 0 22px #d8ef79}.hero-orbit:before{left:12%;top:18%}.hero-orbit:after{right:9%;bottom:23%}
+.floating-card{border-radius:12px;border:1px solid #ffffffaa;transition:transform .3s ease,box-shadow .3s ease}.float-top{animation:card-float 5s ease-in-out infinite}.float-bottom{animation:card-float 5.8s .8s ease-in-out infinite reverse}
+.hero-visual:hover .floating-card{box-shadow:0 22px 55px #061c1770}
+.home-strip{background:linear-gradient(100deg,#d8ef79,#e6f7a1,#cce772);background-size:200% 100%;animation:strip-flow 9s ease infinite}
+.home-strip b{transition:transform .25s ease,color .25s ease}.home-strip b:hover{transform:translateY(-3px);color:#315b3d}
+.motion-reveal{opacity:0;transform:translateY(28px);transition:opacity .7s cubic-bezier(.2,.7,.2,1),transform .7s cubic-bezier(.2,.7,.2,1);transition-delay:calc(var(--reveal-order,0) * 75ms)}
+.motion-reveal.is-visible{opacity:1;transform:none}
+.about-cards article{transition:transform .3s ease,background .3s ease,padding .3s ease}
+.about-cards article:hover{transform:translateY(-7px);background:linear-gradient(160deg,#f8fbf8,#f0f6e6)}
+.about-cards article:hover svg{animation:icon-pulse .6s ease}
+.service-list article{position:relative;transition:padding .3s ease,background .3s ease}
+.service-list article:before{content:"";position:absolute;inset:7px -10px;border-radius:12px;background:#ffffff08;opacity:0;transition:opacity .3s ease}
+.service-list article>*{position:relative;z-index:1}.service-list article:hover{padding-left:17px;padding-right:12px}.service-list article:hover:before{opacity:1}.service-list article:hover>svg{transform:translateX(5px);color:#d8ef79}.service-list article>svg{transition:transform .25s ease,color .25s ease}
+.doctor-showcase article{border-radius:18px;overflow:hidden;box-shadow:0 8px 30px #123f3508;transition:transform .35s cubic-bezier(.2,.75,.2,1),box-shadow .35s ease,border-color .35s ease}
+.doctor-showcase article:hover{transform:translateY(-10px);box-shadow:0 24px 55px #123f3520;border-color:#b9cfc6}
+.doctor-portrait img,.doctor-portrait:after{transition:transform .55s cubic-bezier(.2,.75,.2,1)}
+.doctor-showcase article:hover .doctor-portrait img{transform:scale(1.045)}.doctor-showcase article:hover .doctor-portrait:after{transform:scale(1.08)}
+.doctor-info button:hover{gap:13px;color:#123f35}
+.process-line article>b{transition:transform .3s ease,box-shadow .3s ease}.process-line article:hover>b{transform:scale(1.12);box-shadow:0 0 0 8px #d8ef7945}.process-line article>div{transition:transform .3s ease}.process-line article:hover>div{transform:translateY(-5px)}
+.review-grid article{position:relative;border-radius:18px;overflow:hidden;transition:transform .35s ease,box-shadow .35s ease,border-color .35s ease}
+.review-grid article:before{content:"“";position:absolute;right:18px;top:-25px;font-family:Newsreader,serif;font-size:120px;color:#d8ef7930;line-height:1}
+.review-grid article:hover{transform:translateY(-8px) rotate(-.3deg);box-shadow:0 24px 55px #123f3518;border-color:#bfd2ca}
+.home-cta{position:relative;overflow:hidden;border-radius:22px;box-shadow:0 25px 65px #667b3130}
+.home-cta:before{content:"";position:absolute;width:280px;height:280px;border:1px solid #123f3525;border-radius:50%;right:-90px;top:-145px;box-shadow:0 0 0 38px #ffffff18,0 0 0 76px #123f3509;animation:cta-ring 7s ease-in-out infinite}
+.home-cta>*{position:relative;z-index:1}
+@keyframes hero-rise{from{opacity:0;transform:translateY(24px)}to{opacity:1;transform:none}}
+@keyframes underline-draw{to{transform:scaleX(1)}}
+@keyframes orbit-spin{to{transform:rotate(360deg)}}
+@keyframes card-float{0%,100%{transform:translateY(0)}50%{transform:translateY(-12px)}}
+@keyframes ambient-drift{to{transform:translate(35px,-25px) scale(1.12)}}
+@keyframes strip-flow{0%,100%{background-position:0 50%}50%{background-position:100% 50%}}
+@keyframes icon-pulse{50%{transform:scale(1.18) rotate(-5deg)}}
+@keyframes cta-ring{50%{transform:scale(1.08) translate(-8px,8px)}}
+@media(max-width:900px){.home-page .home-nav{position:sticky}.home-page .home-nav nav{backdrop-filter:blur(18px)}.doctor-showcase article:hover,.review-grid article:hover{transform:translateY(-5px)}.hero-medical{transform:none}}
+@media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}.home-page *,.home-page *:before,.home-page *:after{animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important}.motion-reveal{opacity:1;transform:none}.hero-medical{transform:none}}

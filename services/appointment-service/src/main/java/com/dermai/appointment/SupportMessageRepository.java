@@ -1,3 +1,3 @@
 package com.dermai.appointment;
-import org.springframework.data.jpa.repository.JpaRepository;import java.util.*;
-interface SupportMessageRepository extends JpaRepository<SupportMessage,UUID>{List<SupportMessage> findByPatientIdentityIdOrderBySentAtAsc(UUID patientIdentityId);List<SupportMessage> findAllByOrderBySentAtAsc();}
+import org.springframework.data.jpa.repository.*;import org.springframework.data.repository.query.Param;import java.util.*;
+interface SupportMessageRepository extends JpaRepository<SupportMessage,UUID>{List<SupportMessage> findByPatientIdentityIdOrderBySentAtAsc(UUID patientIdentityId);List<SupportMessage> findAllByOrderBySentAtAsc();@Modifying @Query("update SupportMessage m set m.patientIdentityId=:newIdentity where m.patientIdentityId=:oldIdentity")int relinkPatient(@Param("oldIdentity")UUID oldIdentity,@Param("newIdentity")UUID newIdentity);@Modifying @Query("update SupportMessage m set m.senderIdentityId=:newIdentity where m.senderIdentityId=:oldIdentity and m.senderRole='PATIENT'")int relinkSender(@Param("oldIdentity")UUID oldIdentity,@Param("newIdentity")UUID newIdentity);}

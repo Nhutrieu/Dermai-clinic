@@ -10,6 +10,7 @@ spring:
     properties.hibernate.default_schema: appointment
   flyway: {schemas: appointment, create-schemas: true}
 management.endpoints.web.exposure.include: health,info
+security.service-token: ${SERVICE_TOKEN:}
 doctor-service.url: ${DOCTOR_URL:http://doctor-service:8084}
 spring.rabbitmq:
   host: ${RABBITMQ_HOST:rabbitmq}

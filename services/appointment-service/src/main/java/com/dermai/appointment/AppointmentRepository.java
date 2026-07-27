@@ -14,4 +14,5 @@ public interface AppointmentRepository extends JpaRepository<Appointment,UUID>{
  @Query("select a from Appointment a where a.status <> com.dermai.appointment.AppointmentStatus.CANCELLED and a.startAt < :to and a.endAt > :from")
  List<Appointment> findActiveOverlapping(@Param("from") Instant from,@Param("to") Instant to);
  @Lock(LockModeType.PESSIMISTIC_WRITE) @Query("select a from Appointment a where a.id=:id") Optional<Appointment> findLocked(@Param("id") UUID id);
+ @Modifying @Query("update Appointment a set a.patientIdentityId=:newIdentity where a.patientId=:patientId and a.patientIdentityId=:oldIdentity") int relinkPatientIdentity(@Param("patientId") UUID patientId,@Param("oldIdentity") UUID oldIdentity,@Param("newIdentity") UUID newIdentity);
 }

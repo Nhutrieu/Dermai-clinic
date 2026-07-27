@@ -15,6 +15,18 @@ public class AppointmentService{
   if(doctor==null||doctorIdentity==null||!start.isBefore(end)||start.isBefore(Instant.now()))throw new IllegalArgumentException("INVALID_HOLD");
   try{var x=repo.saveAndFlush(Appointment.held(patient,patientIdentity,doctor,doctorIdentity,start,end));slots.afterCommit();return x;}catch(DataIntegrityViolationException e){throw conflict(e);}
  }
+ public Appointment propose(UUID patient,UUID patientIdentity,UUID doctor,UUID doctorIdentity,Instant start,Instant end,String reason){
+  if(patient==null||patientIdentity==null||doctor==null||doctorIdentity==null||reason==null||reason.isBlank()||!start.isBefore(end)||start.isBefore(Instant.now()))throw new IllegalArgumentException("INVALID_PROPOSAL");
+  try{var x=repo.saveAndFlush(Appointment.proposed(patient,patientIdentity,doctor,doctorIdentity,start,end,reason.trim()));event(x,"AppointmentProposed");notify(x,"BOOKING_PROPOSAL","Lễ tân đề nghị lịch khám","Lễ tân đã chọn lịch "+localTime(start)+". Vui lòng xác nhận trong 10 phút.");slots.afterCommit();return x;}catch(DataIntegrityViolationException e){throw conflict(e);}
+ }
+ public Appointment acceptProposal(UUID id,UUID patientIdentity){
+  var x=locked(id);if(x.status!=AppointmentStatus.PROPOSED||!patientIdentity.equals(x.patientIdentityId))throw new IllegalStateException("INVALID_PROPOSAL");
+  if(x.holdExpiresAt==null||x.holdExpiresAt.isBefore(Instant.now())){x.transition(AppointmentStatus.CANCELLED);x.cancelReason="PROPOSAL_EXPIRED";x.patientHidden=true;slots.afterCommit();throw new ProposalExpiredException();}
+  x.holdExpiresAt=null;x.transition(AppointmentStatus.CONFIRMED);event(x,"AppointmentConfirmedByPatient");notify(x,"PROPOSAL_ACCEPTED","Đã xác nhận lịch khám","Lịch khám "+localTime(x.startAt)+" đã được xác nhận.");slots.afterCommit();return x;
+ }
+ public Appointment declineProposal(UUID id,UUID patientIdentity){
+  var x=locked(id);if(x.status!=AppointmentStatus.PROPOSED||!patientIdentity.equals(x.patientIdentityId))throw new IllegalStateException("INVALID_PROPOSAL");x.transition(AppointmentStatus.CANCELLED);x.cancelReason="PATIENT_DECLINED_PROPOSAL";x.patientHidden=true;event(x,"AppointmentProposalDeclined");notify(x,"PROPOSAL_DECLINED","Đã từ chối lịch đề nghị","Khung giờ đã được trả lại để người khác có thể đặt.");slots.afterCommit();return x;
+ }
  public Appointment confirmHold(UUID id,UUID patientIdentity,String reason,String key){
   var x=locked(id);if(x.status!=AppointmentStatus.HELD||!patientIdentity.equals(x.patientIdentityId))throw new IllegalStateException("INVALID_HOLD");
   if(x.holdExpiresAt==null||x.holdExpiresAt.isBefore(Instant.now())){x.transition(AppointmentStatus.CANCELLED);x.cancelReason="HOLD_EXPIRED";slots.afterCommit();throw new HoldExpiredException();}
@@ -31,9 +43,11 @@ public class AppointmentService{
  private Appointment locked(UUID id){return repo.findLocked(id).orElseThrow(NoSuchElementException::new);}
  private void flushConflict(Appointment x){try{repo.saveAndFlush(x);}catch(DataIntegrityViolationException e){throw new SlotConflictException();}}
  private RuntimeException conflict(DataIntegrityViolationException e){String message=String.valueOf(e.getMostSpecificCause().getMessage());return message.contains("no_patient_overlap")?new PatientOverlapException():new SlotConflictException();}
+ private String localTime(Instant value){return java.time.format.DateTimeFormatter.ofPattern("HH:mm 'ngày' dd/MM/yyyy").withZone(ZoneId.of("Asia/Ho_Chi_Minh")).format(value);}
  void notify(Appointment x,String type,String title,String body){if(!notifications.existsByAppointmentIdAndNotificationType(x.id,type))notifications.save(new AppointmentNotification(x,type,title,body));}
  private void event(Appointment x,String type){var e=new OutboxEvent(x.id,type,"{}");e.payload="{\"eventId\":\""+e.id+"\",\"appointmentId\":\""+x.id+"\",\"patientIdentityId\":\""+x.patientIdentityId+"\",\"status\":\""+x.status+"\",\"startAt\":\""+x.startAt+"\"}";outbox.save(e);}
  static class SlotConflictException extends RuntimeException{}
  static class PatientOverlapException extends RuntimeException{}
  static class HoldExpiredException extends RuntimeException{}
+ static class ProposalExpiredException extends RuntimeException{}
 }

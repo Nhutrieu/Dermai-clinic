@@ -86,19 +86,35 @@ async def public_chat(request: ChatRequest):
         # hoàn tất một câu trả lời tư vấn ngắn.
         "generationConfig": {"temperature": 0.3, "maxOutputTokens": 2048},
     }
-    url = f"https://generativelanguage.googleapis.com/v1beta/models/{settings.gemini_model}:generateContent"
-    try:
-        async with httpx.AsyncClient(timeout=25.0) as client:
-            response = await client.post(url, headers={"x-goog-api-key": settings.gemini_api_key}, json=payload)
-            response.raise_for_status()
-        data = response.json()
-        parts = data.get("candidates", [{}])[0].get("content", {}).get("parts", [])
-        answer = "".join(part.get("text", "") for part in parts).strip()
-        if not answer:
-            raise HTTPException(502, "Gemini không trả về nội dung.")
-        return ChatResponse(answer=answer, citations=[], refused=False, disclaimer=DISCLAIMER)
-    except httpx.HTTPStatusError as error:
-        detail = "Gemini từ chối yêu cầu hoặc API key/model không hợp lệ."
-        raise HTTPException(502, detail) from error
-    except httpx.RequestError as error:
-        raise HTTPException(503, "Không thể kết nối Gemini.") from error
+    candidate_models = [
+        settings.gemini_model,
+        "gemini-flash-latest",
+        "gemini-2.5-flash",
+        "gemini-2.0-flash",
+        "gemini-pro-latest",
+    ]
+    seen = set()
+    models_to_try = [m for m in candidate_models if m and not (m in seen or seen.add(m))]
+
+    last_error = None
+    async with httpx.AsyncClient(timeout=25.0) as client:
+        for model in models_to_try:
+            url = f"https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent"
+            try:
+                response = await client.post(url, headers={"x-goog-api-key": settings.gemini_api_key}, json=payload)
+                response.raise_for_status()
+                data = response.json()
+                parts = data.get("candidates", [{}])[0].get("content", {}).get("parts", [])
+                answer = "".join(part.get("text", "") for part in parts).strip()
+                if answer:
+                    return ChatResponse(answer=answer, citations=[], refused=False, disclaimer=DISCLAIMER)
+            except httpx.HTTPStatusError as error:
+                print(f"GEMINI API ERROR on model {model}: {error.response.status_code} {error.response.text}", flush=True)
+                last_error = error
+            except httpx.RequestError as error:
+                print(f"GEMINI REQUEST ERROR on model {model}: {error}", flush=True)
+                last_error = error
+
+    if isinstance(last_error, httpx.HTTPStatusError):
+        raise HTTPException(502, f"Gemini error {last_error.response.status_code}: {last_error.response.text[:200]}")
+    raise HTTPException(503, "Không thể kết nối Gemini.")

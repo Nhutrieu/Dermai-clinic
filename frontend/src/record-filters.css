@@ -1,1 +1,101 @@
-.medical-record-browser .record-heading{display:flex;justify-content:space-between;align-items:end;gap:24px;margin-bottom:8px}.record-heading h2{margin:0 0 5px}.record-heading>div>p{margin:0;color:#789087;font-size:11px}.record-filters{display:grid;grid-template-columns:minmax(220px,1fr) 160px 145px;gap:9px;flex:1;max-width:720px}.record-filters input,.record-filters select{height:42px;border:1px solid #cddbd6;border-radius:9px;background:#fff;padding:0 12px;color:#173e35;font:inherit;font-size:11px;outline:none}.record-filters input:focus,.record-filters select:focus{border-color:#789d90;box-shadow:0 0 0 3px #dbeae540}.medical-record-browser>article{transition:border-color .2s,box-shadow .2s}.medical-record-browser>article:hover{border-color:#b9cec6;box-shadow:0 8px 24px #123f3509}@media(max-width:900px){.medical-record-browser .record-heading{display:block}.record-filters{max-width:none;margin-top:16px}}@media(max-width:650px){.record-filters{grid-template-columns:1fr}.record-filters input,.record-filters select{width:100%}}
+.medical-record-browser .record-heading{display:flex;justify-content:space-between;align-items:center;gap:24px;margin-bottom:18px}.record-heading h2{margin:0 0 4px;font-family:Newsreader,serif;font-size:24px;color:#143e35}.record-heading>div>p{margin:0;color:#789087;font-size:12px;font-weight:600}.record-filters{display:grid;grid-template-columns:minmax(220px,1fr) 160px 155px;gap:10px;flex:1;max-width:720px}.record-filters input,.record-filters select{height:42px;border:1px solid #cedbd6;border-radius:9px;background:#fff;padding:0 14px;color:#173e35;font:inherit;font-size:12px;font-weight:600;outline:none;transition:border-color .2s,box-shadow .2s}.record-filters input:focus,.record-filters select:focus{border-color:#4e8a7a;box-shadow:0 0 0 3px #4e8a7a1a}.medical-record-browser>article{margin-top:12px;transition:border-color .2s,box-shadow .2s}.medical-record-browser>article:hover{border-color:#b9cec6;box-shadow:0 8px 24px #123f3509}.records article span{display:inline-block;padding:4px 10px;font-size:11px;font-weight:700;border-radius:20px;text-transform:uppercase;background:#edf5e9;color:#355c4d;letter-spacing:.5px}.panel+.panel,.records+.records,.medical-record-browser+.panel.records{margin-top:28px!important}@media(max-width:900px){.medical-record-browser .record-heading{display:block}.record-filters{max-width:none;margin-top:16px}}@media(max-width:650px){.record-filters{grid-template-columns:1fr}.record-filters input,.record-filters select{width:100%}}
+
+.list-filter-bar {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin: 16px 0 20px;
+  flex-wrap: wrap;
+  padding: 12px 16px;
+  background: #f7faf8;
+  border: 1px solid #e1ebe6;
+  border-radius: 12px;
+}
+
+.list-filter-bar .filter-group {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+  font-weight: 700;
+  color: #3b5a51;
+}
+
+.list-filter-bar .keyword-search {
+  flex: 1 1 240px;
+  position: relative;
+}
+
+.list-filter-bar input[type="text"] {
+  width: 100%;
+  height: 38px;
+  padding: 0 12px;
+  border: 1px solid #cad8d3;
+  border-radius: 8px;
+  background: #ffffff;
+  font-size: 13px;
+  color: #173e35;
+  outline: none;
+  transition: all 0.2s ease;
+}
+
+.list-filter-bar input[type="text"]:focus,
+.list-filter-bar select:focus {
+  border-color: #174c40;
+  box-shadow: 0 0 0 3px rgba(23, 76, 64, 0.1);
+}
+
+.list-filter-bar select {
+  height: 38px;
+  padding: 0 10px;
+  border: 1px solid #cad8d3;
+  border-radius: 8px;
+  background: #ffffff;
+  font-size: 12px;
+  font-weight: 700;
+  color: #173e35;
+  outline: none;
+  cursor: pointer;
+}
+
+.list-filter-bar .clear-filter {
+  position: absolute;
+  right: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+  border: none;
+  background: none;
+  color: #8fa59e;
+  font-size: 16px;
+  cursor: pointer;
+}
+
+.list-filter-bar .clear-filter:hover {
+  color: #174c40;
+}
+
+.list-filter-bar .reset-filters-btn {
+  height: 38px;
+  padding: 0 14px;
+  border: 1px solid #c8dad4;
+  border-radius: 8px;
+  background: #ffffff;
+  color: #607c73;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.list-filter-bar .reset-filters-btn:hover {
+  background: #f0f5f3;
+  border-color: #174c40;
+  color: #174c40;
+}
+
+.filter-result-count {
+  font-size: 12px;
+  color: #557269;
+  font-weight: 600;
+  margin-left: auto;
+}

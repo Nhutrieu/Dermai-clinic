@@ -1,0 +1,371 @@
+/* Shared finishing layer for workspace controls that previously fell back to browser styles. */
+textarea { resize: none !important; }
+.appointment-review-host, .hide-cancelled-host { display: none !important; }
+.shell .inline {
+  align-items: stretch;
+  padding: 6px;
+  border: 1px solid #dedbd3;
+  border-radius: 10px;
+  background: #f8f7f3;
+}
+
+.shell .inline input {
+  min-width: 0;
+  border: 0;
+  background: transparent;
+  box-shadow: none;
+}
+
+.shell .inline input:focus {
+  background: #fff;
+}
+
+.shell .inline button,
+.shell .result > button {
+  min-height: 40px;
+  padding: 0 16px;
+  border: 1px solid #173f36;
+  border-radius: 7px;
+  background: #173f36;
+  color: #fff;
+  font-size: 11px;
+  font-weight: 750;
+}
+
+.shell .inline button:hover,
+.shell .result > button:hover {
+  background: #0e332b;
+  transform: translateY(-1px);
+}
+
+.shell .management form {
+  padding: 18px;
+  border: 1px solid #e2ded5;
+  border-radius: 9px;
+  background: #faf9f5;
+}
+
+.shell .management form label {
+  min-width: 0;
+}
+
+.shell .management input,
+.shell .management select,
+.shell .management textarea {
+  width: 100%;
+  min-height: 42px;
+  border-color: #d8d6ce;
+  background: #fff;
+}
+
+.shell .management textarea {
+  min-height: 96px;
+  padding: 11px 12px;
+  border: 1px solid #d8d6ce;
+  border-radius: 8px;
+}
+
+.shell .setting-row {
+  min-height: 68px;
+  padding: 13px 4px;
+}
+
+.shell .setting-row:last-of-type {
+  margin-bottom: 16px;
+}
+
+.shell .setting-row button,
+.shell .clinic-closure-list article button {
+  min-width: 66px;
+  border: 1px solid #e3c4be;
+  background: #fff9f7;
+  color: #a4483f;
+  font-weight: 700;
+}
+
+.shell .setting-row button:hover,
+.shell .clinic-closure-list article button:hover {
+  border-color: #cb8d84;
+  background: #fff0ed;
+}
+
+.shell .real-list article,
+.shell .real-list > article,
+.shell .real-list > div > article,
+.shell .real-list article.appointment-card {
+  min-height: auto !important;
+  padding: 16px 20px !important;
+  margin-bottom: 12px !important;
+  border: 1px solid #e1ebe6 !important;
+  border-radius: 12px !important;
+  background: #ffffff !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: flex-start !important;
+  gap: 16px !important;
+  box-shadow: 0 2px 8px rgba(18, 63, 53, 0.03) !important;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease, transform 0.2s ease !important;
+}
+
+.shell .real-list article:hover,
+.shell .real-list > article.appointment-card:hover {
+  border-color: #b3cdc1 !important;
+  box-shadow: 0 6px 20px rgba(18, 63, 53, 0.08) !important;
+}
+
+.appointment-icon-wrapper {
+  width: 42px !important;
+  height: 42px !important;
+  min-width: 42px !important;
+  min-height: 42px !important;
+  border-radius: 10px !important;
+  background: #eef6f2 !important;
+  color: #174c40 !important;
+  display: grid !important;
+  place-items: center !important;
+  flex-shrink: 0 !important;
+}
+
+.appointment-icon-wrapper svg {
+  width: 20px !important;
+  height: 20px !important;
+}
+
+.appointment-details {
+  flex: 1 1 auto !important;
+  min-width: 0 !important;
+  margin-right: auto !important;
+  text-align: left !important;
+}
+
+.appointment-time {
+  font-size: 15px !important;
+  font-weight: 750 !important;
+  color: #143d34 !important;
+  display: block !important;
+  white-space: nowrap !important;
+}
+
+.appointment-reason {
+  font-size: 13px !important;
+  color: #557269 !important;
+  margin: 4px 0 0 !important;
+  line-height: 1.45 !important;
+  word-break: break-word !important;
+}
+
+.shell .real-list .actions {
+  display: flex !important;
+  align-items: center !important;
+  gap: 10px !important;
+  margin-left: auto !important;
+  max-width: none !important;
+  flex-wrap: wrap !important;
+  justify-content: flex-end !important;
+  flex-shrink: 0 !important;
+}
+
+.shell .real-list .actions > span:not(.status-badge) {
+  background: none !important;
+  border: none !important;
+  padding: 0 !important;
+  border-radius: 0 !important;
+}
+
+.status-badge {
+  display: inline-flex !important;
+  align-items: center !important;
+  padding: 6px 13px !important;
+  font-size: 11px !important;
+  font-weight: 750 !important;
+  border-radius: 20px !important;
+  letter-spacing: 0.3px !important;
+  border: 1px solid transparent !important;
+  white-space: nowrap !important;
+  line-height: 1.2 !important;
+}
+
+.status-badge.badge-confirmed {
+  background: #e9f7ee !important;
+  color: #1b6e41 !important;
+  border-color: #bfe5cc !important;
+}
+
+.status-badge.badge-pending {
+  background: #fff8e6 !important;
+  color: #8a5d00 !important;
+  border-color: #ffe399 !important;
+}
+
+.status-badge.badge-assigned {
+  background: #eef6fc !important;
+  color: #175cd3 !important;
+  border-color: #b2ddff !important;
+}
+
+.status-badge.badge-in-progress {
+  background: #eef4ff !important;
+  color: #3538cd !important;
+  border-color: #c7d7fe !important;
+}
+
+.status-badge.badge-completed {
+  background: #f0f4f3 !important;
+  color: #436359 !important;
+  border-color: #d1ded9 !important;
+}
+
+.status-badge.badge-cancelled {
+  background: #fdebee !important;
+  color: #ab2328 !important;
+  border-color: #f8c2c6 !important;
+}
+
+.status-badge.badge-followup {
+  background: #f2f8d8 !important;
+  color: #3f6110 !important;
+  border-color: #d9ea8e !important;
+}
+
+.contact-reception {
+  background: #fff !important;
+  border: 1px solid #c9ded7 !important;
+  color: #1d5245 !important;
+  font-weight: 700 !important;
+  font-size: 12px !important;
+  padding: 7px 14px !important;
+  border-radius: 8px !important;
+  transition: all 0.2s ease !important;
+  cursor: pointer !important;
+}
+
+.contact-reception:hover {
+  background: #f0f6f3 !important;
+  border-color: #174c40 !important;
+  color: #174c40 !important;
+  transform: translateY(-1px);
+}
+
+.shell .real-list .actions button,
+.shell .actions button {
+  min-height: 34px;
+  padding: 7px 14px;
+  border: 1px solid #2d6658;
+  border-radius: 8px;
+  background: #fff;
+  color: #24564a;
+  font-weight: 700;
+  font-size: 12px;
+}
+
+.shell .real-list .actions button:hover,
+.shell .actions button:hover {
+  background: #173f36;
+  color: #fff;
+}
+
+.shell .admin-directory-detail,
+.shell .reception-patient-detail {
+  box-shadow: inset 3px 0 0 var(--role-accent);
+}
+
+.shell .admin-directory-detail header button,
+.shell .reception-patient-detail header button {
+  width: 34px;
+  height: 34px;
+  padding: 0;
+  display: grid;
+  place-items: center;
+  border: 1px solid #ddd9d0;
+  border-radius: 50%;
+  background: #fff;
+  color: #5d7069;
+}
+
+.shell .admin-directory-detail header button:hover,
+.shell .reception-patient-detail header button:hover {
+  border-color: #aebdb7;
+  background: #f2f5f3;
+}
+
+.shell .result {
+  width: 100%;
+  margin-bottom: 8px;
+  text-align: left;
+  transition: border-color 0.2s ease, background 0.2s ease, transform 0.2s ease;
+}
+
+.shell .result:hover {
+  border-color: #91aa9f;
+  background: #f5f6f1;
+}
+
+.shell .form-message,
+.shell .booking-message,
+.shell .support-notice,
+.shell .proposal-feedback {
+  padding: 10px 12px;
+  border: 1px solid #d5e3c4;
+  border-radius: 7px;
+  background: #f2f7e9;
+  color: #365f4e;
+  line-height: 1.5;
+}
+
+.shell .empty {
+  border-color: #d7d5cd;
+  background: #faf9f5;
+}
+
+.shell ::-webkit-scrollbar {
+  width: 9px;
+  height: 9px;
+}
+
+.shell ::-webkit-scrollbar-thumb {
+  border: 2px solid transparent;
+  border-radius: 10px;
+  background: #a9b8b1;
+  background-clip: padding-box;
+}
+
+.shell ::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+@media (max-width: 760px) {
+  .shell .inline {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+  }
+
+  .shell .management form {
+    padding: 14px;
+  }
+
+  .shell .real-list > article,
+  .shell .real-list > div > article {
+    grid-template-columns: 24px minmax(0, 1fr);
+  }
+
+  .shell .real-list .actions {
+    grid-column: 1 / -1;
+    max-width: none;
+    justify-content: flex-start;
+    padding-left: 36px;
+  }
+}
+
+@media (max-width: 480px) {
+  .shell .inline {
+    grid-template-columns: 1fr;
+  }
+
+  .shell .inline button {
+    width: 100%;
+  }
+
+  .shell .real-list .actions {
+    padding-left: 0;
+  }
+}

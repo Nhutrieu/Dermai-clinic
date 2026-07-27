@@ -2,6 +2,8 @@ name: dermai-clinic
 services:
   postgres:
     image: postgres:16-alpine
+    restart: unless-stopped
+    mem_limit: 512m
     environment:
       POSTGRES_DB: ${POSTGRES_DB:-dermai}
       POSTGRES_USER: ${POSTGRES_USER:-dermai}
@@ -10,13 +12,20 @@ services:
     healthcheck: {test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER}"], interval: 10s, timeout: 5s, retries: 5}
   rabbitmq:
     image: rabbitmq:3.13-management-alpine
+    restart: unless-stopped
+    mem_limit: 384m
     ports: ["15672:15672"]
     healthcheck: {test: ["CMD", "rabbitmq-diagnostics", "-q", "ping"], interval: 15s, timeout: 5s, retries: 5}
   redis:
     image: redis:7-alpine
+    restart: unless-stopped
+    mem_limit: 128m
     command: ["redis-server", "--appendonly", "yes"]
+    healthcheck: {test: ["CMD", "redis-cli", "ping"], interval: 15s, timeout: 5s, retries: 5}
   auth-service:
     build: {context: ., dockerfile: services/Dockerfile, args: {SERVICE: auth-service}}
+    restart: unless-stopped
+    mem_limit: 512m
     environment:
       DB_URL: jdbc:postgresql://postgres:5432/${POSTGRES_DB:-dermai}?currentSchema=auth
       DB_USER: ${POSTGRES_USER:-dermai}
@@ -26,40 +35,61 @@ services:
       SERVICE_TOKEN: ${SERVICE_TOKEN:-}
       SMTP_HOST: mailhog
       SMTP_PORT: 1025
+    healthcheck: {test: ["CMD", "curl", "-fsS", "http://localhost:8082/actuator/health"], interval: 20s, timeout: 5s, retries: 10, start_period: 45s}
     depends_on: {postgres: {condition: service_healthy}, mailhog: {condition: service_started}}
   patient-service:
     build: {context: ., dockerfile: services/Dockerfile, args: {SERVICE: patient-service}}
+    restart: unless-stopped
+    mem_limit: 448m
     environment:
       DB_URL: jdbc:postgresql://postgres:5432/${POSTGRES_DB:-dermai}?currentSchema=patient
       DB_USER: ${POSTGRES_USER:-dermai}
       DB_PASSWORD: ${POSTGRES_PASSWORD:-change-me}
+      APPOINTMENT_URL: http://appointment-service:8085
+      SERVICE_TOKEN: ${SERVICE_TOKEN:-}
+    healthcheck: {test: ["CMD", "curl", "-fsS", "http://localhost:8083/actuator/health"], interval: 20s, timeout: 5s, retries: 10, start_period: 45s}
     depends_on: {postgres: {condition: service_healthy}}
   doctor-service:
     build: {context: ., dockerfile: services/Dockerfile, args: {SERVICE: doctor-service}}
+    restart: unless-stopped
+    mem_limit: 448m
     environment:
       DB_URL: jdbc:postgresql://postgres:5432/${POSTGRES_DB:-dermai}?currentSchema=doctor
       DB_USER: ${POSTGRES_USER:-dermai}
       DB_PASSWORD: ${POSTGRES_PASSWORD:-change-me}
+    healthcheck: {test: ["CMD", "curl", "-fsS", "http://localhost:8084/actuator/health"], interval: 20s, timeout: 5s, retries: 10, start_period: 45s}
     depends_on: {postgres: {condition: service_healthy}}
   appointment-service:
     build: {context: ., dockerfile: services/Dockerfile, args: {SERVICE: appointment-service}}
+    restart: unless-stopped
+    mem_limit: 576m
     environment:
       DB_URL: jdbc:postgresql://postgres:5432/${POSTGRES_DB:-dermai}?currentSchema=appointment
       DB_USER: ${POSTGRES_USER:-dermai}
       DB_PASSWORD: ${POSTGRES_PASSWORD:-change-me}
       RABBITMQ_HOST: rabbitmq
       DOCTOR_URL: http://doctor-service:8084
+      SERVICE_TOKEN: ${SERVICE_TOKEN:-}
+    healthcheck: {test: ["CMD", "curl", "-fsS", "http://localhost:8085/actuator/health"], interval: 20s, timeout: 5s, retries: 10, start_period: 50s}
     depends_on: {postgres: {condition: service_healthy}, rabbitmq: {condition: service_healthy}}
   medical-record-service:
     build: {context: ., dockerfile: services/Dockerfile, args: {SERVICE: medical-record-service}}
+    restart: unless-stopped
+    mem_limit: 448m
     environment: {DB_URL: "jdbc:postgresql://postgres:5432/${POSTGRES_DB:-dermai}?currentSchema=medical_record", DB_USER: "${POSTGRES_USER:-dermai}", DB_PASSWORD: "${POSTGRES_PASSWORD:-change-me}", APPOINTMENT_URL: "http://appointment-service:8085"}
+    healthcheck: {test: ["CMD", "curl", "-fsS", "http://localhost:8086/actuator/health"], interval: 20s, timeout: 5s, retries: 10, start_period: 45s}
     depends_on: {postgres: {condition: service_healthy}}
   prescription-service:
     build: {context: ., dockerfile: services/Dockerfile, args: {SERVICE: prescription-service}}
+    restart: unless-stopped
+    mem_limit: 448m
     environment: {DB_URL: "jdbc:postgresql://postgres:5432/${POSTGRES_DB:-dermai}?currentSchema=prescription", DB_USER: "${POSTGRES_USER:-dermai}", DB_PASSWORD: "${POSTGRES_PASSWORD:-change-me}", MEDICAL_RECORD_URL: "http://medical-record-service:8086"}
+    healthcheck: {test: ["CMD", "curl", "-fsS", "http://localhost:8087/actuator/health"], interval: 20s, timeout: 5s, retries: 10, start_period: 45s}
     depends_on: {postgres: {condition: service_healthy}}
   notification-service:
     build: {context: ., dockerfile: services/Dockerfile, args: {SERVICE: notification-service}}
+    restart: unless-stopped
+    mem_limit: 448m
     environment:
       DB_URL: jdbc:postgresql://postgres:5432/${POSTGRES_DB:-dermai}?currentSchema=notification
       DB_USER: ${POSTGRES_USER:-dermai}
@@ -68,21 +98,27 @@ services:
       SMTP_HOST: mailhog
       AUTH_URL: http://auth-service:8082
       SERVICE_TOKEN: ${SERVICE_TOKEN:-}
+    healthcheck: {test: ["CMD", "curl", "-fsS", "http://localhost:8088/actuator/health"], interval: 20s, timeout: 5s, retries: 10, start_period: 50s}
     depends_on: {postgres: {condition: service_healthy}, rabbitmq: {condition: service_healthy}, auth-service: {condition: service_started}, mailhog: {condition: service_started}}
   ai-service:
     build: ./ai-service
+    restart: unless-stopped
+    mem_limit: 768m
     ports: ["8000:8000"]
     environment:
       MODEL_PATH: /models/best_model.pth
       RAG_INDEX_PATH: /rag-index
       GEMINI_API_KEY: ${GEMINI_API_KEY:-}
-      GEMINI_MODEL: ${GEMINI_MODEL:-gemini-3.5-flash}
+      GEMINI_MODEL: ${GEMINI_MODEL:-gemini-2.5-flash}
     volumes:
       - ./ai-service/app:/app/app:ro
       - ./ai-service/models:/models:ro
       - ./ai-service/rag/index:/rag-index:ro
+    healthcheck: {test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/health', timeout=3)"], interval: 20s, timeout: 5s, retries: 10, start_period: 60s}
   gateway:
     build: {context: ., dockerfile: services/Dockerfile, args: {SERVICE: gateway}}
+    restart: unless-stopped
+    mem_limit: 448m
     environment:
       AUTH_URL: http://auth-service:8082
       PATIENT_URL: http://patient-service:8083
@@ -92,14 +128,29 @@ services:
       PRESCRIPTION_URL: http://prescription-service:8087
       AI_URL: http://ai-service:8000
       JWT_SECRET: ${JWT_SECRET:-replace-with-at-least-32-random-characters}
+    healthcheck: {test: ["CMD", "curl", "-fsS", "http://localhost:8080/actuator/health"], interval: 20s, timeout: 5s, retries: 10, start_period: 50s}
     ports: ["8080:8080"]
-    depends_on: [auth-service, patient-service, doctor-service, appointment-service, medical-record-service, prescription-service, ai-service, redis]
+    depends_on:
+      auth-service: {condition: service_healthy}
+      patient-service: {condition: service_healthy}
+      doctor-service: {condition: service_healthy}
+      appointment-service: {condition: service_healthy}
+      medical-record-service: {condition: service_healthy}
+      prescription-service: {condition: service_healthy}
+      ai-service: {condition: service_healthy}
+      redis: {condition: service_healthy}
   frontend:
     build: ./frontend
+    restart: unless-stopped
+    mem_limit: 96m
     ports: ["3000:80"]
-    depends_on: [gateway]
+    depends_on: {gateway: {condition: service_healthy}}
+    healthcheck: {test: ["CMD", "wget", "-q", "--spider", "http://127.0.0.1/health"], interval: 20s, timeout: 5s, retries: 5, start_period: 10s}
   mailhog:
     image: mailhog/mailhog:v1.0.1
+    restart: unless-stopped
+    mem_limit: 128m
     ports: ["8025:8025"]
+    healthcheck: {test: ["CMD", "wget", "-q", "--spider", "http://127.0.0.1:8025/api/v2/messages"], interval: 20s, timeout: 5s, retries: 5, start_period: 10s}
 volumes:
   postgres_data:

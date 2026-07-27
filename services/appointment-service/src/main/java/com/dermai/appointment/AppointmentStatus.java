@@ -1,9 +1,10 @@
 package com.dermai.appointment;
 import java.util.EnumSet;
 public enum AppointmentStatus{
- HELD,PENDING,ASSIGNED,CONFIRMED,IN_PROGRESS,COMPLETED,FOLLOW_UP_REQUIRED,NO_SHOW,CANCELLED;
+ HELD,PROPOSED,PENDING,ASSIGNED,CONFIRMED,IN_PROGRESS,COMPLETED,FOLLOW_UP_REQUIRED,NO_SHOW,CANCELLED;
  public boolean mayTransitionTo(AppointmentStatus next){return switch(this){
   case HELD->EnumSet.of(ASSIGNED,CANCELLED).contains(next);
+  case PROPOSED->EnumSet.of(CONFIRMED,CANCELLED).contains(next);
   case PENDING->EnumSet.of(ASSIGNED,CANCELLED).contains(next);
   case ASSIGNED->EnumSet.of(CONFIRMED,CANCELLED).contains(next);
   case CONFIRMED->EnumSet.of(IN_PROGRESS,NO_SHOW,CANCELLED).contains(next);

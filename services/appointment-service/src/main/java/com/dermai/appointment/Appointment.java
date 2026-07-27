@@ -19,5 +19,8 @@ public class Appointment{
  public static Appointment held(UUID patient,UUID patientIdentity,UUID doctor,UUID doctorIdentity,Instant start,Instant end){
   var x=pending(patient,patientIdentity,doctor,doctorIdentity,start,end,null,null);x.status=AppointmentStatus.HELD;x.holdExpiresAt=Instant.now().plus(Duration.ofMinutes(5));return x;
  }
+ public static Appointment proposed(UUID patient,UUID patientIdentity,UUID doctor,UUID doctorIdentity,Instant start,Instant end,String reason){
+  var x=pending(patient,patientIdentity,doctor,doctorIdentity,start,end,reason,null);x.status=AppointmentStatus.PROPOSED;x.holdExpiresAt=Instant.now().plus(Duration.ofMinutes(10));return x;
+ }
  public void transition(AppointmentStatus next){if(!status.mayTransitionTo(next))throw new IllegalStateException("INVALID_TRANSITION");status=next;updatedAt=Instant.now();}
 }
