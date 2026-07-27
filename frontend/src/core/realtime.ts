@@ -32,7 +32,8 @@ export function subscribeRealtime(listener: (event: RealtimeEvent) => void, opti
     socket = connected;
     connected.onmessage = event => {
       try {
-        listener(JSON.parse(event.data) as RealtimeEvent);
+        const parsed = JSON.parse(event.data) as RealtimeEvent;
+        listener(parsed);
       } catch {
         // Ignore malformed frames and keep the connection alive.
       }
@@ -49,4 +50,44 @@ export function subscribeRealtime(listener: (event: RealtimeEvent) => void, opti
     if (retry !== undefined) cancel(retry);
     socket?.close();
   };
+}
+
+let sharedAudioContext: AudioContext | null = null;
+
+export function playChimeNotification() {
+  try {
+    const AudioCtx = window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
+    if (!AudioCtx) return;
+    if (!sharedAudioContext) {
+      sharedAudioContext = new AudioCtx();
+    }
+    if (sharedAudioContext.state === "suspended") {
+      sharedAudioContext.resume().catch(() => {});
+    }
+
+    const ctx = sharedAudioContext;
+    const osc1 = ctx.createOscillator();
+    const gain1 = ctx.createGain();
+    osc1.type = "sine";
+    osc1.frequency.setValueAtTime(523.25, ctx.currentTime);
+    gain1.gain.setValueAtTime(0.2, ctx.currentTime);
+    gain1.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.35);
+    osc1.connect(gain1);
+    gain1.connect(ctx.destination);
+    osc1.start(ctx.currentTime);
+    osc1.stop(ctx.currentTime + 0.35);
+
+    const osc2 = ctx.createOscillator();
+    const gain2 = ctx.createGain();
+    osc2.type = "sine";
+    osc2.frequency.setValueAtTime(659.25, ctx.currentTime + 0.12);
+    gain2.gain.setValueAtTime(0.25, ctx.currentTime + 0.12);
+    gain2.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.55);
+    osc2.connect(gain2);
+    gain2.connect(ctx.destination);
+    osc2.start(ctx.currentTime + 0.12);
+    osc2.stop(ctx.currentTime + 0.55);
+  } catch {
+    // Ignore audio restriction
+  }
 }

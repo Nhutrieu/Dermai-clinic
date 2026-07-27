@@ -3,6 +3,7 @@ import { CalendarDays, Trash2 } from "lucide-react";
 import { request } from "../core/api";
 import type { Appointment, ClinicReview, Recommendation, RecommendationResult } from "../core/types";
 import { State } from "./Ui";
+import { PrescriptionPdfModal } from "./PrescriptionPdfModal";
 
 function formatAppointmentTime(iso: string) {
     if (!iso) return "";

@@ -29,7 +29,7 @@ export type Doctor = {
 
 export type WorkSchedule = { id: string; weekday: number; startTime: string; endTime: string; slotMinutes: number };
 export type LeavePeriod = { id: string; startAt: string; endAt: string; reason?: string };
-export type Appointment = { id: string; patientId: string; doctorId?: string; doctorIdentityId?: string; startAt: string; endAt: string; status: string; reason?: string; followUpReason?: string; followUpNotBefore?: string; holdExpiresAt?: string; createdAt: string };
+export type Appointment = { id: string; patientId: string; doctorId?: string; doctorIdentityId?: string; doctorName?: string; startAt: string; endAt: string; status: string; reason?: string; followUpReason?: string; followUpNotBefore?: string; holdExpiresAt?: string; createdAt: string };
 export type MedicalRecord = { id: string; appointmentId: string; patientId: string; finalDiagnosis: string; clinicalNotes?: string; treatmentPlan?: string; severity: string; followUpAt?: string; signedAt: string };
 export type PrescriptionItem = { drugName: string; dosage?: string; frequency?: string; duration?: string; instructions?: string };
 export type Prescription = { id: string; recordId: string; patientId: string; instructions?: string; signedAt: string; items: PrescriptionItem[] };
