@@ -1,0 +1,24 @@
+.slot-grid > button.unavailable,
+.slot-grid > button:disabled {
+  background: #e5e8e7;
+  color: #89938f;
+  border-color: #d5dbd8;
+  box-shadow: none;
+  cursor: not-allowed;
+  opacity: 0.78;
+}
+
+.slot-grid > button.held-by-other,
+.slot-grid > button.held-by-other:disabled {
+  background: #fff5d9;
+  color: #946b16;
+  border-color: #ead28d;
+  opacity: 1;
+}
+
+.slot-grid > button.booked,
+.slot-grid > button.booked:disabled {
+  background: #e4e7e6;
+  color: #737e7a;
+  border-color: #d3d9d6;
+}

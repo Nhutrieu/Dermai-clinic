@@ -9,11 +9,15 @@ public class Appointment{
  @Column(name="follow_up_reason",length=500) public String followUpReason;
  @Column(name="follow_up_not_before") public Instant followUpNotBefore;
  @Column(name="patient_hidden",nullable=false) public boolean patientHidden=false;
+ @Column(name="hold_expires_at") public Instant holdExpiresAt;
  @Column(name="idempotency_key",unique=true) public String idempotencyKey;@Version public long version;
  @Column(name="created_at") public Instant createdAt=Instant.now();@Column(name="updated_at") public Instant updatedAt=Instant.now();
  protected Appointment(){}
  public static Appointment pending(UUID patient,UUID patientIdentity,UUID doctor,UUID doctorIdentity,Instant start,Instant end,String reason,String key){
   var x=new Appointment();x.id=UUID.randomUUID();x.patientId=patient;x.patientIdentityId=patientIdentity;x.doctorId=doctor;x.doctorIdentityId=doctorIdentity;x.startAt=start;x.endAt=end;x.reason=reason;x.idempotencyKey=key;x.status=doctor==null?AppointmentStatus.PENDING:AppointmentStatus.ASSIGNED;return x;
+ }
+ public static Appointment held(UUID patient,UUID patientIdentity,UUID doctor,UUID doctorIdentity,Instant start,Instant end){
+  var x=pending(patient,patientIdentity,doctor,doctorIdentity,start,end,null,null);x.status=AppointmentStatus.HELD;x.holdExpiresAt=Instant.now().plus(Duration.ofMinutes(5));return x;
  }
  public void transition(AppointmentStatus next){if(!status.mayTransitionTo(next))throw new IllegalStateException("INVALID_TRANSITION");status=next;updatedAt=Instant.now();}
 }

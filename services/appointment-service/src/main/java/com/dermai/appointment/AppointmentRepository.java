@@ -9,6 +9,8 @@ public interface AppointmentRepository extends JpaRepository<Appointment,UUID>{
  List<Appointment> findByDoctorIdentityIdAndStartAtBetweenOrderByStartAt(UUID identity,Instant from,Instant to);
  List<Appointment> findByStatusInAndStartAtBetweenOrderByStartAt(Collection<AppointmentStatus> statuses,Instant from,Instant to);
  List<Appointment> findByStatusInAndEndAtBefore(Collection<AppointmentStatus> statuses,Instant cutoff);
+ List<Appointment> findByStatusAndHoldExpiresAtBefore(AppointmentStatus status,Instant cutoff);
+ List<Appointment> findByStatusAndStartAtBetween(AppointmentStatus status,Instant from,Instant to);
  @Query("select a from Appointment a where a.status <> com.dermai.appointment.AppointmentStatus.CANCELLED and a.startAt < :to and a.endAt > :from")
  List<Appointment> findActiveOverlapping(@Param("from") Instant from,@Param("to") Instant to);
  @Lock(LockModeType.PESSIMISTIC_WRITE) @Query("select a from Appointment a where a.id=:id") Optional<Appointment> findLocked(@Param("id") UUID id);
