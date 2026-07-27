@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Printer, X, FileText, CheckCircle2, ShieldCheck, Stethoscope } from "lucide-react";
+import { Printer, X, FileText, CheckCircle2, ShieldCheck, Stethoscope, ZoomIn, ZoomOut } from "lucide-react";
 import { request } from "../core/api";
 import type { Appointment, MedicalRecord, Patient, Prescription } from "../core/types";
 
@@ -27,6 +27,7 @@ export function PrescriptionPdfModal({
     onClose: () => void;
 }) {
     const [downloaded, setDownloaded] = useState(false);
+    const [zoomLevel, setZoomLevel] = useState<number>(1.15); // Default comfortable 115% zoom
     const [record, setRecord] = useState<MedicalRecord | null>(initialRecord || null);
     const [prescription, setPrescription] = useState<Prescription | null>(initialPrescription || null);
     const [patient, setPatient] = useState<Patient | null>(null);
@@ -98,17 +99,41 @@ export function PrescriptionPdfModal({
                         <FileText className="icon" />
                         <span>Đơn Thuốc Điện Tử DermAI Clinic</span>
                     </div>
+
                     <div className="pdf-modal-buttons">
+                        {/* Zoom Controls for Large Easy Reading */}
+                        <div className="pdf-zoom-controls" style={{ display: "flex", alignItems: "center", gap: "6px", background: "rgba(255, 255, 255, 0.12)", padding: "4px 10px", borderRadius: "8px", marginRight: "8px" }}>
+                            <button
+                                type="button"
+                                title="Thu nhỏ chữ"
+                                onClick={() => setZoomLevel(z => Math.max(0.9, z - 0.15))}
+                                style={{ background: "none", border: 0, color: "#fff", cursor: "pointer", display: "grid", placeItems: "center" }}
+                            >
+                                <ZoomOut style={{ width: 16, height: 16 }} />
+                            </button>
+                            <span style={{ fontSize: "12px", fontWeight: 700, minWidth: "40px", textAlign: "center", color: "#6ee7b7" }}>
+                                {Math.round(zoomLevel * 100)}%
+                            </span>
+                            <button
+                                type="button"
+                                title="Phóng to chữ dễ đọc"
+                                onClick={() => setZoomLevel(z => Math.min(1.6, z + 0.15))}
+                                style={{ background: "none", border: 0, color: "#fff", cursor: "pointer", display: "grid", placeItems: "center" }}
+                            >
+                                <ZoomIn style={{ width: 16, height: 16 }} />
+                            </button>
+                        </div>
+
                         <button type="button" className="btn-print" onClick={handlePrint}>
                             <Printer className="icon" /> In / Tải PDF
                         </button>
-                        <button type="button" className="btn-close" onClick={onClose}>
+                        <button type="button" className="btn-close" onClick={onClose} aria-label="Đóng">
                             <X className="icon" />
                         </button>
                     </div>
                 </header>
 
-                <div className="pdf-paper printable-area">
+                <div className="pdf-paper printable-area" style={{ transform: `scale(${zoomLevel})`, transformOrigin: "top center", transition: "transform 0.2s ease" }}>
                     {/* Top Accent Stripe */}
                     <div className="pdf-top-accent" />
 
