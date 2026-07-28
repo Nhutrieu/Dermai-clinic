@@ -27,7 +27,7 @@ export function PrescriptionPdfModal({
     onClose: () => void;
 }) {
     const [downloaded, setDownloaded] = useState(false);
-    const [zoomLevel, setZoomLevel] = useState<number>(1.15); // Default comfortable 115% zoom
+    const [zoomLevel, setZoomLevel] = useState<number>(1.0); // 100% fit-to-screen full single page view
     const [record, setRecord] = useState<MedicalRecord | null>(initialRecord || null);
     const [prescription, setPrescription] = useState<Prescription | null>(initialPrescription || null);
     const [patient, setPatient] = useState<Patient | null>(null);

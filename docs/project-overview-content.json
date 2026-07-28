@@ -1,0 +1,449 @@
+{
+  "cover": {
+    "documentType": "ĐỒ ÁN TỐT NGHIỆP",
+    "documentTitle": "MÔ TẢ TỔNG QUAN VÀ KẾ HOẠCH THỰC HIỆN",
+    "projectTitle": "DERMAI CLINIC – HỆ THỐNG ĐẶT LỊCH KHÁM VÀ HỖ TRỢ CHẨN ĐOÁN Y TẾ BẰNG TRÍ TUỆ NHÂN TẠO CHO PHÒNG KHÁM DA LIỄU",
+    "englishTitle": "DermAI Clinic – An AI-Assisted Dermatology Appointment and Diagnostic Support System Based on Microservices Architecture",
+    "location": "TP. Hồ Chí Minh, năm 2026"
+  },
+  "contents": [
+    "PHẦN 1. Mô tả tổng quan đồ án",
+    "1.1. Tên đề tài, bối cảnh và lý do lựa chọn",
+    "1.2. Mục tiêu, phạm vi và đối tượng sử dụng",
+    "1.3. Chức năng, quy trình nghiệp vụ và điểm nổi bật",
+    "1.4. Kiến trúc, công nghệ và yêu cầu chất lượng",
+    "PHẦN 2. Kế hoạch thực hiện",
+    "2.1. Phương pháp và tiến độ 16 tuần",
+    "2.2. Kiểm thử, đánh giá AI, sản phẩm bàn giao và quản trị rủi ro"
+  ],
+  "sections": [
+    {
+      "heading": "PHẦN 1. MÔ TẢ TỔNG QUAN ĐỒ ÁN",
+      "level": 1,
+      "blocks": [
+        {
+          "type": "paragraph",
+          "text": "Đề tài DermAI Clinic hướng đến việc xây dựng một hệ thống đặt lịch khám và hỗ trợ chẩn đoán bệnh da liễu bằng trí tuệ nhân tạo cho phòng khám chuyên khoa da liễu. Hệ thống giải quyết đồng thời hai bài toán chính: tổ chức quy trình đặt lịch an toàn, thuận tiện và hỗ trợ bác sĩ phân tích hình ảnh tổn thương da bằng mô hình học sâu. Các chức năng quản lý bệnh nhân, bác sĩ, hồ sơ y khoa, đơn thuốc, thông báo và điều phối của lễ tân được xây dựng để tạo thành một quy trình khám chữa bệnh liền mạch, nhưng không làm thay đổi trọng tâm chính của đề tài là đặt lịch khám và AI hỗ trợ chẩn đoán."
+        },
+        {
+          "type": "note",
+          "text": "Nguyên tắc xuyên suốt: AI chỉ cung cấp kết quả tham khảo và hỗ trợ quyết định lâm sàng. Chẩn đoán cuối cùng, kế hoạch điều trị và đơn thuốc luôn do bác sĩ có chuyên môn xác nhận và chịu trách nhiệm."
+        }
+      ]
+    },
+    {
+      "heading": "1.1. Tên đề tài",
+      "level": 2,
+      "blocks": [
+        {
+          "type": "paragraph",
+          "text": "Tên tiếng Việt: DermAI Clinic – Hệ thống đặt lịch khám và hỗ trợ chẩn đoán y tế bằng trí tuệ nhân tạo cho phòng khám da liễu."
+        },
+        {
+          "type": "paragraph",
+          "text": "Tên tiếng Anh: DermAI Clinic – An AI-Assisted Dermatology Appointment and Diagnostic Support System Based on Microservices Architecture."
+        }
+      ]
+    },
+    {
+      "heading": "1.2. Bối cảnh và lý do lựa chọn đề tài",
+      "level": 2,
+      "blocks": [
+        {
+          "type": "paragraph",
+          "text": "Tại các phòng khám da liễu, quá trình tiếp nhận và đặt lịch thường phụ thuộc vào điện thoại, tin nhắn hoặc thao tác thủ công của lễ tân. Khi số lượng bệnh nhân tăng, cách làm này dễ dẫn đến trùng lịch, phân bổ bác sĩ chưa hợp lý, khó theo dõi thay đổi và mất nhiều thời gian xác nhận. Bệnh nhân cũng gặp khó khăn khi cần chủ động chọn bác sĩ, xem giờ trống, đổi hoặc hủy lịch và theo dõi kết quả sau khám."
+        },
+        {
+          "type": "paragraph",
+          "text": "Bên cạnh đó, bệnh da liễu có nhiều biểu hiện hình ảnh tương đồng. Việc ứng dụng Computer Vision có thể giúp sàng lọc ban đầu, đưa ra các khả năng cần xem xét và làm nổi bật vùng ảnh mà mô hình tập trung. Tuy nhiên, kết quả AI có thể bị ảnh hưởng bởi chất lượng ảnh, ánh sáng, màu da, dữ liệu huấn luyện và nhiều yếu tố lâm sàng không thể hiện trên ảnh. Vì vậy, đề tài lựa chọn cách tiếp cận AI hỗ trợ bác sĩ thay vì tự động thay thế chẩn đoán chuyên môn."
+        },
+        {
+          "type": "paragraph",
+          "text": "Đề tài có ý nghĩa thực tiễn vì kết hợp một quy trình nghiệp vụ rõ ràng với công nghệ AI có kiểm soát. Đồng thời, hệ thống tạo điều kiện nghiên cứu nhiều vấn đề kỹ thuật quan trọng như đặt lịch đồng thời, giữ chỗ tạm thời, cập nhật thời gian thực, bảo mật dữ liệu y tế, kiến trúc Microservices, xử lý thông điệp bất đồng bộ và đánh giá mô hình học sâu."
+        }
+      ]
+    },
+    {
+      "heading": "1.3. Mục tiêu của đồ án",
+      "level": 2,
+      "blocks": [
+        {
+          "type": "paragraph",
+          "text": "Mục tiêu tổng quát là xây dựng một nền tảng web hỗ trợ toàn bộ hành trình từ đặt lịch, tiếp nhận, khám bệnh, tham khảo kết quả AI, lập hồ sơ y khoa, kê đơn đến theo dõi và tái khám tại phòng khám da liễu. Hệ thống cần dễ sử dụng cho bệnh nhân, hỗ trợ điều phối cho lễ tân, cung cấp công cụ chuyên môn cho bác sĩ và cho phép quản trị viên theo dõi hoạt động chung."
+        },
+        {
+          "type": "bullets",
+          "items": [
+            "Xây dựng chức năng đặt lịch theo ngày, bác sĩ và khung giờ làm việc thực tế; ngăn chặn tuyệt đối việc hai bệnh nhân cùng đặt một slot.",
+            "Cung cấp cơ chế giữ slot tạm thời, tự giải phóng khi hết hạn và cập nhật trạng thái slot theo thời gian thực bằng WebSocket.",
+            "Xây dựng Scheduling Engine đề xuất bác sĩ và khung giờ dựa trên chuyên môn, thời gian sớm, tải làm việc, lịch sử theo dõi và ưu tiên của bệnh nhân.",
+            "Xây dựng dịch vụ AI phân loại hình ảnh da liễu, trả về Top-3 dự đoán, Confidence Score, cảnh báo không chắc chắn và ảnh Grad-CAM.",
+            "Hỗ trợ bác sĩ xem kết quả AI dưới dạng tham khảo, ghi chẩn đoán cuối cùng, kế hoạch điều trị và ký đơn thuốc.",
+            "Xây dựng cơ chế phân quyền bốn vai trò, bảo vệ dữ liệu y tế và lưu trữ thông tin theo đúng phạm vi nghiệp vụ.",
+            "Đóng gói toàn bộ hệ thống bằng Docker Compose để có thể cài đặt, trình diễn và mở rộng thuận tiện."
+          ]
+        }
+      ]
+    },
+    {
+      "heading": "1.4. Phạm vi thực hiện",
+      "level": 2,
+      "blocks": [
+        {
+          "type": "table",
+          "headers": ["Trong phạm vi đồ án", "Ngoài phạm vi hoặc định hướng mở rộng"],
+          "rows": [
+            ["Đăng ký, đăng nhập, phân quyền và quản lý tài khoản", "Thanh toán trực tuyến và đối soát bảo hiểm y tế"],
+            ["Quản lý hồ sơ bệnh nhân, bác sĩ, lịch làm việc và nghỉ phép", "Kết nối trực tiếp với hệ thống bệnh viện quốc gia"],
+            ["Đặt, giữ, xác nhận, đổi, hủy lịch và đặt hộ qua lễ tân", "Chẩn đoán tự động thay thế bác sĩ hoặc tự động kê đơn"],
+            ["Hồ sơ khám bệnh, chẩn đoán cuối, kế hoạch điều trị, đơn thuốc", "Theo dõi thiết bị y tế và quản lý kho dược chuyên sâu"],
+            ["Phân loại ảnh da liễu, Top-3, Confidence và Grad-CAM", "Chẩn đoán tất cả bệnh lý y khoa hoặc mọi loại tổn thương da"],
+            ["Thông báo trong web, email thử nghiệm và chat hỗ trợ lễ tân", "SMS thương mại và tổng đài tự động quy mô lớn"],
+            ["Triển khai thử nghiệm bằng Docker Compose", "Hạ tầng production đa vùng, chứng nhận thiết bị y tế" ]
+          ]
+        },
+        {
+          "type": "note",
+          "text": "Phạm vi AI được giới hạn ở các nhóm bệnh có trong bộ dữ liệu đã được kiểm tra. Confidence không được diễn giải như xác suất chắc chắn mắc bệnh và không được dùng làm kết luận lâm sàng độc lập."
+        }
+      ]
+    },
+    {
+      "heading": "1.5. Đối tượng sử dụng và phân quyền",
+      "level": 2,
+      "blocks": [
+        {
+          "type": "table",
+          "headers": ["Vai trò", "Trách nhiệm và chức năng chính"],
+          "rows": [
+            ["Bệnh nhân", "Đăng ký tài khoản; cập nhật hồ sơ; chọn bác sĩ, ngày và giờ khám; mô tả triệu chứng; theo dõi lịch; nhận thông báo; chat với lễ tân; xem hồ sơ, đơn thuốc và đánh giá phòng khám sau khi hoàn thành khám."],
+            ["Bác sĩ", "Cập nhật hồ sơ nghề nghiệp, ảnh đại diện, chuyên môn và mô tả; thiết lập lịch làm việc, nghỉ phép; tiếp nhận ca khám; xem kết quả AI tham khảo; ghi hồ sơ y khoa; lập kế hoạch điều trị; ký đơn thuốc và chỉ định tái khám."],
+            ["Lễ tân", "Tra cứu bệnh nhân; hỗ trợ đặt lịch hộ; tiếp nhận yêu cầu; xác nhận, đổi hoặc hủy lịch; nhắc lịch; xử lý bệnh nhân đến trực tiếp, gọi hotline hoặc cần hỗ trợ qua chat."],
+            ["Quản trị viên", "Tạo và quản lý tài khoản nhân sự; quản lý bác sĩ, bệnh nhân và trạng thái tài khoản; khai báo ngày phòng khám nghỉ; duyệt đánh giá; theo dõi dashboard và số liệu vận hành." ]
+          ]
+        }
+      ]
+    },
+    {
+      "heading": "1.6. Các nhóm chức năng chính",
+      "level": 2,
+      "blocks": [
+        {
+          "type": "bullets",
+          "items": [
+            "Xác thực và tài khoản: đăng ký bệnh nhân, đăng nhập, refresh token, quên mật khẩu, khóa hoặc mở khóa tài khoản và phân quyền RBAC.",
+            "Hồ sơ người dùng: thông tin cá nhân, số điện thoại đã chuẩn hóa, tiền sử bệnh, dị ứng, hồ sơ nghề nghiệp bác sĩ, chứng chỉ, kinh nghiệm, ảnh đại diện và phần giới thiệu.",
+            "Đặt lịch: xem lịch trống, giữ slot, xác nhận, đổi, hủy, tái khám, đặt hộ qua hotline hoặc chat, tự động giải phóng slot và ngăn xung đột tại database.",
+            "Điều phối: hàng đợi lịch khám, đề xuất bác sĩ, nhắc lịch, ghi nhận không đến khám, ngày nghỉ chung của phòng khám và nghỉ phép riêng của bác sĩ.",
+            "Khám bệnh: bắt đầu ca khám, ghi triệu chứng, chẩn đoán cuối cùng, mức độ, ghi chú lâm sàng, kế hoạch điều trị, yêu cầu tái khám và kết thúc buổi khám.",
+            "Đơn thuốc: tạo nhiều thuốc trong một đơn, liều dùng, tần suất, thời gian và hướng dẫn sử dụng; đơn chỉ có hiệu lực sau khi bác sĩ ký.",
+            "AI và tư vấn: phân tích ảnh da liễu; hiển thị Top-3, Confidence, Grad-CAM và cảnh báo; chatbot cung cấp kiến thức chăm sóc da chung nhưng không kê đơn hoặc thay bác sĩ.",
+            "Tương tác và minh bạch: thông báo thời gian thực, chat bệnh nhân – lễ tân, lịch sử thay đổi, đánh giá phòng khám có kiểm duyệt và dashboard quản trị."
+          ]
+        }
+      ]
+    },
+    {
+      "heading": "1.7. Quy trình đặt lịch và Scheduling Engine",
+      "level": 2,
+      "blocks": [
+        {
+          "type": "paragraph",
+          "text": "Bệnh nhân chọn bác sĩ và ngày mong muốn. Hệ thống đọc lịch làm việc định kỳ của bác sĩ, loại bỏ thời gian nghỉ trưa, nghỉ phép, ngày phòng khám đóng cửa, slot đã đặt và slot đang được người khác giữ. Khi bệnh nhân chọn một giờ còn trống, hệ thống tạo trạng thái giữ chỗ tạm thời. Người dùng có thể nhấn lại để nhả slot hoặc xác nhận đặt lịch trong thời gian giữ chỗ. Khi giữ chỗ hết hạn, slot được tự động trả về danh sách để người khác đặt."
+        },
+        {
+          "type": "paragraph",
+          "text": "Tính toàn vẹn được bảo vệ ở hai lớp. Lớp ứng dụng kiểm tra giờ làm, thời điểm hợp lệ, quyền sở hữu và trạng thái chuyển đổi. Lớp PostgreSQL sử dụng ràng buộc chống khoảng thời gian giao nhau cho bác sĩ và bệnh nhân. Vì vậy, ngay cả khi hai người gửi yêu cầu trong cùng một thời điểm, database chỉ chấp nhận một lịch hợp lệ cho cùng slot. Sau khi đặt, đổi hoặc hủy, WebSocket phát sự kiện để các tab đang mở cập nhật mà không cần tải lại trang."
+        },
+        {
+          "type": "paragraph",
+          "text": "Khi cần đề xuất lịch, Scheduling Engine lọc các ứng viên hợp lệ và tính điểm có trọng số. Các tiêu chí gồm độ phù hợp chuyên môn, mức độ sớm của khung giờ, khả năng cân bằng tải, việc bác sĩ đã từng theo dõi bệnh nhân và lựa chọn ưu tiên. Kết quả đề xuất có kèm lý do để lễ tân hoặc bệnh nhân hiểu vì sao một bác sĩ và khung giờ được xếp hạng cao."
+        }
+      ]
+    },
+    {
+      "heading": "1.8. Mô-đun AI hỗ trợ chẩn đoán da liễu",
+      "level": 2,
+      "blocks": [
+        {
+          "type": "paragraph",
+          "text": "Mô-đun AI sử dụng Computer Vision để phân loại ảnh tổn thương da trong các nhóm bệnh được định nghĩa bởi bộ dữ liệu. EfficientNet-B0 được dùng làm mô hình baseline nhờ sự cân bằng giữa độ chính xác và tài nguyên tính toán. ResNet50 và ConvNeXt Tiny có thể được huấn luyện trong cùng quy trình để so sánh. Mô hình chính thức chỉ được lựa chọn sau khi đánh giá trên tập validation và test tách biệt."
+        },
+        {
+          "type": "bullets",
+          "items": [
+            "Đầu vào: ảnh JPEG, PNG hoặc WebP; kiểm tra định dạng, kích thước, khả năng giải mã và giới hạn dung lượng.",
+            "Tiền xử lý: chuyển RGB, resize, crop, chuẩn hóa và áp dụng augmentation phù hợp trong giai đoạn huấn luyện.",
+            "Đầu ra: nhãn có điểm cao nhất, Top-3 dự đoán, Confidence Score, phiên bản mô hình và cờ cảnh báo không chắc chắn.",
+            "Khả năng giải thích: Grad-CAM tạo heatmap để minh họa vùng ảnh ảnh hưởng nhiều đến dự đoán.",
+            "Kiểm soát chuyên môn: bác sĩ xem kết quả như một nguồn tham khảo, kết hợp triệu chứng, tiền sử, thăm khám trực tiếp và xét nghiệm trước khi kết luận.",
+            "Theo dõi chất lượng: lưu model version, thời gian suy luận, phản hồi sai lệch và kết quả đánh giá để phục vụ cải tiến mô hình."
+          ]
+        },
+        {
+          "type": "note",
+          "text": "Đồ án không công bố độ chính xác khi chưa hoàn tất huấn luyện và đánh giá. Các chỉ số phải được lấy từ tập test độc lập và trình bày cùng confusion matrix, Precision, Recall, F1-score, Top-1/Top-3 Accuracy và giới hạn của dữ liệu."
+        }
+      ]
+    },
+    {
+      "heading": "1.9. Trợ lý tư vấn kiến thức da liễu",
+      "level": 2,
+      "blocks": [
+        {
+          "type": "paragraph",
+          "text": "Trợ lý tư vấn trên trang chủ sử dụng Gemini để cung cấp thông tin chăm sóc da tổng quát, đặt câu hỏi bổ sung và hướng dẫn người dùng đi khám khi có dấu hiệu nguy hiểm. Prompt hệ thống giới hạn phạm vi da liễu, không cho phép kê thuốc, nêu liều dùng hoặc khẳng định chẩn đoán. Đây là chức năng tư vấn kiến thức, độc lập với mô-đun Computer Vision hỗ trợ bác sĩ."
+        },
+        {
+          "type": "paragraph",
+          "text": "RAG có trích dẫn nguồn được xem là hướng mở rộng. Khi hoàn thiện, hệ thống sẽ truy xuất nội dung từ tài liệu y khoa đã kiểm duyệt trước khi sinh câu trả lời, trả về nguồn và trang tham khảo, đồng thời đánh giá retrieval hit@k, citation correctness, khả năng từ chối và chống prompt injection. Không được mô tả chatbot hiện tại là RAG có nguồn nếu giao diện chưa sử dụng luồng truy xuất này."
+        }
+      ]
+    },
+    {
+      "heading": "1.10. Kiến trúc Microservices",
+      "level": 2,
+      "blocks": [
+        {
+          "type": "paragraph",
+          "text": "Hệ thống được tổ chức theo kiến trúc Microservices để tách các miền nghiệp vụ, giảm phụ thuộc và cho phép kiểm thử, triển khai hoặc mở rộng từng dịch vụ. Frontend chỉ giao tiếp qua API Gateway. Gateway định tuyến request, kiểm tra JWT và truyền thông tin danh tính, vai trò đến dịch vụ phù hợp. Các thao tác cần phản hồi trực tiếp sử dụng REST API; thông báo bất đồng bộ sử dụng RabbitMQ; cập nhật slot và chat sử dụng WebSocket."
+        },
+        {
+          "type": "table",
+          "headers": ["Thành phần", "Trách nhiệm chính"],
+          "rows": [
+            ["Frontend", "Giao diện React theo bốn vai trò, lazy loading, responsive, gọi API và nhận sự kiện WebSocket."],
+            ["API Gateway", "Định tuyến, xác thực access token, CORS, security header và điểm vào duy nhất của backend."],
+            ["Auth Service", "Tài khoản, mật khẩu, JWT, refresh token, OTP và trạng thái khóa tài khoản."],
+            ["Patient Service", "Hồ sơ bệnh nhân, chuẩn hóa số điện thoại và liên kết hồ sơ hotline với tài khoản."],
+            ["Doctor Service", "Hồ sơ nghề nghiệp, ảnh đại diện, lịch làm việc và nghỉ phép."],
+            ["Appointment Service", "Đặt lịch, giữ slot, Scheduling Engine, ngày nghỉ chung, nhắc lịch, chat, đánh giá và WebSocket."],
+            ["Medical Record Service", "Hồ sơ khám, chẩn đoán cuối cùng, ghi chú lâm sàng và kế hoạch điều trị."],
+            ["Prescription Service", "Đơn thuốc và các mục thuốc được bác sĩ ký."],
+            ["Notification Service", "Nhận sự kiện RabbitMQ, chống gửi lặp và thực hiện giao email/thông báo."],
+            ["AI Service", "Suy luận ảnh da liễu, Top-3, Grad-CAM, chatbot và RAG mở rộng."],
+            ["PostgreSQL", "Lưu dữ liệu nghiệp vụ, migration và ràng buộc tính toàn vẹn."],
+            ["RabbitMQ / Redis", "RabbitMQ truyền sự kiện bất đồng bộ; Redis dành cho cache, rate limiting hoặc dữ liệu tạm khi được tích hợp." ]
+          ]
+        }
+      ]
+    },
+    {
+      "heading": "1.11. Công nghệ sử dụng",
+      "level": 2,
+      "blocks": [
+        {
+          "type": "table",
+          "headers": ["Lớp", "Công nghệ"],
+          "rows": [
+            ["Giao diện", "ReactJS, TypeScript, Vite, Lucide Icons và hệ thống CSS responsive tự xây dựng; không sử dụng Tailwind CSS."],
+            ["Backend", "Java 21, Spring Boot, Spring Data JPA, Spring Cloud Gateway, Spring Security/JWT và Flyway."],
+            ["AI", "Python, FastAPI, PyTorch, torchvision, OpenCV, Pillow và Gemini API cho tư vấn công khai."],
+            ["Dữ liệu", "PostgreSQL 16; Redis 7 cho các nhu cầu cache/rate limit khi tích hợp."],
+            ["Messaging và realtime", "RabbitMQ, transactional outbox và WebSocket."],
+            ["Triển khai", "Docker, Docker Compose và Nginx."],
+            ["Kiểm thử", "JUnit, Mockito, Vitest, kiểm thử cạnh tranh đặt lịch và kiểm thử end-to-end dự kiến bằng Playwright." ]
+          ]
+        }
+      ]
+    },
+    {
+      "heading": "1.12. Các quy trình nghiệp vụ tiêu biểu",
+      "level": 2,
+      "blocks": [
+        {
+          "type": "bullets",
+          "items": [
+            "Bệnh nhân tự đặt lịch: đăng nhập → chọn bác sĩ → chọn ngày và slot → giữ chỗ → nhập lý do → xác nhận → lễ tân tiếp nhận → bác sĩ khám.",
+            "Đặt lịch hộ: bệnh nhân gọi hotline hoặc chat → lễ tân tra cứu bằng số điện thoại → tạo hồ sơ khách nếu chưa có → chọn bác sĩ và slot → gửi bệnh nhân xác nhận hoặc tạo lịch tại quầy.",
+            "Liên kết hồ sơ hotline: bệnh nhân đăng ký tài khoản bằng đúng số điện thoại → hệ thống nhận diện hồ sơ chưa liên kết → giữ nguyên mã bệnh nhân và chuyển lịch, chat, thông báo về tài khoản mới.",
+            "Khám bệnh: bác sĩ bắt đầu lịch đã xác nhận → xem hồ sơ và kết quả AI tham khảo → ghi chẩn đoán cuối → lập kế hoạch → ký đơn → hoàn thành hoặc yêu cầu tái khám.",
+            "Đổi hoặc hủy: trong thời hạn cho phép bệnh nhân tự thao tác; sau thời hạn bệnh nhân chat/gọi lễ tân; slot được giải phóng ngay cho người khác và các màn hình nhận cập nhật realtime.",
+            "Đánh giá: chỉ lịch đã hoàn thành mới được đánh giá một lần; quản trị viên duyệt trước khi xuất hiện trên trang chủ."
+          ]
+        }
+      ]
+    },
+    {
+      "heading": "1.13. Yêu cầu phi chức năng và an toàn",
+      "level": 2,
+      "blocks": [
+        {
+          "type": "table",
+          "headers": ["Nhóm yêu cầu", "Yêu cầu chính"],
+          "rows": [
+            ["Bảo mật", "Mật khẩu băm BCrypt; JWT ngắn hạn và refresh token; RBAC; bí mật cấu hình qua biến môi trường; giới hạn origin, rate limit và không ghi PII vào log."],
+            ["Tính toàn vẹn", "Ràng buộc database chống đặt trùng; idempotency key; optimistic/pessimistic locking phù hợp; migration có phiên bản."],
+            ["Khả dụng", "Healthcheck cho dịch vụ; retry và dead-letter queue; WebSocket reconnect; giao diện lỗi riêng từng khu vực."],
+            ["Hiệu năng", "Lazy loading frontend; cache tài nguyên tĩnh; truy vấn có index; đo p95 cho đặt lịch, tải dashboard và suy luận AI."],
+            ["Riêng tư y tế", "Chỉ thu thập dữ liệu cần thiết; cần sự đồng ý khi sử dụng ảnh; giới hạn quyền xem hồ sơ; không gửi ảnh/PII ra ngoài nếu chưa được phép."],
+            ["AI an toàn", "Không tự kê đơn; không thay bác sĩ; cảnh báo không chắc chắn; lưu model version; đánh giá sai lệch theo lớp và điều kiện ảnh."],
+            ["Khả năng bảo trì", "Tách service theo miền nghiệp vụ; API rõ ràng; test tự động; log có request ID; tài liệu SRS, SAD, API và hướng dẫn triển khai." ]
+          ]
+        }
+      ]
+    },
+    {
+      "heading": "1.14. Điểm nổi bật và kết quả mong đợi",
+      "level": 2,
+      "blocks": [
+        {
+          "type": "paragraph",
+          "text": "Điểm nổi bật của DermAI Clinic không chỉ nằm ở việc đưa một mô hình AI vào website mà ở khả năng tích hợp AI vào quy trình khám có trách nhiệm. Kết quả AI gắn với bác sĩ, lịch khám và hồ sơ bệnh nhân nhưng không tự động trở thành chẩn đoán cuối. Scheduling Engine xử lý các tình huống thực tế như giữ slot, nhiều người đặt đồng thời, lịch nghỉ, nghỉ trưa, đặt hộ và cập nhật realtime. Kiến trúc Microservices thể hiện khả năng phân tách miền nghiệp vụ và triển khai một hệ thống có nhiều thành phần độc lập."
+        },
+        {
+          "type": "bullets",
+          "items": [
+            "Một hệ thống web có thể trình diễn đầy đủ bốn vai trò và quy trình khám da liễu từ đặt lịch đến tái khám.",
+            "Một Scheduling Engine có giải thích, không tạo trùng slot và phản ánh thay đổi theo thời gian thực.",
+            "Một mô hình AI đã được đánh giá minh bạch, có Top-3, Grad-CAM, model card và giới hạn sử dụng rõ ràng.",
+            "Một bộ tài liệu gồm SRS, SAD, sơ đồ, API, kiểm thử, model card, hướng dẫn triển khai và hướng dẫn sử dụng.",
+            "Một bản triển khai Docker Compose có dữ liệu demo phù hợp, không chứa khóa bí mật hoặc dữ liệu bệnh nhân thật."
+          ]
+        },
+        {
+          "type": "pageBreak"
+        }
+      ]
+    },
+    {
+      "heading": "PHẦN 2. KẾ HOẠCH THỰC HIỆN",
+      "level": 1,
+      "blocks": [
+        {
+          "type": "paragraph",
+          "text": "Đồ án được thực hiện theo phương pháp phát triển lặp và tăng dần. Mỗi giai đoạn tạo ra một sản phẩm có thể kiểm tra thay vì đợi đến cuối kỳ mới tích hợp. Các chức năng có rủi ro cao như đặt lịch cạnh tranh, liên kết danh tính, AI và bảo mật được kiểm thử sớm. Tiến độ dưới đây được thiết kế cho 16 tuần và có thể điều chỉnh theo lịch học hoặc yêu cầu của giảng viên hướng dẫn."
+        }
+      ]
+    },
+    {
+      "heading": "2.1. Kế hoạch tiến độ 16 tuần",
+      "level": 2,
+      "blocks": [
+        {
+          "type": "table",
+          "headers": ["Thời gian", "Công việc chính", "Sản phẩm đầu ra"],
+          "rows": [
+            ["Tuần 1–2", "Khảo sát quy trình phòng khám; xác định vấn đề, vai trò, phạm vi; lập SRS và Use Case.", "SRS, danh sách yêu cầu, Use Case và tiêu chí nghiệm thu ban đầu."],
+            ["Tuần 3", "Thiết kế kiến trúc Microservices, luồng dữ liệu, bảo mật và ranh giới service.", "SAD, sơ đồ kiến trúc, Deployment Diagram và quyết định công nghệ."],
+            ["Tuần 4", "Thiết kế database, trạng thái lịch, API contract, ERD và migration nền tảng.", "ERD, Sequence Diagram, đặc tả API và migration phiên bản đầu."],
+            ["Tuần 5–6", "Xây dựng Auth, Patient, Doctor; hồ sơ, RBAC, lịch làm việc, nghỉ phép và avatar.", "Đăng nhập bốn vai trò, hồ sơ bệnh nhân/bác sĩ và unit test."],
+            ["Tuần 7–8", "Xây dựng Appointment Service, giữ slot, chống trùng, đặt/đổi/hủy, ngày nghỉ chung và WebSocket.", "Luồng đặt lịch hoàn chỉnh; test hai người đặt cùng slot và realtime."],
+            ["Tuần 9", "Xây dựng giao diện bệnh nhân, lễ tân, bác sĩ và quản trị; chat, hotline và thông báo.", "Frontend responsive, luồng đặt hộ và thông báo giữa các vai trò."],
+            ["Tuần 10", "Xây dựng hồ sơ y khoa, đơn thuốc, tái khám, đánh giá và dashboard.", "Quy trình khám từ xác nhận đến hoàn thành và theo dõi sau khám."],
+            ["Tuần 11", "Thu thập/kiểm tra dữ liệu ảnh, làm sạch, loại trùng, chia train/validation/test và xác định lớp.", "Báo cáo dữ liệu, script kiểm tra, quy tắc split và dữ liệu hợp lệ."],
+            ["Tuần 12–13", "Huấn luyện EfficientNet-B0; so sánh ResNet50/ConvNeXt Tiny nếu đủ tài nguyên; đánh giá và tạo Grad-CAM.", "Checkpoint, metric, confusion matrix, ví dụ Grad-CAM và model card."],
+            ["Tuần 14", "Tích hợp AI Service với giao diện bác sĩ/bệnh nhân; kiểm tra upload, inference và cảnh báo.", "Luồng tải ảnh và xem Top-3/Grad-CAM hoạt động end-to-end."],
+            ["Tuần 15", "Kiểm thử tích hợp, E2E, hiệu năng, cạnh tranh, bảo mật cơ bản và khắc phục lỗi.", "Báo cáo test, kết quả tải, danh sách lỗi và bằng chứng sửa lỗi."],
+            ["Tuần 16", "Đóng gói Docker, sao lưu/khôi phục, hoàn thiện tài liệu, dữ liệu demo và chuẩn bị bảo vệ.", "Bản triển khai cuối, source code, tài liệu, slide và video/demo scenario." ]
+          ]
+        }
+      ]
+    },
+    {
+      "heading": "2.2. Kế hoạch dữ liệu và đánh giá mô hình AI",
+      "level": 2,
+      "blocks": [
+        {
+          "type": "bullets",
+          "items": [
+            "Kiểm tra nguồn, quyền sử dụng và mô tả dữ liệu; loại ảnh hỏng, ảnh trùng và dữ liệu có nguy cơ rò rỉ giữa các tập.",
+            "Phân tích phân bố lớp, màu da, chất lượng ảnh, nền ảnh và thiết bị chụp; ghi rõ thiên lệch mà dữ liệu chưa đại diện.",
+            "Chia dữ liệu theo bệnh nhân hoặc nguồn phù hợp để hạn chế leakage; cố định random seed và lưu cấu hình huấn luyện.",
+            "Sử dụng augmentation hợp lý; tránh biến đổi làm thay đổi đặc trưng bệnh lý hoặc tạo ảnh không thực tế.",
+            "Đánh giá Accuracy, Macro Precision, Macro Recall, Macro F1, Top-3 Accuracy, confusion matrix và kết quả từng lớp.",
+            "Đánh giá calibration hoặc độ tin cậy nếu có điều kiện; đặt ngưỡng uncertain và kiểm tra các trường hợp mô hình cần từ chối.",
+            "Thực hiện error analysis, lưu model version/checksum và chỉ tích hợp checkpoint đã vượt qua tiêu chí đánh giá đã thống nhất."
+          ]
+        }
+      ]
+    },
+    {
+      "heading": "2.3. Kế hoạch kiểm thử phần mềm",
+      "level": 2,
+      "blocks": [
+        {
+          "type": "table",
+          "headers": ["Loại kiểm thử", "Nội dung"],
+          "rows": [
+            ["Unit test", "Chuẩn hóa số điện thoại, chuyển trạng thái lịch, chấm điểm Scheduling Engine, validation và các quy tắc nghiệp vụ."],
+            ["Integration test", "REST giữa các service, migration PostgreSQL, RabbitMQ/outbox, liên kết hồ sơ hotline và quyền truy cập."],
+            ["Concurrency test", "Hai người giữ/đặt cùng slot; đặt trong lúc hủy; lễ tân đổi lịch khi bệnh nhân đang xem; thay đổi ca làm có lịch tồn tại."],
+            ["Realtime test", "WebSocket mất kết nối, tự kết nối lại, đồng bộ slot, chat và thông báo giữa nhiều tab."],
+            ["End-to-end test", "Đăng ký → đặt lịch → xác nhận → bác sĩ khám → ký đơn → hoàn thành → bệnh nhân đánh giá."],
+            ["Security test", "RBAC, token hết hạn, refresh/logout, upload sai định dạng, brute-force/rate limit và kiểm tra secret không nằm trong Git."],
+            ["Performance test", "Tải danh sách slot, đặt lịch cạnh tranh, dashboard, upload ảnh và thời gian suy luận AI."],
+            ["Usability/accessibility", "Responsive mobile, cuộn modal, bàn phím, focus, thông báo lỗi rõ ràng và độ tương phản." ]
+          ]
+        }
+      ]
+    },
+    {
+      "heading": "2.4. Tiêu chí nghiệm thu",
+      "level": 2,
+      "blocks": [
+        {
+          "type": "bullets",
+          "items": [
+            "Bốn vai trò đăng nhập và chỉ truy cập đúng chức năng được phân quyền.",
+            "Bệnh nhân xem được slot hợp lệ, giữ và xác nhận lịch; không thể tạo hai lịch trùng cùng bác sĩ và thời gian.",
+            "Hủy hoặc đổi lịch giải phóng slot và các tab khác nhận cập nhật mà không cần tải lại.",
+            "Lễ tân có thể tra cứu, hỗ trợ qua chat, đặt hộ, xác nhận, đổi, hủy và ghi nhận nhắc lịch.",
+            "Bác sĩ thiết lập lịch, bắt đầu khám, lập hồ sơ, ký đơn và chỉ định tái khám theo đúng trạng thái.",
+            "AI nhận ảnh hợp lệ, trả Top-3, Confidence, Grad-CAM và model version; ảnh sai định dạng hoặc quá lớn bị từ chối.",
+            "Kết quả AI không tự động ghi thành chẩn đoán cuối cùng và giao diện luôn thể hiện giới hạn sử dụng.",
+            "Hệ thống có thể khởi động bằng Docker Compose, healthcheck đạt và dữ liệu PostgreSQL có cơ chế sao lưu/khôi phục.",
+            "Báo cáo trình bày metric AI từ tập test độc lập, test phần mềm và các giới hạn còn tồn tại."
+          ]
+        }
+      ]
+    },
+    {
+      "heading": "2.5. Sản phẩm bàn giao",
+      "level": 2,
+      "blocks": [
+        {
+          "type": "bullets",
+          "items": [
+            "Mã nguồn frontend, backend Microservices, AI Service, migration và script kiểm thử.",
+            "Dockerfile, Docker Compose, cấu hình mẫu và hướng dẫn cài đặt trên máy mới.",
+            "Checkpoint mô hình được chọn, cấu hình huấn luyện, metric, confusion matrix, Grad-CAM và model card.",
+            "SRS, SAD, ERD, Use Case, Activity, Sequence, Class, Deployment Diagram và tài liệu API.",
+            "Báo cáo kiểm thử chức năng, realtime, cạnh tranh đặt lịch, hiệu năng và AI.",
+            "Hướng dẫn sử dụng theo bốn vai trò, kịch bản demo, slide thuyết trình và video dự phòng."
+          ]
+        }
+      ]
+    },
+    {
+      "heading": "2.6. Rủi ro và biện pháp xử lý",
+      "level": 2,
+      "blocks": [
+        {
+          "type": "table",
+          "headers": ["Rủi ro", "Biện pháp xử lý"],
+          "rows": [
+            ["Dữ liệu AI mất cân bằng hoặc không đủ đại diện", "Phân tích phân bố, dùng metric macro, augmentation có kiểm soát, ghi rõ giới hạn và không mở rộng phạm vi ngoài dữ liệu."],
+            ["Mô hình tốt trên test nhưng kém với ảnh thực tế", "Kiểm tra leakage, tạo tập kiểm thử ngoài phân phối nếu có, error analysis và yêu cầu bác sĩ xác nhận."],
+            ["Hai người đặt cùng slot", "Giữ slot có hạn, transaction, ràng buộc exclusion tại PostgreSQL và concurrency test tự động."],
+            ["Mất kết nối WebSocket", "Tự reconnect, tải lại trạng thái từ API sau khi kết nối và không dùng WebSocket làm nguồn dữ liệu duy nhất."],
+            ["Email hoặc RabbitMQ tạm ngừng", "Transactional outbox, retry, dead-letter queue, idempotent consumer và màn hình theo dõi giao thông báo."],
+            ["Thiếu RAM/ổ đĩa khi chạy nhiều service và AI", "Giới hạn RAM container, JVM heap, dọn image/cache, lưu Docker data trên ổ phù hợp và chỉ bật service cần thiết khi phát triển."],
+            ["Lộ API key hoặc dữ liệu bệnh nhân", "Không commit .env, xoay vòng key, phân quyền tối thiểu, log không chứa PII và không dùng dữ liệu thật trong demo."],
+            ["Phạm vi đồ án quá rộng", "Ưu tiên đặt lịch và Computer Vision; xem chatbot RAG, SMS, analytics nâng cao là phần mở rộng nếu thời gian không đủ." ]
+          ]
+        }
+      ]
+    },
+    {
+      "heading": "2.7. Kết luận",
+      "level": 2,
+      "blocks": [
+        {
+          "type": "paragraph",
+          "text": "DermAI Clinic được định hướng là hệ thống đặt lịch khám da liễu có khả năng hỗ trợ chẩn đoán bằng AI trong một quy trình y tế có trách nhiệm. Giá trị chính của đồ án nằm ở việc giải quyết bài toán đặt lịch thực tế, tích hợp mô hình Computer Vision có khả năng giải thích và duy trì ranh giới rõ ràng giữa gợi ý của AI với quyết định của bác sĩ. Với kế hoạch triển khai theo giai đoạn, tiêu chí nghiệm thu cụ thể và cơ chế đánh giá minh bạch, đồ án có thể thể hiện đồng thời năng lực phát triển phần mềm, thiết kế hệ thống phân tán và nghiên cứu ứng dụng trí tuệ nhân tạo."
+        }
+      ]
+    }
+  ]
+}

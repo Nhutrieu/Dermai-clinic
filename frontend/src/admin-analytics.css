@@ -429,7 +429,7 @@
 /* Paper Content */
 .pdf-paper {
   position: relative;
-  padding: 40px 44px;
+  padding: 24px 32px;
   font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
   color: #1a202c;
   background: #ffffff;
@@ -450,12 +450,12 @@
   display: flex;
   justify-content: space-between;
   align-items: flex-start;
-  gap: 20px;
+  gap: 16px;
 }
 
 .pdf-brand {
   display: flex;
-  gap: 16px;
+  gap: 12px;
   align-items: flex-start;
 }
 
@@ -464,33 +464,33 @@
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  padding: 10px 14px;
+  padding: 8px 12px;
   background: #f0f7f4;
   border: 2px solid #143e35;
   border-radius: 12px;
   color: #143e35;
   font-weight: 800;
-  font-size: 16px;
+  font-size: 15px;
   line-height: 1;
 }
 
 .pdf-logo-badge .icon {
-  width: 24px;
-  height: 24px;
-  margin-bottom: 4px;
+  width: 22px;
+  height: 22px;
+  margin-bottom: 2px;
   color: #277864;
 }
 
 .pdf-brand-details h2 {
-  font-size: 14px;
+  font-size: 13px;
   color: #143e35;
-  margin: 0 0 4px;
+  margin: 0 0 2px;
   font-weight: 800;
   letter-spacing: 0.3px;
 }
 
 .pdf-brand-details p {
-  margin: 2px 0;
+  margin: 1px 0;
   font-size: 11px;
   color: #4a5568;
 }
@@ -502,10 +502,10 @@
 .pdf-code-card {
   text-align: right;
   background: #f8faf9;
-  padding: 10px 14px;
+  padding: 8px 12px;
   border-radius: 10px;
   border: 1px solid #e2ece7;
-  min-width: 170px;
+  min-width: 160px;
 }
 
 .pdf-code-card small {
@@ -517,10 +517,10 @@
 
 .pdf-code-card b {
   display: block;
-  font-size: 15px;
+  font-size: 14px;
   color: #143e35;
   font-weight: 800;
-  margin: 2px 0;
+  margin: 1px 0;
 }
 
 .pdf-digital-tag {
@@ -536,18 +536,18 @@
 .pdf-divider-line {
   height: 2px;
   background: #e2ece7;
-  margin: 20px 0 16px;
+  margin: 12px 0 10px;
 }
 
 .pdf-doc-title {
   text-align: center;
-  margin-bottom: 22px;
+  margin-bottom: 12px;
 }
 
 .pdf-doc-title h1 {
-  font-size: 20px;
+  font-size: 17px;
   color: #143e35;
-  margin: 0 0 4px;
+  margin: 0 0 2px;
   font-weight: 800;
   letter-spacing: 0.8px;
   text-transform: uppercase;
@@ -555,7 +555,7 @@
 
 .pdf-doc-title p {
   margin: 0;
-  font-size: 12px;
+  font-size: 11px;
   color: #718096;
   font-weight: 500;
 }
@@ -565,9 +565,9 @@
   background: #f8faf9;
   border: 1px solid #d1e2da;
   border-left: 5px solid #277864;
-  border-radius: 12px;
-  padding: 16px 20px;
-  margin-bottom: 24px;
+  border-radius: 10px;
+  padding: 10px 14px;
+  margin-bottom: 12px;
 }
 
 .pdf-patient-grid {
@@ -614,14 +614,14 @@
 
 /* Prescription Table */
 .pdf-table-wrapper {
-  margin-bottom: 24px;
+  margin-bottom: 12px;
 }
 
 .pdf-table-title {
-  font-size: 12px;
+  font-size: 11px;
   font-weight: 800;
   color: #143e35;
-  margin-bottom: 8px;
+  margin-bottom: 6px;
   letter-spacing: 0.5px;
 }
 
@@ -637,14 +637,14 @@
 .pdf-table th {
   background: #143e35;
   color: #ffffff;
-  padding: 10px 12px;
+  padding: 8px 10px;
   font-weight: 700;
-  font-size: 12px;
+  font-size: 11px;
   text-align: left;
 }
 
 .pdf-table td {
-  padding: 12px;
+  padding: 8px 10px;
   border-bottom: 1px solid #e2e8f0;
   vertical-align: top;
   color: #2d3748;
@@ -660,32 +660,32 @@
 }
 
 .pdf-table .drug-name {
-  font-size: 13px;
+  font-size: 12px;
   color: #1a202c;
   display: block;
 }
 
 .pdf-table .drug-sub {
-  font-size: 11px;
+  font-size: 10px;
   color: #718096;
-  margin-top: 2px;
+  margin-top: 1px;
 }
 
 .pdf-table .usage-tag {
   display: inline-block;
   background: #edf2f7;
   color: #2d3748;
-  padding: 3px 8px;
-  border-radius: 6px;
-  font-size: 11px;
+  padding: 2px 6px;
+  border-radius: 5px;
+  font-size: 10px;
   font-weight: 600;
 }
 
 .pdf-table .empty-rx {
   text-align: center;
-  padding: 24px;
+  padding: 14px;
   color: #718096;
-  font-size: 13px;
+  font-size: 12px;
 }
 
 /* Doctor Advice Box */
@@ -693,18 +693,18 @@
   background: #fffbeb;
   border: 1px solid #fef3c7;
   border-left: 4px solid #d97706;
-  border-radius: 10px;
-  padding: 14px 18px;
-  margin-bottom: 30px;
+  border-radius: 8px;
+  padding: 10px 14px;
+  margin-bottom: 14px;
 }
 
 .advice-header {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 6px;
   color: #92400e;
-  font-size: 13px;
-  margin-bottom: 6px;
+  font-size: 12px;
+  margin-bottom: 4px;
 }
 
 .advice-header .icon {
