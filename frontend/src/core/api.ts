@@ -19,3 +19,14 @@ export async function request<T>(path: string, token?: string, init?: RequestIni
   if (response.status === 204) return undefined as T;
   return response.json();
 }
+
+export async function requestBlob(path: string, token?: string): Promise<Blob> {
+  const response = await fetch(API_ROOT + path, {
+    headers: token ? { Authorization: `Bearer ${token}` } : {},
+  });
+  if (!response.ok) {
+    const body = await response.json().catch(() => ({ detail: `HTTP ${response.status}` }));
+    throw new Error(body.detail || `HTTP ${response.status}`);
+  }
+  return response.blob();
+}

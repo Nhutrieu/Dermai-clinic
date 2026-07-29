@@ -1,0 +1,51 @@
+.ai-booking-context {
+  display: grid;
+  grid-template-columns: 28px 1fr auto;
+  align-items: center;
+  gap: 10px;
+  margin-top: 16px;
+  padding: 12px 13px;
+  border: 1px solid #cfe0c4;
+  border-radius: 10px;
+  background: #f0f7e8;
+  color: #315d4c;
+}
+
+.ai-booking-context > svg {
+  width: 20px;
+}
+
+.ai-booking-context b,
+.ai-booking-context small {
+  display: block;
+}
+
+.ai-booking-context b {
+  font-size: 10px;
+}
+
+.ai-booking-context small {
+  margin-top: 3px;
+  color: #60776f;
+  font-size: 8px;
+}
+
+.ai-booking-context button {
+  border: 1px solid #b9cdbf;
+  border-radius: 7px;
+  background: #fff;
+  color: #526f66;
+  padding: 7px 9px;
+  font-size: 8px;
+  cursor: pointer;
+}
+
+@media (max-width: 560px) {
+  .ai-booking-context {
+    grid-template-columns: 24px 1fr;
+  }
+
+  .ai-booking-context button {
+    grid-column: 1 / -1;
+  }
+}

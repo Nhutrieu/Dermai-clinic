@@ -28,4 +28,18 @@ class AppointmentIdentityClient {
    throw new ResponseStatusException(HttpStatus.SERVICE_UNAVAILABLE,"Chưa thể đồng bộ lịch cũ của hồ sơ hotline. Vui lòng thử lại.",error);
   }
  }
+
+ AppointmentAccess requireAccess(UUID appointmentId,UUID identity,String role){
+  // Dùng appointment-service làm nguồn xác thực quan hệ bệnh nhân/bác sĩ thay vì tin ID từ frontend.
+  try{
+   return client.get().uri("/api/v1/appointments/{id}",appointmentId)
+    .header("X-User-Id",identity.toString())
+    .header("X-User-Role",role)
+    .retrieve().body(AppointmentAccess.class);
+  }catch(Exception error){
+   throw new ResponseStatusException(HttpStatus.FORBIDDEN,"Bạn không có quyền xem dữ liệu của lịch khám này.",error);
+  }
+ }
+
+ record AppointmentAccess(UUID id,UUID patientId,UUID patientIdentityId,UUID doctorIdentityId,String status){}
 }
