@@ -192,11 +192,11 @@
       "blocks": [
         {
           "type": "paragraph",
-          "text": "Trợ lý tư vấn trên trang chủ sử dụng Gemini để cung cấp thông tin chăm sóc da tổng quát, đặt câu hỏi bổ sung và hướng dẫn người dùng đi khám khi có dấu hiệu nguy hiểm. Prompt hệ thống giới hạn phạm vi da liễu, không cho phép kê thuốc, nêu liều dùng hoặc khẳng định chẩn đoán. Đây là chức năng tư vấn kiến thức, độc lập với mô-đun Computer Vision hỗ trợ bác sĩ."
+          "text": "Trợ lý tư vấn trên trang chủ sử dụng Gemini để cung cấp thông tin chăm sóc da tổng quát, đặt câu hỏi bổ sung và hướng dẫn người dùng đi khám khi có dấu hiệu nguy hiểm. Prompt hệ thống giới hạn phạm vi da liễu, không cho phép kê thuốc, nêu liều dùng hoặc khẳng định chẩn đoán. Đây là chức năng tư vấn kiến thức, độc lập với mô-đun Computer Vision dành cho bệnh nhân kiểm tra ảnh da sơ bộ trước khi đặt lịch."
         },
         {
           "type": "paragraph",
-          "text": "RAG có trích dẫn nguồn được xem là hướng mở rộng. Khi hoàn thiện, hệ thống sẽ truy xuất nội dung từ tài liệu y khoa đã kiểm duyệt trước khi sinh câu trả lời, trả về nguồn và trang tham khảo, đồng thời đánh giá retrieval hit@k, citation correctness, khả năng từ chối và chống prompt injection. Không được mô tả chatbot hiện tại là RAG có nguồn nếu giao diện chưa sử dụng luồng truy xuất này."
+          "text": "RAG cục bộ đã được tích hợp sau bước Computer Vision. Hệ thống lập chỉ mục 625 đoạn từ 330 trang của tài liệu Hướng dẫn chẩn đoán và điều trị Da liễu, truy hồi chương tương ứng với nhãn dự đoán, lọc nội dung thuốc và phác đồ, rồi hiển thị đoạn tham khảo kèm tên nguồn và số trang cho bệnh nhân. Khi thiếu bằng chứng, hệ thống từ chối sinh nội dung. Đánh giá retrieval hit@k và citation correctness bởi chuyên gia vẫn là công việc tiếp theo."
         }
       ]
     },
@@ -430,7 +430,7 @@
             ["Email hoặc RabbitMQ tạm ngừng", "Transactional outbox, retry, dead-letter queue, idempotent consumer và màn hình theo dõi giao thông báo."],
             ["Thiếu RAM/ổ đĩa khi chạy nhiều service và AI", "Giới hạn RAM container, JVM heap, dọn image/cache, lưu Docker data trên ổ phù hợp và chỉ bật service cần thiết khi phát triển."],
             ["Lộ API key hoặc dữ liệu bệnh nhân", "Không commit .env, xoay vòng key, phân quyền tối thiểu, log không chứa PII và không dùng dữ liệu thật trong demo."],
-            ["Phạm vi đồ án quá rộng", "Ưu tiên đặt lịch và Computer Vision; xem chatbot RAG, SMS, analytics nâng cao là phần mở rộng nếu thời gian không đủ." ]
+            ["Phạm vi đồ án quá rộng", "Ưu tiên đặt lịch, Computer Vision và RAG theo kết quả; xem SMS, analytics nâng cao và RAG sinh nội dung là phần mở rộng nếu thời gian không đủ." ]
           ]
         }
       ]

@@ -23,7 +23,7 @@
 | Tuần 10 | Medical record, prescription, follow-up, review, dashboard | Quy trình khám hoàn chỉnh |
 | Tuần 11 | Kiểm tra dữ liệu AI, split và class mapping | Dataset report và validator |
 | Tuần 12–13 | Huấn luyện/so sánh model, metric, Grad-CAM | Checkpoint, test metric, model card |
-| Tuần 14 | Tích hợp upload/predict vào frontend | AI end-to-end cho Patient/Doctor |
+| Tuần 14 | Tích hợp upload/predict vào frontend | AI end-to-end cho Patient |
 | Tuần 15 | Integration, E2E, concurrency, load, security test | Test report và danh sách lỗi đã sửa |
 | Tuần 16 | Docker, backup/restore, tài liệu, slide, demo | Release candidate và bộ bàn giao |
 
@@ -39,14 +39,16 @@
 - Realtime slot/chat/notification với reconnect.
 - Hotline/đặt hộ, liên kết hồ sơ theo điện thoại, reminder, no-show, tự hủy lịch
   quá ngày, follow-up, review và dashboard frontend.
-- Backend AI có upload validation, Top-3 và Grad-CAM; Gemini public chat.
+- Backend AI có upload validation, Top-3 và Grad-CAM; giao diện Patient có lịch
+  sử metadata, chia sẻ có lựa chọn và chuyển kết quả sang đặt lịch; Gemini public chat.
 - Docker resource limit, healthcheck, Nginx gzip/cache và frontend lazy loading.
 
 ### Chưa hoàn tất hoặc phải xác minh
 
-- Checkpoint AI, dataset trong workspace và metric test độc lập.
-- Giao diện tải ảnh/xem kết quả AI và lưu prediction có consent.
-- RAG index, citation trên frontend và bộ đánh giá RAG.
+- Đã có checkpoint EfficientNet-B0 cục bộ, dataset report, metric test độc lập
+  và UI Patient; còn thiếu đánh giá chuyên môn, calibration và kiểm thử browser E2E.
+- RAG đã có index và citation trên frontend; còn thiếu bộ đánh giá retrieval bởi
+  chuyên gia, citation validator và kiểm thử prompt injection mở rộng.
 - Tự refresh access token sau 15 phút.
 - Routing/email RabbitMQ end-to-end, rate limit, production secret/TLS/origin.
 - Browser E2E, accessibility audit, load/security test và restore drill.
@@ -61,9 +63,9 @@
 | Concurrency | Hai người giữ/đặt cùng slot, hủy trong lúc đặt | Đã có booking race script; bổ sung hold race |
 | Realtime | Reconnect, nhiều tab, slot/chat/notification event | Có Vitest cho reconnect; cần browser test |
 | E2E | Đăng ký → đặt → xác nhận → khám → đơn → review | Chưa có Playwright/Cypress |
-| AI data | File hỏng, duplicate hash, leakage, class count | Có validator; chưa có dataset report chính thức |
-| AI model | Metric, confusion matrix, latency, deterministic inference | Chờ checkpoint/test set |
-| RAG | Refusal/no-evidence, retrieval, citation, injection | Có policy unit test; chưa có index/evaluation |
+| AI data | File hỏng, duplicate hash, leakage, class count | Đã có validator/report; còn thiếu nguồn, giấy phép và near-duplicate |
+| AI model | Metric, confusion matrix, latency, deterministic inference | Đã có checkpoint/metric/confusion matrix; còn thiếu latency/calibration/nhiều seed |
+| RAG | Refusal/no-evidence, retrieval, citation, injection | Đã có index PDF, citation UI và policy test; chưa có expert evaluation |
 | Security | Authorization matrix, secret scan, upload fuzz, rate limit | Có role check; cần audit tự động |
 | Performance | Booking race, availability, dashboard, inference | Booking race có; các phần khác chưa đo |
 
@@ -79,11 +81,12 @@ thái hiện tại.
 4. Lễ tân tìm Patient, xem chat, đặt hộ/đề nghị lịch và gửi nhắc.
 5. Doctor xem lịch, bắt đầu khám, ghi hồ sơ, ký đơn và yêu cầu tái khám.
 6. Patient xem hồ sơ/đơn, đặt tái khám và đánh giá; Admin duyệt review.
-7. Upload một ảnh hợp lệ vào AI, hiển thị Top-3/Grad-CAM/disclaimer; thử ảnh lỗi.
+7. Patient upload một ảnh hợp lệ vào AI, xem Top-3/Grad-CAM/disclaimer, chọn chia
+   sẻ rồi chuyển sang đặt lịch; thử ảnh lỗi và xóa một mục lịch sử.
 8. Chứng minh model thiếu trả 503 và chatbot từ chối kê đơn.
 
-Kịch bản số 7 chỉ đưa vào bảo vệ sau khi có checkpoint và UI thật; không dùng
-response giả hoặc metric không tái lập được.
+Kịch bản số 7 dùng checkpoint và UI thật; không dùng response giả hoặc metric
+không tái lập được.
 
 ## 6. Checklist trước khi chạy demo
 
@@ -93,7 +96,7 @@ response giả hoặc metric không tái lập được.
 - [ ] Slot, hold, cancel, realtime, chat và notification trong web hoạt động.
 - [ ] Nếu demo AI: `modelReady=true`, model version đúng và ảnh mẫu hợp lệ.
 - [ ] Gemini key còn hiệu lực nhưng không xuất hiện trong Git/log/slide.
-- [ ] MailHog/email chỉ demo sau khi queue routing đã được xác minh.
+- [ ] Gmail SMTP đã gửi thử OTP và email trạng thái lịch khám thành công.
 - [ ] Có video quay dự phòng và ảnh chụp metric/model card.
 
 ## 7. Checklist production
@@ -103,7 +106,7 @@ response giả hoặc metric không tái lập được.
 - Thay `JWT_SECRET`, database password, RabbitMQ credential, service token và
   Gemini key; không dùng default trong Compose.
 - TLS, reverse proxy, CORS/origin cụ thể; đóng cổng Postgres, AI, Adminer,
-  RabbitMQ Management và MailHog khỏi Internet.
+  RabbitMQ Management khỏi Internet; chỉ cho phép kết nối SMTP đi ra qua TLS.
 - Rate limit login, forgot-password, public chat và upload.
 - Access token auto refresh; logout thu hồi refresh token.
 - Backup tự động, restore drill, retention và consent ảnh.

@@ -2,7 +2,7 @@ import { FormEvent, lazy, ReactNode, Suspense, useEffect, useState } from "react
 import { createRoot } from "react-dom/client";
 import { createPortal } from "react-dom";
 import { Activity, ArrowRight, Bell, BrainCircuit, CalendarCheck, CalendarDays, Check, ChevronRight, Clock3, HeartPulse, LogOut, Menu, PhoneCall, ShieldCheck, Sparkles, Star, Stethoscope, Trash2, UserRound, X } from "lucide-react";
-import { request } from "./core/api";
+import { ApiError, request } from "./core/api";
 import { subscribeRealtime } from "./core/realtime";
 import type { Appointment, AvailabilitySlot, ClinicClosure, ClinicReview, Doctor, LeavePeriod, MedicalRecord, Patient, PatientNotification, Prescription, PrescriptionItem, Recommendation, RecommendationResult, ReminderAction, ReminderItem, SupportMessage, Tokens, WorkSchedule } from "./core/types";
 import { RecordList, PrescriptionList } from "./components/Records";
@@ -17,6 +17,7 @@ import "./record-filters.css";
 import "./hotline.css";
 import "./chat.css";
 import "./admin-analytics.css";
+import GoogleSignIn, { type GoogleLoginResult } from "./features/auth/GoogleSignIn";
 
 const PublicRoute = lazy(() => import("./routes/PublicRoute"));
 const PatientRoute = lazy(() => import("./routes/PatientRoute"));
@@ -124,7 +125,7 @@ function Home({ openAuth }: { openAuth: () => void }) {
             <section className="home-process" id="process"><div className="section-label">QUY TRÌNH KHÁM</div><h2>Đơn giản trong từng bước.</h2><div className="process-line"><article><b>01</b><div><UserRound /><h3>Tạo hồ sơ</h3><p>Đăng ký tài khoản bệnh nhân và cập nhật thông tin cá nhân.</p></div></article><article><b>02</b><div><CalendarDays /><h3>Chọn lịch khám</h3><p>Chọn bác sĩ, thời gian mong muốn và gửi yêu cầu.</p></div></article><article><b>03</b><div><Stethoscope /><h3>Khám với bác sĩ</h3><p>Nhận chẩn đoán, kế hoạch điều trị và đơn thuốc nếu cần.</p></div></article><article><b>04</b><div><Clock3 /><h3>Theo dõi & tái khám</h3><p>Xem hồ sơ và chủ động chọn giờ tái khám theo chỉ định.</p></div></article></div></section>
             <section className="home-reviews" id="reviews"><div className="reviews-head"><div><div className="section-label">CẢM NHẬN TỪ BỆNH NHÂN</div><h2>Sự tin tưởng được xây dựng<br />từ từng lần thăm khám.</h2></div><p>Đánh giá xác thực từ những bệnh nhân đã hoàn thành buổi khám tại DermAI Clinic.</p></div>{reviews.length===0?<div className="doctor-empty">Chưa có đánh giá nào được duyệt.</div>:<div className="review-grid">{reviews.map(review=><article key={review.id}><div className="review-stars">{Array.from({length:review.rating},(_,x)=><Star key={x}/>)}</div><blockquote>“{review.comment}”</blockquote><footer><span>{review.displayName.slice(0,2).toUpperCase()}</span><div><b>{review.displayName}</b><small>Bệnh nhân đã khám</small></div></footer></article>)}</div>}</section>
             <section className="home-cta"><div><span>DERMAI CLINIC</span><h2>Sẵn sàng chăm sóc<br />làn da của bạn?</h2><p>Tạo hồ sơ và đặt lịch khám phù hợp chỉ trong vài bước.</p></div><div className="home-cta-actions"><button onClick={openAuth}>Đặt lịch ngay <ArrowRight /></button><a href="tel:0352790904"><PhoneCall /><span><small>HOTLINE ĐẶT LỊCH</small><b>0352 790 904</b></span></a></div></section>
-        </main><footer className="home-footer"><a className="home-brand" href="#top"><span><Activity /></span><b>DermAI <em>Clinic</em></b></a><p>Chăm sóc da liễu bằng chuyên môn, sự thấu hiểu và công nghệ có trách nhiệm.<a className="footer-hotline" href="tel:0352790904"><PhoneCall /> Hotline: 0352 790 904</a></p><small>© 2026 DermAI Clinic. Hệ thống quản lý phòng khám da liễu.</small></footer><ChatBox openAuth={openAuth} />
+        </main><footer className="home-footer"><a className="home-brand" href="#top"><span><Activity /></span><b>DermAI <em>Clinic</em></b></a><p>Chăm sóc da liễu bằng chuyên môn, sự thấu hiểu và công nghệ có trách nhiệm.<a className="footer-hotline" href="tel:0352790904"><PhoneCall /> Hotline: 0352 790 904</a></p><small>© 2026 DermAI Clinic.</small></footer><ChatBox openAuth={openAuth} />
     </div>
 }
 type ChatMessage = { role: "assistant" | "user"; text: string; citations?: { source: string; page: number }[] };
@@ -139,10 +140,158 @@ function ForgotPassword({ close }: { close: () => void }) {
     async function reset(e: FormEvent) { e.preventDefault(); setBusy(true); setMessage(""); try { await request("/auth/reset-password", undefined, { method: "POST", body: JSON.stringify({ email, otp, newPassword: password }) }); setStep("done"); setMessage("Mật khẩu đã được cập nhật thành công.") } catch (x) { setMessage((x as Error).message) } finally { setBusy(false) } }
     return <div className="auth-page"><button className="auth-home" onClick={close}><X /> Quay lại đăng nhập</button><form className="auth-card" onSubmit={step === "request" ? requestOtp : reset}><div className="brand dark"><div className="mark"><ShieldCheck /></div><div><b>Khôi phục</b><span>Tài khoản</span></div></div><h1>{step === "done" ? "Đã đổi mật khẩu" : step === "request" ? "Quên mật khẩu" : "Nhập mã xác nhận"}</h1>{step === "request" && <label>Email tài khoản<input type="email" required value={email} onChange={e => setEmail(e.target.value)} /></label>}{step === "reset" && <><p>Mã OTP đã được gửi đến email nếu tài khoản tồn tại.</p><label>Mã OTP<input inputMode="numeric" pattern="\d{6}" maxLength={6} required value={otp} onChange={e => setOtp(e.target.value.replace(/\D/g, ""))} /></label><label>Mật khẩu mới<input type="password" minLength={10} required value={password} onChange={e => setPassword(e.target.value)} /></label></>}{message && <div className={step === "done" ? "form-message" : "safety-note"}>{message}</div>}{step !== "done" && <button className="primary" disabled={busy}>{busy ? "Đang xử lý…" : step === "request" ? "Gửi mã OTP" : "Đặt lại mật khẩu"}</button>}{step === "done" && <button type="button" className="primary" onClick={close}>Về đăng nhập</button>}</form></div>
 }
-function Login({ onLogin }: { onLogin: (x: Tokens) => void }) {
-    const [register, setRegister] = useState(false); const [email, setEmail] = useState(""); const [password, setPassword] = useState(""); const [fullName, setFullName] = useState(""); const [phone, setPhone] = useState(""); const [error, setError] = useState(""); const [busy, setBusy] = useState(false);
-    async function submit(e: FormEvent) { e.preventDefault(); setBusy(true); setError(""); try { if (register) await request("/auth/register", undefined, { method: "POST", body: JSON.stringify({ email, password }) }); const tokens = await request<Tokens>("/auth/login", undefined, { method: "POST", body: JSON.stringify({ email, password }) }); if (register) await request("/patients/me", tokens.accessToken, { method: "POST", body: JSON.stringify({ fullName, phone: phone.trim() }) }); onLogin(tokens) } catch (x) { setError((x as Error).message) } finally { setBusy(false) } }
-    return <div className="auth-page"><form className="auth-card" onSubmit={submit}><div className="brand dark"><div className="mark"><Activity /></div><div><b>DermAI</b><span>Clinic</span></div></div><h1>{register ? "Đăng ký bệnh nhân" : "Đăng nhập hệ thống"}</h1>{register && <><label>Họ và tên<input value={fullName} onChange={e => setFullName(e.target.value)} required /></label><label>Số điện thoại<input type="tel" inputMode="tel" pattern="[0-9+ .()\-]{8,20}" value={phone} onChange={e => setPhone(e.target.value)} required placeholder="Ví dụ: 0352790904" /></label></>}<label>Email<input type="email" value={email} onChange={e => setEmail(e.target.value)} required /></label><label>Mật khẩu<input type="password" minLength={10} value={password} onChange={e => setPassword(e.target.value)} required /></label>{error && <div className="error">{error}</div>}<button className="primary" disabled={busy}>{busy ? "Đang xử lý..." : register ? "Tạo tài khoản" : "Đăng nhập"}</button><button type="button" className="auth-switch" onClick={() => { setRegister(!register); setError("") }}>{register ? "Đã có tài khoản? Đăng nhập" : "Chưa có tài khoản? Đăng ký Patient"}</button><div className="safety-note"><ShieldCheck /></div></form></div>
+function Login({ onLogin }: { onLogin: (tokens: Tokens) => void }) {
+    const [register, setRegister] = useState(false);
+    const [email, setEmail] = useState("");
+    const [password, setPassword] = useState("");
+    const [fullName, setFullName] = useState("");
+    const [phone, setPhone] = useState("");
+    const [error, setError] = useState("");
+    const [busy, setBusy] = useState(false);
+    const [googlePending, setGooglePending] = useState<{ tokens: Tokens; email: string } | null>(null);
+    const [verificationPending, setVerificationPending] = useState(false);
+    const [verificationOtp, setVerificationOtp] = useState("");
+    const [resendCooldown, setResendCooldown] = useState(0);
+
+    useEffect(() => {
+        if (resendCooldown <= 0) return;
+        const timer = window.setInterval(() => setResendCooldown(value => Math.max(0, value - 1)), 1000);
+        return () => window.clearInterval(timer);
+    }, [resendCooldown > 0]);
+
+    function tokensOf(result: GoogleLoginResult): Tokens {
+        return { accessToken: result.accessToken, refreshToken: result.refreshToken, expiresIn: result.expiresIn, role: result.role };
+    }
+
+    async function handleGoogle(result: GoogleLoginResult) {
+        const tokens = tokensOf(result);
+        setError("");
+        // Tài khoản Google mới phải hoàn thiện số điện thoại trước khi vào khu vực bệnh nhân.
+        if (result.newAccount) {
+            setFullName(result.fullName);
+            setGooglePending({ tokens, email: result.email });
+            return;
+        }
+        try {
+            await request<Patient>("/patients/me", tokens.accessToken);
+            onLogin(tokens);
+        } catch (value) {
+            if (value instanceof ApiError && value.status === 404) {
+                setFullName(result.fullName);
+                setGooglePending({ tokens, email: result.email });
+            } else {
+                setError((value as Error).message);
+            }
+        }
+    }
+
+    async function completeGoogleProfile(event: FormEvent) {
+        event.preventDefault();
+        if (!googlePending) return;
+        setBusy(true);
+        setError("");
+        try {
+            await request("/patients/me", googlePending.tokens.accessToken, {
+                method: "POST",
+                body: JSON.stringify({ fullName, phone: phone.trim() }),
+            });
+            onLogin(googlePending.tokens);
+        } catch (value) {
+            setError((value as Error).message);
+        } finally {
+            setBusy(false);
+        }
+    }
+
+    async function submit(event: FormEvent) {
+        event.preventDefault();
+        setBusy(true);
+        setError("");
+        try {
+            if (register) {
+                await request("/auth/register", undefined, { method: "POST", body: JSON.stringify({ email, password }) });
+                // The account stays unusable until the owner proves access to this mailbox.
+                setVerificationPending(true);
+                setResendCooldown(60);
+                return;
+            }
+            const tokens = await request<Tokens>("/auth/login", undefined, { method: "POST", body: JSON.stringify({ email, password }) });
+            onLogin(tokens);
+        } catch (value) {
+            if (value instanceof ApiError && value.code === "EMAIL_NOT_VERIFIED") {
+                setRegister(true);
+                setVerificationPending(true);
+                setError("Email chưa được xác minh. Nhấn gửi lại mã nếu OTP cũ đã hết hạn.");
+                return;
+            }
+            setError((value as Error).message);
+        } finally {
+            setBusy(false);
+        }
+    }
+
+    async function confirmVerification(event: FormEvent) {
+        event.preventDefault();setBusy(true);setError("");
+        try {
+            await request("/auth/verification/confirm", undefined, { method: "POST", body: JSON.stringify({ email, otp: verificationOtp }) });
+            const tokens = await request<Tokens>("/auth/login", undefined, { method: "POST", body: JSON.stringify({ email, password }) });
+            await request("/patients/me", tokens.accessToken, { method: "POST", body: JSON.stringify({ fullName, phone: phone.trim() }) });
+            onLogin(tokens);
+        } catch (value) {
+            setError((value as Error).message);
+        } finally { setBusy(false); }
+    }
+
+    async function resendVerification() {
+        setBusy(true);setError("");
+        try {
+            await request("/auth/verification/send", undefined, { method: "POST", body: JSON.stringify({ email }) });
+            setResendCooldown(60);
+            setError("Mã OTP mới đã được gửi. Mã có hiệu lực trong 5 phút.");
+        } catch (value) { setError((value as Error).message); }
+        finally { setBusy(false); }
+    }
+
+    if (googlePending) {
+        return <div className="auth-page"><form className="auth-card google-profile-card" onSubmit={completeGoogleProfile}>
+            <div className="brand dark"><div className="mark"><Activity /></div><div><b>DermAI</b><span>Clinic</span></div></div>
+            <h1>Hoàn thiện hồ sơ</h1>
+            <p>Google đã xác thực <b>{googlePending.email}</b>. Vui lòng bổ sung thông tin liên hệ.</p>
+            <label>Họ và tên<input value={fullName} onChange={event => setFullName(event.target.value)} required /></label>
+            <label>Số điện thoại<input type="tel" inputMode="tel" pattern="[0-9+ .()\\-]{8,20}" value={phone} onChange={event => setPhone(event.target.value)} required placeholder="Ví dụ: 0352790904" /></label>
+            {error && <div className="error">{error}</div>}
+            <button className="primary" disabled={busy}>{busy ? "Đang tạo hồ sơ..." : "Hoàn tất đăng nhập"}</button>
+            <button type="button" className="auth-switch" onClick={() => { setGooglePending(null); setError(""); }}>Dùng cách đăng nhập khác</button>
+        </form></div>;
+    }
+
+    if (verificationPending) {
+        return <div className="auth-page"><form className="auth-card email-verification-card" onSubmit={confirmVerification}>
+            <div className="brand dark"><div className="mark"><ShieldCheck /></div><div><b>DermAI</b><span>Xác minh email</span></div></div>
+            <h1>Nhập mã OTP</h1>
+            <p>Mã gồm 6 số đã được gửi đến <b>{email}</b> và có hiệu lực trong 5 phút.</p>
+            <label>Họ và tên<input value={fullName} onChange={event => setFullName(event.target.value)} required /></label>
+            <label>Số điện thoại<input type="tel" inputMode="tel" pattern="[0-9+ .()\\-]{8,20}" value={phone} onChange={event => setPhone(event.target.value)} required placeholder="Ví dụ: 0352790904" /></label>
+            <label>Mã OTP<input className="otp-input" inputMode="numeric" autoComplete="one-time-code" pattern="\d{6}" maxLength={6} value={verificationOtp} onChange={event => setVerificationOtp(event.target.value.replace(/\D/g, ""))} required /></label>
+            {error && <div className="form-message">{error}</div>}
+            <button className="primary" disabled={busy || verificationOtp.length !== 6}>{busy ? "Đang xác minh..." : "Xác minh và hoàn tất"}</button>
+            <button type="button" className="auth-switch" disabled={busy || resendCooldown > 0} onClick={resendVerification}>{resendCooldown > 0 ? `Gửi lại mã sau ${resendCooldown}s` : "Gửi lại mã OTP"}</button>
+            <button type="button" className="auth-switch" onClick={() => { setVerificationPending(false);setRegister(false);setError(""); }}>Quay lại đăng nhập</button>
+        </form></div>;
+    }
+
+    return <div className="auth-page"><form className="auth-card" onSubmit={submit}>
+        <div className="brand dark"><div className="mark"><Activity /></div><div><b>DermAI</b><span>Clinic</span></div></div>
+        <h1>{register ? "Đăng ký bệnh nhân" : "Đăng nhập hệ thống"}</h1>
+        {register && <><label>Họ và tên<input value={fullName} onChange={event => setFullName(event.target.value)} required /></label><label>Số điện thoại<input type="tel" inputMode="tel" pattern="[0-9+ .()\\-]{8,20}" value={phone} onChange={event => setPhone(event.target.value)} required placeholder="Ví dụ: 0352790904" /></label></>}
+        <label>Email<input type="email" value={email} onChange={event => setEmail(event.target.value)} required /></label>
+        <label>Mật khẩu<input type="password" minLength={10} value={password} onChange={event => setPassword(event.target.value)} required /></label>
+        {error && <div className="error">{error}</div>}
+        <button className="primary" disabled={busy}>{busy ? "Đang xử lý..." : register ? "Tạo tài khoản" : "Đăng nhập"}</button>
+        <GoogleSignIn onAuthenticated={handleGoogle} />
+        <button type="button" className="auth-switch" onClick={() => { setRegister(!register); setError(""); }}>{register ? "Đã có tài khoản? Đăng nhập" : "Chưa có tài khoản? Đăng ký Patient"}</button>
+        <div className="safety-note"><ShieldCheck /></div>
+    </form></div>;
 }
 function Dashboard({ session, logout }: { session: Tokens; logout: () => void }) {
     const [tab, setTab] = useState<"profile" | "appointments" | "records" | "ai">("profile"); const [patient, setPatient] = useState<Patient | null>(null); const [doctor, setDoctor] = useState<Doctor | null>(null); const [appointments, setAppointments] = useState<Appointment[]>([]); const [records, setRecords] = useState<MedicalRecord[]>([]); const [prescriptions, setPrescriptions] = useState<Prescription[]>([]); const [patients, setPatients] = useState<Record<string, Patient>>({}); const [work, setWork] = useState<WorkSchedule[]>([]); const [leave, setLeave] = useState<LeavePeriod[]>([]); const [loading, setLoading] = useState(true); const [error, setError] = useState("");

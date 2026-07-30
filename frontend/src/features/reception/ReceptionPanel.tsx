@@ -40,7 +40,9 @@ export default function ReceptionPanel({ token, tab }: { token: string; tab: str
         }
     }
     async function loadReminders() { setReminders(await request<ReminderItem[]>("/appointments/reminders", token)) }
-    useEffect(() => { Promise.all([request<Doctor[]>("/doctors", token).then(setDoctors), search()]).then(() => Promise.all([loadQueue(), loadReminders()])).catch(x => setMessage((x as Error).message)) }, []);
+    async function loadDoctors() { setDoctors(await request<Doctor[]>("/doctors", token)) }
+    useEffect(() => { Promise.all([loadDoctors(), search()]).then(() => Promise.all([loadQueue(), loadReminders()])).catch(x => setMessage((x as Error).message)) }, []);
+    useEffect(() => { const refresh = () => { void loadDoctors().catch(() => undefined) }; window.addEventListener("doctor-profiles-changed", refresh); return () => window.removeEventListener("doctor-profiles-changed", refresh) }, [token]);
     useEffect(() => { const refresh = () => { Promise.all([loadQueue(), loadReminders()]).catch(x => setMessage((x as Error).message)) }; window.addEventListener("reception-appointments-changed", refresh); return () => window.removeEventListener("reception-appointments-changed", refresh) }, []);
     useEffect(() => { if(patientId)sessionStorage.setItem("reception-support-patient",patients.find(p=>p.id===patientId)?.identityId||"") }, [patientId,patients]);
     async function confirm(id: string) { try { await request(`/appointments/${id}/confirm`, token, { method: "POST" }); await Promise.all([loadQueue(), loadReminders()]) } catch (x) { setMessage((x as Error).message) } }

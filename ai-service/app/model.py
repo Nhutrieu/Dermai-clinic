@@ -80,7 +80,7 @@ class GradCam:
         return cam.detach().cpu().numpy()
 
 
-def predict(bundle: ModelBundle, image: Image.Image) -> dict:
+def predict(bundle: ModelBundle, image: Image.Image, confidence_threshold: float = 0.55) -> dict:
     rgb = image.convert("RGB")
     tensor = PREPROCESS(rgb).unsqueeze(0).to(bundle.device)
     with torch.no_grad():
@@ -105,7 +105,6 @@ def predict(bundle: ModelBundle, image: Image.Image) -> dict:
         "top3": top,
         "gradcam_image": "data:image/png;base64," + base64.b64encode(output.getvalue()).decode(),
         "model_version": bundle.version,
-        "uncertain": top[0]["probability"] < 0.55,
+        "uncertain": top[0]["probability"] < confidence_threshold,
         "disclaimer": DISCLAIMER,
     }
-

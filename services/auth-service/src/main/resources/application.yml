@@ -12,9 +12,16 @@ spring:
     schemas: auth
     create-schemas: true
   mail:
-    host: ${SMTP_HOST:mailhog}
-    port: ${SMTP_PORT:1025}
+    host: ${SMTP_HOST:smtp.gmail.com}
+    port: ${SMTP_PORT:587}
+    username: ${SMTP_USERNAME:}
+    password: ${SMTP_PASSWORD:}
+    properties:
+      mail.smtp.auth: ${SMTP_AUTH:false}
+      mail.smtp.starttls.enable: ${SMTP_STARTTLS:false}
 security.jwt.secret: ${JWT_SECRET:replace-with-at-least-32-random-characters}
 security.bootstrap-token: ${BOOTSTRAP_TOKEN:}
 security.service-token: ${SERVICE_TOKEN:}
+security.google.client-id: ${GOOGLE_CLIENT_ID:}
+app.mail.from: ${MAIL_FROM:no-reply@dermai.local}
 management.endpoints.web.exposure.include: health,info

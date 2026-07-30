@@ -1,0 +1,118 @@
+{
+  "classes": [
+    "Acne",
+    "Candidiasis",
+    "Eczema",
+    "Lupus",
+    "Psoriasis",
+    "SkinCancer",
+    "Tinea",
+    "Warts"
+  ],
+  "seed": 42,
+  "validation_ratio": 0.15,
+  "raw_train": {
+    "Acne": 593,
+    "Candidiasis": 248,
+    "Eczema": 1010,
+    "Lupus": 311,
+    "Psoriasis": 820,
+    "SkinCancer": 693,
+    "Tinea": 923,
+    "Warts": 580
+  },
+  "excluded_label_conflicts": {
+    "train": {
+      "Acne": 1,
+      "Candidiasis": 8,
+      "Eczema": 0,
+      "Lupus": 0,
+      "Psoriasis": 0,
+      "SkinCancer": 0,
+      "Tinea": 6,
+      "Warts": 0
+    },
+    "test": {
+      "Acne": 0,
+      "Candidiasis": 0,
+      "Eczema": 1,
+      "Lupus": 0,
+      "Psoriasis": 0,
+      "SkinCancer": 0,
+      "Tinea": 4,
+      "Warts": 0
+    }
+  },
+  "excluded_within_split_duplicates": {
+    "train": {
+      "Acne": 6,
+      "Candidiasis": 4,
+      "Eczema": 63,
+      "Lupus": 4,
+      "Psoriasis": 23,
+      "SkinCancer": 15,
+      "Tinea": 21,
+      "Warts": 23
+    },
+    "test": {
+      "Acne": 0,
+      "Candidiasis": 0,
+      "Eczema": 0,
+      "Lupus": 0,
+      "Psoriasis": 0,
+      "SkinCancer": 0,
+      "Tinea": 0,
+      "Warts": 0
+    }
+  },
+  "excluded_train_test_duplicates": {
+    "Acne": 2,
+    "Candidiasis": 0,
+    "Eczema": 13,
+    "Lupus": 2,
+    "Psoriasis": 6,
+    "SkinCancer": 1,
+    "Tinea": 8,
+    "Warts": 2
+  },
+  "train": {
+    "Acne": 496,
+    "Candidiasis": 201,
+    "Eczema": 794,
+    "Lupus": 259,
+    "Psoriasis": 672,
+    "SkinCancer": 575,
+    "Tinea": 755,
+    "Warts": 472
+  },
+  "validation": {
+    "Acne": 88,
+    "Candidiasis": 35,
+    "Eczema": 140,
+    "Lupus": 46,
+    "Psoriasis": 119,
+    "SkinCancer": 102,
+    "Tinea": 133,
+    "Warts": 83
+  },
+  "test": {
+    "Acne": 65,
+    "Candidiasis": 27,
+    "Eczema": 111,
+    "Lupus": 34,
+    "Psoriasis": 88,
+    "SkinCancer": 77,
+    "Tinea": 98,
+    "Warts": 64
+  },
+  "totals": {
+    "raw_train": 5178,
+    "label_conflict_digests": 9,
+    "excluded_label_conflict_files": 20,
+    "excluded_within_split_duplicates": 159,
+    "excluded_train_test_duplicates": 34,
+    "train": 4224,
+    "validation": 746,
+    "test": 564
+  }
+}

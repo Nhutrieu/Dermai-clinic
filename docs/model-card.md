@@ -1,32 +1,39 @@
 # Model Card — DermAI Image Classifier
 
+> Bản model đang chạy sau khi bổ sung SCIN được mô tả đầy đủ tại
+> [`model-card-scin-v1.md`](model-card-scin-v1.md). Phần dưới đây được giữ như hồ sơ baseline.
+
 ## 1. Trạng thái tài liệu
 
 | Thuộc tính | Giá trị hiện tại |
 |---|---|
-| Trạng thái model | **Chưa phát hành** |
-| Checkpoint trong repository | Chưa có `ai-service/models/best_model.pth` |
-| Dataset trong repository | Chưa có |
-| Metric chính thức | Chưa có |
+| Trạng thái model | **Thử nghiệm nội bộ, chưa dùng lâm sàng** |
+| Checkpoint cục bộ | `ai-service/models/best_model.pth` (16,4 MB) |
+| Model version | `efficientnet_b0-20260728T110848Z` |
+| Dataset cục bộ | `SkinDisease/`, không đưa lên Git |
+| Test độc lập đã làm sạch | 564 ảnh |
+| Accuracy / Macro F1 | 76,60% / 75,27% |
 | Kiến trúc baseline | EfficientNet-B0 |
 | Kiến trúc có thể so sánh | ResNet50, ConvNeXt Tiny |
 | Số lớp code hiện hỗ trợ | 8 |
 | Ngưỡng `uncertain` mặc định | Top-1 confidence < 0,55 |
 
-Tài liệu này là model card trước phát hành. Không được thêm accuracy, F1, số
-lượng ảnh hoặc tuyên bố đại diện dữ liệu nếu không có artifact/báo cáo tái lập.
+Kết quả trong tài liệu được tạo ngày 28/07/2026 từ seed 42 và checkpoint có
+SHA-256 `66493a9d23b781c88257a579196a6ab0999226eca751f0276291ce2ac14a4a2c`.
+Đây là kết quả đồ án thử nghiệm, không phải chứng nhận hiệu năng lâm sàng.
 
 ## 2. Mục đích sử dụng
 
-Model được thiết kế để **hỗ trợ tham khảo** khi bác sĩ phân tích ảnh da liễu
-trong DermAI Clinic. Output gồm Top-3 nhãn, confidence, cảnh báo không chắc chắn
-và Grad-CAM. Bác sĩ phải kết hợp khám trực tiếp, triệu chứng, tiền sử và xét
-nghiệm cần thiết trước khi ghi chẩn đoán cuối.
+Model được thiết kế để bệnh nhân đã đăng nhập **kiểm tra ảnh da sơ bộ** trước khi
+đặt lịch trong DermAI Clinic. Output gồm Top-3 nhãn, confidence, cảnh báo không
+chắc chắn và Grad-CAM. Kết quả giúp bệnh nhân mô tả nhu cầu khám, không phải chẩn
+đoán. Bác sĩ không chạy model trong dashboard và phải kết luận độc lập dựa trên
+khám trực tiếp, triệu chứng, tiền sử và xét nghiệm cần thiết.
 
 Model có thể được dùng trong đồ án để:
 
 - minh họa quy trình Computer Vision trong phòng khám da liễu;
-- hỗ trợ bác sĩ xem các khả năng cần cân nhắc;
+- giúp bệnh nhân diễn đạt lý do khám và quyết định đi khám phù hợp;
 - nghiên cứu error analysis và khả năng giải thích bằng Grad-CAM;
 - so sánh kiến trúc trong cùng điều kiện dữ liệu/huấn luyện.
 
@@ -58,7 +65,17 @@ nhãn hình ảnh trong dataset, không đủ để chẩn đoán bệnh hệ th
 
 ## 5. Dữ liệu
 
-Repository hiện không chứa dataset nên chưa xác nhận được:
+Dataset cục bộ có 5.747 ảnh thô thuộc tám lớp mục tiêu: 5.178 ảnh trong thư mục
+train và 569 ảnh trong test. Validator SHA-256 ghi nhận 0 ảnh hỏng, 189 nhóm
+trùng, 38 nhóm trùng xuyên train/test và 9 nhóm ảnh giống nhau nhưng khác nhãn.
+Pipeline không xóa dữ liệu gốc mà tự động:
+
+- loại 20 file thuộc 9 nhóm xung đột nhãn;
+- loại 159 bản sao nội bộ;
+- loại 34 ảnh train bị trùng với test;
+- chia phần còn lại thành 4.224 train, 746 validation và 564 test sạch.
+
+Thông tin vẫn chưa xác nhận được:
 
 - nguồn và giấy phép;
 - số ảnh theo lớp/split;
@@ -67,27 +84,53 @@ Repository hiện không chứa dataset nên chưa xác nhận được:
 - chất lượng nhãn và mức đồng thuận giữa người gán nhãn;
 - mức đại diện cho bệnh nhân Việt Nam.
 
-Trước huấn luyện chính thức phải chạy validator ảnh hỏng và duplicate hash,
-kiểm tra near-duplicate/leakage, loại PII, tạo data version và báo cáo phân bố.
-Split test phải được khóa trước khi lựa chọn model.
+Validator hiện phát hiện exact duplicate. Trước khi tuyên bố khả năng tổng quát
+hóa vẫn phải kiểm tra near-duplicate, PII và split theo bệnh nhân/nguồn nếu có
+metadata. Nguồn và giấy phép dataset phải được bổ sung trước khi phát hành.
 
-## 6. Huấn luyện dự kiến
+## 6. Cấu hình huấn luyện đã chạy
 
 - Pretrained ImageNet.
 - Input RGB 224×224 sau resize/crop.
 - Normalize ImageNet.
-- AdamW, Cross Entropy và checkpoint theo validation macro F1.
-- So sánh model với cùng split, seed, augmentation, epoch budget và tiêu chí.
+- EfficientNet-B0 pretrained ImageNet, fine-tune toàn bộ model.
+- 20 epoch, batch size 32, seed 42, mixed precision trên RTX 4050 Laptop 6 GB.
+- AdamW, learning rate `3e-4`, weight decay `1e-4`, class-weighted Cross Entropy.
+- Cosine annealing; checkpoint theo validation Macro F1; patience 5.
+- Train dùng augmentation; validation/test chỉ resize, center crop và normalize.
 
-Script hiện tại cần tách transform validation khỏi augmentation train và phải
-đánh giá thư mục test độc lập trước khi dùng kết quả trong báo cáo.
+Checkpoint tốt nhất đạt validation Accuracy 79,76% và Macro F1 78,58% tại
+epoch 17. Metric test chỉ được tính sau khi chọn checkpoint này.
 
-## 7. Đánh giá bắt buộc trước phát hành
+## 7. Kết quả test độc lập
+
+| Metric | Kết quả |
+|---|---:|
+| Accuracy | 76,60% |
+| Top-3 Accuracy | 95,21% |
+| Macro F1 | 75,27% |
+| Weighted F1 | 76,34% |
+
+| Lớp | Precision | Recall | F1 | Support |
+|---|---:|---:|---:|---:|
+| Acne | 78,87% | 86,15% | 82,35% | 65 |
+| Candidiasis | 82,61% | 70,37% | 76,00% | 27 |
+| Eczema | 74,59% | 81,98% | 78,11% | 111 |
+| Lupus | 83,33% | 44,12% | 57,69% | 34 |
+| Psoriasis | 72,63% | 78,41% | 75,41% | 88 |
+| SkinCancer | 86,36% | 74,03% | 79,72% | 77 |
+| Tinea | 70,19% | 74,49% | 72,28% | 98 |
+| Warts | 80,00% | 81,25% | 80,62% | 64 |
+
+Lupus có recall thấp nhất (44,12%); không được dùng kết quả âm tính để loại trừ
+lupus. Confusion matrix và báo cáo chi tiết nằm trong `ai-service/models/`.
+
+### Đánh giá còn thiếu trước phát hành
 
 | Nhóm | Artifact cần có |
 |---|---|
-| Hiệu năng phân loại | Accuracy, Top-3 accuracy, precision/recall/F1 từng lớp, macro/weighted F1 |
-| Sai nhầm | Confusion matrix và phân tích cặp lớp thường nhầm |
+| Hiệu năng phân loại | Đã có metric cơ bản; cần lặp nhiều seed và khoảng tin cậy |
+| Sai nhầm | Đã có confusion matrix; cần error analysis bởi chuyên gia |
 | Độ tin cậy | Calibration/ECE hoặc reliability diagram; đánh giá threshold uncertain |
 | Tổng quát hóa | Test độc lập; subgroup theo metadata sẵn có; ảnh ngoài phân phối |
 | Hệ thống | Latency CPU/GPU, RAM/VRAM, model size, throughput |
@@ -134,22 +177,22 @@ người bệnh mắc bệnh.
 ## 10. Biện pháp giảm thiểu
 
 - Top-3 và `uncertain` thay vì chỉ hiển thị một kết luận chắc chắn.
-- Disclaimer cố định và review bắt buộc bởi bác sĩ.
+- Disclaimer cố định, khuyến nghị đi khám và chẩn đoán cuối bắt buộc bởi bác sĩ.
 - Không có thao tác tự chép AI sang final diagnosis hoặc đơn thuốc.
 - Kiểm tra dữ liệu, group split, error analysis và đánh giá theo subgroup.
 - Lưu model version/checksum và hỗ trợ rollback.
-- Cho bác sĩ báo kết quả sai và thu thập feedback có consent.
+- Chỉ chia sẻ tóm tắt khi bệnh nhân chủ động chọn; không lưu ảnh gốc.
 - Theo dõi phân phối input, latency, lỗi và drift sau triển khai thử nghiệm.
 - Điều hướng đi khám khi ảnh/dấu hiệu nguy hiểm hoặc ngoài phạm vi.
 
 ## 11. Checklist phát hành
 
-- [ ] Dataset report và giấy phép đã hoàn tất.
-- [ ] Test split độc lập, không leakage.
-- [ ] Metric và confusion matrix được tạo từ checkpoint bàn giao.
-- [ ] Checkpoint checksum, config, code commit và class map được lưu.
-- [ ] UI hiển thị Top-3, uncertain, Grad-CAM và disclaimer.
+- [ ] Nguồn, giấy phép và dataset report đầy đủ đã hoàn tất.
+- [x] Exact duplicate/leakage được loại tự động trước train và test.
+- [x] Metric và confusion matrix được tạo từ checkpoint bàn giao.
+- [x] Checkpoint checksum, config, seed và class map được lưu.
+- [x] UI Patient hiển thị Top-3, uncertain, Grad-CAM và disclaimer.
 - [ ] Bác sĩ xác nhận wording lớp và cảnh báo.
-- [ ] Quyền upload, consent, retention và xóa ảnh được thiết kế.
+- [x] Upload chỉ dành cho Patient; không lưu ảnh gốc; metadata có chia sẻ và xóa.
 - [ ] Test ảnh hỏng, ảnh lớn, ảnh ngoài phân phối và model unavailable.
 - [ ] Không có API key, PII hoặc ảnh bệnh nhân thật trong Git/demo.

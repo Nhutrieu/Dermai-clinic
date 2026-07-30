@@ -36,4 +36,13 @@ describe("subscribeRealtime", () => {
     vi.runAllTimers();
     expect(FakeSocket.instances).toHaveLength(2);
   });
+
+  it("connects to a feature-specific websocket path", () => {
+    const stop = subscribeRealtime(vi.fn(), {
+      path: "/api/v1/doctors/ws/profile",
+      createSocket: url => new FakeSocket(url),
+    });
+    expect(FakeSocket.instances[0].url).toBe("ws://localhost/api/v1/doctors/ws/profile");
+    stop();
+  });
 });

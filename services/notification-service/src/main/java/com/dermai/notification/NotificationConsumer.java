@@ -10,15 +10,16 @@ interface DeliveryRepository extends JpaRepository<Delivery,UUID>{Optional<Deliv
  @Bean Binding deadBinding(@Qualifier("deadQueue") Queue deadQueue,DirectExchange deadExchange){return BindingBuilder.bind(deadQueue).to(deadExchange).with("dermai.notifications");}
 }
 @Component class NotificationConsumer{
- private final DeliveryRepository repo;private final JavaMailSender mail;private final RestClient auth;private final ObjectMapper json;private final String token;
- NotificationConsumer(DeliveryRepository r,JavaMailSender m,ObjectMapper j,@Value("${services.auth-url}") String url,@Value("${services.token}") String token){repo=r;mail=m;json=j;auth=RestClient.builder().baseUrl(url).build();this.token=token;}
+ private final DeliveryRepository repo;private final JavaMailSender mail;private final RestClient auth;private final ObjectMapper json;private final String token;private final String mailFrom;
+ NotificationConsumer(DeliveryRepository r,JavaMailSender m,ObjectMapper j,@Value("${services.auth-url}") String url,@Value("${services.token}") String token,@Value("${app.mail.from}") String mailFrom){repo=r;mail=m;json=j;auth=RestClient.builder().baseUrl(url).build();this.token=token;this.mailFrom=mailFrom;}
  @RabbitListener(queues="dermai.notifications")
  public void consume(String payload)throws Exception{
   JsonNode e=json.readTree(payload);UUID eventId=UUID.fromString(e.path("eventId").asText());var existing=repo.findByEventId(eventId);if(existing.isPresent()&&existing.get().sentAt!=null)return;
   UUID identity=UUID.fromString(e.path("patientIdentityId").asText());var owner=auth.get().uri("/api/v1/auth/internal/identities/{id}",identity).header("X-Service-Token",token).retrieve().body(Identity.class);
   if(owner==null)throw new IllegalStateException("Không tìm thấy người nhận");
   String status=e.path("status").asText(),start=e.path("startAt").asText();var d=existing.orElseGet(()->{var n=new Delivery();n.id=UUID.randomUUID();n.eventId=eventId;n.eventType=status;n.recipient=owner.email();n.subject=subject(status);return n;});d.attempts++;repo.save(d);
-  try{var msg=new SimpleMailMessage();msg.setTo(owner.email());msg.setFrom("no-reply@dermai.local");msg.setSubject(d.subject);msg.setText("Trạng thái lịch khám: "+status+"\nThời gian: "+start+"\n\nDermAI chỉ hỗ trợ quản lý, không thay thế bác sĩ.");mail.send(msg);d.sentAt=Instant.now();d.lastError=null;repo.save(d);}
+  // Gmail requires the From address to match the authenticated SMTP account.
+  try{var msg=new SimpleMailMessage();msg.setTo(owner.email());msg.setFrom(mailFrom);msg.setSubject(d.subject);msg.setText("Trạng thái lịch khám: "+status+"\nThời gian: "+start+"\n\nDermAI chỉ hỗ trợ quản lý, không thay thế bác sĩ.");mail.send(msg);d.sentAt=Instant.now();d.lastError=null;repo.save(d);}
   catch(RuntimeException ex){d.lastError=String.valueOf(ex.getMessage());repo.save(d);throw ex;}
  }
  private String subject(String s){return switch(s){case"CANCELLED"->"Lịch khám đã hủy";case"COMPLETED"->"Đã hoàn thành khám";case"FOLLOW_UP_REQUIRED"->"Yêu cầu tái khám";default->"Cập nhật lịch khám DermAI";};}

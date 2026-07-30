@@ -6,9 +6,10 @@
 nhân tạo cho phòng khám da liễu.
 
 DermAI Clinic lấy quy trình đặt lịch làm nghiệp vụ trung tâm. Computer Vision
-hỗ trợ bác sĩ phân tích ảnh da liễu; hồ sơ y khoa, đơn thuốc, thông báo, chat và
-dashboard tạo thành quy trình khám liên tục. AI chỉ cung cấp thông tin tham
-khảo, không tự tạo chẩn đoán cuối cùng, không kê thuốc và không thay bác sĩ.
+cho phép bệnh nhân kiểm tra ảnh da sơ bộ trước khi đặt lịch; hồ sơ y khoa, đơn
+thuốc, thông báo, chat và dashboard tạo thành quy trình khám liên tục. AI chỉ
+cung cấp thông tin tham khảo, không tự tạo chẩn đoán cuối cùng, không kê thuốc
+và không thay bác sĩ.
 
 Phạm vi hiện tại gồm ứng dụng web bốn vai trò, các dịch vụ Spring Boot, dịch vụ
 AI FastAPI và hạ tầng Docker Compose. Thanh toán, bảo hiểm, SMS thương mại, kết
@@ -18,19 +19,20 @@ nối bệnh viện và chẩn đoán tự động thay bác sĩ nằm ngoài ph
 
 - Backend AI đã có API nhận ảnh, Top-3, confidence, ngưỡng không chắc chắn và
   Grad-CAM.
-- Repository chưa có checkpoint `best_model.pth` hoặc bộ dữ liệu huấn luyện;
-  chưa được công bố metric.
-- Frontend hiện dùng Gemini cho tư vấn công khai. RAG trích xuất có citation đã
-  có mã nền nhưng chưa được nối vào giao diện chính.
-- Luồng tải ảnh và xem kết quả chẩn đoán AI trên frontend là phần cần hoàn tất
-  để đạt đầy đủ mục tiêu đề tài.
+- Checkpoint EfficientNet-B0 đã được huấn luyện cục bộ; test sạch đạt Accuracy
+  76,60%, Macro F1 75,27% và Top-3 Accuracy 95,21%.
+- Frontend dùng Gemini cho tư vấn công khai. Sau mỗi prediction, RAG tự truy hồi
+  nội dung liên quan từ PDF hướng dẫn da liễu trong `SkinDisease`, rồi trả tối đa
+  ba ý xử trí an toàn, ngắn gọn theo nhóm bệnh.
+- Frontend Patient đã có luồng tải ảnh, xem Top-3/Grad-CAM, lưu lịch sử metadata,
+  chủ động chia sẻ kết quả và chuyển sang đặt lịch. Ảnh gốc không được lưu.
 
 ## 2. Tác nhân và quyền chính
 
 | Tác nhân | Chức năng |
 |---|---|
-| Bệnh nhân | Đăng ký; cập nhật hồ sơ; chọn bác sĩ/ngày/slot; giữ và xác nhận lịch; đổi/hủy trong thời hạn; xem lịch, hồ sơ, đơn thuốc; nhận thông báo; chat lễ tân; đánh giá lịch đã hoàn thành |
-| Bác sĩ | Cập nhật hồ sơ nghề nghiệp, avatar, mô tả; quản lý ca làm/nghỉ phép; xem lịch được xác nhận; bắt đầu khám; xem AI tham khảo; ghi hồ sơ; ký đơn; yêu cầu tái khám |
+| Bệnh nhân | Đăng ký; cập nhật hồ sơ; kiểm tra ảnh da sơ bộ bằng AI; chủ động chia sẻ tóm tắt AI khi đặt lịch; chọn bác sĩ/ngày/slot; giữ và xác nhận lịch; đổi/hủy trong thời hạn; xem lịch, hồ sơ, đơn thuốc; nhận thông báo; chat lễ tân; đánh giá lịch đã hoàn thành |
+| Bác sĩ | Cập nhật hồ sơ nghề nghiệp, avatar, mô tả; quản lý ca làm/nghỉ phép; xem lịch được xác nhận và tóm tắt AI do bệnh nhân chia sẻ; bắt đầu khám; ghi kết luận độc lập; ký đơn; yêu cầu tái khám |
 | Lễ tân | Tra cứu bệnh nhân; đặt hộ qua hotline/chat; tiếp nhận, phân công, xác nhận, đổi/hủy lịch; nhắc lịch; ghi nhận không đến khám |
 | Quản trị viên | Tạo tài khoản nhân sự; xem bác sĩ/bệnh nhân; khóa/mở tài khoản bệnh nhân; khai báo ngày nghỉ chung; duyệt đánh giá; xem dashboard |
 
@@ -100,12 +102,19 @@ Phân quyền sử dụng RBAC với bốn role: `PATIENT`, `DOCTOR`, `RECEPTION
   version, cờ `uncertain`, Grad-CAM dạng data URL và disclaimer.
 - **FR-AI-03:** khi chưa có checkpoint, API phải fail-closed với HTTP 503; không
   tạo kết quả giả.
-- **FR-AI-04:** frontend mục tiêu cho phép Patient/Doctor tải ảnh và hiển thị kết
-  quả như tham khảo, tách biệt với trường chẩn đoán cuối của bác sĩ.
+- **FR-AI-04:** frontend chỉ cho Patient tải ảnh và hiển thị kết quả tham khảo;
+  Doctor không chạy model và chỉ thấy tóm tắt khi Patient chủ động chia sẻ qua
+  nội dung đặt lịch. Kết quả luôn tách biệt với chẩn đoán cuối của bác sĩ.
+- **FR-AI-05:** Patient Service chỉ lưu metadata kết quả, model version và trạng
+  thái chia sẻ; không lưu ảnh gốc hoặc Grad-CAM. Patient có thể đổi trạng thái
+  chia sẻ và xóa lịch sử của chính mình.
 - **FR-CHAT-01:** chatbot Gemini công khai chỉ tư vấn kiến thức chăm sóc da,
   không chẩn đoán chắc chắn, kê đơn hoặc nêu liều thuốc.
-- **FR-RAG-01:** RAG là mô-đun mở rộng có citation; khi index chưa sẵn sàng phải
-  trả lời không đủ bằng chứng thay vì bịa nội dung.
+- **FR-RAG-01:** sau prediction, RAG truy hồi theo nhãn từ tài liệu y khoa cục bộ,
+  trả đoạn tham khảo cùng tên nguồn/số trang; khi index chưa sẵn sàng hoặc không
+  đủ bằng chứng phải fail-closed thay vì bịa nội dung.
+- **FR-RAG-02:** nội dung tự động cho Patient không chứa liều hoặc tên thuốc kê
+  đơn; chỉ tóm tắt tối đa ba ý xử trí/chăm sóc được kiểm soát theo trang điều trị.
 - **FR-SUP-01:** Patient và lễ tân chat hỗ trợ realtime; lễ tân nhìn thấy danh
   tính, tên và số điện thoại của đúng cuộc hội thoại.
 - **FR-REV-01:** mỗi lịch `COMPLETED` chỉ được đánh giá một lần; chỉ review

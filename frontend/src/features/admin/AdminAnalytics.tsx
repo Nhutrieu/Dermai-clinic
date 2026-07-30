@@ -151,7 +151,6 @@ export function AdminAnalytics({
                 <div className="chart-panel">
                     <div className="chart-header">
                         <h3>Biểu đồ lượt đặt lịch theo {period === "DAILY" ? "ngày gần nhất" : "trạng thái"}</h3>
-                        <small>Cập nhật tự động từ Database</small>
                     </div>
 
                     {period === "DAILY" ? (

@@ -1,5 +1,12 @@
 const API_ROOT = "/api/v1";
 
+export class ApiError extends Error {
+  constructor(message: string, public readonly status: number, public readonly code?: string) {
+    super(message);
+    this.name = "ApiError";
+  }
+}
+
 export async function request<T>(path: string, token?: string, init?: RequestInit): Promise<T> {
   const isForm = init?.body instanceof FormData;
   const response = await fetch(path.startsWith("/ai/") ? path : API_ROOT + path, {
@@ -13,7 +20,7 @@ export async function request<T>(path: string, token?: string, init?: RequestIni
 
   if (!response.ok) {
     const body = await response.json().catch(() => ({ detail: "Không thể kết nối dịch vụ." }));
-    throw new Error(body.detail || `HTTP ${response.status}`);
+    throw new ApiError(body.detail || `HTTP ${response.status}`, response.status, body.code);
   }
 
   if (response.status === 204) return undefined as T;

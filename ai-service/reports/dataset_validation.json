@@ -1,0 +1,245 @@
+{
+  "data_root": "D:\\DermAI Clinic\\SkinDisease",
+  "classes": [
+    "Acne",
+    "Candidiasis",
+    "Eczema",
+    "Lupus",
+    "Psoriasis",
+    "SkinCancer",
+    "Tinea",
+    "Warts"
+  ],
+  "counts": {
+    "train": {
+      "Acne": 593,
+      "Candidiasis": 248,
+      "Eczema": 1010,
+      "Lupus": 311,
+      "Psoriasis": 820,
+      "SkinCancer": 693,
+      "Tinea": 923,
+      "Warts": 580
+    },
+    "test": {
+      "Acne": 65,
+      "Candidiasis": 27,
+      "Eczema": 112,
+      "Lupus": 34,
+      "Psoriasis": 88,
+      "SkinCancer": 77,
+      "Tinea": 102,
+      "Warts": 64
+    }
+  },
+  "totals": {
+    "images": 5747,
+    "broken": 0,
+    "duplicate_groups": 189,
+    "cross_split_duplicate_groups": 38,
+    "label_conflict_groups": 9
+  },
+  "missing_class_folders": [],
+  "broken_files": [],
+  "cross_split_duplicates": [
+    [
+      "train/Acne/acne-cystic-2.jpeg",
+      "test/Eczema/eczema-hand-16.jpeg"
+    ],
+    [
+      "train/Acne/acne-excoriated-1.jpeg",
+      "test/Acne/acne-excoriated-2.jpeg"
+    ],
+    [
+      "train/Acne/acne-pustular-18.jpeg",
+      "test/Acne/acne-cystic-11.jpeg"
+    ],
+    [
+      "train/Candidiasis/candida-groin-10.jpeg",
+      "test/Tinea/tinea-groin-75.jpeg"
+    ],
+    [
+      "train/Candidiasis/candida-groin-4.jpeg",
+      "test/Tinea/13TineaGroin34.jpeg",
+      "test/Tinea/tinea-groin-89.jpeg"
+    ],
+    [
+      "train/Candidiasis/candida-groin-5.jpeg",
+      "train/Tinea/tinea-groin-83.jpeg",
+      "test/Tinea/13TineaGroin143.jpeg"
+    ],
+    [
+      "train/Eczema/05AtopicAreola3.jpeg",
+      "test/Eczema/eczema-areola-17.jpeg"
+    ],
+    [
+      "train/Eczema/eczema-areola-16.jpeg",
+      "test/Eczema/05AtopicAreola23.jpeg"
+    ],
+    [
+      "train/Eczema/eczema-areola-3.jpeg",
+      "test/Eczema/03Eczema0310.jpeg"
+    ],
+    [
+      "train/Eczema/eczema-chronic-2.jpeg",
+      "train/Eczema/eczema-subacute-13.jpeg",
+      "train/Eczema/eczema-subacute-14.jpeg",
+      "test/Eczema/eczema-arms-7.jpeg"
+    ],
+    [
+      "train/Eczema/eczema-fingertips-56.jpeg",
+      "test/Eczema/eczema-fingertips-55.jpeg"
+    ],
+    [
+      "train/Eczema/eczema-fingertips-59.jpeg",
+      "test/Eczema/eczema-fingertips-58.jpeg"
+    ],
+    [
+      "train/Eczema/eczema-hand-1.jpeg",
+      "test/Eczema/eczema-acute-1.jpeg"
+    ],
+    [
+      "train/Eczema/eczema-hand-100.jpeg",
+      "test/Eczema/eczema-fingertips-66.jpeg"
+    ],
+    [
+      "train/Eczema/eczema-impetiginized-7.jpeg",
+      "test/Eczema/eczema-foot-25.jpeg"
+    ],
+    [
+      "train/Eczema/eczema-leg-4.jpeg",
+      "test/Eczema/eczema-subacute-18.jpeg"
+    ],
+    [
+      "train/Eczema/eczema-subacute-15.jpeg",
+      "test/Eczema/eczema-trunk-generalized-36.jpeg"
+    ],
+    [
+      "train/Eczema/eczema-subacute-29.jpeg",
+      "test/Eczema/eczema-trunk-generalized-28.jpeg"
+    ],
+    [
+      "train/Eczema/eczema-trunk-generalized-25.jpeg",
+      "test/Eczema/eczema-subacute-36.jpeg"
+    ],
+    [
+      "train/Lupus/2542__ProtectWyJQcm90ZWN0Il0_FocusFillWzI5NCwyMjIsIngiLDFd.jpeg",
+      "test/Lupus/le-nailfolds__ProtectWyJQcm90ZWN0Il0_FocusFillWzI5NCwyMjIsIngiLDFd.jpeg"
+    ],
+    [
+      "train/Lupus/lupus-chronic-cutaneous-40.jpeg",
+      "test/Lupus/lupus-chronic-cutaneous-41.jpeg"
+    ],
+    [
+      "train/Psoriasis/psoriasis-erythrodermic-29.jpeg",
+      "train/Psoriasis/psoriasis-erythrodermic-30.jpeg",
+      "test/Psoriasis/Psoriasis-Hand-27.jpeg"
+    ],
+    [
+      "train/Psoriasis/Psoriasis-Guttate-25.jpeg",
+      "test/Psoriasis/Psoriasis-Guttate-41.jpeg"
+    ],
+    [
+      "train/Psoriasis/Psoriasis-Guttate-42.jpeg",
+      "test/Psoriasis/Psoriasis-Guttate-26.jpeg"
+    ],
+    [
+      "train/Psoriasis/Psoriasis-Hand-26.jpeg",
+      "test/Psoriasis/Psoriasis-Hand-25.jpeg"
+    ],
+    [
+      "train/Psoriasis/Psoriasis-Hand-34.jpeg",
+      "train/Psoriasis/psoriasis-pustular-generalized-65.jpeg",
+      "test/Psoriasis/psoriasis-erythrodermic-27.jpeg"
+    ],
+    [
+      "train/Psoriasis/psoriasis-palms-soles-90.jpeg",
+      "test/Psoriasis/psoriasis-palms-soles-91.jpeg"
+    ],
+    [
+      "train/SkinCancer/basal-cell-carcinoma-pigmented-65.jpeg",
+      "test/SkinCancer/basal-cell-carcinoma-pigmented-64.jpeg"
+    ],
+    [
+      "train/Tinea/tinea-beard-8.jpeg",
+      "test/Tinea/tinea-beard-1.jpeg"
+    ],
+    [
+      "train/Tinea/tinea-body-14.jpeg",
+      "test/Tinea/tinea-body-15.jpeg"
+    ],
+    [
+      "train/Tinea/tinea-foot-plantar-28.jpeg",
+      "test/Tinea/tinea-foot-dorsum-23.jpeg"
+    ],
+    [
+      "train/Tinea/tinea-foot-webs-1.jpeg",
+      "train/Tinea/tinea-foot-webs-7.jpeg",
+      "test/Tinea/tinea-foot-webs-25.jpeg"
+    ],
+    [
+      "train/Tinea/tinea-foot-webs-13.jpeg",
+      "test/Tinea/tinea-versicolor-87.jpeg"
+    ],
+    [
+      "train/Tinea/tinea-hand-dorsum-7.jpeg",
+      "test/Tinea/tinea-body-9.jpeg"
+    ],
+    [
+      "train/Tinea/tinea-incognito-5.jpeg",
+      "test/Tinea/tinea-groin-64.jpeg"
+    ],
+    [
+      "train/Tinea/tinea-incognito-7.jpeg",
+      "test/Tinea/tinea-groin-91.jpeg"
+    ],
+    [
+      "train/Warts/warts-flat-32.jpeg",
+      "test/Warts/warts-flat-29.jpeg"
+    ],
+    [
+      "train/Warts/warts-flat-35.jpeg",
+      "test/Warts/warts-flat-34.jpeg"
+    ]
+  ],
+  "label_conflicts": [
+    [
+      "train/Acne/acne-cystic-2.jpeg",
+      "test/Eczema/eczema-hand-16.jpeg"
+    ],
+    [
+      "train/Candidiasis/candida-groin-10.jpeg",
+      "test/Tinea/tinea-groin-75.jpeg"
+    ],
+    [
+      "train/Candidiasis/candida-groin-14.jpeg",
+      "train/Tinea/tinea-groin-71.jpeg"
+    ],
+    [
+      "train/Candidiasis/candida-groin-15.jpeg",
+      "train/Tinea/tinea-groin-70.jpeg"
+    ],
+    [
+      "train/Candidiasis/candida-groin-16.jpeg",
+      "train/Tinea/tinea-groin-69.jpeg"
+    ],
+    [
+      "train/Candidiasis/candida-groin-4.jpeg",
+      "test/Tinea/13TineaGroin34.jpeg",
+      "test/Tinea/tinea-groin-89.jpeg"
+    ],
+    [
+      "train/Candidiasis/candida-groin-5.jpeg",
+      "train/Tinea/tinea-groin-83.jpeg",
+      "test/Tinea/13TineaGroin143.jpeg"
+    ],
+    [
+      "train/Candidiasis/candida-groin-6.jpeg",
+      "train/Tinea/tinea-groin-79.jpeg"
+    ],
+    [
+      "train/Candidiasis/candida-groin-7.jpeg",
+      "train/Tinea/tinea-groin-78.jpeg"
+    ]
+  ]
+}

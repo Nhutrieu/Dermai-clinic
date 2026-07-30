@@ -1,0 +1,22 @@
+{
+  "promoted_model": "efficientnet_b0-20260728T185742Z",
+  "promoted_checkpoint_sha256": "914f83a85c4dbff06424e0a48f1121950f10e3c0ce8d5a9f68369b86ea48796",
+  "baseline_model": "efficientnet_b0-20260728T110848Z",
+  "baseline_checkpoint_sha256": "66493a9d23b781c88257a579196a6ab0999226eca751f0276291ce2ac14a4a2c",
+  "fixed_test": {
+    "images": 564,
+    "baseline": {"accuracy": 0.766, "macro_f1": 0.7527, "weighted_f1": 0.7634, "top3_accuracy": 0.9521},
+    "promoted": {"accuracy": 0.7890070921985816, "macro_f1": 0.7831175112263598, "weighted_f1": 0.7858411860129128, "top3_accuracy": 0.9361702127659575}
+  },
+  "scin_external_test": {
+    "images": 240,
+    "observed_classes": 7,
+    "baseline": {"accuracy": 0.225, "macro_f1": 0.2267681869075058, "weighted_f1": 0.2406829016252391, "top3_accuracy": 0.3875},
+    "promoted": {"accuracy": 0.6791666666666667, "macro_f1": 0.41566552091139586, "weighted_f1": 0.6594001772886651, "top3_accuracy": 0.9291666666666667}
+  },
+  "promotion_reason": "Accuracy and Macro F1 improved on the fixed test, while all aggregate metrics improved substantially on the untouched SCIN external test.",
+  "known_regressions": [
+    "Fixed-test Top-3 accuracy decreased by 0.01592978723404253.",
+    "SCIN external Tinea recall is 0.12903225806451613."
+  ]
+}

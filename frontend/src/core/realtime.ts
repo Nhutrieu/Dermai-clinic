@@ -8,6 +8,7 @@ type SocketLike = Pick<WebSocket, "close"> & {
 
 type Options = {
   url?: string;
+  path?: string;
   reconnectMs?: number;
   createSocket?: (url: string) => SocketLike;
   schedule?: (callback: () => void, delay: number) => number;
@@ -17,7 +18,8 @@ type Options = {
 export function subscribeRealtime(listener: (event: RealtimeEvent) => void, options: Options = {}) {
   const browserLocation = typeof location === "undefined" ? { protocol: "http:", host: "localhost" } : location;
   const protocol = browserLocation.protocol === "https:" ? "wss:" : "ws:";
-  const url = options.url ?? `${protocol}//${browserLocation.host}/api/v1/appointments/ws/slots`;
+  const path = options.path ?? "/api/v1/appointments/ws/slots";
+  const url = options.url ?? `${protocol}//${browserLocation.host}${path}`;
   const createSocket = options.createSocket ?? (value => new WebSocket(value));
   const schedule = options.schedule ?? ((callback, delay) => globalThis.setTimeout(callback, delay) as unknown as number);
   const cancel = options.cancel ?? (id => globalThis.clearTimeout(id));

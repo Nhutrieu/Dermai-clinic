@@ -17,6 +17,8 @@ public class JwtGatewayFilter implements GlobalFilter, Ordered {
   private final byte[] secret;
   private static final Set<String> PUBLIC = Set.of(
       "/api/v1/auth/register", "/api/v1/auth/login", "/api/v1/auth/refresh",
+      "/api/v1/auth/google", "/api/v1/auth/google/config",
+      "/api/v1/auth/verification/send", "/api/v1/auth/verification/confirm",
       "/api/v1/auth/forgot-password", "/api/v1/auth/reset-password",
       "/api/v1/auth/bootstrap-admin");
   public JwtGatewayFilter(@Value("${security.jwt.secret}") String secret) {
@@ -28,10 +30,11 @@ public class JwtGatewayFilter implements GlobalFilter, Ordered {
     String path=exchange.getRequest().getURI().getPath();
     boolean publicDoctorDirectory = exchange.getRequest().getMethod() == HttpMethod.GET && path.equals("/api/v1/doctors");
     boolean publicDoctorAvatar = exchange.getRequest().getMethod() == HttpMethod.GET && path.matches("/api/v1/doctors/[0-9a-fA-F-]+/avatar");
+    boolean publicDoctorProfileUpdates = path.equals("/api/v1/doctors/ws/profile");
     boolean publicGeminiChat = exchange.getRequest().getMethod() == HttpMethod.POST && path.equals("/ai/public-chat");
     boolean publicSlotUpdates = path.equals("/api/v1/appointments/ws/slots");
     boolean publicReviews = exchange.getRequest().getMethod() == HttpMethod.GET && path.equals("/api/v1/appointments/reviews/public");
-    if (PUBLIC.contains(path) || publicDoctorDirectory || publicDoctorAvatar || publicGeminiChat || publicSlotUpdates || publicReviews || path.startsWith("/actuator/") || path.startsWith("/ai/health"))
+    if (PUBLIC.contains(path) || publicDoctorDirectory || publicDoctorAvatar || publicDoctorProfileUpdates || publicGeminiChat || publicSlotUpdates || publicReviews || path.startsWith("/actuator/") || path.startsWith("/ai/health"))
       return chain.filter(exchange);
     String value=exchange.getRequest().getHeaders().getFirst(HttpHeaders.AUTHORIZATION);
     if (value==null || !value.startsWith("Bearer ")) return unauthorized(exchange);

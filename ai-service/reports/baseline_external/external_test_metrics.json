@@ -1,0 +1,73 @@
+{
+  "checkpoint": "best_model.pth",
+  "model_version": "efficientnet_b0-20260728T110848Z",
+  "architecture": "efficientnet_b0",
+  "split": "external_test",
+  "excluded_reference_duplicates": 0,
+  "excluded_within_split_duplicates": 0,
+  "test_images": 240,
+  "test_class_counts": {
+    "Acne": 19,
+    "Candidiasis": 1,
+    "Eczema": 156,
+    "Lupus": 4,
+    "Psoriasis": 22,
+    "SkinCancer": 0,
+    "Tinea": 31,
+    "Warts": 7
+  },
+  "accuracy": 0.225,
+  "top3_accuracy": 0.3875,
+  "macro_f1": 0.2267681869075058,
+  "weighted_f1": 0.2406829016252391,
+  "per_class": {
+    "Acne": {
+      "precision": 0.2153846153846154,
+      "recall": 0.7368421052631579,
+      "f1": 0.33333333333333337,
+      "support": 19
+    },
+    "Candidiasis": {
+      "precision": 0.0625,
+      "recall": 1.0,
+      "f1": 0.11764705882352941,
+      "support": 1
+    },
+    "Eczema": {
+      "precision": 0.95,
+      "recall": 0.12179487179487179,
+      "f1": 0.2159090909090909,
+      "support": 156
+    },
+    "Lupus": {
+      "precision": 0.03125,
+      "recall": 0.5,
+      "f1": 0.058823529411764705,
+      "support": 4
+    },
+    "Psoriasis": {
+      "precision": 0.4375,
+      "recall": 0.3181818181818182,
+      "f1": 0.3684210526315789,
+      "support": 22
+    },
+    "SkinCancer": {
+      "precision": 0.0,
+      "recall": 0.0,
+      "f1": 0.0,
+      "support": 0
+    },
+    "Tinea": {
+      "precision": 0.20930232558139536,
+      "recall": 0.2903225806451613,
+      "f1": 0.24324324324324326,
+      "support": 31
+    },
+    "Warts": {
+      "precision": 0.2222222222222222,
+      "recall": 0.2857142857142857,
+      "f1": 0.25,
+      "support": 7
+    }
+  }
+}

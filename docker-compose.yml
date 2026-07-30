@@ -34,10 +34,16 @@ services:
       JWT_SECRET: ${JWT_SECRET:-replace-with-at-least-32-random-characters}
       BOOTSTRAP_TOKEN: ${BOOTSTRAP_TOKEN:-}
       SERVICE_TOKEN: ${SERVICE_TOKEN:-}
-      SMTP_HOST: mailhog
-      SMTP_PORT: 1025
+      GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID:-}
+      SMTP_HOST: ${SMTP_HOST:-smtp.gmail.com}
+      SMTP_PORT: ${SMTP_PORT:-587}
+      SMTP_USERNAME: ${SMTP_USERNAME:-}
+      SMTP_PASSWORD: ${SMTP_PASSWORD:-}
+      SMTP_AUTH: ${SMTP_AUTH:-false}
+      SMTP_STARTTLS: ${SMTP_STARTTLS:-false}
+      MAIL_FROM: ${MAIL_FROM:-no-reply@dermai.local}
     healthcheck: {test: ["CMD", "curl", "-fsS", "http://localhost:8082/actuator/health"], interval: 20s, timeout: 5s, retries: 10, start_period: 45s}
-    depends_on: {postgres: {condition: service_healthy}, mailhog: {condition: service_started}}
+    depends_on: {postgres: {condition: service_healthy}}
   patient-service:
     build: {context: ., dockerfile: services/Dockerfile, args: {SERVICE: patient-service}}
     restart: unless-stopped
@@ -96,11 +102,17 @@ services:
       DB_USER: ${POSTGRES_USER:-dermai}
       DB_PASSWORD: ${POSTGRES_PASSWORD:-change-me}
       RABBITMQ_HOST: rabbitmq
-      SMTP_HOST: mailhog
+      SMTP_HOST: ${SMTP_HOST:-smtp.gmail.com}
+      SMTP_PORT: ${SMTP_PORT:-587}
+      SMTP_USERNAME: ${SMTP_USERNAME:-}
+      SMTP_PASSWORD: ${SMTP_PASSWORD:-}
+      SMTP_AUTH: ${SMTP_AUTH:-true}
+      SMTP_STARTTLS: ${SMTP_STARTTLS:-true}
+      MAIL_FROM: ${MAIL_FROM:-}
       AUTH_URL: http://auth-service:8082
       SERVICE_TOKEN: ${SERVICE_TOKEN:-}
     healthcheck: {test: ["CMD", "curl", "-fsS", "http://localhost:8088/actuator/health"], interval: 20s, timeout: 5s, retries: 10, start_period: 50s}
-    depends_on: {postgres: {condition: service_healthy}, rabbitmq: {condition: service_healthy}, auth-service: {condition: service_started}, mailhog: {condition: service_started}}
+    depends_on: {postgres: {condition: service_healthy}, rabbitmq: {condition: service_healthy}, auth-service: {condition: service_started}}
   ai-service:
     build: ./ai-service
     restart: unless-stopped
@@ -114,7 +126,7 @@ services:
     volumes:
       - ./ai-service/app:/app/app:ro
       - ./ai-service/models:/models:ro
-      - ./ai-service/rag/index:/rag-index:ro
+      - ./ai-service/rag-data:/rag-index:ro
     healthcheck: {test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/health', timeout=3)"], interval: 20s, timeout: 5s, retries: 10, start_period: 60s}
   gateway:
     build: {context: ., dockerfile: services/Dockerfile, args: {SERVICE: gateway}}
@@ -147,12 +159,6 @@ services:
     ports: ["3000:80"]
     depends_on: {gateway: {condition: service_healthy}}
     healthcheck: {test: ["CMD", "wget", "-q", "--spider", "http://127.0.0.1/health"], interval: 20s, timeout: 5s, retries: 5, start_period: 10s}
-  mailhog:
-    image: mailhog/mailhog:v1.0.1
-    restart: unless-stopped
-    mem_limit: 128m
-    ports: ["8025:8025"]
-    healthcheck: {test: ["CMD", "wget", "-q", "--spider", "http://127.0.0.1:8025/api/v2/messages"], interval: 20s, timeout: 5s, retries: 5, start_period: 10s}
   adminer:
     image: adminer:latest
     restart: unless-stopped

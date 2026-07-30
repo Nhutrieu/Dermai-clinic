@@ -13,6 +13,9 @@ spring:
           allowedMethods: [GET, POST, PUT, PATCH, DELETE, OPTIONS]
           allowedHeaders: [Authorization, Content-Type, Idempotency-Key, X-Request-ID]
     routes:
+      - id: doctor-profile-websocket
+        uri: ${DOCTOR_WS_URL:ws://doctor-service:8084}
+        predicates: [Path=/api/v1/doctors/ws/profile]
       - id: appointment-slot-websocket
         uri: ${APPOINTMENT_WS_URL:ws://appointment-service:8085}
         predicates: [Path=/api/v1/appointments/ws/slots]

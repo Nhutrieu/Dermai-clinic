@@ -1,0 +1,63 @@
+{
+  "Acne": {
+    "precision": 0.2153846153846154,
+    "recall": 0.7368421052631579,
+    "f1-score": 0.33333333333333337,
+    "support": 19.0
+  },
+  "Candidiasis": {
+    "precision": 0.0625,
+    "recall": 1.0,
+    "f1-score": 0.11764705882352941,
+    "support": 1.0
+  },
+  "Eczema": {
+    "precision": 0.95,
+    "recall": 0.12179487179487179,
+    "f1-score": 0.2159090909090909,
+    "support": 156.0
+  },
+  "Lupus": {
+    "precision": 0.03125,
+    "recall": 0.5,
+    "f1-score": 0.058823529411764705,
+    "support": 4.0
+  },
+  "Psoriasis": {
+    "precision": 0.4375,
+    "recall": 0.3181818181818182,
+    "f1-score": 0.3684210526315789,
+    "support": 22.0
+  },
+  "SkinCancer": {
+    "precision": 0.0,
+    "recall": 0.0,
+    "f1-score": 0.0,
+    "support": 0.0
+  },
+  "Tinea": {
+    "precision": 0.20930232558139536,
+    "recall": 0.2903225806451613,
+    "f1-score": 0.24324324324324326,
+    "support": 31.0
+  },
+  "Warts": {
+    "precision": 0.2222222222222222,
+    "recall": 0.2857142857142857,
+    "f1-score": 0.25,
+    "support": 7.0
+  },
+  "accuracy": 0.225,
+  "macro avg": {
+    "precision": 0.2660198953985291,
+    "recall": 0.40660695769991184,
+    "f1-score": 0.19842216354406758,
+    "support": 240.0
+  },
+  "weighted avg": {
+    "precision": 0.7089530639203603,
+    "recall": 0.225,
+    "f1-score": 0.2406829016252391,
+    "support": 240.0
+  }
+}

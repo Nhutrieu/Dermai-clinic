@@ -1,18 +1,24 @@
 import argparse
+import hashlib
 import json
 import re
 from pathlib import Path
 
-import numpy as np
 from pypdf import PdfReader
-from sentence_transformers import SentenceTransformer
 
 
-def chunks(text: str, size: int = 3200, overlap: int = 500):
-    cleaned = re.sub(r"\s+", " ", text).strip()
+def clean_text(text: str) -> str:
+    replacements = {"ƣ": "ư", "Ƣ": "Ư", "Ö": "Ú"}
+    for source, target in replacements.items():
+        text = text.replace(source, target)
+    return re.sub(r"\s+", " ", text).strip()
+
+
+def chunks(text: str, size: int = 1100, overlap: int = 120):
+    cleaned = clean_text(text)
     for start in range(0, len(cleaned), size - overlap):
         part = cleaned[start:start + size].strip()
-        if len(part) >= 150:
+        if len(part) >= 120:
             yield part
 
 
@@ -27,18 +33,24 @@ def main():
             items.append({"source": args.pdf.name, "page": page_number, "text": part})
     if not items:
         raise SystemExit("PDF không có text; cần OCR trước khi ingest.")
-    encoder = SentenceTransformer("sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2")
-    vectors = encoder.encode(
-        [x["text"] for x in items], normalize_embeddings=True, show_progress_bar=True
-    )
     args.output.mkdir(parents=True, exist_ok=True)
-    np.save(args.output / "vectors.npy", vectors)
     (args.output / "chunks.json").write_text(
         json.dumps(items, ensure_ascii=False), encoding="utf-8"
+    )
+    metadata = {
+        "source": args.pdf.name,
+        "sha256": hashlib.sha256(args.pdf.read_bytes()).hexdigest(),
+        "pages": len(reader.pages),
+        "chunks": len(items),
+        "chunk_size": 1100,
+        "overlap": 120,
+        "retrieval": "tfidf_word_unigram_bigram",
+    }
+    (args.output / "metadata.json").write_text(
+        json.dumps(metadata, ensure_ascii=False, indent=2), encoding="utf-8"
     )
     print(f"Indexed {len(items)} chunks from {len(reader.pages)} pages.")
 
 
 if __name__ == "__main__":
     main()
-

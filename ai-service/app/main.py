@@ -2,7 +2,7 @@ import io
 import httpx
 from contextlib import asynccontextmanager
 
-from fastapi import FastAPI, File, HTTPException, UploadFile
+from fastapi import FastAPI, File, Header, HTTPException, UploadFile
 from PIL import Image, UnidentifiedImageError
 
 from .config import settings
@@ -41,7 +41,12 @@ def health():
 
 
 @app.post("/predict", response_model=PredictionResponse)
-async def prediction(image: UploadFile = File(...)):
+async def prediction(
+    image: UploadFile = File(...),
+    x_user_role: str | None = Header(default=None, alias="X-User-Role"),
+):
+    if x_user_role != "PATIENT":
+        raise HTTPException(403, "Chỉ bệnh nhân được sử dụng tính năng kiểm tra da bằng AI.")
     if image.content_type not in settings.allowed_mime:
         raise HTTPException(415, "Chỉ chấp nhận JPEG, PNG hoặc WebP.")
     content = await image.read(settings.max_upload_bytes + 1)
@@ -55,7 +60,11 @@ async def prediction(image: UploadFile = File(...)):
         source = Image.open(io.BytesIO(content))
     except (UnidentifiedImageError, OSError):
         raise HTTPException(422, "Tệp không phải ảnh hợp lệ.") from None
-    return predict(state["model"], source)
+    result = predict(state["model"], source, settings.confidence_threshold)
+    rag = state.get("rag")
+    if rag:
+        result["guidance"] = rag.guidance(result["disease"])
+    return result
 
 
 @app.post("/chat", response_model=ChatResponse)

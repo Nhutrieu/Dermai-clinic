@@ -31,7 +31,7 @@ Gateway ----------------------------------------------------------> AI FastAPI
 
 Spring services -> PostgreSQL (mỗi service sở hữu một schema logic)
 Frontend        -> Nginx
-Dev tools       -> MailHog, Adminer
+Dev tools       -> Adminer
 ```
 
 ## 3. Dịch vụ và quyền sở hữu dữ liệu
@@ -40,7 +40,7 @@ Dev tools       -> MailHog, Adminer
 |---|---|---|
 | Gateway | Không lưu nghiệp vụ | Route, xác thực JWT, CORS và security header |
 | Auth Service | `auth` | Identity, email, password hash, role, trạng thái, refresh token, OTP |
-| Patient Service | `patient` | Hồ sơ Patient, điện thoại chuẩn hóa, liên kết tài khoản hotline |
+| Patient Service | `patient` | Hồ sơ Patient, điện thoại chuẩn hóa, liên kết tài khoản hotline và metadata lần kiểm tra da AI |
 | Doctor Service | `doctor` | Hồ sơ Doctor, avatar lưu DB, mô tả, lịch làm và nghỉ phép |
 | Appointment Service | `appointment` | Lịch, hold/proposal, Scheduling Engine, closures, notification trong web, reminder, support chat, review và outbox |
 | Medical Record Service | `medical_record` | Hồ sơ khám đã ký và chẩn đoán cuối |
@@ -131,27 +131,32 @@ Model code hỗ trợ EfficientNet-B0, ResNet50 và ConvNeXt Tiny. Output gồm 
 chính, confidence, Top-3, Grad-CAM data URL, model version, `uncertain` và
 disclaimer. Kết quả không được ghi tự động vào final diagnosis.
 
-Repository hiện chưa lưu prediction metadata hoặc ảnh bệnh nhân trong object
-storage. Nếu bổ sung lưu trữ, phải có consent, quyền truy cập, retention, bỏ
-EXIF và không ghi ảnh/PII vào log.
+Chỉ role `PATIENT` được gọi `/ai/predict`. Patient Service lưu metadata kết quả
+và lựa chọn chia sẻ của đúng bệnh nhân; ảnh gốc và Grad-CAM chỉ tồn tại trong
+phiên giao diện, không được lưu vào database/object storage. Khi bệnh nhân đặt
+lịch từ kết quả AI, frontend đính kèm một tóm tắt vào lý do khám; bác sĩ vẫn ghi
+kết luận độc lập. Không ghi ảnh hoặc PII vào log.
 
 ### 7.2. Gemini và RAG
 
 - `/ai/public-chat` gọi Gemini để tư vấn kiến thức chung. Endpoint này không
   phải RAG và hiện không trả citation.
-- `/ai/chat` dùng `RagStore` trích xuất đoạn tài liệu từ `vectors.npy` và
-  `chunks.json`; nếu thiếu index hoặc không đủ điểm, trả không đủ bằng chứng.
-- RAG hiện ở chế độ extractive, chưa phải generator có citation hoàn chỉnh trên
-  frontend.
+- `RagStore` đọc `chunks.json` được trích theo trang từ PDF trong `SkinDisease`,
+  dựng chỉ mục TF-IDF unigram/bigram khi khởi động và không cần tải model embedding.
+- Sau `/ai/predict`, hệ thống giới hạn tìm kiếm vào các trang điều trị/phòng bệnh
+  tương ứng với nhãn. Khi tìm thấy bằng chứng, API trả một bản tóm tắt kiểm soát
+  tối đa ba ý, không có liều hoặc tên thuốc kê đơn.
+- `/ai/chat` tiếp tục dùng cùng chỉ mục ở chế độ extractive; nếu thiếu index hoặc
+  không đủ điểm, trả không đủ bằng chứng.
 - Cả hai luồng phải từ chối kê đơn/liều thuốc và không nhận PII/ảnh bệnh nhân.
 
 ## 8. Triển khai hiện tại
 
 - Docker Compose chạy PostgreSQL, RabbitMQ, Redis, tám Spring service, AI,
-  Gateway, Frontend/Nginx, MailHog và Adminer.
+  Gateway, Frontend/Nginx và Adminer. Email được gửi qua Gmail SMTP.
 - PostgreSQL dùng named volume. RabbitMQ/Redis cần volume riêng nếu dữ liệu hàng
   đợi/cache phải tồn tại qua container recreation.
-- Các cổng 5432, 8000, 8080, 8081, 15672 và 8025 chỉ nên mở local; production
+- Các cổng 5432, 8000, 8080, 8081 và 15672 chỉ nên mở local; production
   chỉ công khai reverse proxy/TLS.
 - Redis hiện có trong hạ tầng nhưng chưa được ứng dụng dùng cho cache/rate limit.
 - Healthcheck chứng minh process phản hồi endpoint, không thay thế synthetic

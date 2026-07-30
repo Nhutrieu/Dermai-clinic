@@ -13,7 +13,13 @@ node_modules/
 dist/
 target/
 ai-service/models/*.pth
+# Checkpoint huấn luyện có thể nằm trong thư mục archive; không lưu binary model lên Git.
+ai-service/models/**/*.pth
+ai-service/candidates/
 ai-service/rag/index/
+ai-service/rag-data/
+ai-service/data-sources/scin/*.csv
+ai-service/reports/scin_selection.json
 services/ai-service/models/
 services/ai-service/rag/index/
 backups/

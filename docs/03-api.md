@@ -50,12 +50,17 @@
 | GET | `/api/v1/patients/{patientId}` | Doctor/Receptionist/Admin | Xem hồ sơ theo patient ID |
 | GET | `/api/v1/patients/identity/{identityId}` | Receptionist/Admin | Tìm hồ sơ theo identity |
 | POST | `/api/v1/patients/hotline` | Receptionist/Admin | Tạo hoặc lấy hồ sơ khách theo số điện thoại |
+| GET | `/api/v1/patients/me/ai-assessments` | Patient | Lịch sử metadata kiểm tra da AI của tôi |
+| POST | `/api/v1/patients/me/ai-assessments` | Patient | Lưu kết quả AI sau một lần inference thành công |
+| PATCH | `/api/v1/patients/me/ai-assessments/{id}/sharing` | Patient sở hữu | Bật/tắt chia sẻ kết quả khi đặt lịch |
+| DELETE | `/api/v1/patients/me/ai-assessments/{id}` | Patient sở hữu | Xóa kết quả khỏi lịch sử |
 
 Số điện thoại nhận các dạng `+84`, `84`, `0084`, khoảng trắng, dấu chấm hoặc dấu
 gạch và được chuẩn hóa về `0...`. Số không hợp lệ trả HTTP 400.
 
-API `/patients/me/images` **chưa tồn tại**. Ảnh chẩn đoán hiện được gửi trực tiếp
-đến `/ai/predict` và chưa được Patient Service lưu.
+API `/patients/me/images` không tồn tại. Ảnh được gửi trực tiếp đến
+`/ai/predict`; Patient Service chỉ lưu nhãn, confidence, Top-3, model version,
+`uncertain` và trạng thái chia sẻ. Ảnh gốc và Grad-CAM không được lưu.
 
 ## 4. Doctor API
 
@@ -160,7 +165,7 @@ Dashboard Admin hiện tổng hợp từ các API hiện có ở frontend; endpo
 | Method | Endpoint | Quyền | Mô tả |
 |---|---|---|---|
 | GET | `/ai/health` | Public | `modelReady`, `ragReady` |
-| POST | `/ai/predict` | Authenticated | Multipart field `image`; inference + Grad-CAM |
+| POST | `/ai/predict` | Patient | Multipart field `image`; inference, Grad-CAM và RAG theo nhãn |
 | POST | `/ai/chat` | Authenticated | RAG extractive từ index local |
 | POST | `/ai/public-chat` | Public | Gemini tư vấn kiến thức da liễu chung |
 
@@ -178,12 +183,23 @@ Dashboard Admin hiện tổng hợp từ các API hiện có ở frontend; endpo
   "gradcam_image": "data:image/png;base64,...",
   "model_version": "efficientnet_b0-best",
   "uncertain": false,
-  "disclaimer": "Kết quả chỉ nhằm hỗ trợ, không thay thế chẩn đoán của bác sĩ."
+  "disclaimer": "Kết quả chỉ nhằm hỗ trợ, không thay thế chẩn đoán của bác sĩ.",
+  "guidance": {
+    "title": "Thông tin tham khảo về chàm và viêm da cơ địa",
+    "answer": "• Ý xử trí tham khảo thứ nhất...\n\n• Ý thứ hai...\n\n• Ý thứ ba...",
+    "citations": [
+      {"source": "Huong-dan-chan-doan-dieu-tri-Da-lieu.pdf", "page": 115}
+    ],
+    "has_evidence": true
+  }
 }
 ```
 
 Response hiện không có `predictionId` và Grad-CAM không phải artifact URI lưu
-lâu dài. Nếu chưa có checkpoint, `/ai/predict` trả HTTP 503.
+lâu dài. Frontend lưu response metadata qua Patient API sau khi inference thành
+công. `guidance` là tóm tắt kiểm soát tối đa ba ý, không lưu trong hồ sơ và không
+chứa liều hoặc tên thuốc kê đơn. Nếu chưa có checkpoint, `/ai/predict` trả HTTP 503; nếu RAG
+chưa sẵn sàng, `has_evidence=false` thay vì sinh nội dung không có nguồn.
 
 ## 9. Recommendation response
 
