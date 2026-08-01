@@ -3,11 +3,13 @@ import { subscribeRealtime } from "./realtime";
 
 class FakeSocket {
   static instances: FakeSocket[] = [];
+  onopen: WebSocket["onopen"] = null;
   onmessage: WebSocket["onmessage"] = null;
   onclose: WebSocket["onclose"] = null;
   onerror: WebSocket["onerror"] = null;
   constructor(public url: string) { FakeSocket.instances.push(this); }
   close() { this.onclose?.call(this as unknown as WebSocket, {} as CloseEvent); }
+  open() { this.onopen?.call(this as unknown as WebSocket, {} as Event); }
   message(data: string) { this.onmessage?.call(this as unknown as WebSocket, { data } as MessageEvent<string>); }
 }
 
@@ -44,5 +46,19 @@ describe("subscribeRealtime", () => {
     });
     expect(FakeSocket.instances[0].url).toBe("ws://localhost/api/v1/doctors/ws/profile");
     stop();
+  });
+
+  it("reports connection changes without changing event delivery", () => {
+    const states: string[] = [];
+    const stop = subscribeRealtime(vi.fn(), {
+      createSocket: url => new FakeSocket(url),
+      schedule: () => 1,
+      cancel: () => undefined,
+      onConnectionChange: state => states.push(state),
+    });
+    FakeSocket.instances[0].open();
+    FakeSocket.instances[0].close();
+    stop();
+    expect(states).toEqual(["connecting", "connected", "reconnecting", "closed"]);
   });
 });

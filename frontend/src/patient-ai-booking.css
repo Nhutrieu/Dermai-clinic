@@ -1,46 +1,50 @@
 .ai-booking-context {
   display: grid;
-  grid-template-columns: 28px 1fr auto;
+  grid-template-columns: 24px minmax(0, 1fr) auto;
   align-items: center;
-  gap: 10px;
-  margin-top: 16px;
-  padding: 12px 13px;
-  border: 1px solid #cfe0c4;
-  border-radius: 10px;
-  background: #f0f7e8;
-  color: #315d4c;
+  gap: var(--space-3);
+  margin-top: var(--space-4);
+  padding: 13px 14px;
+  border: 1px solid var(--color-success-border);
+  border-radius: var(--radius-control);
+  background: var(--color-success-surface);
+  color: var(--color-success);
 }
 
 .ai-booking-context > svg {
   width: 20px;
+  height: 20px;
 }
 
-.ai-booking-context b,
+.ai-booking-context strong,
 .ai-booking-context small {
   display: block;
 }
 
-.ai-booking-context b {
-  font-size: 10px;
+.ai-booking-context strong {
+  color: var(--color-ink);
+  font-size: 15px;
 }
 
 .ai-booking-context small {
-  margin-top: 3px;
-  color: #60776f;
-  font-size: 8px;
+  margin-top: 4px;
+  color: var(--color-text-secondary);
+  font-size: 14px;
+  line-height: 1.4;
 }
 
 .ai-booking-context button {
-  border: 1px solid #b9cdbf;
-  border-radius: 7px;
-  background: #fff;
-  color: #526f66;
-  padding: 7px 9px;
-  font-size: 8px;
-  cursor: pointer;
+  min-height: var(--control-min-height);
+  padding: 0 12px;
+  border: 1px solid var(--color-border-strong);
+  border-radius: var(--radius-control);
+  background: var(--color-surface);
+  color: var(--color-primary);
+  font-size: 14px;
+  font-weight: 700;
 }
 
-@media (max-width: 560px) {
+@media (max-width: 620px) {
   .ai-booking-context {
     grid-template-columns: 24px 1fr;
   }

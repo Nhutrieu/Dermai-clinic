@@ -1,0 +1,716 @@
+import { useEffect, useState, type ReactNode } from "react";
+import { AlertTriangle, BrainCircuit, CalendarDays, CheckCircle2, Clock3, Stethoscope } from "lucide-react";
+import { request } from "../../core/api";
+import { subscribeRealtime } from "../../core/realtime";
+import type { AiAssessment, Appointment, AvailabilitySlot, Doctor, Patient } from "../../core/types";
+import AppointmentList from "../../components/AppointmentList";
+import AccessibleDialog from "../../components/AccessibleDialog";
+
+const ACTIVE_UPCOMING_STATUSES = new Set(["PROPOSED", "PENDING", "ASSIGNED", "CONFIRMED", "IN_PROGRESS"]);
+type Feedback = { tone: "info" | "success" | "error"; text: string };
+type BookingDialogProps = {
+    title: string;
+    descriptionId: string;
+    titleId: string;
+    tone?: "warning" | "danger";
+    children: ReactNode;
+    primaryLabel: string;
+    secondaryLabel: string;
+    onPrimary: () => void;
+    onClose: () => void;
+    note?: string;
+};
+
+function activeUpcoming(list: Appointment[]) {
+    const now = Date.now();
+    return list.filter(item => ACTIVE_UPCOMING_STATUSES.has(item.status) && new Date(item.endAt).getTime() > now);
+}
+
+function clinicDate(value: string) {
+    return new Intl.DateTimeFormat("en-CA", {
+        timeZone: "Asia/Ho_Chi_Minh", year: "numeric", month: "2-digit", day: "2-digit"
+    }).format(new Date(value));
+}
+
+function clinicDateInput(addDays = 0) {
+    const value = new Date();
+    value.setDate(value.getDate() + addDays);
+    return new Intl.DateTimeFormat("en-CA", {
+        timeZone: "Asia/Ho_Chi_Minh", year: "numeric", month: "2-digit", day: "2-digit"
+    }).format(value);
+}
+
+function formatTime(value: string) {
+    return new Date(value).toLocaleTimeString("vi-VN", { hour: "2-digit", minute: "2-digit" });
+}
+
+function formatDateTime(value: string) {
+    return new Date(value).toLocaleString("vi-VN", {
+        hour: "2-digit", minute: "2-digit", day: "2-digit", month: "2-digit", year: "numeric"
+    });
+}
+
+function slotLabel(status: AvailabilitySlot["status"], holdCountdown: string) {
+    switch (status) {
+        case "BOOKED": return "Đã có người đặt";
+        case "ON_LEAVE": return "Bác sĩ nghỉ";
+        case "HELD_BY_YOU": return "Bạn đang giữ " + holdCountdown;
+        case "HELD_BY_OTHER": return "Người khác đang giữ";
+        default: return "Còn trống";
+    }
+}
+
+function BookingDialog({
+    title, descriptionId, titleId, tone = "warning", children, primaryLabel,
+    secondaryLabel, onPrimary, onClose, note
+}: BookingDialogProps) {
+    return (
+        <AccessibleDialog
+            title={title}
+            titleId={titleId}
+            descriptionId={descriptionId}
+            tone={tone}
+            icon={<AlertTriangle />}
+            onClose={onClose}
+            footer={(
+                <>
+                    <button type="button" onClick={onClose}>{secondaryLabel}</button>
+                    <button type="button" className="booking-dialog-primary" onClick={onPrimary}>{primaryLabel}</button>
+                </>
+            )}
+        >
+            {children}
+            {note && <p className="booking-dialog-note">{note}</p>}
+        </AccessibleDialog>
+    );
+}
+
+export default function PatientAppointmentsView({
+    token, patient, appointments, changed
+}: {
+    token: string;
+    patient: Patient;
+    appointments: Appointment[];
+    changed: (appointments: Appointment[]) => void;
+}) {
+    const [doctors, setDoctors] = useState<Doctor[]>([]);
+    const [doctorId, setDoctorId] = useState("");
+    const [date, setDate] = useState(() => clinicDateInput());
+    const [slots, setSlots] = useState<AvailabilitySlot[]>([]);
+    const [selected, setSelected] = useState<AvailabilitySlot | null>(null);
+    const [pendingSlot, setPendingSlot] = useState<AvailabilitySlot | null>(null);
+    const [duplicateBooking, setDuplicateBooking] = useState<{ slot: AvailabilitySlot; existing: Appointment } | null>(null);
+    const [timeConflict, setTimeConflict] = useState<{ slot: AvailabilitySlot; existing: Appointment; doctorName: string } | null>(null);
+    const [holdId, setHoldId] = useState("");
+    const [holdUntil, setHoldUntil] = useState("");
+    const [holdClock, setHoldClock] = useState(Date.now());
+    const [reason, setReason] = useState("");
+    const [sharedAi, setSharedAi] = useState<AiAssessment | null>(null);
+    const [items, setItems] = useState(appointments);
+    const [feedback, setFeedback] = useState<Feedback | null>(null);
+    const [busy, setBusy] = useState(false);
+
+    const doctor = doctors.find(item => item.id === doctorId);
+    const upcomingCount = activeUpcoming(items).length;
+    const holdSeconds = holdUntil ? Math.max(0, Math.ceil((new Date(holdUntil).getTime() - holdClock) / 1000)) : 0;
+    const holdCountdown = Math.floor(holdSeconds / 60) + ":" + String(holdSeconds % 60).padStart(2, "0");
+
+    async function loadDoctors() {
+        const list = await request<Doctor[]>("/doctors", token);
+        setDoctors(list);
+        setDoctorId(current => current && list.some(item => item.id === current) ? current : list[0]?.id || "");
+    }
+
+    useEffect(() => {
+        loadDoctors().catch(error => setFeedback({ tone: "error", text: (error as Error).message }));
+    }, [token]);
+
+    useEffect(() => {
+        const refresh = () => { void loadDoctors().catch(() => undefined) };
+        window.addEventListener("doctor-profiles-changed", refresh);
+        return () => window.removeEventListener("doctor-profiles-changed", refresh);
+    }, [token]);
+
+    useEffect(() => {
+        request<AiAssessment[]>("/patients/me/ai-assessments", token).then(list => {
+            const draft = sessionStorage.getItem("dermai-ai-booking");
+            let draftId = "";
+            let draftSummary = "";
+            try {
+                const parsed = JSON.parse(draft || "{}");
+                draftId = parsed.assessmentId || "";
+                draftSummary = parsed.summary || "";
+            } catch {
+                /* Bỏ qua draft lỗi để luồng đặt lịch vẫn hoạt động. */
+            }
+            const assessment = list.find(item => item.id === draftId && item.sharedWithDoctor)
+                || list.find(item => item.sharedWithDoctor);
+            if (!assessment) return;
+            setSharedAi(assessment);
+            const top = assessment.top3
+                .map(item => item.label + " " + (item.probability * 100).toFixed(1) + "%")
+                .join("; ");
+            const summary = draftSummary
+                || "Kết quả kiểm tra da bằng AI (tham khảo): " + top + ". Model "
+                + assessment.modelVersion + "."
+                + (assessment.uncertain ? " AI đánh dấu kết quả chưa chắc chắn." : "");
+            setReason(value => value.trim() ? value : summary);
+            sessionStorage.removeItem("dermai-ai-booking");
+        }).catch(() => undefined);
+    }, [token]);
+
+    useEffect(() => { setItems(appointments) }, [appointments]);
+
+    async function findSlots(realtime = false) {
+        if (!doctorId || !date) return;
+        setBusy(true);
+        if (!realtime) {
+            setFeedback(null);
+            setSlots([]);
+        }
+        try {
+            const result = await request<{ items: AvailabilitySlot[] }>(
+                "/appointments/availability?doctorId=" + encodeURIComponent(doctorId)
+                + "&date=" + encodeURIComponent(date) + "&durationMinutes=30",
+                token
+            );
+            setSlots(result.items);
+            const own = result.items.find(item => item.status === "HELD_BY_YOU");
+            if (own) {
+                setSelected(own);
+                setHoldId(own.holdId || "");
+                setHoldUntil(own.holdExpiresAt || "");
+            } else if (selected && !result.items.some(item => item.startAt === selected.startAt && item.status === "AVAILABLE")) {
+                setSelected(null);
+                setHoldId("");
+                setHoldUntil("");
+            }
+            const available = result.items.filter(item => item.status === "AVAILABLE").length;
+            const text = result.items.length
+                ? realtime ? "Lịch khám vừa được cập nhật tự động."
+                    : available ? "Chọn một khung giờ còn trống." : "Các khung giờ trong ngày này đã kín."
+                : "Bác sĩ chưa có lịch làm việc trong ngày đã chọn.";
+            setFeedback(current =>
+                realtime && current && current.tone !== "info"
+                    ? current
+                    : { tone: "info", text }
+            );
+        } catch (error) {
+            setFeedback({ tone: "error", text: (error as Error).message });
+        } finally {
+            setBusy(false);
+        }
+    }
+
+    useEffect(() => {
+        if (doctorId && date) void findSlots();
+    }, [doctorId, date]);
+
+    useEffect(() => {
+        if (!doctorId || !date) return;
+        let live = true;
+        const refresh = () => { if (live) void findSlots(true) };
+        const unsubscribe = subscribeRealtime(refresh);
+        const fallback = window.setInterval(refresh, 5000);
+        window.addEventListener("focus", refresh);
+        return () => {
+            live = false;
+            unsubscribe();
+            window.clearInterval(fallback);
+            window.removeEventListener("focus", refresh);
+        };
+    }, [doctorId, date]);
+
+    useEffect(() => {
+        if (!holdUntil) return;
+        const timer = window.setInterval(() => setHoldClock(Date.now()), 1000);
+        const expiry = window.setTimeout(() => {
+            void releaseHold()
+                .then(() => findSlots(true))
+                .finally(() => setFeedback({
+                    tone: "error",
+                    text: "Thời gian giữ chỗ đã hết. Vui lòng chọn lại khung giờ."
+                }));
+        }, Math.max(0, new Date(holdUntil).getTime() - Date.now()) + 250);
+        return () => {
+            window.clearInterval(timer);
+            window.clearTimeout(expiry);
+        };
+    }, [holdUntil]);
+
+    async function releaseHold() {
+        if (!holdId) return;
+        const id = holdId;
+        setHoldId("");
+        setHoldUntil("");
+        setSelected(null);
+        await request("/appointments/holds/" + id, token, { method: "DELETE" }).catch(() => undefined);
+    }
+
+    async function holdSlot(slot: AvailabilitySlot) {
+        if (busy) return;
+        if (slot.status === "HELD_BY_YOU") {
+            setBusy(true);
+            try {
+                await releaseHold();
+                await findSlots(true);
+                setFeedback({ tone: "info", text: "Đã nhả khung giờ. Người khác có thể đặt giờ này." });
+            } finally {
+                setBusy(false);
+            }
+            return;
+        }
+        if (slot.status !== "AVAILABLE") return;
+        setBusy(true);
+        try {
+            await releaseHold();
+            const held = await request<Appointment>("/appointments/holds", token, {
+                method: "POST",
+                body: JSON.stringify({
+                    patientId: patient.id,
+                    doctorId: slot.doctorId,
+                    doctorIdentityId: slot.doctorIdentityId,
+                    startAt: slot.startAt,
+                    endAt: slot.endAt
+                })
+            });
+            setSelected({ ...slot, status: "HELD_BY_YOU", holdId: held.id, holdExpiresAt: held.holdExpiresAt });
+            setHoldId(held.id);
+            setHoldUntil(held.holdExpiresAt || "");
+            setFeedback({ tone: "success", text: "Khung giờ được giữ riêng cho bạn trong 5 phút." });
+        } catch (error) {
+            await findSlots(true);
+            setFeedback({ tone: "error", text: (error as Error).message });
+        } finally {
+            setBusy(false);
+        }
+    }
+
+    async function chooseSlot(slot: AvailabilitySlot) {
+        if (busy) return;
+        if (slot.status === "HELD_BY_YOU") {
+            await holdSlot(slot);
+            return;
+        }
+        if (slot.status !== "AVAILABLE") return;
+        setBusy(true);
+        try {
+            const latest = await request<Appointment[]>("/appointments/mine", token);
+            setItems(latest);
+            changed(latest);
+            const upcoming = activeUpcoming(latest);
+            const overlapping = upcoming.find(item =>
+                item.doctorId !== slot.doctorId
+                && new Date(item.startAt).getTime() < new Date(slot.endAt).getTime()
+                && new Date(item.endAt).getTime() > new Date(slot.startAt).getTime()
+            );
+            if (overlapping) {
+                const bookedDoctor = doctors.find(item => item.id === overlapping.doctorId);
+                setTimeConflict({
+                    slot,
+                    existing: overlapping,
+                    doctorName: bookedDoctor?.fullName || overlapping.doctorName || "bác sĩ khác"
+                });
+                return;
+            }
+            const sameDoctorDay = upcoming.find(item =>
+                item.doctorId === slot.doctorId && clinicDate(item.startAt) === clinicDate(slot.startAt)
+            );
+            if (sameDoctorDay) {
+                setDuplicateBooking({ slot, existing: sameDoctorDay });
+                return;
+            }
+            if (upcoming.length >= 3) {
+                setFeedback({
+                    tone: "error",
+                    text: "Bạn đã có tối đa 3 lịch khám sắp tới. Vui lòng hoàn thành hoặc hủy một lịch trước khi đặt thêm."
+                });
+                return;
+            }
+            if (upcoming.length > 0) {
+                setPendingSlot(slot);
+                return;
+            }
+        } catch (error) {
+            setFeedback({ tone: "error", text: (error as Error).message });
+            return;
+        } finally {
+            setBusy(false);
+        }
+        await holdSlot(slot);
+    }
+
+    async function confirmAdditionalBooking() {
+        const slot = pendingSlot;
+        setPendingSlot(null);
+        if (slot) await holdSlot(slot);
+    }
+
+    function chooseAnotherDate() {
+        setDuplicateBooking(null);
+        window.setTimeout(() => document.querySelector<HTMLInputElement>("#booking-date")?.focus(), 0);
+    }
+
+    function chooseAnotherTime() {
+        setTimeConflict(null);
+        window.setTimeout(() => {
+            document.querySelector<HTMLButtonElement>(".booking-slot-grid button:not(:disabled)")?.focus();
+        }, 0);
+    }
+
+    async function book() {
+        if (!selected || !holdId || !reason.trim()) return;
+        setBusy(true);
+        try {
+            const booked = await request<Appointment>("/appointments/holds/" + holdId + "/confirm", token, {
+                method: "POST",
+                headers: { "Idempotency-Key": crypto.randomUUID() },
+                body: JSON.stringify({ reason: reason.trim() })
+            });
+            if (sharedAi) {
+                await request("/patients/me/ai-assessments/" + sharedAi.id + "/sharing", token, {
+                    method: "PATCH",
+                    body: JSON.stringify({ sharedWithDoctor: true, appointmentId: booked.id })
+                });
+            }
+            const latest = await request<Appointment[]>("/appointments/mine", token);
+            setItems(latest);
+            changed(latest);
+            setReason("");
+            setSharedAi(null);
+            setSelected(null);
+            setHoldId("");
+            setHoldUntil("");
+            await findSlots(true);
+            setFeedback({
+                tone: "success",
+                text: sharedAi
+                    ? "Đã gửi yêu cầu đặt lịch và chia sẻ riêng kết quả AI với bác sĩ phụ trách."
+                    : "Đã gửi yêu cầu đặt lịch. Bạn có thể theo dõi trạng thái ở danh sách bên dưới."
+            });
+        } catch (error) {
+            await findSlots(true);
+            setFeedback({ tone: "error", text: (error as Error).message });
+        } finally {
+            setBusy(false);
+        }
+    }
+
+    async function clearSharedAi() {
+        if (!sharedAi) return;
+        await request("/patients/me/ai-assessments/" + sharedAi.id + "/sharing", token, {
+            method: "PATCH", body: JSON.stringify({ sharedWithDoctor: false })
+        }).catch(() => undefined);
+        setSharedAi(null);
+        setReason(value => value.startsWith("Kết quả kiểm tra da bằng AI") ? "" : value);
+        setFeedback({ tone: "info", text: "Đã bỏ kết quả AI khỏi yêu cầu đặt lịch." });
+    }
+
+    async function cancel(id: string, cancelReason: string) {
+        await request("/appointments/" + id + "/cancel", token, {
+            method: "POST", body: JSON.stringify({ reason: cancelReason })
+        });
+        const latest = await request<Appointment[]>("/appointments/mine", token);
+        setItems(latest);
+        changed(latest);
+    }
+
+    return (
+        <>
+            {timeConflict && (
+                <BookingDialog
+                    tone="danger"
+                    title="Bạn đã có lịch vào giờ này"
+                    titleId="time-conflict-title"
+                    descriptionId="time-conflict-description"
+                    primaryLabel="Chọn giờ khác"
+                    secondaryLabel="Đóng"
+                    onPrimary={chooseAnotherTime}
+                    onClose={() => setTimeConflict(null)}
+                >
+                    <p>
+                        Lịch với <strong>BS. {timeConflict.doctorName}</strong> từ{" "}
+                        <strong>{formatTime(timeConflict.existing.startAt)}</strong> đến{" "}
+                        <strong>{formatTime(timeConflict.existing.endAt)}</strong> trùng với khung giờ vừa chọn.
+                    </p>
+                    <p>Một bệnh nhân không thể khám hai bác sĩ cùng lúc.</p>
+                </BookingDialog>
+            )}
+            {duplicateBooking && (
+                <BookingDialog
+                    title="Bạn đã đặt lịch với bác sĩ này"
+                    titleId="duplicate-doctor-title"
+                    descriptionId="duplicate-doctor-description"
+                    primaryLabel="Chọn ngày khác"
+                    secondaryLabel="Đóng"
+                    onPrimary={chooseAnotherDate}
+                    onClose={() => setDuplicateBooking(null)}
+                >
+                    <p>
+                        Bạn đã có lịch với <strong>BS. {duplicateBooking.slot.doctorName}</strong>{" "}
+                        vào <strong>{formatDateTime(duplicateBooking.existing.startAt)}</strong>.
+                    </p>
+                    <p>Mỗi bác sĩ chỉ được đặt một lịch trong cùng ngày.</p>
+                </BookingDialog>
+            )}
+            {pendingSlot && (
+                <BookingDialog
+                    title={"Bạn đang có " + upcomingCount + " lịch sắp tới"}
+                    titleId="additional-booking-title"
+                    descriptionId="additional-booking-description"
+                    primaryLabel="Vẫn đặt thêm"
+                    secondaryLabel="Quay lại"
+                    onPrimary={() => void confirmAdditionalBooking()}
+                    onClose={() => setPendingSlot(null)}
+                    note="Tối đa 3 lịch sắp tới. Không thể đặt trùng giờ hoặc cùng bác sĩ hai lần trong một ngày."
+                >
+                    <p>
+                        Bạn vẫn muốn đặt thêm lịch với <strong>BS. {pendingSlot.doctorName}</strong>{" "}
+                        vào <strong>{formatDateTime(pendingSlot.startAt)}</strong>?
+                    </p>
+                </BookingDialog>
+            )}
+
+            <div className="patient-booking">
+                <header className="booking-page-heading">
+                    <div>
+                        <h2>Đặt lịch khám da liễu</h2>
+                        <p>Chọn lần lượt bác sĩ, ngày và khung giờ phù hợp với bạn.</p>
+                    </div>
+                    <span><CalendarDays aria-hidden="true" />Tối đa 60 ngày</span>
+                </header>
+
+                <section className="booking-layout" aria-label="Thông tin đặt lịch">
+                    <div className="booking-flow">
+                        <section className="booking-step" aria-labelledby="doctor-step-title">
+                            <div className="booking-step-heading">
+                                <span aria-hidden="true">1</span>
+                                <div>
+                                    <h3 id="doctor-step-title">Chọn bác sĩ</h3>
+                                    <p>Xem chuyên môn và kinh nghiệm trước khi chọn.</p>
+                                </div>
+                            </div>
+                            {doctors.length === 0 ? (
+                                <div className="booking-state booking-state-loading" role="status">
+                                    <span className="booking-skeleton booking-skeleton-avatar" />
+                                    <span className="booking-skeleton" />
+                                    <span>Đang tải danh sách bác sĩ...</span>
+                                </div>
+                            ) : (
+                                <div className="booking-doctor-selector" aria-label="Danh sách bác sĩ">
+                                    {doctors.map(item => (
+                                        <button
+                                            key={item.id}
+                                            type="button"
+                                            className={doctorId === item.id ? "is-selected" : ""}
+                                            aria-pressed={doctorId === item.id}
+                                            onClick={() => {
+                                                setPendingSlot(null);
+                                                setDuplicateBooking(null);
+                                                setTimeConflict(null);
+                                                setDoctorId(item.id);
+                                                void releaseHold();
+                                            }}
+                                        >
+                                            {item.avatarUrl ? (
+                                                <img src={item.avatarUrl} alt={"Ảnh BS. " + item.fullName} />
+                                            ) : (
+                                                <span aria-hidden="true">{item.fullName.slice(0, 1).toUpperCase()}</span>
+                                            )}
+                                            <div>
+                                                <strong>BS. {item.fullName}</strong>
+                                                <small>{item.specialtyCode}</small>
+                                                <em>{item.experienceYears} năm kinh nghiệm</em>
+                                            </div>
+                                            <CheckCircle2 aria-hidden="true" />
+                                        </button>
+                                    ))}
+                                </div>
+                            )}
+
+                            {/* Hồ sơ ngắn giúp bệnh nhân hiểu bác sĩ trước khi chọn lịch. */}
+                            {doctor && (
+                                <div className="booking-doctor-description" aria-live="polite">
+                                    <strong>Giới thiệu BS. {doctor.fullName}</strong>
+                                    <p>{doctor.bio?.trim() || "Bác sĩ chưa cập nhật phần giới thiệu chuyên môn."}</p>
+                                    {doctor.certificateNo && (
+                                        <small>Số chứng chỉ hành nghề: {doctor.certificateNo}</small>
+                                    )}
+                                </div>
+                            )}
+                        </section>
+
+                        <section className="booking-step" aria-labelledby="date-step-title">
+                            <div className="booking-step-heading">
+                                <span aria-hidden="true">2</span>
+                                <div>
+                                    <h3 id="date-step-title">Chọn ngày khám</h3>
+                                    <p>Có thể đặt lịch từ hôm nay đến 60 ngày tiếp theo.</p>
+                                </div>
+                            </div>
+                            <div className="booking-field booking-date-field">
+                                <label htmlFor="booking-date">Ngày muốn khám</label>
+                                <input
+                                    id="booking-date"
+                                    type="date"
+                                    min={clinicDateInput()}
+                                    max={clinicDateInput(60)}
+                                    value={date}
+                                    onChange={event => {
+                                        setPendingSlot(null);
+                                        setDuplicateBooking(null);
+                                        setTimeConflict(null);
+                                        setDate(event.target.value);
+                                        void releaseHold();
+                                    }}
+                                />
+                                <small>Khung giờ được hiển thị theo giờ Việt Nam.</small>
+                            </div>
+                        </section>
+
+                        <section className="booking-step" aria-labelledby="time-step-title">
+                            <div className="booking-step-heading">
+                                <span aria-hidden="true">3</span>
+                                <div>
+                                    <h3 id="time-step-title">Chọn khung giờ</h3>
+                                    <p>Mỗi lượt khám kéo dài 30 phút.</p>
+                                </div>
+                            </div>
+                            <div className="booking-slot-legend" aria-label="Chú thích trạng thái">
+                                <span>Còn trống</span>
+                                <span>Bạn đang giữ</span>
+                                <span>Không thể chọn</span>
+                            </div>
+                            <div className="booking-slot-grid" aria-busy={busy} aria-label="Các khung giờ khám">
+                                {busy && slots.length === 0 ? (
+                                    <div className="booking-slot-loading" role="status">
+                                        <span>Đang kiểm tra lịch bác sĩ...</span>
+                                        {Array.from({ length: 8 }, (_, index) => <i key={index} aria-hidden="true" />)}
+                                    </div>
+                                ) : slots.length === 0 ? (
+                                    <div className="booking-state booking-state-empty">
+                                        <Clock3 aria-hidden="true" />
+                                        <strong>Chưa có khung giờ</strong>
+                                        <span>Hãy thử chọn ngày khác hoặc bác sĩ khác.</span>
+                                    </div>
+                                ) : (
+                                    slots.map(slot => {
+                                        const unavailable = !["AVAILABLE", "HELD_BY_YOU"].includes(slot.status);
+                                        const statusClass = slot.status.toLowerCase().replaceAll("_", "-");
+                                        const label = slotLabel(slot.status, holdCountdown);
+                                        return (
+                                            <button
+                                                key={slot.startAt}
+                                                type="button"
+                                                disabled={unavailable}
+                                                className={[
+                                                    selected?.startAt === slot.startAt ? "is-selected" : "",
+                                                    statusClass
+                                                ].filter(Boolean).join(" ")}
+                                                aria-pressed={selected?.startAt === slot.startAt}
+                                                aria-label={formatTime(slot.startAt) + ", " + label}
+                                                onClick={() => void chooseSlot(slot)}
+                                            >
+                                                <strong>{formatTime(slot.startAt)}</strong>
+                                                <small>{label}</small>
+                                            </button>
+                                        );
+                                    })
+                                )}
+                            </div>
+                        </section>
+
+                        <section className="booking-step" aria-labelledby="reason-step-title">
+                            <div className="booking-step-heading">
+                                <span aria-hidden="true">4</span>
+                                <div>
+                                    <h3 id="reason-step-title">Nhập lý do khám</h3>
+                                    <p>Mô tả ngắn triệu chứng để bác sĩ chuẩn bị tốt hơn.</p>
+                                </div>
+                            </div>
+                            <div className="booking-field">
+                                <label htmlFor="booking-reason">Triệu chứng hoặc nhu cầu thăm khám</label>
+                                <textarea
+                                    id="booking-reason"
+                                    required
+                                    maxLength={1000}
+                                    aria-describedby="booking-reason-help"
+                                    value={reason}
+                                    onChange={event => setReason(event.target.value)}
+                                    placeholder="Ví dụ: nổi mẩn đỏ, ngứa da trong 3 ngày"
+                                />
+                                <small id="booking-reason-help">Không nhập thông tin không liên quan đến việc thăm khám.</small>
+                            </div>
+                            {sharedAi && (
+                                <div className="ai-booking-context">
+                                    <BrainCircuit aria-hidden="true" />
+                                    <div>
+                                        <strong>Đính kèm kết quả AI tham khảo</strong>
+                                        <small>
+                                            {sharedAi.predictedLabel} · {(sharedAi.confidence * 100).toFixed(1)}% · {sharedAi.modelVersion}
+                                        </small>
+                                    </div>
+                                    <button type="button" onClick={() => void clearSharedAi()}>Bỏ đính kèm</button>
+                                </div>
+                            )}
+                        </section>
+                    </div>
+
+                    <aside className="booking-review" aria-labelledby="booking-review-title">
+                        <div className="booking-review-heading">
+                            <span aria-hidden="true"><Stethoscope /></span>
+                            <div>
+                                <h3 id="booking-review-title">Xem lại lịch hẹn</h3>
+                                <p>Kiểm tra thông tin trước khi xác nhận.</p>
+                            </div>
+                        </div>
+                        <dl>
+                            <div><dt>Bác sĩ</dt><dd>{doctor ? "BS. " + doctor.fullName : "Chưa chọn"}</dd></div>
+                            <div>
+                                <dt>Ngày khám</dt>
+                                <dd>{date ? new Date(date + "T00:00:00").toLocaleDateString("vi-VN") : "Chưa chọn"}</dd>
+                            </div>
+                            <div><dt>Khung giờ</dt><dd>{selected ? formatTime(selected.startAt) : "Chưa chọn"}</dd></div>
+                            <div><dt>Lý do khám</dt><dd className="booking-review-reason">{reason.trim() || "Chưa nhập"}</dd></div>
+                        </dl>
+                        {holdUntil && (
+                            <div className="booking-hold-status" role="status" aria-live="polite">
+                                <Clock3 aria-hidden="true" />
+                                <span>Giữ riêng trong <strong>{holdCountdown}</strong>. Nhấn lại khung giờ để nhả chỗ.</span>
+                            </div>
+                        )}
+                        <button
+                            type="button"
+                            className="booking-confirm"
+                            disabled={busy || !selected || !reason.trim() || !holdId}
+                            onClick={() => void book()}
+                        >
+                            {busy && selected ? "Đang xử lý..." : "Xác nhận đặt lịch"}
+                        </button>
+                        {(!selected || !reason.trim()) && (
+                            <small className="booking-confirm-help">
+                                {!selected ? "Chọn một khung giờ để tiếp tục." : "Nhập lý do khám để xác nhận."}
+                            </small>
+                        )}
+                        {feedback && (
+                            <div
+                                className={"booking-feedback booking-feedback-" + feedback.tone}
+                                role={feedback.tone === "error" ? "alert" : "status"}
+                                aria-live={feedback.tone === "error" ? "assertive" : "polite"}
+                            >
+                                {feedback.text}
+                            </div>
+                        )}
+                    </aside>
+                </section>
+
+                <AppointmentList
+                    token={token}
+                    appointments={items}
+                    cancel={cancel}
+                    patientName={patient.fullName}
+                />
+            </div>
+        </>
+    );
+}

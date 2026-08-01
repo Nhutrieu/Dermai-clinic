@@ -1,6 +1,8 @@
 export type RealtimeEvent = { type: string } & Record<string, unknown>;
+export type RealtimeConnectionState = "connecting" | "connected" | "reconnecting" | "closed";
 
 type SocketLike = Pick<WebSocket, "close"> & {
+  onopen: WebSocket["onopen"];
   onmessage: WebSocket["onmessage"];
   onclose: WebSocket["onclose"];
   onerror: WebSocket["onerror"];
@@ -13,6 +15,7 @@ type Options = {
   createSocket?: (url: string) => SocketLike;
   schedule?: (callback: () => void, delay: number) => number;
   cancel?: (id: number) => void;
+  onConnectionChange?: (state: RealtimeConnectionState) => void;
 };
 
 export function subscribeRealtime(listener: (event: RealtimeEvent) => void, options: Options = {}) {
@@ -23,6 +26,7 @@ export function subscribeRealtime(listener: (event: RealtimeEvent) => void, opti
   const createSocket = options.createSocket ?? (value => new WebSocket(value));
   const schedule = options.schedule ?? ((callback, delay) => globalThis.setTimeout(callback, delay) as unknown as number);
   const cancel = options.cancel ?? (id => globalThis.clearTimeout(id));
+  const onConnectionChange = options.onConnectionChange ?? (() => undefined);
   const reconnectMs = options.reconnectMs ?? 2_000;
   let active = true;
   let socket: SocketLike | undefined;
@@ -30,8 +34,10 @@ export function subscribeRealtime(listener: (event: RealtimeEvent) => void, opti
 
   const connect = () => {
     if (!active) return;
+    onConnectionChange(socket ? "reconnecting" : "connecting");
     const connected = createSocket(url);
     socket = connected;
+    connected.onopen = () => onConnectionChange("connected");
     connected.onmessage = event => {
       try {
         const parsed = JSON.parse(event.data) as RealtimeEvent;
@@ -42,7 +48,10 @@ export function subscribeRealtime(listener: (event: RealtimeEvent) => void, opti
     };
     connected.onerror = () => connected.close();
     connected.onclose = () => {
-      if (active) retry = schedule(connect, reconnectMs);
+      if (active) {
+        onConnectionChange("reconnecting");
+        retry = schedule(connect, reconnectMs);
+      }
     };
   };
 
@@ -51,6 +60,7 @@ export function subscribeRealtime(listener: (event: RealtimeEvent) => void, opti
     active = false;
     if (retry !== undefined) cancel(retry);
     socket?.close();
+    onConnectionChange("closed");
   };
 }
 

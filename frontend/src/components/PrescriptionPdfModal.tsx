@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { Printer, X, FileText, CheckCircle2, ShieldCheck, Stethoscope, ZoomIn, ZoomOut } from "lucide-react";
 import { request } from "../core/api";
 import type { Appointment, MedicalRecord, Patient, Prescription } from "../core/types";
+export { PrescriptionPdfModal } from "./PrescriptionPdfDialog";
 
 function formatAppointmentTime(iso: string) {
     if (!iso) return "";
@@ -11,7 +12,7 @@ function formatAppointmentTime(iso: string) {
     return `${time} · ${date}`;
 }
 
-export function PrescriptionPdfModal({
+function LegacyPrescriptionPdfModal({
     appointment,
     record: initialRecord,
     prescription: initialPrescription,

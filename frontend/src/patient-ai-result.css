@@ -1,0 +1,563 @@
+.patient-ai-result {
+  overflow: hidden;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-panel);
+  background: var(--color-surface);
+  box-shadow: var(--shadow-sm);
+}
+
+.patient-ai-result-header {
+  display: grid;
+  grid-template-columns: minmax(260px, 0.75fr) minmax(360px, 1.25fr);
+  gap: var(--space-6);
+  align-items: center;
+  margin: 0;
+  padding: var(--space-6);
+  border-bottom: 1px solid var(--color-border);
+}
+
+.patient-ai-result-header h2 {
+  margin: 0;
+  color: var(--color-ink);
+  font-family: Newsreader, serif;
+  font-size: clamp(26px, 3vw, 34px);
+  font-weight: 600;
+  line-height: 1.15;
+}
+
+.patient-ai-result-header > div:first-child > p {
+  margin: var(--space-2) 0 0;
+  color: var(--color-text-secondary);
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+.patient-ai-review-status {
+  display: grid;
+  grid-template-columns: 24px minmax(0, 1fr);
+  gap: var(--space-3);
+  align-items: start;
+  padding-left: var(--space-5);
+  border-left: 1px solid var(--color-border);
+  color: var(--color-info);
+}
+
+.patient-ai-review-status.is-ready {
+  color: var(--color-warning);
+}
+
+.patient-ai-review-status.is-not-shared {
+  color: var(--color-text-secondary);
+}
+
+.patient-ai-review-status > svg {
+  width: 22px;
+  height: 22px;
+  margin-top: 1px;
+}
+
+.patient-ai-review-status strong {
+  display: block;
+  color: var(--color-ink);
+  font-size: 16px;
+  line-height: 1.4;
+}
+
+.patient-ai-review-status p {
+  margin: 4px 0 0;
+  color: var(--color-text-secondary);
+  font-size: 14px;
+  line-height: 1.55;
+}
+
+.patient-ai-result-notice {
+  display: grid;
+  grid-template-columns: 22px minmax(0, 1fr);
+  gap: var(--space-3);
+  margin: var(--space-5) var(--space-6) 0;
+  padding: 15px 16px;
+  border: 1px solid var(--color-warning-border);
+  border-radius: var(--radius-control);
+  background: var(--color-warning-surface);
+  color: var(--color-warning);
+}
+
+.patient-ai-result-notice svg {
+  width: 21px;
+  height: 21px;
+  margin-top: 1px;
+}
+
+.patient-ai-result-notice p {
+  margin: 0;
+  color: var(--color-ink);
+  font-size: 15px;
+  font-weight: 700;
+  line-height: 1.55;
+}
+
+.patient-ai-result-body {
+  padding: var(--space-6);
+}
+
+.patient-ai-result-body > section + section,
+.patient-ai-technical-details {
+  margin-top: var(--space-6);
+  padding-top: var(--space-6);
+  border-top: 1px solid var(--color-border);
+}
+
+.patient-ai-result-section-heading h3,
+.patient-ai-confidence-note h3,
+.patient-ai-next-action h3 {
+  margin: 0;
+  color: var(--color-ink);
+  font-family: Manrope, system-ui, sans-serif;
+  font-size: 21px;
+  line-height: 1.35;
+}
+
+.patient-ai-result-section-heading > p,
+.patient-ai-confidence-note > div:first-child > p,
+.patient-ai-next-action > div > p {
+  max-width: var(--patient-ai-result-reading-width);
+  margin: 7px 0 0;
+  color: var(--color-text-secondary);
+  font-size: 15px;
+  line-height: 1.6;
+}
+
+.patient-ai-observation-lead {
+  max-width: var(--patient-ai-result-reading-width);
+  margin: var(--space-5) 0 0;
+  color: var(--color-ink);
+  font-size: 17px;
+  line-height: 1.7;
+}
+
+.patient-ai-observation-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.05fr) minmax(0, 0.95fr);
+  gap: var(--space-6);
+  margin-top: var(--space-5);
+}
+
+.patient-ai-observation-grid > div + div {
+  padding-left: var(--space-6);
+  border-left: 1px solid var(--color-border);
+}
+
+.patient-ai-observation-grid h4,
+.patient-ai-gradcam-explanation h4,
+.patient-ai-guidance-copy h4 {
+  margin: 0;
+  color: var(--color-ink);
+  font-size: 15px;
+  line-height: 1.45;
+}
+
+.patient-ai-observation-grid p {
+  margin: 7px 0 0;
+  color: var(--color-text-secondary);
+  font-size: 15px;
+  line-height: 1.6;
+}
+
+.patient-ai-observation-grid h4 + p + h4 {
+  margin-top: var(--space-5);
+}
+
+.patient-ai-observation-grid ol {
+  display: grid;
+  gap: var(--space-2);
+  margin: var(--space-3) 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.patient-ai-observation-grid li {
+  display: flex;
+  min-height: var(--control-min-height);
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  padding: 8px 0;
+  color: var(--color-text-secondary);
+  font-size: 15px;
+}
+
+.patient-ai-observation-grid li + li {
+  border-top: 1px solid var(--color-border);
+}
+
+.patient-ai-observation-grid li span {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.patient-ai-observation-grid li span b {
+  display: grid;
+  width: 26px;
+  height: 26px;
+  place-items: center;
+  border: 1px solid var(--color-border-strong);
+  border-radius: var(--radius-control);
+  color: var(--color-primary);
+  font-size: 14px;
+}
+
+.patient-ai-observation-grid li > strong {
+  color: var(--color-ink);
+  font-size: 14px;
+}
+
+.patient-ai-image-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--space-4);
+  margin-top: var(--space-5);
+}
+
+.patient-ai-image-grid figure {
+  min-width: 0;
+  margin: 0;
+}
+
+.patient-ai-result-media {
+  display: grid;
+  aspect-ratio: 4 / 3;
+  overflow: hidden;
+  place-items: center;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-control);
+  background: var(--color-disabled-surface);
+}
+
+.patient-ai-result-media img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+.patient-ai-result-media-empty {
+  display: grid;
+  max-width: 310px;
+  justify-items: center;
+  gap: var(--space-3);
+  padding: var(--space-5);
+  color: var(--color-text-secondary);
+  font-size: 14px;
+  line-height: 1.5;
+  text-align: center;
+}
+
+.patient-ai-result-media-empty svg {
+  width: 28px;
+  height: 28px;
+  color: var(--color-muted);
+}
+
+.patient-ai-image-grid figcaption {
+  display: grid;
+  gap: 3px;
+  padding-top: var(--space-3);
+}
+
+.patient-ai-image-grid figcaption strong {
+  color: var(--color-ink);
+  font-size: 15px;
+}
+
+.patient-ai-image-grid figcaption span {
+  color: var(--color-text-secondary);
+  font-size: 14px;
+  line-height: 1.45;
+}
+
+.patient-ai-gradcam-explanation {
+  display: grid;
+  grid-template-columns: 22px minmax(0, 1fr);
+  gap: var(--space-3);
+  margin-top: var(--space-5);
+  padding: var(--space-4);
+  border: 1px solid var(--color-info-border);
+  border-radius: var(--radius-control);
+  background: var(--color-info-surface);
+  color: var(--color-info);
+}
+
+.patient-ai-gradcam-explanation > svg {
+  width: 21px;
+  height: 21px;
+}
+
+.patient-ai-gradcam-explanation p {
+  margin: 5px 0 0;
+  color: var(--color-text-secondary);
+  font-size: 14px;
+  line-height: 1.6;
+}
+
+.patient-ai-confidence-note {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: var(--space-5);
+  padding: var(--space-5);
+  border: 1px solid var(--color-info-border);
+  border-radius: var(--radius-control);
+  background: var(--color-info-surface);
+}
+
+.patient-ai-confidence-note.is-uncertain {
+  border-color: var(--color-warning-border);
+  background: var(--color-warning-surface);
+}
+
+.patient-ai-confidence-value {
+  min-width: 140px;
+  text-align: right;
+}
+
+.patient-ai-confidence-value span,
+.patient-ai-confidence-value strong {
+  display: block;
+}
+
+.patient-ai-confidence-value span {
+  color: var(--color-text-secondary);
+  font-size: 14px;
+}
+
+.patient-ai-confidence-value strong {
+  margin-top: 3px;
+  color: var(--color-ink);
+  font-size: 23px;
+  line-height: 1.25;
+}
+
+.patient-ai-confidence-status {
+  grid-column: 1 / -1;
+  margin: 0;
+  padding-top: var(--space-4);
+  border-top: 1px solid var(--color-info-border);
+  color: var(--color-text-secondary);
+  font-size: 14px;
+  line-height: 1.6;
+}
+
+.patient-ai-confidence-note.is-uncertain .patient-ai-confidence-status {
+  border-top-color: var(--color-warning-border);
+}
+
+.patient-ai-guidance-copy {
+  display: grid;
+  grid-template-columns: 24px minmax(0, 1fr);
+  gap: var(--space-3);
+  max-width: calc(var(--patient-ai-result-reading-width) + 48px);
+  margin-top: var(--space-5);
+}
+
+.patient-ai-guidance-copy > svg {
+  width: 22px;
+  height: 22px;
+  color: var(--color-primary);
+}
+
+.patient-ai-guidance-copy p {
+  margin: var(--space-3) 0 0;
+  color: var(--color-text-secondary);
+  font-size: 15px;
+  line-height: 1.7;
+}
+
+.patient-ai-next-action {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: var(--space-5);
+  align-items: center;
+}
+
+.patient-ai-next-action button {
+  display: inline-flex;
+  min-height: 48px;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+  padding: 0 18px;
+  border: 1px solid var(--color-primary);
+  border-radius: var(--radius-control);
+  background: var(--color-primary);
+  color: var(--color-surface);
+  font-size: 15px;
+  font-weight: 800;
+  white-space: nowrap;
+  transition:
+    background-color var(--patient-ai-motion-duration) var(--patient-ai-motion-ease),
+    transform var(--patient-ai-motion-duration) var(--patient-ai-motion-ease);
+}
+
+.patient-ai-next-action button:hover {
+  background: var(--color-primary-strong);
+  transform: translateY(-1px);
+}
+
+.patient-ai-next-action button:active {
+  transform: translateY(1px);
+}
+
+.patient-ai-next-action button svg {
+  width: 18px;
+  height: 18px;
+}
+
+.patient-ai-technical-details summary {
+  display: flex;
+  min-height: var(--control-min-height);
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  color: var(--color-primary);
+  font-size: 15px;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.patient-ai-technical-details summary::after {
+  content: "Mở";
+  color: var(--color-text-secondary);
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.patient-ai-technical-details[open] summary::after {
+  content: "Đóng";
+}
+
+.patient-ai-technical-details summary:focus-visible {
+  outline: none;
+  border-radius: var(--radius-control);
+  box-shadow: var(--focus-ring);
+}
+
+.patient-ai-technical-details dl {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--space-3) var(--space-5);
+  margin: var(--space-3) 0 0;
+}
+
+.patient-ai-technical-details dl > div {
+  min-width: 0;
+}
+
+.patient-ai-technical-details dt {
+  color: var(--color-text-secondary);
+  font-size: 14px;
+}
+
+.patient-ai-technical-details dd {
+  margin: 4px 0 0;
+  color: var(--color-ink);
+  font-size: 14px;
+  font-weight: 700;
+  overflow-wrap: anywhere;
+}
+
+.patient-ai-technical-details > p {
+  max-width: var(--patient-ai-result-reading-width);
+  margin: var(--space-4) 0 0;
+  color: var(--color-text-secondary);
+  font-size: 14px;
+  line-height: 1.55;
+}
+
+@media (max-width: 900px) {
+  .patient-ai-result-header {
+    grid-template-columns: 1fr;
+    gap: var(--space-5);
+  }
+
+  .patient-ai-review-status {
+    padding-top: var(--space-5);
+    padding-left: 0;
+    border-top: 1px solid var(--color-border);
+    border-left: 0;
+  }
+}
+
+@media (max-width: 780px) {
+  .patient-ai-observation-grid,
+  .patient-ai-image-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .patient-ai-observation-grid > div + div {
+    padding-top: var(--space-5);
+    padding-left: 0;
+    border-top: 1px solid var(--color-border);
+    border-left: 0;
+  }
+
+  .patient-ai-next-action {
+    grid-template-columns: 1fr;
+  }
+
+  .patient-ai-next-action button {
+    width: 100%;
+  }
+}
+
+@media (max-width: 560px) {
+  .patient-ai-result-header,
+  .patient-ai-result-body {
+    padding: var(--space-5);
+  }
+
+  .patient-ai-result-notice {
+    margin: var(--space-4) var(--space-5) 0;
+  }
+
+  .patient-ai-confidence-note {
+    grid-template-columns: 1fr;
+    padding: var(--space-4);
+  }
+
+  .patient-ai-confidence-value {
+    min-width: 0;
+    text-align: left;
+  }
+
+  .patient-ai-confidence-status {
+    grid-column: auto;
+  }
+}
+
+@media (max-width: 390px) {
+  .patient-ai-result-header,
+  .patient-ai-result-body {
+    padding: var(--space-4);
+  }
+
+  .patient-ai-result-notice {
+    margin: var(--space-4) var(--space-4) 0;
+    padding: 14px;
+  }
+
+  .patient-ai-result-media-empty {
+    padding: var(--space-4);
+  }
+
+  .patient-ai-technical-details dl {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .patient-ai-result button,
+  .patient-ai-result img {
+    animation: none;
+    transition: none;
+  }
+}

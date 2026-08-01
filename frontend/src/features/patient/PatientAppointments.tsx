@@ -1,3 +1,6 @@
+// Stable feature entry. The redesigned view keeps the existing route import unchanged.
+export { default } from "./PatientAppointmentsView";
+
 import { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
 import { AlertTriangle, BrainCircuit, CalendarDays } from "lucide-react";
@@ -8,7 +11,7 @@ import AppointmentList, { HideCancelledButton, ReviewControl } from "../../compo
 const ACTIVE_UPCOMING_STATUSES = new Set(["PROPOSED", "PENDING", "ASSIGNED", "CONFIRMED", "IN_PROGRESS"]);
 function activeUpcoming(list: Appointment[]) { const now = Date.now(); return list.filter(item => ACTIVE_UPCOMING_STATUSES.has(item.status) && new Date(item.endAt).getTime() > now) }
 function clinicDate(value: string) { return new Intl.DateTimeFormat("en-CA", { timeZone: "Asia/Ho_Chi_Minh", year: "numeric", month: "2-digit", day: "2-digit" }).format(new Date(value)) }
-export default function PatientAppointments({ token, patient, appointments, changed }: { token: string; patient: Patient; appointments: Appointment[]; changed: (appointments: Appointment[]) => void }) {
+function LegacyPatientAppointments({ token, patient, appointments, changed }: { token: string; patient: Patient; appointments: Appointment[]; changed: (appointments: Appointment[]) => void }) {
     const [doctors, setDoctors] = useState<Doctor[]>([]); const [doctorId, setDoctorId] = useState(""); const [date, setDate] = useState(() => new Date().toISOString().slice(0, 10)); const [slots, setSlots] = useState<AvailabilitySlot[]>([]); const [selected, setSelected] = useState<AvailabilitySlot | null>(null); const [pendingSlot, setPendingSlot] = useState<AvailabilitySlot | null>(null); const [duplicateBooking, setDuplicateBooking] = useState<{ slot: AvailabilitySlot; existing: Appointment } | null>(null); const [timeConflict, setTimeConflict] = useState<{ slot: AvailabilitySlot; existing: Appointment; doctorName: string } | null>(null); const [holdId, setHoldId] = useState(""); const [holdUntil, setHoldUntil] = useState(""); const [holdClock, setHoldClock] = useState(Date.now()); const [reason, setReason] = useState(""); const [sharedAi, setSharedAi] = useState<AiAssessment | null>(null); const [items, setItems] = useState(appointments); const [message, setMessage] = useState(""); const [busy, setBusy] = useState(false);
     async function loadDoctors() { const list = await request<Doctor[]>("/doctors", token); setDoctors(list); setDoctorId(current => current && list.some(d => d.id === current) ? current : list[0]?.id || "") }
     useEffect(() => { loadDoctors().catch(x => setMessage((x as Error).message)) }, [token]);

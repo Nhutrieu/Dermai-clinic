@@ -10,3 +10,220 @@
 .time-conflict-dialog>p+p{margin-top:8px;padding:9px 12px;border-radius:9px;background:#fff3f0;color:#8a5048}.time-conflict-dialog .additional-booking-icon{background:#ffe9e4;color:#b4473b}
 @keyframes additional-booking-in{from{opacity:0;transform:translateY(12px) scale(.98)}to{opacity:1;transform:none}}
 @media(max-width:520px){.additional-booking-dialog{padding:24px 18px}.additional-booking-dialog>div{grid-template-columns:1fr}.additional-booking-dialog h2{font-size:20px}}
+
+/* Accessible booking decisions use restrained surfaces and the shared token scale. */
+.booking-dialog-backdrop {
+  position: fixed;
+  z-index: 120;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  padding: var(--space-4);
+  background: var(--color-overlay);
+}
+
+.booking-dialog {
+  position: relative;
+  width: min(460px, 100%);
+  max-height: calc(100dvh - 32px);
+  overflow: auto;
+  padding: 28px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-panel);
+  background: var(--color-surface);
+  color: var(--color-ink);
+  box-shadow: var(--shadow-md);
+  text-align: left;
+}
+
+.booking-dialog:focus {
+  outline: none;
+}
+
+.booking-dialog-close {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  display: grid;
+  width: var(--control-min-height);
+  height: var(--control-min-height);
+  place-items: center;
+  padding: 0;
+  border: 1px solid transparent;
+  border-radius: var(--radius-control);
+  background: transparent;
+  color: var(--color-text-secondary);
+}
+
+.booking-dialog-close:hover {
+  border-color: var(--color-border);
+  background: var(--color-surface-subtle);
+}
+
+.booking-dialog-close svg {
+  width: 20px;
+  height: 20px;
+}
+
+.booking-dialog-icon {
+  display: grid;
+  width: 44px;
+  height: 44px;
+  place-items: center;
+  margin-bottom: var(--space-4);
+  border-radius: var(--radius-control);
+  background: var(--color-warning-surface);
+  color: var(--color-warning);
+}
+
+.booking-dialog-danger .booking-dialog-icon {
+  background: var(--color-danger-surface);
+  color: var(--color-danger);
+}
+
+.booking-dialog-icon svg {
+  width: 22px;
+  height: 22px;
+}
+
+.booking-dialog h2 {
+  max-width: calc(100% - 34px);
+  margin: 0;
+  color: var(--color-ink);
+  font-family: Manrope, system-ui, sans-serif;
+  font-size: 22px;
+  line-height: 1.35;
+}
+
+.booking-dialog-copy {
+  margin-top: var(--space-3);
+}
+
+.booking-dialog-copy p,
+.booking-dialog-note {
+  margin: 0;
+  color: var(--color-text-secondary);
+  font-size: 15px;
+  line-height: 1.6;
+}
+
+.booking-dialog-copy p + p {
+  margin-top: var(--space-2);
+}
+
+.booking-dialog-copy strong {
+  color: var(--color-ink);
+}
+
+.booking-dialog-note {
+  margin-top: var(--space-4);
+  padding: 11px 12px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-control);
+  background: var(--color-surface-subtle);
+  font-size: 14px;
+}
+
+.booking-dialog-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--space-2);
+  margin-top: var(--space-5);
+}
+
+.booking-dialog-actions button {
+  min-height: var(--control-min-height);
+  padding: 0 15px;
+  border: 1px solid var(--color-border-strong);
+  border-radius: var(--radius-control);
+  background: var(--color-surface);
+  color: var(--color-primary);
+  font-size: 14px;
+  font-weight: 800;
+  white-space: nowrap;
+}
+
+.booking-dialog-actions .booking-dialog-primary {
+  border-color: var(--color-primary);
+  background: var(--color-primary);
+  color: var(--color-surface);
+}
+
+.booking-dialog-actions .booking-dialog-primary:hover {
+  background: var(--color-primary-strong);
+}
+
+/* Notification remains visually secondary but readable while booking. */
+.patient-route .notification-panel > header small {
+  display: none;
+}
+
+.patient-route .notification-panel > header button {
+  width: var(--control-min-height);
+  height: var(--control-min-height);
+}
+
+.patient-route .notification-list > article {
+  padding: 14px;
+  border-bottom: 1px solid var(--color-border);
+  background: var(--color-surface);
+}
+
+.patient-route .notification-list > article.unread {
+  background: var(--color-success-surface);
+}
+
+.patient-route .notification-list b,
+.patient-route .notification-list p,
+.patient-route .notification-list small,
+.patient-route .notification-empty b,
+.patient-route .notification-empty p {
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+.patient-route .proposal-actions button {
+  min-height: var(--control-min-height);
+}
+
+@media (max-width: 780px) {
+  /* Keep the two patient launchers above the fixed bottom navigation. */
+  .patient-route .support-chat {
+    right: 14px;
+    bottom: 88px;
+  }
+
+  .patient-route .support-panel {
+    height: min(520px, calc(100dvh - 180px));
+  }
+
+  .patient-route .notification-launcher {
+    right: 16px;
+    bottom: 150px;
+  }
+
+  .patient-route .notification-panel {
+    right: 15px;
+    bottom: 208px;
+    max-height: calc(100dvh - 230px);
+  }
+}
+
+@media (max-width: 520px) {
+  .booking-dialog {
+    padding: 24px 18px 18px;
+  }
+
+  .booking-dialog h2 {
+    font-size: 20px;
+  }
+
+  .booking-dialog-actions {
+    display: grid;
+    grid-template-columns: 1fr;
+  }
+
+  .booking-dialog-actions .booking-dialog-primary {
+    grid-row: 1;
+  }
+}

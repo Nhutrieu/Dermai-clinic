@@ -8,9 +8,34 @@
   --color-canvas: #f4f8f6;
   --color-border: #d5e1dd;
   --color-danger: #b74f46;
+  --color-danger-strong: #963e37;
+  --color-text-secondary: #526a63;
+  --color-surface-subtle: #f6f8f7;
+  --color-border-strong: #b8cac4;
+  --color-success: #21613d;
+  --color-success-surface: #edf7f0;
+  --color-warning: #7b5714;
+  --color-warning-surface: #fff7e3;
+  --color-danger-surface: #fff1ef;
+  --color-info: #315f73;
+  --color-info-surface: #eef6f9;
+  --color-success-border: #b9d9c5;
+  --color-warning-border: #d8c376;
+  --color-danger-border: #e2bbb6;
+  --color-info-border: #b9d3dd;
+  --color-disabled: #596963;
+  --color-disabled-surface: #eef1f0;
+  --color-placeholder: #667a74;
+  --color-skeleton: #dfe7e3;
+  --color-followup: #4d641f;
+  --color-followup-surface: #f4f7e8;
+  --color-followup-border: #cad697;
+  --color-overlay: rgb(9 44 37 / 0.62);
   --radius-sm: 10px;
   --radius-md: 16px;
   --radius-lg: 24px;
+  --radius-control: 8px;
+  --radius-panel: 12px;
   --shadow-sm: 0 8px 24px rgba(11, 51, 43, 0.06);
   --shadow-md: 0 18px 48px rgba(11, 51, 43, 0.12);
   --focus-ring: 0 0 0 3px rgba(20, 87, 73, 0.18);
@@ -20,6 +45,58 @@
   --space-4: 16px;
   --space-5: 24px;
   --space-6: 32px;
+  --control-min-height: 44px;
+  --booking-summary-width: 360px;
+  --booking-sticky-offset: 126px;
+  --patient-dashboard-content-width: 1180px;
+  --patient-dashboard-section-gap: var(--space-5);
+  --patient-dashboard-motion-duration: 360ms;
+  --patient-dashboard-motion-ease: cubic-bezier(0.22, 1, 0.36, 1);
+  /* Patient AI intake reuses the clinic palette and only defines layout/motion semantics. */
+  --patient-ai-content-width: 1120px;
+  --patient-ai-motion-duration: 240ms;
+  --patient-ai-motion-ease: cubic-bezier(0.22, 1, 0.36, 1);
+  --patient-ai-result-reading-width: 70ch;
+  /* Patient medical records use one clinical-document hierarchy across list, detail and print preview. */
+  --patient-medical-content-width: 1280px;
+  --patient-medical-list-width: 390px;
+  --patient-medical-diagnosis-surface: #eef5f1;
+  --patient-medical-document-surface: #fbfcfb;
+  --patient-medical-motion-duration: 180ms;
+  --patient-medical-motion-ease: cubic-bezier(0.22, 1, 0.36, 1);
+  --patient-pdf-width: 900px;
+  --patient-pdf-toolbar-muted: #c7d8d3;
+  --patient-pdf-toolbar-border: rgb(255 255 255 / 0.22);
+  --patient-pdf-toolbar-hover: rgb(255 255 255 / 0.12);
+  /* Reception operations stay compact and reuse the shared clinical palette. */
+  --reception-content-width: 1320px;
+  --reception-operations-width: 340px;
+  --reception-row-min-height: 72px;
+  --reception-motion-duration: 160ms;
+  --reception-motion-ease: cubic-bezier(0.22, 1, 0.36, 1);
+  --reception-booking-dialog-width: 1180px;
+  --reception-booking-summary-width: 340px;
+  --reception-booking-motion-duration: 180ms;
+  /* Public clinic experience: restrained semantic tokens for the homepage only. */
+  --home-canvas: #f6f4ef;
+  --home-surface: #fffefb;
+  --home-surface-muted: #edf3ef;
+  --home-ink: #123a31;
+  --home-text: #405f57;
+  --home-border: #d8e2dd;
+  --home-primary: #145749;
+  --home-primary-hover: #0d4439;
+  --home-accent: #b8ca6b;
+  --home-section-space: clamp(72px, 8vw, 112px);
+  --home-content-width: 1180px;
+  --home-header-height: 72px;
+  --home-radius: 12px;
+  --home-motion-ease: cubic-bezier(0.22, 1, 0.36, 1);
+  --home-motion-enter-duration: 620ms;
+  --home-motion-reveal-duration: 560ms;
+  --home-motion-feedback-duration: 180ms;
+  --home-motion-distance: 18px;
+  --home-motion-step: 60ms;
 }
 
 *,

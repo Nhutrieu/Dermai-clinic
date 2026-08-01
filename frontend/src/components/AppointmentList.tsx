@@ -1,6 +1,10 @@
+// Keep the public component path stable while the patient list uses the redesigned view.
+export { default } from "./PatientAppointmentList";
+
 import { FormEvent, useEffect, useState } from "react";
 import { CalendarDays, Trash2 } from "lucide-react";
 import { request } from "../core/api";
+import { canPatientSelfManageAppointment } from "../core/appointmentPolicy";
 import type { Appointment, ClinicReview, Recommendation, RecommendationResult } from "../core/types";
 import { State } from "./Ui";
 import { PrescriptionPdfModal } from "./PrescriptionPdfModal";
@@ -32,7 +36,7 @@ function PatientFollowUpControl({ token, appointment, submit }: { token: string;
 export function HideCancelledButton({token,id}:{token:string;id:string}){const [busy,setBusy]=useState(false);async function hide(e:React.MouseEvent<HTMLButtonElement>){if(!confirm("Ẩn lịch đã hủy này khỏi danh sách của bạn?"))return;const row=e.currentTarget.closest("article");setBusy(true);try{await request(`/appointments/${id}/hide`,token,{method:"PATCH"});row?.remove()}catch(x){alert((x as Error).message);setBusy(false)}}return <button className="hide-cancelled" title="Xóa khỏi danh sách" aria-label="Xóa lịch đã hủy khỏi danh sách" disabled={busy} onClick={hide}><Trash2/></button>}
 export function ReviewControl({token,appointmentId,patientName="Bệnh nhân"}:{token:string;appointmentId:string;patientName?:string}){const [open,setOpen]=useState(false);const [rating,setRating]=useState(5);const [comment,setComment]=useState("");const [submitted,setSubmitted]=useState(false);const [message,setMessage]=useState("");useEffect(()=>{request<ClinicReview[]>("/appointments/reviews/mine",token).then(items=>setSubmitted(items.some(x=>x.appointmentId===appointmentId))).catch(()=>{})},[appointmentId,token]);async function submit(e:FormEvent){e.preventDefault();try{await request(`/appointments/reviews/${appointmentId}`,token,{method:"PUT",body:JSON.stringify({rating,comment,displayName:patientName})});setSubmitted(true);setMessage("Đã gửi đánh giá, đang chờ quản trị viên duyệt.");setOpen(false)}catch(x){setMessage((x as Error).message)}}return <div className="review-control">{submitted?<button disabled>Đã đánh giá</button>:open?<form onSubmit={submit}><label>Số sao<select value={rating} onChange={e=>setRating(Number(e.target.value))}>{[5,4,3,2,1].map(x=><option key={x} value={x}>{x} sao</option>)}</select></label><textarea required minLength={5} maxLength={1000} value={comment} onChange={e=>setComment(e.target.value)} placeholder="Chia sẻ trải nghiệm của bạn..."/><button>Gửi đánh giá</button><button type="button" onClick={()=>setOpen(false)}>Đóng</button></form>:<button onClick={()=>setOpen(true)}>Đánh giá phòng khám</button>}{message&&<small>{message}</small>}</div>}
 
-export default function AppointmentList({ appointments, token, cancel, reschedule, bookFollowUp, patientName = "Bệnh nhân" }: { appointments: Appointment[]; token?: string; cancel?: (id: string, reason: string) => Promise<void>; reschedule?: (id: string, value: string) => Promise<void>; bookFollowUp?: (id: string, slot: Recommendation) => Promise<void>; patientName?:string }) {
+function LegacyAppointmentList({ appointments, token, cancel, reschedule, bookFollowUp, patientName = "Bệnh nhân" }: { appointments: Appointment[]; token?: string; cancel?: (id: string, reason: string) => Promise<void>; reschedule?: (id: string, value: string) => Promise<void>; bookFollowUp?: (id: string, slot: Recommendation) => Promise<void>; patientName?:string }) {
     const [searchKw, setSearchKw] = useState("");
     const [statusFilter, setStatusFilter] = useState("ALL");
     const [dateFilter, setDateFilter] = useState("ALL");
@@ -96,6 +100,7 @@ export default function AppointmentList({ appointments, token, cancel, reschedul
         )}
         {filtered.length === 0 ? <State text={appointments.length === 0 ? "Chưa có lịch khám trong database." : "Không có lịch khám phù hợp với bộ lọc."} /> : filtered.map(x => {
             const { label, badgeClass } = getStatusBadge(x.status);
+            const canSelfManage = canPatientSelfManageAppointment(x.status, x.createdAt);
             return <article key={x.id} className="appointment-card">
                 <div className="appointment-icon-wrapper">
                     <CalendarDays />
@@ -106,8 +111,9 @@ export default function AppointmentList({ appointments, token, cancel, reschedul
                 </div>
                 <div className="actions">
                     <span className={`status-badge ${badgeClass}`}>{label}</span>
-                    {["PENDING", "ASSIGNED", "CONFIRMED"].includes(x.status) && reschedule && token && <RescheduleControl token={token} appointment={x} submit={value => reschedule(x.id, value)} />}
-                    {["PENDING", "ASSIGNED", "CONFIRMED"].includes(x.status) && cancel && (Date.now() - new Date(x.createdAt).getTime() <= 30 * 60_000 ? <CancelControl submit={reason => cancel(x.id, reason)} /> : <button className="contact-reception" onClick={() => window.dispatchEvent(new Event("open-support-chat"))}>Liên hệ lễ tân để hủy</button>)}
+                    {["PENDING", "ASSIGNED", "CONFIRMED"].includes(x.status) && canSelfManage && reschedule && token && <RescheduleControl token={token} appointment={x} submit={value => reschedule(x.id, value)} />}
+                    {["PENDING", "ASSIGNED", "CONFIRMED"].includes(x.status) && canSelfManage && cancel && <CancelControl submit={reason => cancel(x.id, reason)} />}
+                    {["PENDING", "ASSIGNED", "CONFIRMED"].includes(x.status) && !canSelfManage && (reschedule || cancel) && <button className="contact-reception" onClick={() => window.dispatchEvent(new Event("open-support-chat"))}>Liên hệ hỗ trợ để đổi hoặc hủy lịch</button>}
                     {x.status === "FOLLOW_UP_REQUIRED" && token && bookFollowUp && <PatientFollowUpControl token={token} appointment={x} submit={slot => bookFollowUp(x.id, slot)} />}
                     {x.status === "COMPLETED" && token && patientName && <ReviewControl token={token} appointmentId={x.id} patientName={patientName} />}
                 </div>
@@ -115,5 +121,4 @@ export default function AppointmentList({ appointments, token, cancel, reschedul
         })}
     </section>;
 }
-AppointmentList.defaultProps={patientName:"Bệnh nhân"};
-
+LegacyAppointmentList.defaultProps={patientName:"Bệnh nhân"};

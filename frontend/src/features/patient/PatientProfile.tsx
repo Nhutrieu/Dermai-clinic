@@ -1,9 +1,64 @@
-import { FormEvent, useState } from "react";
+import { FormEvent, useEffect, useState } from "react";
 import { request } from "../../core/api";
-import type { Appointment, Patient } from "../../core/types";
-import { Card } from "../../components/Ui";
-export default function PatientProfile({ token, patient, appointments, saved }: { token: string; patient: Patient; appointments: Appointment[]; saved: (p: Patient) => void }) {
-    const [form, setForm] = useState(patient); const [message, setMessage] = useState(""); const upcoming = appointments.filter(x => new Date(x.startAt) > new Date() && x.status !== "CANCELLED");
-    async function submit(e: FormEvent) { e.preventDefault(); try { const updated = await request<Patient>("/patients/me", token, { method: "PATCH", body: JSON.stringify({ fullName: form.fullName, dob: form.dob || null, phone: form.phone?.trim(), medicalHistory: form.medicalHistory || null, allergies: form.allergies || null }) }); saved(updated); setForm(updated); setMessage("Đã lưu hồ sơ vào database.") } catch (x) { setMessage((x as Error).message) } }
-    return <><section className="metrics patient-profile-metrics"><Card label="Lịch sắp tới" value={String(upcoming.length)} /><Card label="Dị ứng đã khai báo" value={patient.allergies?.trim() ? "Có" : "Chưa có"} /></section><section className="panel management"><h2>Cập nhật hồ sơ bệnh nhân</h2><form onSubmit={submit}><label>Họ tên<input required value={form.fullName} onChange={e => setForm({ ...form, fullName: e.target.value })} /></label><label>Ngày sinh<input type="date" value={form.dob || ""} onChange={e => setForm({ ...form, dob: e.target.value })} /></label><label>Số điện thoại<input type="tel" inputMode="tel" pattern="[0-9+ .()\-]{8,20}" required value={form.phone || ""} onChange={e => setForm({ ...form, phone: e.target.value })} placeholder="Ví dụ: 0352790904" /></label><label>Tiền sử bệnh<textarea value={form.medicalHistory || ""} onChange={e => setForm({ ...form, medicalHistory: e.target.value })} /></label><label>Dị ứng<textarea value={form.allergies || ""} onChange={e => setForm({ ...form, allergies: e.target.value })} /></label><button className="primary">Lưu hồ sơ</button></form>{message && <p>{message}</p>}</section></>
+import type { Patient } from "../../core/types";
+
+type PatientProfileProps = {
+    token: string;
+    patient: Patient;
+    saved: (patient: Patient) => void;
+};
+
+/** Trình chỉnh sửa hồ sơ được giữ trong Dashboard để không làm mất tính năng cũ. */
+export default function PatientProfile({ token, patient, saved }: PatientProfileProps) {
+    const [form, setForm] = useState(patient);
+    const [message, setMessage] = useState("");
+    const [error, setError] = useState("");
+    const [busy, setBusy] = useState(false);
+
+    useEffect(() => setForm(patient), [patient]);
+
+    async function submit(event: FormEvent) {
+        event.preventDefault();
+        setBusy(true);
+        setMessage("");
+        setError("");
+        try {
+            const updated = await request<Patient>("/patients/me", token, {
+                method: "PATCH",
+                body: JSON.stringify({
+                    fullName: form.fullName,
+                    dob: form.dob || null,
+                    phone: form.phone?.trim(),
+                    medicalHistory: form.medicalHistory || null,
+                    allergies: form.allergies || null,
+                }),
+            });
+            saved(updated);
+            setForm(updated);
+            setMessage("Đã cập nhật hồ sơ cá nhân.");
+        } catch (cause) {
+            setError((cause as Error).message);
+        } finally {
+            setBusy(false);
+        }
+    }
+
+    return <section className="patient-profile-editor" aria-labelledby="patient-profile-editor-title">
+        <header>
+            <div>
+                <h2 id="patient-profile-editor-title">Thông tin cá nhân</h2>
+                <p>Cập nhật thông tin liên hệ và tiền sử để bác sĩ có dữ liệu chính xác khi thăm khám.</p>
+            </div>
+        </header>
+        <form onSubmit={submit}>
+            <label>Họ và tên<input required value={form.fullName} onChange={event => setForm({ ...form, fullName: event.target.value })} /></label>
+            <label>Ngày sinh<input type="date" value={form.dob || ""} onChange={event => setForm({ ...form, dob: event.target.value })} /></label>
+            <label>Số điện thoại<input type="tel" inputMode="tel" pattern="[0-9+ .()\-]{8,20}" required value={form.phone || ""} onChange={event => setForm({ ...form, phone: event.target.value })} placeholder="Ví dụ: 0352790904" /></label>
+            <label>Tiền sử bệnh<textarea value={form.medicalHistory || ""} onChange={event => setForm({ ...form, medicalHistory: event.target.value })} /></label>
+            <label>Dị ứng<textarea value={form.allergies || ""} onChange={event => setForm({ ...form, allergies: event.target.value })} /></label>
+            <button type="submit" className="patient-dashboard-primary-action" disabled={busy}>{busy ? "Đang lưu..." : "Lưu hồ sơ"}</button>
+        </form>
+        {message && <p className="patient-dashboard-feedback is-success" role="status" aria-live="polite">{message}</p>}
+        {error && <p className="patient-dashboard-feedback is-error" role="alert">{error}</p>}
+    </section>;
 }

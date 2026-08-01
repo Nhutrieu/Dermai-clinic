@@ -1,0 +1,761 @@
+.patient-ai-page {
+  display: grid;
+  width: min(100%, var(--patient-ai-content-width));
+  gap: var(--space-5);
+  margin: 0 auto;
+  padding-bottom: var(--space-5);
+  color: var(--color-ink);
+}
+
+/* Keep the intro compact so the upload action remains visible early. */
+.patient-ai-intro {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(300px, 0.62fr);
+  gap: var(--space-6);
+  align-items: end;
+  padding-top: 6px;
+}
+
+.patient-ai-intro h2 {
+  max-width: 720px;
+  margin: 0;
+  color: var(--color-ink);
+  font-family: Newsreader, serif;
+  font-size: clamp(30px, 3.2vw, 42px);
+  font-weight: 600;
+  line-height: 1.12;
+  letter-spacing: -0.02em;
+}
+
+.patient-ai-intro > div > p {
+  max-width: 680px;
+  margin: var(--space-3) 0 0;
+  color: var(--color-text-secondary);
+  font-size: 16px;
+  line-height: 1.65;
+}
+
+.ai-intake-medical-notice {
+  display: grid;
+  grid-template-columns: 24px minmax(0, 1fr);
+  gap: var(--space-3);
+  padding: 15px 16px;
+  border: 1px solid var(--color-warning-border);
+  border-radius: var(--radius-control);
+  background: var(--color-warning-surface);
+  color: var(--color-warning);
+}
+
+.ai-intake-medical-notice > svg {
+  width: 22px;
+  height: 22px;
+  margin-top: 1px;
+}
+
+.ai-intake-medical-notice strong,
+.ai-intake-medical-notice p {
+  display: block;
+}
+
+.ai-intake-medical-notice strong {
+  color: var(--color-ink);
+  font-size: 15px;
+}
+
+.ai-intake-medical-notice p {
+  margin: 4px 0 0;
+  color: var(--color-text-secondary);
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+.patient-ai-page .ai-intake-shell {
+  display: grid;
+  grid-template-columns: minmax(300px, 0.78fr) minmax(440px, 1.22fr);
+  overflow: hidden;
+  padding: 0;
+  border-radius: var(--radius-panel);
+  background: var(--color-surface);
+  box-shadow: var(--shadow-sm);
+}
+
+.ai-intake-guidelines {
+  padding: var(--space-6);
+  border-right: 1px solid var(--color-border);
+  background: var(--color-surface-subtle);
+}
+
+.ai-intake-guidelines-heading,
+.ai-intake-upload-heading {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--space-4);
+}
+
+.ai-intake-guidelines-heading > svg,
+.ai-intake-upload-heading > svg {
+  flex: 0 0 auto;
+  width: 24px;
+  height: 24px;
+  color: var(--color-primary);
+}
+
+.ai-intake-guidelines-heading > div {
+  order: -1;
+}
+
+.ai-intake-guidelines-heading h3,
+.ai-intake-upload-heading h3 {
+  margin: 0;
+  color: var(--color-ink);
+  font-family: Manrope, system-ui, sans-serif;
+  font-size: 21px;
+  line-height: 1.35;
+}
+
+.ai-intake-guidelines-heading p,
+.ai-intake-upload-heading p {
+  margin: 7px 0 0;
+  color: var(--color-text-secondary);
+  font-size: 15px;
+  line-height: 1.55;
+}
+
+.ai-intake-guideline-groups {
+  display: grid;
+  gap: var(--space-5);
+  margin-top: var(--space-5);
+}
+
+.ai-intake-guideline-groups section + section {
+  padding-top: var(--space-5);
+  border-top: 1px solid var(--color-border);
+}
+
+.ai-intake-guideline-groups h4,
+.ai-intake-privacy-note h4 {
+  margin: 0;
+  color: var(--color-ink);
+  font-size: 15px;
+  line-height: 1.4;
+}
+
+.ai-intake-guideline-groups ul {
+  display: grid;
+  gap: 10px;
+  margin: var(--space-3) 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.ai-intake-guideline-groups li {
+  display: grid;
+  grid-template-columns: 19px minmax(0, 1fr);
+  gap: 9px;
+  align-items: start;
+  color: var(--color-text-secondary);
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+.ai-intake-guideline-groups li svg {
+  width: 18px;
+  height: 18px;
+  margin-top: 1px;
+  color: var(--color-success);
+}
+
+.ai-intake-guideline-groups section:last-child li svg {
+  color: var(--color-danger);
+}
+
+.ai-intake-privacy-note {
+  display: grid;
+  grid-template-columns: 22px minmax(0, 1fr);
+  gap: var(--space-3);
+  margin-top: var(--space-6);
+  padding-top: var(--space-5);
+  border-top: 1px solid var(--color-border);
+}
+
+.ai-intake-privacy-note > svg {
+  width: 21px;
+  height: 21px;
+  color: var(--color-primary);
+}
+
+.ai-intake-privacy-note p {
+  margin: 6px 0 0;
+  color: var(--color-text-secondary);
+  font-size: 14px;
+  line-height: 1.55;
+}
+
+.ai-intake-upload {
+  min-width: 0;
+  padding: var(--space-6);
+}
+
+.ai-intake-file-input {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+.ai-intake-dropzone {
+  display: flex;
+  min-height: 286px;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  margin-top: var(--space-5);
+  padding: var(--space-5);
+  border: 1px dashed var(--color-border-strong);
+  border-radius: var(--radius-panel);
+  background: var(--color-surface-subtle);
+  color: var(--color-text-secondary);
+  text-align: center;
+  transition:
+    border-color var(--patient-ai-motion-duration) var(--patient-ai-motion-ease),
+    background-color var(--patient-ai-motion-duration) var(--patient-ai-motion-ease);
+}
+
+.ai-intake-dropzone.is-dragging,
+.ai-intake-dropzone:focus-within {
+  border-color: var(--color-primary);
+  background: var(--color-success-surface);
+}
+
+.ai-intake-dropzone:focus-within {
+  box-shadow: var(--focus-ring);
+}
+
+.ai-intake-dropzone.has-error {
+  border-color: var(--color-danger-border);
+  background: var(--color-danger-surface);
+}
+
+.ai-intake-dropzone > svg {
+  width: 34px;
+  height: 34px;
+  margin-bottom: var(--space-3);
+  color: var(--color-primary);
+}
+
+.ai-intake-dropzone > strong {
+  color: var(--color-ink);
+  font-size: 16px;
+}
+
+.ai-intake-dropzone > p {
+  max-width: 380px;
+  margin: 7px 0 0;
+  color: var(--color-text-secondary);
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+.ai-intake-dropzone > button {
+  min-width: 132px;
+  min-height: var(--control-min-height);
+  margin-top: var(--space-4);
+  padding: 0 16px;
+  border: 1px solid var(--color-primary);
+  border-radius: var(--radius-control);
+  background: var(--color-surface);
+  color: var(--color-primary);
+  font-size: 14px;
+  font-weight: 800;
+}
+
+.ai-intake-dropzone > button:hover {
+  background: var(--color-success-surface);
+}
+
+.ai-intake-dropzone > small {
+  margin-top: 10px;
+  color: var(--color-muted);
+  font-size: 14px;
+}
+
+.ai-intake-preview {
+  display: grid;
+  grid-template-columns: minmax(220px, 1fr) minmax(180px, 0.72fr);
+  gap: var(--space-4);
+  margin-top: var(--space-5);
+  padding: var(--space-3);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-panel);
+  background: var(--color-surface-subtle);
+}
+
+.ai-intake-preview-media {
+  display: grid;
+  min-height: 250px;
+  overflow: hidden;
+  place-items: center;
+  border-radius: var(--radius-control);
+  background: var(--color-disabled-surface);
+}
+
+.ai-intake-preview-media img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  max-height: 360px;
+  object-fit: contain;
+}
+
+.ai-intake-preview-details {
+  display: flex;
+  min-width: 0;
+  justify-content: center;
+  flex-direction: column;
+  padding: var(--space-3);
+}
+
+.ai-intake-file-ready {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  color: var(--color-success);
+  font-size: 14px;
+  font-weight: 800;
+}
+
+.ai-intake-file-ready svg {
+  width: 18px;
+  height: 18px;
+}
+
+.ai-intake-preview-details > strong {
+  overflow: hidden;
+  margin-top: var(--space-3);
+  color: var(--color-ink);
+  font-size: 15px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.ai-intake-preview-details > small {
+  margin-top: 5px;
+  color: var(--color-text-secondary);
+  font-size: 14px;
+}
+
+.ai-intake-preview-actions {
+  display: grid;
+  gap: var(--space-2);
+  margin-top: var(--space-5);
+}
+
+.ai-intake-preview-actions button {
+  display: flex;
+  min-height: var(--control-min-height);
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+  padding: 0 12px;
+  border: 1px solid var(--color-border-strong);
+  border-radius: var(--radius-control);
+  background: var(--color-surface);
+  color: var(--color-primary);
+  font-size: 14px;
+  font-weight: 800;
+}
+
+.ai-intake-preview-actions button:hover {
+  border-color: var(--color-primary);
+  background: var(--color-success-surface);
+}
+
+.ai-intake-preview-actions button svg {
+  width: 17px;
+  height: 17px;
+}
+
+.ai-intake-preview-actions .ai-intake-remove-photo {
+  color: var(--color-danger);
+}
+
+.ai-intake-preview-actions .ai-intake-remove-photo:hover {
+  border-color: var(--color-danger-border);
+  background: var(--color-danger-surface);
+}
+
+.ai-intake-alert {
+  display: grid;
+  grid-template-columns: 22px minmax(0, 1fr);
+  gap: var(--space-3);
+  margin-top: var(--space-4);
+  padding: 14px;
+  border: 1px solid var(--color-danger-border);
+  border-radius: var(--radius-control);
+  background: var(--color-danger-surface);
+  color: var(--color-danger);
+}
+
+.ai-intake-alert > svg {
+  width: 21px;
+  height: 21px;
+}
+
+.ai-intake-alert strong {
+  display: block;
+  color: var(--color-ink);
+  font-size: 15px;
+}
+
+.ai-intake-alert p {
+  margin: 4px 0 0;
+  color: var(--color-text-secondary);
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+.ai-intake-alert button {
+  min-height: var(--control-min-height);
+  margin-top: 8px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--color-danger);
+  font-size: 14px;
+  font-weight: 800;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.ai-intake-share {
+  display: grid;
+  grid-template-columns: 22px minmax(0, 1fr);
+  gap: var(--space-3);
+  align-items: start;
+  margin-top: var(--space-5);
+  padding: 15px 0;
+  border-top: 1px solid var(--color-border);
+  border-bottom: 1px solid var(--color-border);
+  cursor: pointer;
+}
+
+.ai-intake-share input {
+  width: 20px;
+  height: 20px;
+  margin: 1px 0 0;
+  accent-color: var(--color-primary);
+}
+
+.ai-intake-share strong,
+.ai-intake-share small {
+  display: block;
+}
+
+.ai-intake-share strong {
+  color: var(--color-ink);
+  font-size: 15px;
+  line-height: 1.4;
+}
+
+.ai-intake-share small {
+  margin-top: 4px;
+  color: var(--color-text-secondary);
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+.ai-intake-analysis-state:empty {
+  display: none;
+}
+
+.ai-intake-analysis-state > div {
+  display: grid;
+  grid-template-columns: 22px minmax(0, 1fr);
+  gap: var(--space-3);
+  margin-top: var(--space-4);
+  padding: 13px 14px;
+  border: 1px solid var(--color-info-border);
+  border-radius: var(--radius-control);
+  background: var(--color-info-surface);
+  color: var(--color-info);
+}
+
+.ai-intake-analysis-state > div.is-complete {
+  border-color: var(--color-success-border);
+  background: var(--color-success-surface);
+  color: var(--color-success);
+}
+
+.ai-intake-analysis-state > div.is-uncertain {
+  border-color: var(--color-warning-border);
+  background: var(--color-warning-surface);
+  color: var(--color-warning);
+}
+
+.ai-intake-analysis-state svg {
+  width: 21px;
+  height: 21px;
+}
+
+.ai-intake-analysis-state strong,
+.ai-intake-analysis-state small {
+  display: block;
+}
+
+.ai-intake-analysis-state strong {
+  color: var(--color-ink);
+  font-size: 15px;
+  line-height: 1.4;
+}
+
+.ai-intake-analysis-state small {
+  margin-top: 4px;
+  color: var(--color-text-secondary);
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+.ai-intake-actions {
+  margin-top: var(--space-4);
+}
+
+.ai-intake-submit {
+  display: flex;
+  width: 100%;
+  min-height: 48px;
+  align-items: center;
+  justify-content: center;
+  gap: 9px;
+  padding: 0 18px;
+  border: 1px solid var(--color-primary);
+  border-radius: var(--radius-control);
+  background: var(--color-primary);
+  color: var(--color-surface);
+  font-size: 15px;
+  font-weight: 800;
+  white-space: nowrap;
+  transition:
+    background-color var(--patient-ai-motion-duration) var(--patient-ai-motion-ease),
+    transform var(--patient-ai-motion-duration) var(--patient-ai-motion-ease);
+}
+
+.ai-intake-submit:hover:not(:disabled) {
+  background: var(--color-primary-strong);
+  transform: translateY(-1px);
+}
+
+.ai-intake-submit:disabled {
+  border-color: var(--color-border);
+  background: var(--color-disabled-surface);
+  color: var(--color-disabled);
+}
+
+.ai-intake-submit svg {
+  width: 18px;
+  height: 18px;
+}
+
+.ai-intake-dropzone > button:active,
+.ai-intake-preview-actions button:active,
+.ai-intake-submit:active {
+  transform: translateY(1px);
+}
+
+.ai-intake-actions > p {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  margin: var(--space-3) 0 0;
+  color: var(--color-text-secondary);
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+.ai-intake-actions > p svg {
+  flex: 0 0 17px;
+  width: 17px;
+  height: 17px;
+  margin-top: 2px;
+  color: var(--color-warning);
+}
+
+@keyframes ai-intake-enter {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes ai-intake-spinner {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .patient-ai-intro,
+  .patient-ai-page .ai-intake-shell {
+    animation: ai-intake-enter var(--patient-ai-motion-duration) var(--patient-ai-motion-ease) both;
+  }
+
+  .patient-ai-page .ai-intake-shell {
+    animation-delay: 70ms;
+  }
+
+  .ai-intake-preview,
+  .ai-intake-analysis-state > div {
+    animation: ai-intake-enter 180ms var(--patient-ai-motion-ease) both;
+  }
+
+  .ai-intake-button-spinner,
+  .ai-intake-analysis-state .is-processing > svg {
+    animation: ai-intake-spinner 900ms linear infinite;
+  }
+}
+
+@media (max-width: 1100px) {
+  .patient-ai-intro,
+  .patient-ai-page .ai-intake-shell {
+    grid-template-columns: 1fr;
+  }
+
+  .ai-intake-medical-notice {
+    max-width: 720px;
+  }
+
+  .ai-intake-guidelines {
+    border-right: 0;
+    border-bottom: 1px solid var(--color-border);
+  }
+
+  .ai-intake-guideline-groups {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .ai-intake-guideline-groups section + section {
+    padding-top: 0;
+    padding-left: var(--space-5);
+    border-top: 0;
+    border-left: 1px solid var(--color-border);
+  }
+}
+
+@media (max-width: 780px) {
+  .patient-ai-page {
+    gap: var(--space-4);
+    padding-bottom: 110px;
+  }
+
+  .patient-ai-intro {
+    gap: var(--space-4);
+    padding-top: 0;
+  }
+
+  .patient-ai-intro h2 {
+    font-size: clamp(28px, 7vw, 35px);
+  }
+
+  .patient-ai-page .ai-intake-shell {
+    display: flex;
+    flex-direction: column;
+  }
+
+  /* Upload leads on phones; the preparation guide follows it. */
+  .ai-intake-upload {
+    order: 1;
+    padding: var(--space-5);
+  }
+
+  .ai-intake-guidelines {
+    order: 2;
+    padding: var(--space-5);
+    border-top: 1px solid var(--color-border);
+    border-bottom: 0;
+  }
+
+  .ai-intake-preview {
+    grid-template-columns: 1fr;
+  }
+
+  .ai-intake-preview-media {
+    min-height: 220px;
+  }
+
+  .ai-intake-preview-details {
+    padding: var(--space-2);
+  }
+
+  .ai-intake-preview-actions {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+@media (max-width: 560px) {
+  .patient-ai-intro > div > p {
+    font-size: 15px;
+  }
+
+  .ai-intake-upload,
+  .ai-intake-guidelines {
+    padding: var(--space-4);
+  }
+
+  .ai-intake-dropzone {
+    min-height: 250px;
+    padding: var(--space-4);
+  }
+
+  .ai-intake-guideline-groups {
+    grid-template-columns: 1fr;
+  }
+
+  .ai-intake-guideline-groups section + section {
+    padding-top: var(--space-4);
+    padding-left: 0;
+    border-top: 1px solid var(--color-border);
+    border-left: 0;
+  }
+
+  .ai-intake-preview-actions {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 390px) {
+  .patient-ai-intro h2 {
+    font-size: 28px;
+  }
+
+  .ai-intake-medical-notice,
+  .ai-intake-upload,
+  .ai-intake-guidelines {
+    padding: 14px;
+  }
+
+  .ai-intake-dropzone {
+    min-height: 232px;
+  }
+
+  .ai-intake-submit {
+    padding: 0 12px;
+    font-size: 14px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .patient-ai-page *,
+  .patient-ai-page *::before,
+  .patient-ai-page *::after {
+    scroll-behavior: auto;
+    animation: none;
+    transition-duration: 0.01ms;
+  }
+}

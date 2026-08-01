@@ -196,16 +196,18 @@ export default function SupportChat({ session }: { session: Tokens }) {
     const patientLabel = (id: string) => patients[id]?.fullName || `Bệnh nhân · ${id.slice(0, 8)}`;
 
     return (
-        <div className="support-chat">
+        <div className={`support-chat ${receptionist ? "receptionist-support-chat" : ""}`}>
             <button
                 className="support-launch"
+                aria-expanded={open}
+                aria-controls="reception-support-panel"
                 onClick={() => setOpen(!open)}
             >
                 {open ? "Đóng" : receptionist ? "Hộp thư hỗ trợ" : "Chat với lễ tân"}
                 {unread.length > 0 && <span className="support-badge">{unread.length > 99 ? "99+" : unread.length}</span>}
             </button>
             {open && (
-                <section className="support-panel">
+                <section id="reception-support-panel" className="support-panel" aria-label={receptionist ? "Hộp thư hỗ trợ bệnh nhân" : "Chat hỗ trợ với lễ tân"}>
                     <header>
                         <div>
                             <b>{receptionist ? "Hỗ trợ bệnh nhân" : "Lễ tân DermAI"}</b>

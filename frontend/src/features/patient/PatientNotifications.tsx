@@ -49,8 +49,12 @@ export default function PatientNotifications({ session }: { session: Tokens }) {
         };
     }, [session.accessToken]);
 
-    useEffect(() => subscribeRealtime(() => {
+    useEffect(() => subscribeRealtime(event => {
         void load();
+        // Reuse this shared patient socket so every mounted patient view receives the new status.
+        if (event.type === "SLOTS_CHANGED") {
+            window.dispatchEvent(new Event("appointments-changed"));
+        }
     }), [session.accessToken]);
 
     const unread = items.filter(x => !x.readAt);
@@ -61,7 +65,14 @@ export default function PatientNotifications({ session }: { session: Tokens }) {
         const readAt = new Date().toISOString();
         setItems(current => current.map(x => !x.readAt ? { ...x, readAt } : x));
         await Promise.all(unread.map(x => request(`/appointments/notifications/${x.id}/read`, session.accessToken, { method: "PATCH" }).catch(() => undefined)));
+        window.dispatchEvent(new Event("patient-notifications-changed"));
     }
+
+    useEffect(() => {
+        const openNotifications = () => { void show() };
+        window.addEventListener("open-patient-notifications", openNotifications);
+        return () => window.removeEventListener("open-patient-notifications", openNotifications);
+    }, [unread.map(item => item.id).join(":"), session.accessToken]);
 
     async function respond(id: string, action: "accept" | "decline") {
         setBusyId(id);
