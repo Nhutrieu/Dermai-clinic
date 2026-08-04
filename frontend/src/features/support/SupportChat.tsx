@@ -1,8 +1,9 @@
 import { FormEvent, useEffect, useRef, useState } from "react";
 import { CalendarCheck } from "lucide-react";
 import { request } from "../../core/api";
-import { subscribeRealtime, playChimeNotification } from "../../core/realtime";
+import { enableChimeNotifications, subscribeRealtime, playChimeNotification } from "../../core/realtime";
 import type { Appointment, AvailabilitySlot, Doctor, Patient, SupportMessage, Tokens } from "../../core/types";
+import { newIncomingSupportMessages } from "./supportMessageModel";
 
 export default function SupportChat({ session }: { session: Tokens }) {
     const [open, setOpen] = useState(false);
@@ -21,7 +22,8 @@ export default function SupportChat({ session }: { session: Tokens }) {
     const [bookingBusy, setBookingBusy] = useState(false);
     const [notice, setNotice] = useState("");
 
-    const prevCountRef = useRef<number>(0);
+    const knownMessageIdsRef = useRef<Set<string>>(new Set());
+    const messagesInitializedRef = useRef(false);
     const receptionist = session.role === "RECEPTIONIST";
     const ids = [...new Set(messages.map(x => x.patientIdentityId))];
     const visible = receptionist ? messages.filter(x => x.patientIdentityId === conversation) : messages;
@@ -31,15 +33,13 @@ export default function SupportChat({ session }: { session: Tokens }) {
         try {
             const list = await request<SupportMessage[]>("/appointments/support", session.accessToken);
             
-            // ONLY play audio chime when a NEW message from the OTHER person arrives
-            if (prevCountRef.current > 0 && list.length > prevCountRef.current) {
-                const latestMsg = list[list.length - 1];
-                const isFromOther = receptionist ? latestMsg.senderRole === "PATIENT" : latestMsg.senderRole !== "PATIENT";
-                if (isFromOther) {
-                    playChimeNotification();
-                }
+            // Compare message IDs so the first message after an empty inbox is not missed.
+            if (messagesInitializedRef.current) {
+                const incoming = newIncomingSupportMessages(knownMessageIdsRef.current, list, receptionist);
+                if (incoming.length) playChimeNotification();
             }
-            prevCountRef.current = list.length;
+            knownMessageIdsRef.current = new Set(list.map(message => message.id));
+            messagesInitializedRef.current = true;
 
             setMessages(list);
             const patientIds = [...new Set(list.map(x => x.patientIdentityId))];
@@ -73,6 +73,17 @@ export default function SupportChat({ session }: { session: Tokens }) {
         const timer = window.setInterval(load, 4000);
         return () => window.clearInterval(timer);
     }, [open, conversation]);
+
+    useEffect(() => {
+        // Browsers require a user gesture before Web Audio may play in a background update.
+        const unlockAudio = () => enableChimeNotifications();
+        window.addEventListener("pointerdown", unlockAudio, { passive: true });
+        window.addEventListener("keydown", unlockAudio);
+        return () => {
+            window.removeEventListener("pointerdown", unlockAudio);
+            window.removeEventListener("keydown", unlockAudio);
+        };
+    }, []);
 
     useEffect(() => subscribeRealtime(event => {
         if (event.type === "CHAT_CHANGED") void load();

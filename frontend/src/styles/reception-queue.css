@@ -1,0 +1,714 @@
+/* Reception queue is intentionally dense: one operational hierarchy, no nested cards. */
+.reception-queue {
+  min-width: 0;
+  overflow: hidden;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-panel);
+  background: var(--color-surface);
+}
+
+.reception-queue-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--space-5);
+  padding: var(--space-5);
+  border-bottom: 1px solid var(--color-border);
+}
+
+.reception-queue-header h2 {
+  margin: 0;
+  color: var(--color-ink);
+  font-family: Manrope, system-ui, sans-serif;
+  font-size: 21px;
+  line-height: 1.3;
+}
+
+.reception-queue-header p {
+  margin: 5px 0 0;
+  color: var(--color-text-secondary);
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+.reception-queue-sync {
+  display: flex;
+  min-height: var(--control-min-height);
+  align-items: center;
+  justify-content: flex-end;
+  gap: var(--space-3);
+  color: var(--color-text-secondary);
+  font-size: 14px;
+  white-space: nowrap;
+}
+
+.reception-queue-realtime {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--color-warning);
+  font-weight: 750;
+}
+
+.reception-queue-realtime.is-connected {
+  color: var(--color-success);
+}
+
+.reception-queue-realtime.is-closed {
+  color: var(--color-danger);
+}
+
+.reception-queue-realtime svg,
+.reception-queue-refresh svg {
+  width: 17px;
+  height: 17px;
+}
+
+.reception-queue-refresh {
+  display: inline-flex;
+  min-height: var(--control-min-height);
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 0 var(--space-3);
+  border: 1px solid var(--color-border-strong);
+  border-radius: var(--radius-control);
+  background: var(--color-surface);
+  color: var(--color-primary);
+  font-size: 14px;
+  font-weight: 750;
+}
+
+.reception-queue-refresh:hover {
+  border-color: var(--color-primary);
+  background: var(--color-surface-subtle);
+}
+
+.reception-queue-limit {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: 9px var(--space-5);
+  border-bottom: 1px solid var(--color-info-border);
+  background: var(--color-info-surface);
+  color: var(--color-info);
+  font-size: 14px;
+  line-height: 1.45;
+}
+
+.reception-queue-limit svg {
+  width: 18px;
+  height: 18px;
+  flex: 0 0 18px;
+}
+
+.reception-queue-summary {
+  display: grid;
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  border-bottom: 1px solid var(--color-border);
+  background: var(--reception-queue-header-surface);
+}
+
+.reception-queue-summary button {
+  display: flex;
+  min-width: 0;
+  min-height: 64px;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2);
+  padding: var(--space-3) var(--space-4);
+  border: 0;
+  border-left: 1px solid var(--color-border);
+  background: transparent;
+  color: var(--color-text-secondary);
+  font-size: 14px;
+  line-height: 1.3;
+  text-align: left;
+}
+
+.reception-queue-summary button:first-child {
+  border-left: 0;
+}
+
+.reception-queue-summary button:hover,
+.reception-queue-summary button.is-active {
+  background: var(--color-surface);
+  color: var(--color-primary);
+}
+
+.reception-queue-summary button.is-active {
+  box-shadow: inset 0 -3px 0 var(--color-primary);
+}
+
+.reception-queue-summary strong {
+  color: var(--color-ink);
+  font-variant-numeric: tabular-nums;
+  font-size: 22px;
+  line-height: 1;
+}
+
+.reception-queue-toolbar {
+  display: grid;
+  grid-template-columns: minmax(220px, 1.25fr) repeat(3, minmax(150px, 0.75fr));
+  gap: var(--space-3);
+  padding: var(--space-4) var(--space-5);
+  border-bottom: 1px solid var(--color-border);
+}
+
+.reception-queue-toolbar label {
+  display: grid;
+  min-width: 0;
+  gap: 6px;
+}
+
+.reception-queue-toolbar label > span {
+  color: var(--color-ink);
+  font-size: 14px;
+  font-weight: 750;
+}
+
+.reception-queue-toolbar input,
+.reception-queue-toolbar select {
+  width: 100%;
+  min-height: var(--control-min-height);
+  padding: 0 var(--space-3);
+  border: 1px solid var(--color-border-strong);
+  border-radius: var(--radius-control);
+  background: var(--color-surface);
+  color: var(--color-ink);
+  font-size: 14px;
+}
+
+.reception-queue-search > div {
+  position: relative;
+}
+
+.reception-queue-search svg {
+  position: absolute;
+  top: 50%;
+  left: var(--space-3);
+  width: 18px;
+  height: 18px;
+  color: var(--color-text-secondary);
+  transform: translateY(-50%);
+  pointer-events: none;
+}
+
+.reception-queue-search input {
+  padding-left: 38px;
+}
+
+.reception-queue-table-wrap {
+  overflow-x: auto;
+  overscroll-behavior-inline: contain;
+}
+
+.reception-queue-table-head,
+.reception-queue-row {
+  display: grid;
+  min-width: var(--reception-queue-table-min-width);
+  grid-template-columns: 100px minmax(210px, 1.25fr) minmax(160px, 0.85fr) 180px 170px;
+  gap: var(--space-3);
+}
+
+.reception-queue-table-head {
+  align-items: center;
+  padding: 10px var(--space-5);
+  border-bottom: 1px solid var(--color-border-strong);
+  background: var(--color-surface-subtle);
+  color: var(--color-text-secondary);
+  font-size: 14px;
+  font-weight: 750;
+}
+
+.reception-queue-row {
+  position: relative;
+  min-height: 82px;
+  align-items: center;
+  padding: var(--space-3) var(--space-5);
+  border-bottom: 1px solid var(--color-border);
+  background: var(--color-surface);
+  transition: background var(--reception-motion-duration) var(--reception-motion-ease);
+}
+
+.reception-queue-row:hover {
+  background: var(--color-surface-subtle);
+}
+
+.reception-queue-row.has-live-update {
+  animation: reception-queue-row-update 850ms var(--reception-motion-ease) both;
+}
+
+.reception-queue-time,
+.reception-queue-person,
+.reception-queue-doctor,
+.reception-queue-progress,
+.reception-queue-action {
+  min-width: 0;
+}
+
+.reception-queue-time strong,
+.reception-queue-time span,
+.reception-queue-person strong,
+.reception-queue-person span,
+.reception-queue-doctor strong,
+.reception-queue-progress small {
+  display: block;
+}
+
+.reception-queue-time strong {
+  color: var(--color-ink);
+  font-variant-numeric: tabular-nums;
+  font-size: 17px;
+  line-height: 1.25;
+}
+
+.reception-queue-time span,
+.reception-queue-person span,
+.reception-queue-progress small {
+  margin-top: 4px;
+  color: var(--color-text-secondary);
+  font-size: 14px;
+  line-height: 1.35;
+}
+
+.reception-queue-person strong,
+.reception-queue-doctor strong {
+  overflow: hidden;
+  color: var(--color-ink);
+  font-size: 15px;
+  line-height: 1.35;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.reception-queue-person span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.reception-queue-status {
+  display: inline-flex;
+  min-height: 32px;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 9px;
+  border: 1px solid var(--color-border);
+  border-radius: 999px;
+  background: var(--color-disabled-surface);
+  color: var(--color-disabled);
+  font-size: 14px;
+  font-weight: 750;
+  line-height: 1.2;
+  white-space: nowrap;
+}
+
+.reception-queue-status svg {
+  width: 15px;
+  height: 15px;
+  flex: 0 0 15px;
+}
+
+.reception-queue-status-pending,
+.reception-queue-status-overdue {
+  border-color: var(--color-warning-border);
+  background: var(--color-warning-surface);
+  color: var(--color-warning);
+}
+
+.reception-queue-status-assigned,
+.reception-queue-status-confirmed {
+  border-color: var(--color-info-border);
+  background: var(--color-info-surface);
+  color: var(--color-info);
+}
+
+.reception-queue-status-progress,
+.reception-queue-status-completed {
+  border-color: var(--color-success-border);
+  background: var(--color-success-surface);
+  color: var(--color-success);
+}
+
+.reception-queue-status-followup {
+  border-color: var(--color-followup-border);
+  background: var(--color-followup-surface);
+  color: var(--color-followup);
+}
+
+.reception-queue-status-cancelled {
+  border-color: var(--color-danger-border);
+  background: var(--color-danger-surface);
+  color: var(--color-danger);
+}
+
+.reception-queue-action {
+  display: flex;
+  justify-content: flex-end;
+}
+
+.reception-queue-action .reception-row-action {
+  min-height: var(--control-min-height);
+  padding: 0 var(--space-3);
+}
+
+.reception-queue-action .reception-row-action svg {
+  width: 16px;
+  height: 16px;
+}
+
+.reception-queue-no-action {
+  color: var(--color-text-secondary);
+  font-size: 14px;
+}
+
+.reception-queue-action-error {
+  grid-column: 1 / -1;
+  padding: 9px var(--space-3);
+  border-left: 3px solid var(--color-danger);
+  background: var(--color-danger-surface);
+  color: var(--color-danger);
+  font-size: 14px;
+  line-height: 1.45;
+}
+
+.reception-queue-state,
+.reception-queue-stale {
+  display: flex;
+  min-height: 148px;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-3);
+  padding: var(--space-5);
+  color: var(--color-text-secondary);
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+.reception-queue-state > svg,
+.reception-queue-stale > svg {
+  width: 24px;
+  height: 24px;
+  flex: 0 0 24px;
+}
+
+.reception-queue-state strong {
+  display: block;
+  color: var(--color-ink);
+  font-size: 15px;
+}
+
+.reception-queue-state p {
+  margin: 3px 0 0;
+}
+
+.reception-queue-state button,
+.reception-queue-stale button {
+  display: inline-flex;
+  min-height: var(--control-min-height);
+  align-items: center;
+  gap: 6px;
+  margin-left: var(--space-3);
+  padding: 0 var(--space-3);
+  border: 1px solid currentColor;
+  border-radius: var(--radius-control);
+  background: var(--color-surface);
+  color: var(--color-primary);
+  font-size: 14px;
+  font-weight: 750;
+}
+
+.reception-queue-state-error {
+  color: var(--color-danger);
+  background: var(--color-danger-surface);
+}
+
+.reception-queue-loading {
+  display: grid;
+  gap: 1px;
+  background: var(--color-border);
+}
+
+.reception-queue-loading span {
+  height: 82px;
+  background: var(--color-skeleton);
+}
+
+.reception-queue-live-announcement {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+.reception-queue-footer {
+  display: flex;
+  min-height: 54px;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  padding: 5px var(--space-5);
+  border-top: 1px solid var(--color-border);
+  color: var(--color-text-secondary);
+  font-size: 14px;
+}
+
+.reception-queue-stale {
+  min-height: 0;
+  justify-content: flex-start;
+  border-top: 1px solid var(--color-warning-border);
+  background: var(--color-warning-surface);
+  color: var(--color-warning);
+}
+
+.reception-queue-stale button {
+  margin-left: auto;
+  color: var(--color-warning);
+}
+
+.reception-queue-dialog {
+  width: min(520px, 100%);
+}
+
+.reception-queue-dialog .booking-dialog-actions .reception-button-danger {
+  border-color: var(--color-danger);
+  background: var(--color-danger);
+  color: var(--color-surface);
+}
+
+.reception-queue-dialog .booking-dialog-actions .reception-button-danger:hover {
+  border-color: var(--color-danger-strong);
+  background: var(--color-danger-strong);
+}
+
+.reception-queue-dialog-details {
+  display: grid;
+  gap: 0;
+  margin: var(--space-4) 0 0;
+  border-top: 1px solid var(--color-border);
+}
+
+.reception-queue-dialog-details > div {
+  display: grid;
+  grid-template-columns: 150px minmax(0, 1fr);
+  gap: var(--space-3);
+  padding: 10px 0;
+  border-bottom: 1px solid var(--color-border);
+}
+
+.reception-queue-dialog-details dt,
+.reception-queue-dialog-details dd {
+  margin: 0;
+  font-size: 14px;
+  line-height: 1.45;
+}
+
+.reception-queue-dialog-details dt {
+  color: var(--color-text-secondary);
+}
+
+.reception-queue-dialog-details dd {
+  color: var(--color-ink);
+  font-weight: 750;
+}
+
+.reception-queue-dialog-consequence {
+  margin-top: var(--space-4);
+  padding: var(--space-3);
+  border: 1px solid var(--color-warning-border);
+  border-radius: var(--radius-control);
+  background: var(--color-warning-surface);
+  color: var(--color-warning);
+}
+
+@keyframes reception-queue-row-update {
+  0%, 45% { background: var(--reception-queue-live-surface); }
+  100% { background: var(--color-surface); }
+}
+
+@media (max-width: 1180px) {
+  .reception-queue-header {
+    align-items: stretch;
+    flex-direction: column;
+    gap: var(--space-3);
+  }
+
+  .reception-queue-sync {
+    justify-content: flex-start;
+    flex-wrap: wrap;
+  }
+
+  .reception-queue-summary {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .reception-queue-summary button:nth-child(4) {
+    border-left: 0;
+  }
+
+  .reception-queue-summary button:nth-child(n + 4) {
+    border-top: 1px solid var(--color-border);
+  }
+
+  .reception-queue-toolbar {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .reception-queue-table-wrap {
+    overflow: visible;
+  }
+
+  .reception-queue-table-head {
+    display: none;
+  }
+
+  .reception-queue-row {
+    min-width: 0;
+    grid-template-columns: 90px minmax(180px, 1fr) minmax(150px, 0.8fr) 170px;
+    grid-template-areas:
+      "time patient doctor progress"
+      "time patient action action"
+      "error error error error";
+    align-items: start;
+  }
+
+  .reception-queue-time { grid-area: time; }
+  .reception-queue-person { grid-area: patient; }
+  .reception-queue-doctor { grid-area: doctor; }
+  .reception-queue-progress { grid-area: progress; }
+  .reception-queue-action {
+    grid-area: action;
+    justify-content: flex-start;
+  }
+  .reception-queue-action-error { grid-area: error; }
+}
+
+@media (max-width: 780px) {
+  .reception-queue-header,
+  .reception-queue-toolbar {
+    padding: var(--space-4);
+  }
+
+  .reception-queue-limit {
+    padding-inline: var(--space-4);
+  }
+
+  .reception-queue-sync > span:not(.reception-queue-realtime) {
+    flex: 1 1 100%;
+  }
+
+  .reception-queue-toolbar {
+    grid-template-columns: 1fr;
+  }
+
+  .reception-queue-row {
+    grid-template-columns: 82px minmax(0, 1fr);
+    grid-template-areas:
+      "time patient"
+      "doctor doctor"
+      "progress progress"
+      "action action"
+      "error error";
+    gap: var(--space-3);
+    padding: var(--space-4);
+  }
+
+  .reception-queue-doctor,
+  .reception-queue-progress,
+  .reception-queue-action {
+    display: grid;
+    grid-template-columns: 82px minmax(0, 1fr);
+    align-items: center;
+    justify-content: stretch;
+    gap: var(--space-3);
+  }
+
+  .reception-queue-doctor::before,
+  .reception-queue-progress::before,
+  .reception-queue-action::before {
+    content: attr(data-label);
+    color: var(--color-text-secondary);
+    font-size: 14px;
+    font-weight: 650;
+  }
+
+  .reception-queue-progress small {
+    grid-column: 2;
+  }
+
+  .reception-queue-action .reception-row-action {
+    width: 100%;
+    min-height: var(--control-min-height);
+  }
+
+  .reception-queue-footer {
+    align-items: flex-start;
+    flex-direction: column;
+    padding: var(--space-3) var(--space-4);
+  }
+}
+
+@media (max-width: 520px) {
+  .reception-queue-summary {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .reception-queue-summary button:nth-child(odd) {
+    border-left: 0;
+  }
+
+  .reception-queue-summary button:nth-child(n + 3) {
+    border-top: 1px solid var(--color-border);
+  }
+
+  .reception-queue-summary button:nth-child(4) {
+    border-left: 1px solid var(--color-border);
+  }
+
+  .reception-queue-sync {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+  }
+
+  .reception-queue-sync > span:not(.reception-queue-realtime) {
+    grid-column: 1 / -1;
+  }
+
+  .reception-queue-refresh span {
+    display: none;
+  }
+
+  .reception-queue-refresh {
+    width: var(--control-min-height);
+    padding: 0;
+  }
+
+  .reception-queue-state,
+  .reception-queue-stale {
+    align-items: flex-start;
+    flex-wrap: wrap;
+    justify-content: flex-start;
+    padding: var(--space-4);
+  }
+
+  .reception-queue-state button,
+  .reception-queue-stale button {
+    width: 100%;
+    margin-left: 0;
+  }
+
+  .reception-queue-dialog-details > div {
+    grid-template-columns: 1fr;
+    gap: 3px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .reception-queue-row.has-live-update {
+    animation: none;
+  }
+}

@@ -24,3 +24,4 @@ services/ai-service/models/
 services/ai-service/rag/index/
 backups/
 SkinDisease/
+.ai-skills/

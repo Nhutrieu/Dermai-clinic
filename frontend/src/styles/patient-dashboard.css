@@ -585,6 +585,11 @@
   color: var(--color-primary);
 }
 
+.patient-dashboard-notification-list article.is-warning > svg,
+.patient-dashboard-notification-list article.is-warning > span {
+  color: var(--color-warning);
+}
+
 .patient-dashboard-notification-list p {
   margin: 4px 0 5px;
   color: var(--color-text-secondary);

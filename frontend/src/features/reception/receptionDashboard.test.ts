@@ -2,9 +2,11 @@ import { describe, expect, it } from "vitest";
 import type { Appointment, ReminderItem } from "../../core/types";
 import {
   buildReceptionSummary,
+  buildReceptionQueueSummary,
   getAttentionAppointments,
   getOperationalAppointments,
   getReceptionStatus,
+  getReceptionQueueState,
   isOverdueForNoShow,
 } from "./receptionDashboardModel";
 
@@ -70,5 +72,33 @@ describe("reception dashboard presentation", () => {
     const late = appointment("late", "CONFIRMED", "2026-08-01T05:00:00.000Z");
     const early = appointment("early", "CONFIRMED", "2026-08-01T01:00:00.000Z");
     expect(getOperationalAppointments([late, early], now).map(item => item.id)).toEqual(["early", "late"]);
+  });
+
+  it("derives honest time-based queue phases without inventing patient arrival", () => {
+    const upcoming = appointment("upcoming", "CONFIRMED", "2026-08-01T04:00:00.000Z");
+    const overdue = appointment("overdue", "CONFIRMED", "2026-08-01T02:00:00.000Z");
+    const inProgress = appointment("progress", "IN_PROGRESS", "2026-08-01T01:30:00.000Z");
+    expect(getReceptionQueueState(upcoming, now).phase).toBe("upcoming");
+    expect(getReceptionQueueState(overdue, now)).toMatchObject({ phase: "overdue", label: "Quá giờ hẹn" });
+    expect(getReceptionQueueState(inProgress, now).phase).toBe("in_progress");
+  });
+
+  it("summarises only states backed by appointment and reminder data", () => {
+    const items = [
+      appointment("upcoming", "CONFIRMED", "2026-08-01T04:00:00.000Z"),
+      appointment("overdue", "CONFIRMED", "2026-08-01T02:00:00.000Z"),
+      appointment("progress", "IN_PROGRESS", "2026-08-01T01:30:00.000Z"),
+      appointment("complete", "COMPLETED", "2026-08-01T01:00:00.000Z"),
+      appointment("absent", "NO_SHOW", "2026-08-01T00:30:00.000Z"),
+      appointment("assigned", "ASSIGNED", "2026-08-01T04:30:00.000Z"),
+    ];
+    expect(buildReceptionQueueSummary(items, [], now)).toEqual({
+      upcoming: 1,
+      overdue: 1,
+      inProgress: 1,
+      completed: 1,
+      noShow: 1,
+      attention: 2,
+    });
   });
 });

@@ -27,13 +27,23 @@ function localDateTimeInput(value: string) {
   return new Date(date.getTime() - offset).toISOString().slice(0, 16);
 }
 
+function appointmentStatusLabel(status: string) {
+  switch (status) {
+    case "PENDING": return "Chờ xử lý";
+    case "ASSIGNED": return "Đã phân công";
+    case "CONFIRMED": return "Đã xác nhận";
+    case "CANCELLED": return "Đã hủy";
+    default: return status;
+  }
+}
+
 function AppointmentContextSummary({ appointment, patientName, doctorName }: AppointmentContext) {
   return (
     <dl className="reception-action-context">
       <div><dt>Bệnh nhân</dt><dd>{patientName}</dd></div>
-      <div><dt>Bác sĩ</dt><dd>BS. {doctorName}</dd></div>
+      <div><dt>Bác sĩ</dt><dd>{doctorName.startsWith("Chưa") ? doctorName : `BS. ${doctorName}`}</dd></div>
       <div><dt>Thời gian hiện tại</dt><dd>{formatReceptionDateTime(appointment.startAt)}</dd></div>
-      <div><dt>Trạng thái</dt><dd>Đã xác nhận</dd></div>
+      <div><dt>Trạng thái</dt><dd>{appointmentStatusLabel(appointment.status)}</dd></div>
     </dl>
   );
 }
@@ -94,9 +104,11 @@ export function ReceptionRescheduleControl({
   patientName,
   doctorName,
   submit,
+  onSuccess,
 }: AppointmentContext & {
   token: string;
   submit: (value: string) => Promise<Appointment>;
+  onSuccess?: (appointment: Appointment) => void;
 }) {
   const [open, setOpen] = useState(false);
   const [preferredAt, setPreferredAt] = useState(() => localDateTimeInput(appointment.startAt));
@@ -155,12 +167,14 @@ export function ReceptionRescheduleControl({
 
   function close() {
     if (submitting) return;
+    const completed = success;
     setOpen(false);
     setSuccess(null);
     setConflict(null);
     setError("");
     setSelected(null);
     setRecommendations([]);
+    if (completed) onSuccess?.(completed);
   }
 
   return (
@@ -285,22 +299,24 @@ export function ReceptionCancelControl({
   patientName,
   doctorName,
   submit,
+  onSuccess,
 }: AppointmentContext & {
   submit: (reason: string) => Promise<Appointment>;
+  onSuccess?: (appointment: Appointment) => void;
 }) {
   const [open, setOpen] = useState(false);
   const [reason, setReason] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState("");
-  const [success, setSuccess] = useState(false);
+  const [success, setSuccess] = useState<Appointment | null>(null);
 
   async function confirmCancel() {
     if (!reason.trim() || submitting) return;
     setSubmitting(true);
     setError("");
     try {
-      await submit(reason.trim());
-      setSuccess(true);
+      const updated = await submit(reason.trim());
+      setSuccess(updated);
     } catch (cause) {
       setError(toBookingIssue(cause).detail);
     } finally {
@@ -310,10 +326,12 @@ export function ReceptionCancelControl({
 
   function close() {
     if (submitting) return;
+    const completed = success;
     setOpen(false);
     setReason("");
     setError("");
-    setSuccess(false);
+    setSuccess(null);
+    if (completed) onSuccess?.(completed);
   }
 
   return (

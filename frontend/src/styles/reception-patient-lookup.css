@@ -1,0 +1,914 @@
+/* Patient lookup is a privacy-aware operational surface scoped to reception only. */
+.reception-patient-lookup {
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-panel);
+  background: var(--color-surface);
+  color: var(--color-ink);
+  font-size: 15px;
+}
+
+.reception-patient-lookup button {
+  min-height: var(--control-min-height);
+}
+
+.reception-patient-lookup-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--space-4);
+  padding: var(--space-5);
+  border-bottom: 1px solid var(--color-border);
+}
+
+.reception-patient-lookup h2,
+.reception-patient-lookup h3,
+.reception-patient-lookup h4,
+.reception-patient-lookup p {
+  margin: 0;
+}
+
+.reception-patient-lookup h2 {
+  font-size: 20px;
+  line-height: 1.3;
+}
+
+.reception-patient-lookup-header p,
+.reception-patient-section-heading p,
+.reception-patient-results-panel header p {
+  margin-top: 5px;
+  color: var(--color-text-secondary);
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+.reception-patient-search {
+  display: grid;
+  gap: var(--space-2);
+  padding: var(--space-4) var(--space-5);
+  background: var(--color-surface-subtle);
+}
+
+.reception-patient-search > label {
+  font-size: 15px;
+  font-weight: 750;
+}
+
+.reception-patient-search-control {
+  display: grid;
+  min-height: 50px;
+  grid-template-columns: 20px minmax(0, 1fr) auto auto;
+  align-items: center;
+  gap: var(--space-2);
+  padding: 3px 3px 3px var(--space-3);
+  border: 1px solid var(--color-border-strong);
+  border-radius: var(--radius-control);
+  background: var(--color-surface);
+}
+
+.reception-patient-search-control:focus-within {
+  border-color: var(--color-primary);
+  box-shadow: var(--focus-ring);
+}
+
+.reception-patient-search-control > svg {
+  width: 19px;
+  height: 19px;
+  color: var(--color-text-secondary);
+}
+
+.reception-patient-search-control input {
+  min-width: 0;
+  min-height: 42px;
+  padding: 0;
+  border: 0;
+  outline: 0;
+  background: transparent;
+  color: var(--color-ink);
+  font-size: 15px;
+  box-shadow: none;
+}
+
+.reception-patient-search-control input:focus {
+  border: 0;
+  box-shadow: none;
+}
+
+.reception-patient-search-control input::placeholder {
+  color: var(--color-placeholder);
+  opacity: 1;
+}
+
+.reception-patient-search-control button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 0 var(--space-4);
+  border: 1px solid var(--color-primary);
+  border-radius: 6px;
+  background: var(--color-primary);
+  color: var(--color-surface);
+  font-size: 14px;
+  font-weight: 750;
+}
+
+.reception-patient-search-control button[aria-label] {
+  width: 44px;
+  padding: 0;
+  border-color: transparent;
+  background: transparent;
+  color: var(--color-text-secondary);
+}
+
+.reception-patient-search-control button[aria-label]:hover {
+  background: var(--color-surface-subtle);
+}
+
+.reception-patient-search-control button:disabled {
+  border-color: var(--color-border);
+  background: var(--color-disabled-surface);
+  color: var(--color-disabled);
+}
+
+.reception-patient-search > small {
+  color: var(--color-text-secondary);
+  font-size: 14px;
+  line-height: 1.45;
+}
+
+.reception-patient-idle,
+.reception-patient-local-error,
+.reception-patient-empty,
+.reception-patient-loading {
+  display: flex;
+  min-height: 82px;
+  align-items: center;
+  gap: var(--space-3);
+  margin: var(--space-4) var(--space-5) var(--space-5);
+  padding: var(--space-4);
+  border: 1px dashed var(--color-border-strong);
+  background: var(--reception-patient-detail-surface);
+}
+
+.reception-patient-idle > svg,
+.reception-patient-empty > svg {
+  width: 24px;
+  height: 24px;
+  flex: 0 0 auto;
+  color: var(--color-primary);
+}
+
+.reception-patient-idle strong,
+.reception-patient-empty strong {
+  font-size: 15px;
+}
+
+.reception-patient-idle p,
+.reception-patient-empty p,
+.reception-patient-local-error p {
+  margin-top: 4px;
+  color: var(--color-text-secondary);
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+.reception-patient-local-error {
+  border: 1px solid var(--color-danger-border);
+  border-left: 3px solid var(--color-danger);
+  background: var(--color-danger-surface);
+  color: var(--color-danger-strong);
+}
+
+.reception-patient-local-error > svg,
+.reception-patient-appointment-error > svg,
+.reception-patient-detail-error > svg {
+  width: 20px;
+  height: 20px;
+  flex: 0 0 auto;
+}
+
+.reception-patient-local-error > div,
+.reception-patient-empty > div:nth-child(2),
+.reception-patient-appointment-error > div,
+.reception-patient-detail-error > div {
+  min-width: 0;
+  flex: 1 1 auto;
+}
+
+.reception-patient-local-error button,
+.reception-patient-appointment-error button,
+.reception-patient-detail-error button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  margin-left: auto;
+  padding: 0 var(--space-3);
+  border: 1px solid currentColor;
+  border-radius: var(--radius-control);
+  background: transparent;
+  color: inherit;
+  font-size: 14px;
+  font-weight: 750;
+}
+
+.reception-patient-local-error button svg,
+.reception-patient-detail-error button svg {
+  width: 17px;
+  height: 17px;
+}
+
+.reception-patient-empty {
+  flex-wrap: wrap;
+}
+
+.reception-patient-empty > div:last-child {
+  display: flex;
+  gap: var(--space-2);
+  margin-left: auto;
+}
+
+.reception-patient-loading {
+  min-height: 54px;
+  border-style: solid;
+  color: var(--color-text-secondary);
+  font-size: 14px;
+}
+
+.reception-patient-loading span {
+  width: 16px;
+  height: 16px;
+  border: 2px solid var(--color-border-strong);
+  border-top-color: var(--color-primary);
+  border-radius: 50%;
+  animation: reception-patient-spin 700ms linear infinite;
+}
+
+.reception-patient-workspace {
+  display: grid;
+  min-width: 0;
+  border-top: 1px solid var(--color-border);
+}
+
+.reception-patient-workspace.has-selection {
+  grid-template-columns: minmax(300px, var(--reception-patient-list-width)) minmax(0, 1fr);
+}
+
+.reception-patient-results-panel {
+  min-width: 0;
+  padding: var(--space-4);
+  background: var(--color-surface);
+}
+
+.reception-patient-workspace.has-selection .reception-patient-results-panel {
+  border-right: 1px solid var(--color-border);
+}
+
+.reception-patient-results-panel > header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--space-3);
+  padding-bottom: var(--space-3);
+  border-bottom: 1px solid var(--color-border);
+}
+
+.reception-patient-results-panel h3,
+.reception-patient-detail h3 {
+  font-size: 18px;
+  line-height: 1.35;
+}
+
+.reception-patient-duplicate {
+  display: flex;
+  gap: var(--space-2);
+  margin-top: var(--space-3);
+  padding: 10px var(--space-3);
+  border-left: 3px solid var(--color-warning-border);
+  background: var(--color-warning-surface);
+  color: var(--color-warning);
+}
+
+.reception-patient-duplicate svg,
+.reception-patient-duplicate-label svg {
+  width: 18px;
+  height: 18px;
+  flex: 0 0 auto;
+}
+
+.reception-patient-duplicate p,
+.reception-patient-duplicate-label {
+  font-size: 14px;
+  line-height: 1.45;
+}
+
+.reception-patient-result-list {
+  display: grid;
+  max-height: 720px;
+  overflow-y: auto;
+  scrollbar-width: thin;
+}
+
+.reception-patient-result {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: var(--space-2) var(--space-3);
+  padding: var(--space-4) 2px;
+  border-bottom: 1px solid var(--color-border);
+}
+
+.reception-patient-result.is-selected {
+  margin: 0 calc(var(--space-4) * -1);
+  padding-right: var(--space-4);
+  padding-left: calc(var(--space-4) - 3px);
+  border-left: 3px solid var(--color-primary);
+  background: var(--color-success-surface);
+}
+
+.reception-patient-result-identity {
+  display: grid;
+  grid-template-columns: 38px minmax(0, 1fr);
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.reception-patient-result-identity > span,
+.reception-patient-identity-summary > span {
+  display: grid;
+  width: 38px;
+  height: 38px;
+  place-items: center;
+  border: 1px solid var(--color-success-border);
+  border-radius: 50%;
+  background: var(--color-success-surface);
+  color: var(--color-primary-strong);
+  font-size: 15px;
+  font-weight: 800;
+}
+
+.reception-patient-result-identity strong,
+.reception-patient-result-identity small {
+  display: block;
+}
+
+.reception-patient-result-identity strong {
+  font-size: 15px;
+  line-height: 1.35;
+}
+
+.reception-patient-result-identity small {
+  margin-top: 2px;
+  color: var(--color-text-secondary);
+  font-size: 14px;
+}
+
+.reception-patient-result dl {
+  grid-column: 1 / -1;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--space-2);
+  margin: 0;
+}
+
+.reception-patient-result dl > div {
+  min-width: 0;
+}
+
+.reception-patient-result dt,
+.reception-patient-result dd {
+  margin: 0;
+  font-size: 14px;
+  line-height: 1.4;
+}
+
+.reception-patient-result dt {
+  color: var(--color-text-secondary);
+}
+
+.reception-patient-result dd {
+  margin-top: 2px;
+  color: var(--color-ink);
+  font-weight: 700;
+}
+
+.reception-patient-account {
+  display: inline-flex;
+  min-height: 28px;
+  align-items: center;
+  justify-self: end;
+  padding: 4px 8px;
+  border: 1px solid var(--color-border);
+  border-radius: 999px;
+  background: var(--color-disabled-surface);
+  color: var(--color-disabled);
+  font-size: 14px;
+  font-weight: 700;
+  line-height: 1.25;
+}
+
+.reception-patient-account.is-linked {
+  border-color: var(--color-success-border);
+  background: var(--color-success-surface);
+  color: var(--color-success);
+}
+
+.reception-patient-duplicate-label,
+.reception-patient-next {
+  grid-column: 1 / -1;
+  color: var(--color-text-secondary);
+  font-size: 14px;
+  line-height: 1.45;
+}
+
+.reception-patient-duplicate-label {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--color-warning);
+  font-weight: 700;
+}
+
+.reception-patient-view {
+  grid-column: 1 / -1;
+  width: fit-content;
+  padding: 0 var(--space-3);
+  border: 1px solid var(--color-primary);
+  border-radius: var(--radius-control);
+  background: var(--color-surface);
+  color: var(--color-primary);
+  font-size: 14px;
+  font-weight: 750;
+}
+
+.reception-patient-view:hover,
+.reception-patient-view[aria-pressed="true"] {
+  background: var(--color-primary);
+  color: var(--color-surface);
+}
+
+.reception-patient-detail {
+  min-width: 0;
+  background: var(--reception-patient-detail-surface);
+}
+
+.reception-patient-detail-loading,
+.reception-patient-detail-error {
+  min-height: 210px;
+  padding: var(--space-5);
+}
+
+.reception-patient-detail-loading {
+  display: grid;
+  align-content: center;
+  gap: var(--space-3);
+}
+
+.reception-patient-detail-loading span {
+  display: block;
+  height: 16px;
+  border-radius: 4px;
+  background: var(--color-skeleton);
+  animation: reception-patient-skeleton 1.1s ease-in-out infinite;
+}
+
+.reception-patient-detail-loading span:nth-child(1) { width: 42%; }
+.reception-patient-detail-loading span:nth-child(2) { width: 70%; }
+.reception-patient-detail-loading span:nth-child(3) { width: 56%; }
+
+.reception-patient-detail-loading p {
+  color: var(--color-text-secondary);
+  font-size: 14px;
+}
+
+.reception-patient-detail-error,
+.reception-patient-appointment-error {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  border-left: 3px solid var(--color-danger);
+  background: var(--color-danger-surface);
+  color: var(--color-danger-strong);
+}
+
+.reception-patient-detail-error p,
+.reception-patient-appointment-error p {
+  margin-top: 4px;
+  font-size: 14px;
+  line-height: 1.45;
+}
+
+.reception-patient-identity-summary {
+  display: grid;
+  grid-template-columns: 52px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-5);
+  border-bottom: 1px solid var(--color-border);
+  background: var(--color-surface);
+}
+
+.reception-patient-identity-summary > span {
+  width: 52px;
+  height: 52px;
+  font-size: 18px;
+}
+
+.reception-patient-identity-summary h3 + p {
+  margin: 3px 0 7px;
+  color: var(--color-text-secondary);
+  font-size: 14px;
+}
+
+.reception-patient-identity-summary .reception-patient-account {
+  justify-self: start;
+}
+
+.reception-patient-identity-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: var(--space-2);
+}
+
+.reception-patient-administrative,
+.reception-patient-appointment-sections > section {
+  padding: var(--space-5);
+  border-bottom: 1px solid var(--color-border);
+}
+
+.reception-patient-section-heading {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--space-3);
+}
+
+.reception-patient-section-heading h4 {
+  font-size: 17px;
+  line-height: 1.35;
+}
+
+.reception-patient-section-heading > span {
+  color: var(--color-text-secondary);
+  font-size: 14px;
+  white-space: nowrap;
+}
+
+.reception-patient-support {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: 0 var(--space-3);
+  border: 1px solid var(--color-border-strong);
+  border-radius: var(--radius-control);
+  background: var(--color-surface);
+  color: var(--color-primary);
+  font-size: 14px;
+  font-weight: 750;
+}
+
+.reception-patient-support svg {
+  width: 18px;
+  height: 18px;
+}
+
+.reception-patient-administrative dl {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  margin: var(--space-4) 0 0;
+  border-top: 1px solid var(--color-border);
+  border-left: 1px solid var(--color-border);
+}
+
+.reception-patient-administrative dl > div {
+  min-width: 0;
+  padding: var(--space-3);
+  border-right: 1px solid var(--color-border);
+  border-bottom: 1px solid var(--color-border);
+  background: var(--color-surface);
+}
+
+.reception-patient-administrative dt,
+.reception-patient-administrative dd {
+  margin: 0;
+}
+
+.reception-patient-administrative dt {
+  color: var(--color-text-secondary);
+  font-size: 14px;
+}
+
+.reception-patient-administrative dd {
+  margin-top: 4px;
+  color: var(--color-ink);
+  font-size: 15px;
+  font-weight: 750;
+  overflow-wrap: anywhere;
+}
+
+.reception-patient-privacy {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-2);
+  margin-top: var(--space-3);
+  color: var(--color-text-secondary);
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+.reception-patient-privacy svg {
+  width: 18px;
+  height: 18px;
+  flex: 0 0 auto;
+  color: var(--color-success);
+}
+
+.reception-patient-appointment-sections {
+  display: grid;
+  grid-template-columns: minmax(0, 1.08fr) minmax(300px, 0.92fr);
+}
+
+.reception-patient-appointment-sections > section:first-child {
+  border-right: 1px solid var(--color-border);
+}
+
+.reception-patient-appointment-list,
+.reception-patient-history-list {
+  margin-top: var(--space-3);
+  border-top: 1px solid var(--color-border);
+}
+
+.reception-patient-appointment-row,
+.reception-patient-history-list > article {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: start;
+  gap: var(--space-2) var(--space-3);
+  padding: var(--space-3) 0;
+  border-bottom: 1px solid var(--color-border);
+}
+
+.reception-patient-appointment-main time,
+.reception-patient-appointment-main strong,
+.reception-patient-history-list time,
+.reception-patient-history-list strong {
+  display: block;
+  font-size: 14px;
+  line-height: 1.4;
+}
+
+.reception-patient-appointment-main time,
+.reception-patient-history-list time {
+  color: var(--color-ink);
+  font-weight: 800;
+}
+
+.reception-patient-appointment-main strong,
+.reception-patient-history-list strong {
+  margin-top: 3px;
+  color: var(--color-text-secondary);
+}
+
+.reception-patient-appointment-main p,
+.reception-patient-history-list p {
+  margin-top: 5px;
+  color: var(--color-text-secondary);
+  font-size: 14px;
+  line-height: 1.45;
+}
+
+.reception-patient-appointment-actions {
+  grid-column: 1 / -1;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: var(--space-2);
+}
+
+.reception-patient-appointment-actions .reception-row-action {
+  min-height: 40px;
+  padding: 0 var(--space-3);
+}
+
+.reception-patient-appointment-state,
+.reception-patient-appointment-empty,
+.reception-patient-appointment-error {
+  min-height: 92px;
+  margin-top: var(--space-3);
+  padding: var(--space-4);
+  border: 1px dashed var(--color-border-strong);
+  color: var(--color-text-secondary);
+  font-size: 14px;
+}
+
+.reception-patient-appointment-empty {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+
+.reception-patient-appointment-empty svg {
+  width: 22px;
+  height: 22px;
+  color: var(--color-primary);
+}
+
+.reception-patient-appointment-empty button {
+  margin-left: auto;
+  padding: 0 var(--space-3);
+  border: 1px solid var(--color-primary);
+  border-radius: var(--radius-control);
+  background: var(--color-surface);
+  color: var(--color-primary);
+  font-size: 14px;
+  font-weight: 750;
+}
+
+.reception-patient-appointment-error {
+  border: 1px solid var(--color-danger-border);
+  border-left: 3px solid var(--color-danger);
+}
+
+.reception-patient-range-note {
+  padding: var(--space-3) var(--space-5);
+  color: var(--color-text-secondary);
+  font-size: 14px;
+  line-height: 1.45;
+}
+
+@keyframes reception-patient-spin {
+  to { transform: rotate(360deg); }
+}
+
+@keyframes reception-patient-skeleton {
+  50% { opacity: 0.5; }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .reception-patient-result,
+  .reception-patient-detail {
+    animation: reception-patient-enter var(--reception-motion-duration) var(--reception-motion-ease) both;
+  }
+}
+
+@keyframes reception-patient-enter {
+  from { opacity: 0; transform: translateY(2px); }
+  to { opacity: 1; transform: none; }
+}
+
+@media (max-width: 1180px) {
+  .reception-patient-workspace.has-selection {
+    grid-template-columns: minmax(280px, 310px) minmax(0, 1fr);
+  }
+
+  .reception-patient-appointment-sections {
+    grid-template-columns: 1fr;
+  }
+
+  .reception-patient-appointment-sections > section:first-child {
+    border-right: 0;
+  }
+}
+
+@media (max-width: 900px) {
+  .reception-patient-workspace.has-selection {
+    grid-template-columns: 1fr;
+  }
+
+  .reception-patient-workspace.has-selection .reception-patient-results-panel {
+    border-right: 0;
+    border-bottom: 1px solid var(--color-border);
+  }
+
+  .reception-patient-result-list {
+    max-height: 430px;
+  }
+}
+
+@media (max-width: 680px) {
+  .reception-patient-lookup-header,
+  .reception-patient-identity-summary,
+  .reception-patient-section-heading {
+    align-items: stretch;
+  }
+
+  .reception-patient-lookup-header,
+  .reception-patient-section-heading {
+    flex-direction: column;
+  }
+
+  .reception-patient-lookup-header,
+  .reception-patient-search,
+  .reception-patient-administrative,
+  .reception-patient-appointment-sections > section {
+    padding: var(--space-4);
+  }
+
+  .reception-patient-idle,
+  .reception-patient-local-error,
+  .reception-patient-empty,
+  .reception-patient-loading {
+    margin: var(--space-3) var(--space-4) var(--space-4);
+  }
+
+  .reception-patient-identity-summary {
+    grid-template-columns: 44px minmax(0, 1fr);
+  }
+
+  .reception-patient-identity-summary > span {
+    width: 44px;
+    height: 44px;
+  }
+
+  .reception-patient-identity-actions {
+    grid-column: 1 / -1;
+    justify-content: flex-start;
+  }
+
+  .reception-patient-administrative dl {
+    grid-template-columns: 1fr;
+  }
+
+  .reception-patient-appointment-actions {
+    justify-content: flex-start;
+  }
+}
+
+@media (max-width: 520px) {
+  .reception-patient-search-control {
+    grid-template-columns: 20px minmax(0, 1fr) 44px;
+  }
+
+  .reception-patient-search-control button[type="submit"] {
+    grid-column: 1 / -1;
+    width: 100%;
+  }
+
+  .reception-patient-local-error,
+  .reception-patient-detail-error,
+  .reception-patient-appointment-error {
+    align-items: flex-start;
+    flex-wrap: wrap;
+  }
+
+  .reception-patient-local-error button,
+  .reception-patient-detail-error button,
+  .reception-patient-appointment-error button {
+    width: 100%;
+    margin-left: 0;
+  }
+
+  .reception-patient-empty > div:last-child,
+  .reception-patient-identity-actions {
+    display: grid;
+    width: 100%;
+    margin-left: 0;
+  }
+
+  .reception-patient-result {
+    grid-template-columns: 1fr;
+  }
+
+  .reception-patient-account {
+    justify-self: start;
+  }
+
+  .reception-patient-result dl {
+    grid-template-columns: 1fr;
+  }
+
+  .reception-patient-result.is-selected {
+    margin-right: calc(var(--space-4) * -1);
+    margin-left: calc(var(--space-4) * -1);
+  }
+
+  .reception-patient-view,
+  .reception-patient-appointment-actions > button,
+  .reception-patient-appointment-actions > .reception-row-action {
+    width: 100%;
+  }
+
+  .reception-patient-appointment-row,
+  .reception-patient-history-list > article {
+    grid-template-columns: 1fr;
+  }
+
+  .reception-patient-appointment-row > .reception-status,
+  .reception-patient-history-list > article > .reception-status {
+    justify-self: start;
+  }
+
+  .reception-patient-range-note {
+    padding: var(--space-3) var(--space-4);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .reception-patient-loading span,
+  .reception-patient-detail-loading span,
+  .reception-patient-result,
+  .reception-patient-detail {
+    animation: none;
+  }
+}

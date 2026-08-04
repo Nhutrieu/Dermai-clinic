@@ -66,18 +66,27 @@ export function subscribeRealtime(listener: (event: RealtimeEvent) => void, opti
 
 let sharedAudioContext: AudioContext | null = null;
 
-export function playChimeNotification() {
+function getAudioContext() {
   try {
     const AudioCtx = window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
-    if (!AudioCtx) return;
+    if (!AudioCtx) return null;
     if (!sharedAudioContext) {
       sharedAudioContext = new AudioCtx();
     }
-    if (sharedAudioContext.state === "suspended") {
-      sharedAudioContext.resume().catch(() => {});
-    }
+    return sharedAudioContext;
+  } catch {
+    return null;
+  }
+}
 
-    const ctx = sharedAudioContext;
+export function enableChimeNotifications() {
+  const context = getAudioContext();
+  if (!context || context.state === "closed") return;
+  if (context.state === "suspended") void context.resume().catch(() => undefined);
+}
+
+function renderChime(ctx: AudioContext) {
+  try {
     const osc1 = ctx.createOscillator();
     const gain1 = ctx.createGain();
     osc1.type = "sine";
@@ -100,6 +109,16 @@ export function playChimeNotification() {
     osc2.start(ctx.currentTime + 0.12);
     osc2.stop(ctx.currentTime + 0.55);
   } catch {
-    // Ignore audio restriction
+    // Audio is optional and must never interrupt realtime updates.
   }
+}
+
+export function playChimeNotification() {
+  const context = getAudioContext();
+  if (!context || context.state === "closed") return;
+  if (context.state === "suspended") {
+    void context.resume().then(() => renderChime(context)).catch(() => undefined);
+    return;
+  }
+  renderChime(context);
 }

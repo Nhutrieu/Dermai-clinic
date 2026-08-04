@@ -224,11 +224,19 @@ export default function ReceptionHotlineBookingView({ session }: { session: Toke
     }
   }, [date, doctorId, open, selectedPatient, session.accessToken]);
 
-  async function show() {
+  async function show(initialPatient?: Patient) {
     setOpen(true);
     setSuccess(null);
+    if (initialPatient && !workflowLocked) {
+      // A patient profile opens the existing hotline workflow with identity context intact.
+      setPatients(current => [initialPatient, ...current.filter(item => item.id !== initialPatient.id)]);
+      setQuery(initialPatient.phone || initialPatient.fullName);
+      setSearchAttempted(true);
+      setSearchState("success");
+      selectPatient(initialPatient);
+    }
     if (!doctors.length) void loadDoctors();
-    if (!searchAttempted) void searchPatients("");
+    if (!searchAttempted && !initialPatient) void searchPatients("");
   }
 
   function close() {
@@ -238,10 +246,13 @@ export default function ReceptionHotlineBookingView({ session }: { session: Toke
   }
 
   useEffect(() => {
-    const openFromDashboard = () => { void show() };
+    const openFromDashboard = (event: Event) => {
+      const patient = (event as CustomEvent<Patient | undefined>).detail;
+      void show(patient);
+    };
     window.addEventListener("open-hotline-booking", openFromDashboard);
     return () => window.removeEventListener("open-hotline-booking", openFromDashboard);
-  }, [doctors.length, loadDoctors, searchAttempted, searchPatients]);
+  }, [doctors.length, loadDoctors, searchAttempted, searchPatients, selectedPatient?.id, workflowLocked]);
 
   useEffect(() => {
     const refresh = () => { void loadDoctors() };

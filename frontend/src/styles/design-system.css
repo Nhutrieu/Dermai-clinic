@@ -74,9 +74,21 @@
   --reception-row-min-height: 72px;
   --reception-motion-duration: 160ms;
   --reception-motion-ease: cubic-bezier(0.22, 1, 0.36, 1);
+  --reception-queue-table-min-width: 980px;
+  --reception-queue-live-surface: #e8f4ec;
+  --reception-queue-header-surface: #f0f5f2;
+  --reception-patient-list-width: 350px;
+  --reception-patient-detail-surface: #fbfcfb;
   --reception-booking-dialog-width: 1180px;
   --reception-booking-summary-width: 340px;
   --reception-booking-motion-duration: 180ms;
+  --reception-request-content-width: 1160px;
+  --reception-request-aside-width: 260px;
+  /* Accepted appointments use a compact operational list rather than stacked dashboard cards. */
+  --reception-accepted-content-width: 1240px;
+  --reception-accepted-time-width: 150px;
+  --reception-accepted-muted-surface: #f7f9f8;
+  --reception-accepted-reminder-surface: #fbfcf8;
   /* Public clinic experience: restrained semantic tokens for the homepage only. */
   --home-canvas: #f6f4ef;
   --home-surface: #fffefb;

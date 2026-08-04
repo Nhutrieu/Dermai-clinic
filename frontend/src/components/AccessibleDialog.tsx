@@ -24,6 +24,7 @@ type AccessibleDialogProps = {
   backdropClassName?: string;
   closeLabel?: string;
   closeOnBackdrop?: boolean;
+  closeDisabled?: boolean;
   onClose: () => void;
 };
 
@@ -44,12 +45,15 @@ export default function AccessibleDialog({
   backdropClassName = "",
   closeLabel = "Đóng hộp thoại",
   closeOnBackdrop = true,
+  closeDisabled = false,
   onClose,
 }: AccessibleDialogProps) {
   const dialogRef = useRef<HTMLElement>(null);
   const previousFocusRef = useRef<HTMLElement | null>(null);
   const closeRef = useRef(onClose);
+  const closeDisabledRef = useRef(closeDisabled);
   closeRef.current = onClose;
+  closeDisabledRef.current = closeDisabled;
 
   useEffect(() => {
     previousFocusRef.current = document.activeElement instanceof HTMLElement
@@ -65,7 +69,7 @@ export default function AccessibleDialog({
     initialFocus?.focus();
 
     function handleKeyDown(event: KeyboardEvent) {
-      if (event.key === "Escape") {
+      if (event.key === "Escape" && !closeDisabledRef.current) {
         event.preventDefault();
         closeRef.current();
         return;
@@ -102,7 +106,7 @@ export default function AccessibleDialog({
       className={["booking-dialog-backdrop", backdropClassName].filter(Boolean).join(" ")}
       role="presentation"
       onMouseDown={event => {
-        if (closeOnBackdrop && event.target === event.currentTarget) onClose();
+        if (closeOnBackdrop && !closeDisabled && event.target === event.currentTarget) onClose();
       }}
     >
       <section
@@ -122,6 +126,7 @@ export default function AccessibleDialog({
           type="button"
           className="booking-dialog-close"
           aria-label={closeLabel}
+          disabled={closeDisabled}
           onClick={onClose}
         >
           <X aria-hidden="true" />

@@ -9,6 +9,7 @@ export type ReceptionStatusTone =
   | "progress"
   | "completed"
   | "followup"
+  | "overdue"
   | "cancelled"
   | "neutral";
 
@@ -24,6 +25,29 @@ export type ReceptionSummary = {
   inProgress: number;
   completed: number;
   closed: number;
+};
+
+export type ReceptionQueuePhase =
+  | "attention"
+  | "upcoming"
+  | "overdue"
+  | "in_progress"
+  | "completed"
+  | "no_show"
+  | "closed";
+
+export type ReceptionQueueState = ReceptionStatus & {
+  phase: ReceptionQueuePhase;
+  minutesFromStart: number;
+};
+
+export type ReceptionQueueSummary = {
+  upcoming: number;
+  overdue: number;
+  inProgress: number;
+  completed: number;
+  noShow: number;
+  attention: number;
 };
 
 export function getReceptionStatus(status: string): ReceptionStatus {
@@ -71,6 +95,71 @@ export function isClinicToday(appointment: Appointment, now = new Date()): boole
 export function isOverdueForNoShow(appointment: Appointment, now = new Date()): boolean {
   if (appointment.status !== "CONFIRMED") return false;
   return new Date(appointment.startAt).getTime() + 30 * 60_000 <= now.getTime();
+}
+
+/**
+ * Derives an operational label from the persisted appointment status and time.
+ * It deliberately does not infer patient arrival because the API has no check-in event.
+ */
+export function getReceptionQueueState(
+  appointment: Appointment,
+  now = new Date(),
+): ReceptionQueueState {
+  const minutesFromStart = Math.max(
+    0,
+    Math.floor((now.getTime() - new Date(appointment.startAt).getTime()) / 60_000),
+  );
+
+  if (["PENDING", "ASSIGNED", "PROPOSED"].includes(appointment.status)) {
+    const status = getReceptionStatus(appointment.status);
+    return { ...status, phase: "attention", minutesFromStart };
+  }
+  if (appointment.status === "CONFIRMED") {
+    const hasStarted = new Date(appointment.startAt).getTime() <= now.getTime();
+    return hasStarted
+      ? {
+          label: minutesFromStart >= 30 ? "Quá giờ hẹn" : "Đã qua giờ hẹn",
+          tone: "overdue",
+          phase: "overdue",
+          minutesFromStart,
+        }
+      : {
+          label: "Sắp đến",
+          tone: "confirmed",
+          phase: "upcoming",
+          minutesFromStart: 0,
+        };
+  }
+  if (appointment.status === "IN_PROGRESS") {
+    return { label: "Đang khám", tone: "progress", phase: "in_progress", minutesFromStart };
+  }
+  if (["COMPLETED", "FOLLOW_UP_REQUIRED"].includes(appointment.status)) {
+    const status = getReceptionStatus(appointment.status);
+    return { ...status, phase: "completed", minutesFromStart };
+  }
+  if (appointment.status === "NO_SHOW") {
+    return { label: "Vắng mặt", tone: "cancelled", phase: "no_show", minutesFromStart };
+  }
+  const status = getReceptionStatus(appointment.status);
+  return { ...status, phase: "closed", minutesFromStart };
+}
+
+export function buildReceptionQueueSummary(
+  appointments: Appointment[],
+  reminders: ReminderItem[],
+  now = new Date(),
+): ReceptionQueueSummary {
+  const today = getOperationalAppointments(appointments, now);
+  const states = today.map(item => getReceptionQueueState(item, now));
+  const attentionIds = new Set(getAttentionAppointments(appointments, reminders, now).map(item => item.id));
+  return {
+    upcoming: states.filter(item => item.phase === "upcoming").length,
+    overdue: states.filter(item => item.phase === "overdue").length,
+    inProgress: states.filter(item => item.phase === "in_progress").length,
+    completed: states.filter(item => item.phase === "completed").length,
+    noShow: states.filter(item => item.phase === "no_show").length,
+    attention: today.filter(item => attentionIds.has(item.id)).length,
+  };
 }
 
 export function buildReceptionSummary(appointments: Appointment[], now = new Date()): ReceptionSummary {

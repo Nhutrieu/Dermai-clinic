@@ -13,9 +13,21 @@ import type {
 } from "../../core/types";
 import ReceptionDashboard from "./ReceptionDashboard";
 import ReceptionPanel from "./ReceptionPanel";
+import { toBookingIssue } from "./receptionBookingModel";
 
 type PatientPage = { content: Patient[]; totalElements: number };
 type ReceptionTab = "profile" | "appointments" | "records";
+
+function appointmentSnapshot(appointment: Appointment) {
+  return [
+    appointment.status,
+    appointment.startAt,
+    appointment.endAt,
+    appointment.doctorId || "",
+    appointment.reason || "",
+    appointment.updatedAt || "",
+  ].join("|");
+}
 
 export default function ReceptionWorkspace({
   token,
@@ -47,6 +59,7 @@ function ReceptionDashboardContainer({
   onNavigate: (tab: ReceptionTab) => void;
 }) {
   const [query, setQuery] = useState("");
+  const [lastSearchTerm, setLastSearchTerm] = useState("");
   const [patients, setPatients] = useState<Patient[]>([]);
   const [searchResults, setSearchResults] = useState<Patient[]>([]);
   const [selectedPatientId, setSelectedPatientId] = useState("");
@@ -62,12 +75,15 @@ function ReceptionDashboardContainer({
   const [reminderError, setReminderError] = useState("");
   const [notice, setNotice] = useState("");
   const [actionError, setActionError] = useState("");
+  const [actionErrorAppointmentId, setActionErrorAppointmentId] = useState("");
   const [busyAppointmentId, setBusyAppointmentId] = useState("");
   const [realtimeState, setRealtimeState] = useState<RealtimeConnectionState>("connecting");
   const [lastSyncedAt, setLastSyncedAt] = useState<Date | null>(null);
   const [liveRevision, setLiveRevision] = useState(0);
+  const [changedAppointmentIds, setChangedAppointmentIds] = useState<string[]>([]);
   const realtimeRefreshTimer = useRef<number | null>(null);
   const liveHighlightTimer = useRef<number | null>(null);
+  const appointmentSnapshotsRef = useRef<Map<string, string>>(new Map());
 
   const loadQueue = useCallback(async (showLoading = false) => {
     if (showLoading) setQueueLoading(true);
@@ -81,8 +97,28 @@ function ReceptionDashboardContainer({
         `/appointments/queue?from=${encodeURIComponent(from.toISOString())}&to=${encodeURIComponent(to.toISOString())}`,
         token,
       );
+      const previousSnapshots = appointmentSnapshotsRef.current;
+      const nextSnapshots = new Map(items.map(item => [item.id, appointmentSnapshot(item)]));
+      const changedIds = previousSnapshots.size
+        ? items.filter(item => previousSnapshots.get(item.id) !== nextSnapshots.get(item.id)).map(item => item.id)
+        : [];
+      const removedCount = previousSnapshots.size
+        ? [...previousSnapshots.keys()].filter(id => !nextSnapshots.has(id)).length
+        : 0;
+      appointmentSnapshotsRef.current = nextSnapshots;
       setAppointments(items);
       setLastSyncedAt(new Date());
+
+      // Highlight only rows whose persisted appointment data actually changed.
+      if (changedIds.length || removedCount) {
+        if (liveHighlightTimer.current !== null) window.clearTimeout(liveHighlightTimer.current);
+        setChangedAppointmentIds(changedIds);
+        setLiveRevision(Date.now());
+        liveHighlightTimer.current = window.setTimeout(() => {
+          setChangedAppointmentIds([]);
+          setLiveRevision(0);
+        }, 900);
+      }
 
       // A missing patient profile must not prevent the operational schedule from rendering.
       const patientIds = [...new Set(items.map(item => item.patientId))];
@@ -140,18 +176,14 @@ function ReceptionDashboardContainer({
   }, [loadQueue, loadReminders]);
 
   useEffect(() => {
-    const refresh = async (highlight = false) => {
+    const refresh = async () => {
       await Promise.all([loadQueue(), loadReminders()]);
-      if (!highlight) return;
-      if (liveHighlightTimer.current !== null) window.clearTimeout(liveHighlightTimer.current);
-      setLiveRevision(Date.now());
-      liveHighlightTimer.current = window.setTimeout(() => setLiveRevision(0), 900);
     };
     const scheduleRefresh = () => {
       if (realtimeRefreshTimer.current !== null) window.clearTimeout(realtimeRefreshTimer.current);
       realtimeRefreshTimer.current = window.setTimeout(() => {
         realtimeRefreshTimer.current = null;
-        void refresh(true);
+        void refresh();
       }, 150);
     };
     const unsubscribe = subscribeRealtime(event => {
@@ -173,9 +205,7 @@ function ReceptionDashboardContainer({
   async function search() {
     const searchTerm = query.trim();
     setSearchAttempted(true);
-    setSelectedPatientId("");
     if (searchTerm.length < 2) {
-      setSearchResults([]);
       setSearchError("Nhập ít nhất 2 ký tự để tìm bệnh nhân.");
       return;
     }
@@ -185,10 +215,12 @@ function ReceptionDashboardContainer({
       const page = await request<PatientPage>(`/patients?query=${encodeURIComponent(searchTerm)}`, token);
       const results = page.content || [];
       setSearchResults(results);
+      setLastSearchTerm(searchTerm);
+      setSelectedPatientId("");
       setPatients(current => [...new Map([...current, ...results].map(item => [item.id, item])).values()]);
     } catch (cause) {
-      setSearchResults([]);
-      setSearchError((cause as Error).message);
+      // Keep the last successful result set visible when the network is interrupted.
+      setSearchError(toBookingIssue(cause).detail);
     } finally {
       setSearchLoading(false);
     }
@@ -196,6 +228,7 @@ function ReceptionDashboardContainer({
 
   function clearSearch() {
     setQuery("");
+    setLastSearchTerm("");
     setSearchResults([]);
     setSelectedPatientId("");
     setSearchAttempted(false);
@@ -211,12 +244,14 @@ function ReceptionDashboardContainer({
     setBusyAppointmentId(id);
     setNotice("");
     setActionError("");
+    setActionErrorAppointmentId("");
     try {
       await action();
       setNotice(successMessage);
       await Promise.all([loadQueue(), loadReminders()]);
     } catch (cause) {
       setActionError((cause as Error).message);
+      setActionErrorAppointmentId(id);
       throw cause;
     } finally {
       setBusyAppointmentId("");
@@ -261,11 +296,13 @@ function ReceptionDashboardContainer({
     : "Chưa phân công";
 
   return <ReceptionDashboard
+    token={token}
     appointments={appointments}
     reminders={reminders}
     searchResults={searchResults}
     selectedPatientId={selectedPatientId}
     query={query}
+    lastSearchTerm={lastSearchTerm}
     queueLoading={queueLoading}
     queueError={queueError}
     reminderLoading={reminderLoading}
@@ -279,6 +316,8 @@ function ReceptionDashboardContainer({
     realtimeState={realtimeState}
     lastSyncedAt={lastSyncedAt}
     liveRevision={liveRevision}
+    changedAppointmentIds={changedAppointmentIds}
+    actionErrorAppointmentId={actionErrorAppointmentId}
     patientName={patientName}
     doctorName={doctorName}
     onQueryChange={setQuery}
@@ -286,7 +325,7 @@ function ReceptionDashboardContainer({
     onClearSearch={clearSearch}
     onSelectPatient={setSelectedPatientId}
     onOpenSupport={openSupport}
-    onOpenHotline={() => window.dispatchEvent(new Event("open-hotline-booking"))}
+    onOpenHotline={patient => window.dispatchEvent(new CustomEvent<Patient | undefined>("open-hotline-booking", { detail: patient }))}
     onOpenRequests={() => onNavigate("appointments")}
     onOpenAccepted={() => onNavigate("records")}
     onConfirm={confirmAppointment}

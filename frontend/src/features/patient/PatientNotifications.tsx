@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { Bell, X } from "lucide-react";
+import { Bell, TriangleAlert, X } from "lucide-react";
 import { request } from "../../core/api";
 import { subscribeRealtime, playChimeNotification } from "../../core/realtime";
 import type { Appointment, PatientNotification, Tokens } from "../../core/types";
@@ -11,8 +11,8 @@ export default function PatientNotifications({ session }: { session: Tokens }) {
     const [busyId, setBusyId] = useState("");
     const [message, setMessage] = useState("");
 
-    const prevNotificationsCount = useRef<number>(0);
-    const prevProposalsCount = useRef<number>(0);
+    const knownNotificationIds = useRef<Set<string> | null>(null);
+    const knownProposalIds = useRef<Set<string> | null>(null);
 
     async function load() {
         try {
@@ -21,16 +21,19 @@ export default function PatientNotifications({ session }: { session: Tokens }) {
                 request<Appointment[]>("/appointments/proposals/mine", session.accessToken)
             ]);
 
-            // ONLY play audio chime when a NEW notification or proposal arrives from the system/receptionist
-            const isNewNotification = prevNotificationsCount.current > 0 && notifications.length > prevNotificationsCount.current;
-            const isNewProposal = prevProposalsCount.current > 0 && active.length > prevProposalsCount.current;
+            // Compare stable IDs so the first notification and a replacement in
+            // the 50-item window are still announced in realtime.
+            const isNewNotification = knownNotificationIds.current !== null
+                && notifications.some(item => !knownNotificationIds.current!.has(item.id));
+            const isNewProposal = knownProposalIds.current !== null
+                && active.some(item => !knownProposalIds.current!.has(item.id));
 
             if (isNewNotification || isNewProposal) {
                 playChimeNotification();
             }
 
-            prevNotificationsCount.current = notifications.length;
-            prevProposalsCount.current = active.length;
+            knownNotificationIds.current = new Set(notifications.map(item => item.id));
+            knownProposalIds.current = new Set(active.map(item => item.id));
 
             setItems(notifications);
             setProposals(active);
@@ -121,7 +124,8 @@ export default function PatientNotifications({ session }: { session: Tokens }) {
                             </div>
                         ) : (
                             items.map(x => (
-                                <article key={x.id} className={!x.readAt ? "unread" : ""}>
+                                <article key={x.id} className={`${!x.readAt ? "unread" : ""} ${x.notificationType === "NO_SHOW" ? "is-warning" : ""}`.trim()}>
+                                    {x.notificationType === "NO_SHOW" && <span className="notification-warning-label"><TriangleAlert aria-hidden="true" /> Cảnh báo lịch khám</span>}
                                     <b>{x.title}</b>
                                     <p>{x.body}</p>
                                     {x.notificationType === "BOOKING_PROPOSAL" && x.appointmentId && (

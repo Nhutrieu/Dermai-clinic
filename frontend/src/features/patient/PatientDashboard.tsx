@@ -13,6 +13,7 @@ import {
     MessageCircle,
     Pill,
     Stethoscope,
+    TriangleAlert,
     UserRound,
 } from "lucide-react";
 import { request, requestBlob } from "../../core/api";
@@ -551,8 +552,8 @@ export default function PatientDashboard({
                 ) : importantNotifications.length === 0 ? (
                     <DashboardState tone="empty" title="Chưa có thông báo quan trọng" description="Xác nhận, thay đổi và nhắc lịch sẽ xuất hiện tại đây." />
                 ) : <div className="patient-dashboard-notification-list">
-                    {importantNotifications.map(item => <article className={!item.readAt ? "is-unread" : ""} key={item.id}>
-                        <Bell aria-hidden="true" />
+                    {importantNotifications.map(item => <article className={`${!item.readAt ? "is-unread" : ""} ${item.notificationType === "NO_SHOW" ? "is-warning" : ""}`.trim()} key={item.id}>
+                        {item.notificationType === "NO_SHOW" ? <TriangleAlert aria-hidden="true" /> : <Bell aria-hidden="true" />}
                         <div><h3>{item.title}</h3><p>{item.body}</p><time dateTime={item.createdAt}>{new Date(item.createdAt).toLocaleString("vi-VN")}</time></div>
                         <span>{item.readAt ? "Đã xem" : "Mới"}</span>
                     </article>)}
