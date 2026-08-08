@@ -84,6 +84,20 @@
   --reception-booking-motion-duration: 180ms;
   --reception-request-content-width: 1160px;
   --reception-request-aside-width: 260px;
+  /* Doctor profile separates public identity, professional details and availability. */
+  --doctor-profile-content-width: 1240px;
+  --doctor-profile-side-width: 410px;
+  --doctor-profile-surface: #fffefb;
+  --doctor-profile-surface-muted: #f5f7f5;
+  --doctor-profile-border: #d9dfdb;
+  --doctor-profile-accent: #477d6f;
+  /* Doctor appointments prioritize today's queue and keep clinical support secondary. */
+  --doctor-dashboard-content-width: 1240px;
+  --doctor-dashboard-aside-width: 300px;
+  --doctor-dashboard-surface: #fffefb;
+  --doctor-dashboard-surface-muted: #f4f7f5;
+  --doctor-dashboard-border: #d9dfdb;
+  --doctor-dashboard-accent: #477d6f;
   /* Accepted appointments use a compact operational list rather than stacked dashboard cards. */
   --reception-accepted-content-width: 1240px;
   --reception-accepted-time-width: 150px;

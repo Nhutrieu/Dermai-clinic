@@ -6,6 +6,7 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestClient;
 
+import java.math.BigDecimal;
 import java.time.*;
 import java.util.*;
 
@@ -14,7 +15,7 @@ public class SchedulingRecommendationService {
  private static final ZoneId CLINIC_ZONE=ZoneId.of("Asia/Ho_Chi_Minh");
  private static final LocalTime LUNCH_START=LocalTime.of(12,0),LUNCH_END=LocalTime.of(13,0);
  private static final int BOOKING_WINDOW_DAYS=60;
- private static final Set<AppointmentStatus> ACTIVE=EnumSet.of(AppointmentStatus.HELD,AppointmentStatus.PROPOSED,AppointmentStatus.PENDING,AppointmentStatus.ASSIGNED,AppointmentStatus.CONFIRMED,AppointmentStatus.IN_PROGRESS,AppointmentStatus.FOLLOW_UP_REQUIRED);
+ private static final Set<AppointmentStatus> ACTIVE=EnumSet.of(AppointmentStatus.HELD,AppointmentStatus.PROPOSED,AppointmentStatus.PENDING,AppointmentStatus.ASSIGNED,AppointmentStatus.CONFIRMED,AppointmentStatus.CHECKED_IN,AppointmentStatus.IN_PROGRESS,AppointmentStatus.FOLLOW_UP_REQUIRED);
  private final AppointmentRepository appointments;
  private final SchedulingEngine engine;
  private final RestClient doctors;
@@ -100,8 +101,8 @@ public class SchedulingRecommendationService {
   return new Availability(items,CLINIC_ZONE.getId());
  }
 
- public void assertAvailable(UUID doctorId,Instant start,Instant end,UUID excludedAppointmentId,String authorization,String role){
-  if(doctorId==null)return;
+ public BigDecimal assertAvailable(UUID doctorId,Instant start,Instant end,UUID excludedAppointmentId,String authorization,String role){
+  if(doctorId==null)return null;
   if(start==null||end==null||!start.isBefore(end)||start.isBefore(Instant.now()))throw new IllegalArgumentException("INVALID_INTERVAL");
   if(start.isAfter(Instant.now().plus(BOOKING_WINDOW_DAYS,java.time.temporal.ChronoUnit.DAYS)))throw new SlotUnavailableException("BOOKING_TOO_FAR_AHEAD");
   var doctor=loadDoctors(authorization,role).stream().filter(x->doctorId.equals(x.id())).findFirst().orElseThrow(()->new IllegalArgumentException("DOCTOR_NOT_AVAILABLE"));
@@ -116,7 +117,8 @@ public class SchedulingRecommendationService {
   if(!inWorkSchedule)throw new SlotUnavailableException("OUTSIDE_DOCTOR_WORK_SCHEDULE");
   if(doctor.leavePeriods().stream().anyMatch(x->start.isBefore(x.endAt())&&end.isAfter(x.startAt())))throw new SlotUnavailableException("DOCTOR_ON_LEAVE");
   boolean conflict=appointments.findActiveOverlapping(start,end).stream().anyMatch(x->doctorId.equals(x.doctorId)&&!x.id.equals(excludedAppointmentId));
- if(conflict)throw new SlotUnavailableException("DOCTOR_SLOT_CONFLICT");
+  if(conflict)throw new SlotUnavailableException("DOCTOR_SLOT_CONFLICT");
+  return doctor.consultationFee();
  }
  private boolean overlapsLunch(ZonedDateTime start,ZonedDateTime end){return start.toLocalTime().isBefore(LUNCH_END)&&end.toLocalTime().isAfter(LUNCH_START);}
 
@@ -132,7 +134,7 @@ public class SchedulingRecommendationService {
  public record Item(UUID doctorId,UUID doctorIdentityId,String doctorName,String specialtyCode,Instant startAt,Instant endAt,double score,List<String> reasons){}
  public record Availability(List<AvailabilityItem> items,String timezone){}
  public record AvailabilityItem(UUID doctorId,UUID doctorIdentityId,String doctorName,String specialtyCode,Instant startAt,Instant endAt,String status,UUID holdId,Instant holdExpiresAt){}
- record DoctorData(UUID id,UUID identityId,String fullName,String specialtyCode,int experienceYears,List<ScheduleData> workSchedules,List<LeaveData> leavePeriods){}
+ record DoctorData(UUID id,UUID identityId,String fullName,String specialtyCode,int experienceYears,BigDecimal consultationFee,List<ScheduleData> workSchedules,List<LeaveData> leavePeriods){}
  record ScheduleData(UUID id,UUID doctorId,short weekday,LocalTime startTime,LocalTime endTime,int slotMinutes){}
  record LeaveData(Instant startAt,Instant endAt){}
  public static class SlotUnavailableException extends RuntimeException{SlotUnavailableException(String message){super(message);}}

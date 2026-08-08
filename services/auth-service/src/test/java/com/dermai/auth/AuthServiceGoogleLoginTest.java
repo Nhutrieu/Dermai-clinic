@@ -23,7 +23,7 @@ class AuthServiceGoogleLoginTest {
     identities = mock(IdentityRepository.class);
     var refreshTokens = mock(RefreshTokenRepository.class);
     service = new AuthService(identities, refreshTokens, mock(PasswordOtpRepository.class),
-        mock(EmailVerificationOtpRepository.class), mock(JavaMailSender.class),
+        mock(EmailVerificationOtpRepository.class), mock(com.dermai.auth.domain.StaffAccountEventRepository.class), mock(JavaMailSender.class),
         "test-jwt-secret-that-is-longer-than-32-bytes", "no-reply@dermai.local");
     when(identities.save(any(Identity.class))).thenAnswer(call -> call.getArgument(0));
   }
@@ -44,7 +44,7 @@ class AuthServiceGoogleLoginTest {
 
   @Test
   void neverLinksGoogleLoginToStaffAccount() {
-    Identity doctor = Identity.staff("doctor@gmail.com", "hash", Identity.Role.DOCTOR);
+    Identity doctor = Identity.staff("doctor@gmail.com", "hash", Identity.Role.DOCTOR, "Bác sĩ thử nghiệm");
     when(identities.findByGoogleSubject("google-sub-2")).thenReturn(Optional.empty());
     when(identities.findByEmailIgnoreCase("doctor@gmail.com")).thenReturn(Optional.of(doctor));
 

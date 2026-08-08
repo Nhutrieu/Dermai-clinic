@@ -1,15 +1,16 @@
 package com.dermai.doctor;
-import jakarta.validation.Valid;import jakarta.validation.constraints.*;import org.springframework.http.*;import org.springframework.transaction.annotation.Transactional;import org.springframework.web.bind.annotation.*;import org.springframework.web.multipart.MultipartFile;import org.springframework.web.server.ResponseStatusException;import java.io.IOException;import java.time.*;import java.util.*;
+import jakarta.validation.Valid;import jakarta.validation.constraints.*;import org.springframework.http.*;import org.springframework.transaction.annotation.Transactional;import org.springframework.web.bind.annotation.*;import org.springframework.web.multipart.MultipartFile;import org.springframework.web.server.ResponseStatusException;import java.io.IOException;import java.math.BigDecimal;import java.math.RoundingMode;import java.time.*;import java.util.*;
 @RestController @RequestMapping("/api/v1/doctors")
 public class DoctorController{
  private final DoctorRepository doctors;private final ScheduleRepository schedules;private final LeaveRepository leaves;private final DoctorProfileWebSocketHandler profileUpdates;
  DoctorController(DoctorRepository d,ScheduleRepository s,LeaveRepository l,DoctorProfileWebSocketHandler p){doctors=d;schedules=s;leaves=l;profileUpdates=p;}
- record DoctorBody(@NotNull UUID identityId,@NotBlank String fullName,@NotBlank String specialtyCode,@Min(0) int experienceYears,String certificateNo){}
+ record DoctorBody(@NotNull UUID identityId,@NotBlank String fullName,@NotBlank String specialtyCode,@Min(0) int experienceYears,String certificateNo,@NotNull @DecimalMin("0") @Digits(integer=10,fraction=0) BigDecimal consultationFee){}
  record DoctorProfileBody(@NotBlank @Size(max=160) String fullName,@NotBlank @Size(max=80) String specialtyCode,@Min(0) @Max(80) int experienceYears,@Size(max=120) String certificateNo){}
+ record ConsultationFeeBody(@NotNull @DecimalMin("0") @Digits(integer=10,fraction=0) BigDecimal consultationFee){}
  record ScheduleBody(@Min(1) @Max(7) short weekday,@NotNull LocalTime startTime,@NotNull LocalTime endTime,@Min(10) @Max(120) int slotMinutes){}
  record LeaveBody(@NotNull Instant startAt,@NotNull Instant endAt,@Size(max=250) String reason){}
  record BioBody(@Size(max=1200) String bio){}
- record SchedulingDoctor(UUID id,UUID identityId,String fullName,String specialtyCode,int experienceYears,List<WorkSchedule> workSchedules,List<SchedulingLeave> leavePeriods){}
+ record SchedulingDoctor(UUID id,UUID identityId,String fullName,String specialtyCode,int experienceYears,BigDecimal consultationFee,List<WorkSchedule> workSchedules,List<SchedulingLeave> leavePeriods){}
  record SchedulingLeave(Instant startAt,Instant endAt){}
  @GetMapping List<Doctor> list(@RequestParam(required=false) String specialty){return specialty==null?doctors.findAll():doctors.findBySpecialtyCodeAndActiveTrue(specialty);}
  @GetMapping("/me") Doctor me(@RequestHeader("X-User-Id") UUID identity,@RequestHeader("X-User-Role") String role){require(role,"DOCTOR");return doctors.findByIdentityId(identity).orElseThrow(()->new ResponseStatusException(HttpStatus.NOT_FOUND,"Tài khoản chưa có hồ sơ bác sĩ"));}
@@ -29,10 +30,13 @@ public class DoctorController{
  @GetMapping("/me/schedule") Map<String,Object> mySchedule(@RequestHeader("X-User-Id") UUID identity,@RequestHeader("X-User-Role") String role){require(role,"DOCTOR");var d=doctors.findByIdentityId(identity).orElseThrow(()->new ResponseStatusException(HttpStatus.NOT_FOUND));return Map.of("workSchedules",schedules.findByDoctorId(d.id),"leavePeriods",leaves.findByDoctorId(d.id));}
  @GetMapping("/scheduling-data") List<SchedulingDoctor> schedulingData(@RequestHeader("X-User-Role") String role){
   requireAny(role,"PATIENT","RECEPTIONIST","DOCTOR","ADMIN");
-  return doctors.findAll().stream().filter(d->d.active).map(d->new SchedulingDoctor(d.id,d.identityId,d.fullName,d.specialtyCode,d.experienceYears,schedules.findByDoctorId(d.id),leaves.findByDoctorId(d.id).stream().map(x->new SchedulingLeave(x.startAt,x.endAt)).toList())).toList();
+  return doctors.findAll().stream().filter(d->d.active).map(d->new SchedulingDoctor(d.id,d.identityId,d.fullName,d.specialtyCode,d.experienceYears,d.consultationFee,schedules.findByDoctorId(d.id),leaves.findByDoctorId(d.id).stream().map(x->new SchedulingLeave(x.startAt,x.endAt)).toList())).toList();
  }
  @PostMapping ResponseEntity<Doctor> create(@RequestHeader("X-User-Role") String role,@Valid @RequestBody DoctorBody b){
-  require(role,"ADMIN");if(doctors.findByIdentityId(b.identityId()).isPresent())throw new ResponseStatusException(HttpStatus.CONFLICT,"Tài khoản đã có hồ sơ bác sĩ");var d=new Doctor(b.identityId(),b.fullName(),b.specialtyCode());d.experienceYears=b.experienceYears();d.certificateNo=b.certificateNo();var saved=doctors.save(d);profileUpdates.broadcastUpdated(saved.id);return ResponseEntity.status(201).body(saved);
+  require(role,"ADMIN");if(doctors.findByIdentityId(b.identityId()).isPresent())throw new ResponseStatusException(HttpStatus.CONFLICT,"Tài khoản đã có hồ sơ bác sĩ");var d=new Doctor(b.identityId(),b.fullName(),b.specialtyCode());d.experienceYears=b.experienceYears();d.certificateNo=b.certificateNo();d.consultationFee=normalizeFee(b.consultationFee());var saved=doctors.save(d);profileUpdates.broadcastUpdated(saved.id);return ResponseEntity.status(201).body(saved);
+ }
+ @PatchMapping("/{id}/consultation-fee") Doctor updateConsultationFee(@PathVariable UUID id,@RequestHeader("X-User-Role") String role,@Valid @RequestBody ConsultationFeeBody body){
+  require(role,"ADMIN");var doctor=doctors.findById(id).orElseThrow(()->new ResponseStatusException(HttpStatus.NOT_FOUND,"Không tìm thấy bác sĩ"));doctor.consultationFee=normalizeFee(body.consultationFee());var saved=doctors.save(doctor);profileUpdates.broadcastUpdated(saved.id);return saved;
  }
  @Transactional @PutMapping("/{id}/schedule") List<WorkSchedule> schedule(@PathVariable UUID id,@RequestHeader("X-User-Id") UUID identity,@RequestHeader("X-User-Role") String role,@Valid @RequestBody List<ScheduleBody> body){
   requireOwner(id,role,identity);if(doctors.findById(id).isEmpty())throw new ResponseStatusException(HttpStatus.NOT_FOUND);
@@ -51,4 +55,5 @@ public class DoctorController{
  private void require(String got,String r){if(!r.equals(got))throw new ResponseStatusException(HttpStatus.FORBIDDEN);}
  private void requireAny(String got,String... r){if(Arrays.stream(r).noneMatch(got::equals))throw new ResponseStatusException(HttpStatus.FORBIDDEN);}
  private void requireOwner(UUID doctorId,String role,UUID identity){if("ADMIN".equals(role))return;if(!"DOCTOR".equals(role)||identity==null||doctors.findByIdentityId(identity).map(d->!d.id.equals(doctorId)).orElse(true))throw new ResponseStatusException(HttpStatus.FORBIDDEN);}
+ private BigDecimal normalizeFee(BigDecimal fee){return fee.setScale(0,RoundingMode.UNNECESSARY);}
 }

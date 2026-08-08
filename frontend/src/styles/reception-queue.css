@@ -104,7 +104,7 @@
 
 .reception-queue-summary {
   display: grid;
-  grid-template-columns: repeat(6, minmax(0, 1fr));
+  grid-template-columns: repeat(7, minmax(0, 1fr));
   border-bottom: 1px solid var(--color-border);
   background: var(--reception-queue-header-surface);
 }
@@ -324,6 +324,12 @@
   color: var(--color-info);
 }
 
+.reception-queue-status-arrived {
+  border-color: var(--color-success-border);
+  background: var(--color-success-surface);
+  color: var(--color-success);
+}
+
 .reception-queue-status-progress,
 .reception-queue-status-completed {
   border-color: var(--color-success-border);
@@ -356,6 +362,13 @@
 .reception-queue-action .reception-row-action svg {
   width: 16px;
   height: 16px;
+}
+
+.reception-row-action-group {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: var(--space-2);
 }
 
 .reception-queue-no-action {
@@ -546,7 +559,7 @@
     grid-template-columns: repeat(3, minmax(0, 1fr));
   }
 
-  .reception-queue-summary button:nth-child(4) {
+  .reception-queue-summary button:nth-child(3n + 1) {
     border-left: 0;
   }
 

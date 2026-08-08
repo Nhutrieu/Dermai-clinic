@@ -9,6 +9,17 @@ export type BookingIssue = {
   conflict: boolean;
 };
 
+export const APPOINTMENT_ALREADY_HANDLED_MESSAGE =
+  "Lịch này đã được lễ tân khác xử lý. Danh sách vừa được cập nhật.";
+
+// A second receptionist can submit while the first request is still leaving the UI.
+// The database rejects that stale transition; the screen should treat it as a live update.
+export function isAppointmentAlreadyHandledError(error: unknown) {
+  return error instanceof ApiError
+    && error.status === 409
+    && error.code === "INVALID_TRANSITION";
+}
+
 const CONFLICT_MESSAGES: Record<string, Omit<BookingIssue, "code" | "conflict">> = {
   SLOT_CONFLICT: {
     title: "Khung giờ vừa được đặt",

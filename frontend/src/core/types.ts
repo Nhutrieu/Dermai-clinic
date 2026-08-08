@@ -25,11 +25,12 @@ export type Doctor = {
   certificateNo?: string;
   avatarUrl?: string;
   bio?: string;
+  consultationFee: number;
 };
 
 export type WorkSchedule = { id: string; weekday: number; startTime: string; endTime: string; slotMinutes: number };
 export type LeavePeriod = { id: string; startAt: string; endAt: string; reason?: string };
-export type Appointment = { id: string; patientId: string; doctorId?: string; doctorIdentityId?: string; doctorName?: string; startAt: string; endAt: string; status: string; reason?: string; followUpReason?: string; followUpNotBefore?: string; holdExpiresAt?: string; createdAt: string; updatedAt?: string };
+export type Appointment = { id: string; patientId: string; doctorId?: string; doctorIdentityId?: string; doctorName?: string; startAt: string; endAt: string; status: string; reason?: string; followUpReason?: string; followUpNotBefore?: string; holdExpiresAt?: string; checkedInAt?: string; consultationFeeSnapshot?: number; createdAt: string; updatedAt?: string };
 export type MedicalRecord = { id: string; appointmentId: string; patientId: string; finalDiagnosis: string; clinicalNotes?: string; treatmentPlan?: string; severity: string; followUpAt?: string; signedAt: string };
 export type PrescriptionItem = { drugName: string; dosage?: string; frequency?: string; duration?: string; instructions?: string };
 export type Prescription = { id: string; recordId: string; patientId: string; instructions?: string; signedAt: string; items: PrescriptionItem[] };
@@ -41,7 +42,12 @@ export type ReminderAction = { id: string; appointmentId: string; actionType: "C
 export type ReminderItem = { appointment: Appointment; latestAction?: ReminderAction };
 export type RecommendationResult = { items: Recommendation[]; algorithmVersion: string; timezone: string };
 export type ClinicReview = { id: string; appointmentId: string; displayName: string; rating: number; comment: string; status: "PENDING" | "APPROVED" | "HIDDEN"; createdAt: string };
+export type StaffAccount = { identityId: string; displayName?: string; email: string; role: "RECEPTIONIST" | "DOCTOR" | "ADMIN"; status: "ACTIVE" | "LOCKED"; createdAt: string };
+export type StaffAccountEvent = { id: string; staffIdentityId: string; actorIdentityId: string; actionType: string; createdAt: string };
+export type AppointmentActionLog = { id: string; appointmentId: string; actorIdentityId: string; actorRole: string; actionType: string; createdAt: string };
 export type SupportMessage = { id: string; patientIdentityId: string; senderIdentityId: string; senderRole: string; body: string; sentAt: string; readAt?: string };
+export type SupportConversation = { patientIdentityId: string; assignedReceptionistIdentityId?: string | null; assignedAt?: string | null; updatedAt: string };
+export type StaffDirectoryEntry = { identityId: string; displayName?: string | null; status: "ACTIVE" | "LOCKED" };
 export type AiRankedPrediction = { label: string; probability: number };
 export type AiCitation = { source: string; page: number };
 export type AiDiseaseGuidance = { title: string; answer: string; citations: AiCitation[]; has_evidence: boolean };

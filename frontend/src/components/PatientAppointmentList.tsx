@@ -1,6 +1,7 @@
 import { FormEvent, useEffect, useState } from "react";
 import { CalendarDays, MessageCircle, Search, X } from "lucide-react";
 import { request } from "../core/api";
+import { formatVnd } from "../core/currency";
 import {
     canPatientSelfManageAppointment,
     patientAppointmentSelfServiceClosesAt,
@@ -30,6 +31,7 @@ export function statusDetails(status: string) {
         case "PENDING": return { label: "Chờ tiếp nhận", className: "is-pending" };
         case "ASSIGNED": return { label: "Đã xếp bác sĩ", className: "is-assigned" };
         case "CONFIRMED": return { label: "Đã xác nhận", className: "is-confirmed" };
+        case "CHECKED_IN": return { label: "Đã đến phòng khám", className: "is-checked-in" };
         case "IN_PROGRESS": return { label: "Đang khám", className: "is-in-progress" };
         case "COMPLETED": return { label: "Đã hoàn thành", className: "is-completed" };
         case "CANCELLED": return { label: "Đã hủy", className: "is-cancelled" };
@@ -369,6 +371,7 @@ export default function PatientAppointmentList({
                             <option value="ALL">Tất cả</option>
                             <option value="PENDING">Chờ tiếp nhận</option>
                             <option value="CONFIRMED">Đã xác nhận</option>
+                            <option value="CHECKED_IN">Đã đến phòng khám</option>
                             <option value="COMPLETED">Đã hoàn thành</option>
                             <option value="CANCELLED">Đã hủy</option>
                             <option value="FOLLOW_UP_REQUIRED">Cần tái khám</option>
@@ -416,6 +419,12 @@ export default function PatientAppointmentList({
                                     <p>{item.status === "FOLLOW_UP_REQUIRED"
                                         ? item.followUpReason || "Bác sĩ yêu cầu tái khám"
                                         : item.reason || "Không có ghi chú"}</p>
+                                    {item.consultationFeeSnapshot !== undefined && item.consultationFeeSnapshot !== null && (
+                                        <p className="patient-appointment-fee">
+                                            <span>Giá khám đã chốt</span>
+                                            <strong>{formatVnd(item.consultationFeeSnapshot)}</strong>
+                                        </p>
+                                    )}
                                 </div>
                                 <div className="patient-appointment-actions">
                                     <AppointmentStatusBadge status={item.status} />

@@ -17,6 +17,7 @@ class BookingPolicy {
       AppointmentStatus.PENDING,
       AppointmentStatus.ASSIGNED,
       AppointmentStatus.CONFIRMED,
+      AppointmentStatus.CHECKED_IN,
       AppointmentStatus.IN_PROGRESS
   );
   private static final ZoneId CLINIC_ZONE = ZoneId.of("Asia/Ho_Chi_Minh");

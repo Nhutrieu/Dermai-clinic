@@ -46,6 +46,7 @@ type Props = {
   onOpenRequests: () => void;
   onOpenAccepted: () => void;
   onConfirm: (appointmentId: string) => Promise<void>;
+  onCheckIn: (appointmentId: string) => Promise<void>;
   onNoShow: (appointmentId: string) => Promise<void>;
   onRetryQueue: () => Promise<void>;
 };
@@ -53,6 +54,7 @@ type Props = {
 const STATUS_ORDER: ReceptionQueuePhase[] = [
   "attention",
   "overdue",
+  "checked_in",
   "in_progress",
   "upcoming",
   "completed",
@@ -96,6 +98,9 @@ function operationalTiming(appointment: Appointment, now: Date, needsContact: bo
     return `Còn ${durationCopy(minutes)}`;
   }
   if (state.phase === "overdue") return `Qua giờ hẹn ${durationCopy(state.minutesFromStart)}`;
+  if (state.phase === "checked_in") return appointment.checkedInAt
+    ? `Tiếp nhận lúc ${formatTime(appointment.checkedInAt)}`
+    : "Đang chờ đến lượt khám";
   if (appointment.updatedAt) return `Cập nhật lúc ${formatTime(appointment.updatedAt)}`;
   if (state.phase === "attention") return "Cần lễ tân xử lý";
   return `Theo lịch lúc ${formatTime(appointment.startAt)}`;
@@ -103,6 +108,7 @@ function operationalTiming(appointment: Appointment, now: Date, needsContact: bo
 
 function QueueStateIcon({ phase }: { phase: ReceptionQueuePhase }) {
   if (phase === "overdue" || phase === "attention") return <AlertTriangle aria-hidden="true" />;
+  if (phase === "checked_in") return <CheckCircle2 aria-hidden="true" />;
   if (phase === "in_progress") return <Stethoscope aria-hidden="true" />;
   if (phase === "completed") return <CheckCircle2 aria-hidden="true" />;
   if (phase === "no_show") return <UserX aria-hidden="true" />;
@@ -264,6 +270,7 @@ export default function ReceptionQueueBoard(props: Props) {
   const summaryItems: { key: QueueFilter; label: string; value: number }[] = [
     { key: "upcoming", label: "Sắp đến", value: summary.upcoming },
     { key: "overdue", label: "Qua giờ hẹn", value: summary.overdue },
+    { key: "checked_in", label: "Đã đến", value: summary.checkedIn },
     { key: "in_progress", label: "Đang khám", value: summary.inProgress },
     { key: "completed", label: "Hoàn tất", value: summary.completed },
     { key: "no_show", label: "Vắng mặt", value: summary.noShow },
@@ -303,8 +310,8 @@ export default function ReceptionQueueBoard(props: Props) {
       </header>
 
       <div className="reception-queue-limit" role="note">
-        <AlertTriangle aria-hidden="true" />
-        <span>Hệ thống chưa ghi nhận bước tiếp nhận tại quầy, nên chưa có thời gian chờ hoặc vị trí hàng đợi.</span>
+        <CheckCircle2 aria-hidden="true" />
+        <span>Xác nhận bệnh nhân đã đến trước khi bác sĩ bắt đầu khám để tránh ghi nhận vắng mặt nhầm.</span>
       </div>
 
       <div className="reception-queue-summary" aria-label="Tóm tắt vận hành hôm nay">
@@ -341,6 +348,7 @@ export default function ReceptionQueueBoard(props: Props) {
             <option value="ATTENTION">Cần xử lý</option>
             <option value="upcoming">Sắp đến</option>
             <option value="overdue">Qua giờ hẹn</option>
+            <option value="checked_in">Đã đến phòng khám</option>
             <option value="in_progress">Đang khám</option>
             <option value="completed">Hoàn tất</option>
             <option value="no_show">Vắng mặt</option>
@@ -393,8 +401,17 @@ export default function ReceptionQueueBoard(props: Props) {
                 action = <button type="button" className="reception-row-action" onClick={props.onOpenRequests}>Mở yêu cầu<ChevronRight aria-hidden="true" /></button>;
               } else if (item.status === "ASSIGNED") {
                 action = <button type="button" className="reception-row-action" disabled={busy} onClick={() => void props.onConfirm(item.id).catch(() => undefined)}>{busy ? "Đang xác nhận" : "Xác nhận lịch"}</button>;
-              } else if (isOverdueForNoShow(item, now)) {
-                action = <button type="button" className="reception-row-action reception-row-action-warning" disabled={busy} onClick={() => setNoShowAppointment(item)}>Ghi nhận vắng</button>;
+              } else if (item.status === "CONFIRMED") {
+                action = (
+                  <div className="reception-row-action-group">
+                    <button type="button" className="reception-row-action" disabled={busy} onClick={() => void props.onCheckIn(item.id).catch(() => undefined)}>
+                      {busy ? "Đang cập nhật" : "Xác nhận đã đến"}
+                    </button>
+                    {isOverdueForNoShow(item, now) && (
+                      <button type="button" className="reception-row-action reception-row-action-warning" disabled={busy} onClick={() => setNoShowAppointment(item)}>Ghi nhận vắng</button>
+                    )}
+                  </div>
+                );
               }
               return (
                 <article

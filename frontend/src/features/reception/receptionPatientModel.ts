@@ -5,6 +5,7 @@ const ACTIVE_APPOINTMENT_STATUSES = new Set([
   "ASSIGNED",
   "PROPOSED",
   "CONFIRMED",
+  "CHECKED_IN",
   "IN_PROGRESS",
 ]);
 

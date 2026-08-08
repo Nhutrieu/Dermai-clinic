@@ -829,6 +829,21 @@
   font-size: 14px;
 }
 
+.clinic-home-doctor-fee {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  align-items: baseline;
+  margin: 10px 0 0;
+  color: var(--home-text);
+  font-size: 14px;
+}
+
+.clinic-home-doctor-fee strong {
+  color: var(--home-primary);
+  font-size: 16px;
+}
+
 .clinic-home-doctor-bio {
   display: -webkit-box;
   margin-top: 13px;
@@ -934,6 +949,135 @@
 }
 
 .clinic-home-review-layout article > p strong {
+  color: var(--home-ink);
+  font-size: 15px;
+}
+
+.clinic-home-review-more {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 24px;
+}
+
+.clinic-home-review-dialog-backdrop {
+  position: fixed;
+  z-index: 140;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  padding: 24px;
+  background: var(--color-overlay);
+}
+
+.clinic-home-review-dialog {
+  position: relative;
+  display: grid;
+  width: min(720px, 100%);
+  max-height: min(760px, calc(100vh - 48px));
+  overflow: hidden;
+  border: 1px solid var(--home-border);
+  border-radius: var(--home-radius);
+  background: var(--home-surface);
+  color: var(--home-ink);
+  box-shadow: var(--shadow-md);
+}
+
+.clinic-home-review-dialog > h2 {
+  margin: 0;
+  padding: 28px 72px 20px 28px;
+  border-bottom: 1px solid var(--home-border);
+  font-family: Newsreader, Georgia, serif;
+  font-size: clamp(26px, 4vw, 34px);
+  font-weight: 600;
+  line-height: 1.2;
+}
+
+.clinic-home-review-dialog .booking-dialog-close {
+  position: absolute;
+  z-index: 1;
+  top: 20px;
+  right: 20px;
+  display: grid;
+  width: 44px;
+  height: 44px;
+  padding: 0;
+  place-items: center;
+  border: 1px solid var(--home-border);
+  border-radius: var(--radius-control);
+  background: var(--home-surface);
+  color: var(--home-primary);
+}
+
+.clinic-home-review-dialog .booking-dialog-close:hover {
+  border-color: var(--home-primary);
+  background: var(--home-surface-muted);
+}
+
+.clinic-home-review-dialog .booking-dialog-close svg {
+  width: 20px;
+  height: 20px;
+}
+
+.clinic-home-review-dialog .booking-dialog-copy {
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding: 0 28px 28px;
+}
+
+.clinic-home-review-dialog-intro {
+  margin: 20px 0 6px;
+  color: var(--home-text);
+  font-size: 15px;
+  line-height: 1.6;
+}
+
+.clinic-home-review-dialog-list {
+  display: grid;
+}
+
+.clinic-home-review-dialog-list article {
+  padding: 24px 0;
+  border-bottom: 1px solid var(--home-border);
+}
+
+.clinic-home-review-dialog-list article:last-child {
+  border-bottom: 0;
+}
+
+.clinic-home-review-dialog-list article > header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.clinic-home-review-dialog-list time {
+  color: var(--home-text);
+  font-size: 14px;
+}
+
+.clinic-home-review-dialog-list blockquote {
+  margin: 14px 0 18px;
+  color: var(--home-ink);
+  font-family: Newsreader, Georgia, serif;
+  font-size: 21px;
+  line-height: 1.5;
+  white-space: pre-wrap;
+}
+
+.clinic-home-review-dialog-list article > p {
+  margin: 0;
+  color: var(--home-text);
+  font-size: 14px;
+}
+
+.clinic-home-review-dialog-list article > p strong,
+.clinic-home-review-dialog-list article > p span {
+  display: block;
+}
+
+.clinic-home-review-dialog-list article > p strong {
   color: var(--home-ink);
   font-size: 15px;
 }
@@ -1678,6 +1822,36 @@
   .chat-widget .chat-panel {
     right: 0;
     width: min(385px, calc(100vw - 24px));
+  }
+}
+
+@media (max-width: 560px) {
+  .clinic-home-review-dialog-backdrop {
+    align-items: end;
+    padding: 12px;
+  }
+
+  .clinic-home-review-dialog {
+    width: 100%;
+    max-height: calc(100dvh - 24px);
+  }
+
+  .clinic-home-review-dialog > h2 {
+    padding: 22px 68px 18px 20px;
+    font-size: 27px;
+  }
+
+  .clinic-home-review-dialog .booking-dialog-close {
+    top: 14px;
+    right: 14px;
+  }
+
+  .clinic-home-review-dialog .booking-dialog-copy {
+    padding: 0 20px 20px;
+  }
+
+  .clinic-home-review-dialog-list blockquote {
+    font-size: 19px;
   }
 }
 

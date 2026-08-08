@@ -13,7 +13,11 @@ import type {
 } from "../../core/types";
 import ReceptionDashboard from "./ReceptionDashboard";
 import ReceptionPanel from "./ReceptionPanel";
-import { toBookingIssue } from "./receptionBookingModel";
+import {
+  APPOINTMENT_ALREADY_HANDLED_MESSAGE,
+  isAppointmentAlreadyHandledError,
+  toBookingIssue,
+} from "./receptionBookingModel";
 
 type PatientPage = { content: Patient[]; totalElements: number };
 type ReceptionTab = "profile" | "appointments" | "records";
@@ -240,7 +244,12 @@ function ReceptionDashboardContainer({
     window.dispatchEvent(new Event("open-support-chat"));
   }
 
-  async function runAppointmentAction(id: string, action: () => Promise<unknown>, successMessage: string) {
+  async function runAppointmentAction(
+    id: string,
+    action: () => Promise<unknown>,
+    successMessage: string,
+    refreshWhenAlreadyHandled = false,
+  ) {
     setBusyAppointmentId(id);
     setNotice("");
     setActionError("");
@@ -250,6 +259,11 @@ function ReceptionDashboardContainer({
       setNotice(successMessage);
       await Promise.all([loadQueue(), loadReminders()]);
     } catch (cause) {
+      if (refreshWhenAlreadyHandled && isAppointmentAlreadyHandledError(cause)) {
+        setNotice(APPOINTMENT_ALREADY_HANDLED_MESSAGE);
+        await Promise.all([loadQueue(), loadReminders()]);
+        return;
+      }
       setActionError((cause as Error).message);
       setActionErrorAppointmentId(id);
       throw cause;
@@ -263,6 +277,7 @@ function ReceptionDashboardContainer({
       id,
       () => request(`/appointments/${id}/confirm`, token, { method: "POST" }),
       "Đã xác nhận lịch và cập nhật danh sách vận hành.",
+      true,
     );
   }
 
@@ -271,6 +286,14 @@ function ReceptionDashboardContainer({
       id,
       () => request(`/appointments/${id}/no-show`, token, { method: "POST" }),
       "Đã ghi nhận bệnh nhân vắng mặt.",
+    );
+  }
+
+  async function checkIn(id: string) {
+    return runAppointmentAction(
+      id,
+      () => request(`/appointments/${id}/check-in`, token, { method: "POST" }),
+      "Đã xác nhận bệnh nhân có mặt và chuyển sang chờ khám.",
     );
   }
 
@@ -329,6 +352,7 @@ function ReceptionDashboardContainer({
     onOpenRequests={() => onNavigate("appointments")}
     onOpenAccepted={() => onNavigate("records")}
     onConfirm={confirmAppointment}
+    onCheckIn={checkIn}
     onNoShow={noShow}
     onRemind={remind}
     onRetryQueue={() => loadQueue(true)}

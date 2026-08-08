@@ -10,9 +10,9 @@ class ExpiredAppointmentCanceller{
  public void cancelMissedAppointments(){
   var now=Instant.now();
 
-  // A confirmed appointment that never starts is a patient no-show after the
-  // clinic's 30-minute grace period. This keeps NO_SHOW distinct from requests
-  // that were never confirmed by reception.
+  // Only a confirmed appointment without an on-site check-in may become a
+  // no-show. CHECKED_IN is excluded, so a late doctor start never marks an
+  // arrived patient as absent.
   var absent=appointments.findByStatusAndStartAtBefore(AppointmentStatus.CONFIRMED,now.minus(Duration.ofMinutes(30)));
   absent.forEach(x->service.noShow(x.id));
 

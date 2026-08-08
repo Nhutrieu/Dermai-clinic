@@ -1,37 +1,39 @@
 import { FormEvent, useState } from "react";
-import { CalendarDays } from "lucide-react";
 import { request } from "../../core/api";
-import type { Appointment, Doctor, LeavePeriod, Patient, Prescription, WorkSchedule } from "../../core/types";
-import { Card, State } from "../../components/Ui";
+import type { RealtimeConnectionState } from "../../core/realtime";
+import type { Appointment, Doctor, MedicalRecord, Patient, WorkSchedule } from "../../core/types";
+import DoctorDashboard, { type DoctorDashboardResources } from "./DoctorDashboard";
 import DoctorSharedAi from "./DoctorSharedAi";
-import DoctorAiPreviewButton from "./DoctorAiPreviewButton";
 
-function formatAppointmentTime(iso: string) {
-    if (!iso) return "";
-    const d = new Date(iso);
-    const time = d.toLocaleTimeString("vi-VN", { hour: "2-digit", minute: "2-digit", hour12: false });
-    const date = d.toLocaleDateString("vi-VN", { day: "2-digit", month: "2-digit", year: "numeric" });
-    return `${time} · ${date}`;
-}
+type DoctorViewProps = {
+    token: string;
+    doctor: Doctor;
+    appointments: Appointment[];
+    records?: MedicalRecord[];
+    patients: Record<string, Patient>;
+    work: WorkSchedule[];
+    leave?: any[];
+    resources?: DoctorDashboardResources;
+    realtimeState?: RealtimeConnectionState;
+    lastUpdated?: Date;
+    retry?: () => void;
+    transition: (id: string, action: "start" | "complete") => Promise<void>;
+    requireFollowUp: (id: string, reason: string, notBefore: string) => Promise<void>;
+};
 
-function getStatusBadge(status: string) {
-    switch (status) {
-        case "PENDING": return { label: "Chờ tiếp nhận", badgeClass: "badge-pending" };
-        case "ASSIGNED": return { label: "Đã xếp bác sĩ", badgeClass: "badge-assigned" };
-        case "CONFIRMED": return { label: "Đã xác nhận", badgeClass: "badge-confirmed" };
-        case "IN_PROGRESS": return { label: "Đang khám", badgeClass: "badge-in-progress" };
-        case "COMPLETED": return { label: "Đã hoàn thành", badgeClass: "badge-completed" };
-        case "CANCELLED": return { label: "Đã hủy", badgeClass: "badge-cancelled" };
-        case "FOLLOW_UP_REQUIRED": return { label: "Yêu cầu tái khám", badgeClass: "badge-followup" };
-        default: return { label: status, badgeClass: "badge-default" };
-    }
-}
-
-export default function DoctorView({ token, doctor, appointments, patients, work, leave, transition, requireFollowUp }: { token: string; doctor: Doctor; appointments: Appointment[]; patients: Record<string, Patient>; work: WorkSchedule[]; leave: LeavePeriod[]; transition: (id: string, a: "start" | "complete") => Promise<void>; requireFollowUp: (id: string, reason: string, notBefore: string) => Promise<void> }) {
+export default function DoctorView({ token, doctor, appointments, records = [], patients, work, resources = { appointments: { loading: false, error: "" }, records: { loading: false, error: "" }, patients: { loading: false, error: "" }, schedule: { loading: false, error: "" } }, realtimeState = "connected", lastUpdated = new Date(), retry = () => {}, transition, requireFollowUp }: DoctorViewProps) {
     const [selected, setSelected] = useState<Appointment | null>(null);
-    appointments=appointments.filter(x=>["CONFIRMED","IN_PROGRESS"].includes(x.status));
-    const today = appointments.filter(x => new Date(x.startAt).toDateString() === new Date().toDateString());
-    return <><section className="metrics"><Card label="Ca khám hôm nay" value={String(today.length)} /><Card label="Đang chờ khám" value={String(today.filter(x => x.status === "CONFIRMED").length)} /><Card label="Đang khám" value={String(today.filter(x => x.status === "IN_PROGRESS").length)} /><Card label="Ca làm đã cấu hình" value={String(work.length)} /></section><section className="doctor-grid"><div className="panel real-list"><h2>Lịch khám sắp tới</h2>{appointments.length === 0 ? <State text="Chưa có lịch được phân công." /> : appointments.map(x => { const { label, badgeClass } = getStatusBadge(x.status); return <article key={x.id} className="appointment-card"><div className="appointment-icon-wrapper"><CalendarDays /></div><div className="appointment-details"><b className="appointment-time">{patients[x.patientId]?.fullName || "Không đọc được hồ sơ bệnh nhân"}</b><p className="appointment-reason">{formatAppointmentTime(x.startAt)} · {x.reason || "Không có ghi chú"}</p></div><div className="actions"><span className={`status-badge ${badgeClass}`}>{label}</span><DoctorAiPreviewButton token={token} appointmentId={x.id} />{x.status === "CONFIRMED" && <button onClick={() => transition(x.id, "start")}>Bắt đầu</button>}{x.status === "IN_PROGRESS" && <button onClick={() => setSelected(x)}>Ghi hồ sơ</button>}</div></article>; })}</div><div className="panel doctor-profile"><h2>Hồ sơ bác sĩ</h2><dl><dt>Chuyên môn</dt><dd>{doctor.specialtyCode}</dd><dt>Kinh nghiệm</dt><dd>{doctor.experienceYears} năm</dd><dt>Chứng chỉ</dt><dd>{doctor.certificateNo || "Chưa khai báo"}</dd><dt>Ca làm</dt><dd>{work.length}</dd><dt>Kỳ nghỉ</dt><dd>{leave.length}</dd></dl></div></section>{selected && <Consultation token={token} appointment={selected} patient={patients[selected.patientId]} close={() => setSelected(null)} complete={() => transition(selected.id, "complete")} requireFollowUp={(reason, notBefore) => requireFollowUp(selected.id, reason, notBefore)} />}</>
+
+    async function startConsultation(appointmentId: string) {
+        await transition(appointmentId, "start");
+        const appointment = appointments.find(item => item.id === appointmentId);
+        if (appointment) setSelected({ ...appointment, status: "IN_PROGRESS" });
+    }
+
+    return <>
+        <DoctorDashboard token={token} doctor={doctor} appointments={appointments} records={records} patients={patients} work={work} resources={resources} realtimeState={realtimeState} lastUpdated={lastUpdated} onRetry={retry} onStart={startConsultation} onContinue={setSelected} />
+        {selected && <Consultation token={token} appointment={selected} patient={patients[selected.patientId]} close={() => setSelected(null)} complete={() => transition(selected.id, "complete")} requireFollowUp={(reason, notBefore) => requireFollowUp(selected.id, reason, notBefore)} />}
+    </>;
 }
 type PrescriptionDraft = { drugName: string; dosage: string; frequency: string; duration: string; instructions: string };
 function Consultation({ token, appointment, patient, close, complete, requireFollowUp }: { token: string; appointment: Appointment; patient?: Patient; close: () => void; complete: () => Promise<void>; requireFollowUp: (reason: string, notBefore: string) => Promise<void> }) {

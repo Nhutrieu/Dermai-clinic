@@ -16,6 +16,7 @@ import "./styles/workspace-polish.css";
 import "./styles/record-filters.css";
 import "./styles/hotline.css";
 import "./styles/chat.css";
+import "./styles/support-assignment.css";
 import "./styles/admin-analytics.css";
 import GoogleSignIn, { type GoogleLoginResult } from "./features/auth/GoogleSignIn";
 import HomePage from "./features/public/HomePage";
@@ -30,7 +31,7 @@ const ReceptionWorkspace = lazy(() => import("./features/reception/ReceptionWork
 const PatientDashboard = lazy(() => import("./features/patient/PatientDashboard"));
 const PatientAppointments = lazy(() => import("./features/patient/PatientAppointments"));
 const PatientMedicalRecords = lazy(() => import("./features/patient/PatientMedicalRecords"));
-const DoctorProfile = lazy(() => import("./features/doctor/DoctorProfile"));
+const DoctorProfile = lazy(() => import("./features/doctor/DoctorProfileScreen"));
 const DoctorView = lazy(() => import("./features/doctor/DoctorView"));
 const ReceptionHotlineBooking = lazy(() => import("./features/reception/HotlineBooking"));
 const PatientNotifications = lazy(() => import("./features/patient/PatientNotifications"));
@@ -44,7 +45,7 @@ function App() {
         if (event.type === "DOCTOR_PROFILE_UPDATED") window.dispatchEvent(new CustomEvent("doctor-profiles-changed", { detail: event }));
     }, { path: "/api/v1/doctors/ws/profile" }), []);
     if (!session) return <Suspense fallback={<State text="Đang tải giao diện..." />}><PublicRoute>{forgotOpen ? <ForgotPassword close={() => setForgotOpen(false)} /> : authOpen ? <><button className="auth-home" onClick={() => setAuthOpen(false)}><X /> Về trang chủ</button><button className="auth-forgot" onClick={() => setForgotOpen(true)}>Quên mật khẩu?</button><Login onLogin={x => { sessionStorage.setItem("dermai-session", JSON.stringify(x)); setSession(x) }} /></> : <HomePage openAuth={() => setAuthOpen(true)} chat={<ChatBox openAuth={() => setAuthOpen(true)} />} />}</PublicRoute></Suspense>;
-    const workspace = <><Dashboard session={session} logout={() => { sessionStorage.removeItem("dermai-session"); setSession(null) }} />{session.role === "PATIENT" && <PatientNotifications session={session} />}{session.role === "RECEPTIONIST" && <ReceptionHotlineBooking session={session} />}{["PATIENT", "RECEPTIONIST"].includes(session.role) && <SupportChat session={session} />}</>;
+    const workspace = <><Dashboard session={session} logout={() => { sessionStorage.removeItem("dermai-session"); setSession(null) }} />{session.role === "PATIENT" && <PatientNotifications session={session} />}{session.role === "RECEPTIONIST" && <ReceptionHotlineBooking session={session} />}{["PATIENT", "RECEPTIONIST", "ADMIN"].includes(session.role) && <SupportChat session={session} />}</>;
     const Route = session.role === "PATIENT" ? PatientRoute : session.role === "DOCTOR" ? DoctorRoute : session.role === "RECEPTIONIST" ? ReceptionistRoute : AdminRoute;
     return <Suspense fallback={<State text="Đang mở không gian làm việc..." />}><Route>{workspace}</Route></Suspense>;
 }
@@ -325,9 +326,9 @@ function Dashboard({ session, logout }: { session: Tokens; logout: () => void })
     }, [session]);
     async function transition(id: string, action: "start" | "complete") { setError(""); try { await request(`/appointments/${id}/${action}`, session.accessToken, { method: "POST" }); await loadDoctor() } catch (x) { setError((x as Error).message) } }
     async function requireFollowUp(id: string, reason: string, notBefore: string) { setError(""); try { await request(`/appointments/${id}/require-follow-up`, session.accessToken, { method: "POST", body: JSON.stringify({ reason, notBefore }) }); await loadDoctor() } catch (x) { setError((x as Error).message); throw x } }
-    const labels = session.role === "ADMIN" ? ["Bệnh nhân", "Bác sĩ", "Tài khoản"] : session.role === "RECEPTIONIST" ? ["Tổng quan", "Yêu cầu đặt lịch", "Lịch đã nhận"] : session.role === "PATIENT" ? ["Tổng quan", "Lịch khám", "Hồ sơ y khoa"] : ["Hồ sơ", "Lịch khám", "Hồ sơ y khoa"];
+    const labels = session.role === "ADMIN" ? ["Bệnh nhân", "Bác sĩ", "Nhân sự"] : session.role === "RECEPTIONIST" ? ["Tổng quan", "Yêu cầu đặt lịch", "Lịch đã nhận"] : session.role === "PATIENT" ? ["Tổng quan", "Lịch khám", "Kết quả khám"] : ["Hồ sơ", "Lịch khám", "Hồ sơ y khoa"];
     const roleName = session.role === "PATIENT" ? "Bệnh nhân" : session.role === "DOCTOR" ? "Bác sĩ" : session.role === "RECEPTIONIST" ? "Lễ tân" : "Quản trị viên";
-    const roleSubtitle = session.role === "PATIENT" && tab === "profile" ? "Theo dõi lịch hẹn, kết quả mới và việc bạn cần làm tiếp theo" : session.role === "PATIENT" ? "Đặt lịch, theo dõi hồ sơ và kiểm tra da bằng AI" : session.role === "DOCTOR" ? "Quản lý lịch khám và hồ sơ chuyên môn" : session.role === "RECEPTIONIST" ? "Điều phối bệnh nhân và lịch hẹn trong ngày" : "Theo dõi hoạt động và quản trị hệ thống";
+    const roleSubtitle = session.role === "PATIENT" && tab === "profile" ? "Theo dõi lịch hẹn, kết quả mới và việc bạn cần làm tiếp theo" : session.role === "PATIENT" ? "Đặt lịch, xem kết quả khám và kiểm tra da bằng AI" : session.role === "DOCTOR" ? "Quản lý lịch khám và hồ sơ chuyên môn" : session.role === "RECEPTIONIST" ? "Điều phối bệnh nhân và lịch hẹn trong ngày" : "Theo dõi hoạt động và quản trị hệ thống";
     const greeting = patient ? `Xin chào, ${patient.fullName}` : doctor ? `BS. ${doctor.fullName}` : "DermAI Clinic";
     const today = new Intl.DateTimeFormat("vi-VN", { weekday: "long", day: "2-digit", month: "long", year: "numeric" }).format(new Date());
     return <div className={`shell role-${session.role.toLowerCase()} ${session.role === "PATIENT" && tab === "profile" ? "patient-dashboard-active" : ""}`}>

@@ -6,6 +6,10 @@ import type { Appointment, Doctor, Patient, Recommendation, RecommendationResult
 import { State } from "../../components/Ui";
 import ReceptionAppointmentRequests from "./ReceptionAppointmentRequests";
 import ReceptionAcceptedAppointments from "./ReceptionAcceptedAppointments";
+import {
+    APPOINTMENT_ALREADY_HANDLED_MESSAGE,
+    isAppointmentAlreadyHandledError,
+} from "./receptionBookingModel";
 type PatientPage = { content: Patient[]; totalElements: number };
 function formatAppointmentTime(iso: string) {
     if (!iso) return "";
@@ -20,6 +24,7 @@ function getStatusBadge(status: string) {
         case "PENDING": return { label: "Chờ tiếp nhận", badgeClass: "badge-pending" };
         case "ASSIGNED": return { label: "Đã xếp bác sĩ", badgeClass: "badge-assigned" };
         case "CONFIRMED": return { label: "Đã xác nhận", badgeClass: "badge-confirmed" };
+        case "CHECKED_IN": return { label: "Đã đến phòng khám", badgeClass: "badge-confirmed" };
         case "IN_PROGRESS": return { label: "Đang khám", badgeClass: "badge-in-progress" };
         case "COMPLETED": return { label: "Đã hoàn thành", badgeClass: "badge-completed" };
         case "CANCELLED": return { label: "Đã hủy", badgeClass: "badge-cancelled" };
@@ -141,8 +146,14 @@ export default function ReceptionPanel({ token, tab }: { token: string; tab: str
             setMessage("Đã xác nhận lịch và chuyển sang danh sách lịch đã nhận.");
             await Promise.all([loadQueue(), loadReminders()]);
         } catch (x) {
-            setMessage((x as Error).message);
-            setMessageError(true);
+            if (isAppointmentAlreadyHandledError(x)) {
+                setMessage(APPOINTMENT_ALREADY_HANDLED_MESSAGE);
+                setMessageError(false);
+                await Promise.all([loadQueue(), loadReminders()]);
+            } else {
+                setMessage((x as Error).message);
+                setMessageError(true);
+            }
         } finally {
             setBusyAppointmentId("");
         }
@@ -174,6 +185,21 @@ export default function ReceptionPanel({ token, tab }: { token: string; tab: str
         } catch (x) {
             setMessage((x as Error).message);
             setMessageError(true);
+        } finally {
+            setBusyAppointmentId("");
+        }
+    }
+    async function checkIn(id: string) {
+        setBusyAppointmentId(id);
+        setMessageError(false);
+        try {
+            await request(`/appointments/${id}/check-in`, token, { method: "POST" });
+            setMessage("Đã xác nhận bệnh nhân có mặt và chuyển sang chờ khám.");
+            await Promise.all([loadQueue(), loadReminders()]);
+        } catch (x) {
+            setMessage((x as Error).message);
+            setMessageError(true);
+            throw x;
         } finally {
             setBusyAppointmentId("");
         }
@@ -302,6 +328,7 @@ export default function ReceptionPanel({ token, tab }: { token: string; tab: str
         onRemind={async (id, action) => { await remind(id, action); }}
         onReschedule={reschedule}
         onCancel={cancel}
+        onCheckIn={checkIn}
         onNoShow={async id => { await noShow(id); }}
         onOpenSupport={openSupport}
         onOpenRequests={() => window.dispatchEvent(new CustomEvent("reception-navigate", { detail: "appointments" }))}

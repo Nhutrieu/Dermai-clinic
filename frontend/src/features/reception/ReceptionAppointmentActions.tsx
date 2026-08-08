@@ -32,6 +32,7 @@ function appointmentStatusLabel(status: string) {
     case "PENDING": return "Chờ xử lý";
     case "ASSIGNED": return "Đã phân công";
     case "CONFIRMED": return "Đã xác nhận";
+    case "CHECKED_IN": return "Đã đến phòng khám";
     case "CANCELLED": return "Đã hủy";
     default: return status;
   }

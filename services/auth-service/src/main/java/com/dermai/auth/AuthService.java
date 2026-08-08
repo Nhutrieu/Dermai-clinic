@@ -19,12 +19,13 @@ import java.util.*;
 public class AuthService {
  private final IdentityRepository users; private final RefreshTokenRepository refreshes;
  private final PasswordOtpRepository otps; private final EmailVerificationOtpRepository verificationOtps;
+ private final StaffAccountEventRepository staffEvents;
  private final BCryptPasswordEncoder encoder=new BCryptPasswordEncoder(12);
  private final JavaMailSender mail;
  private final String mailFrom;
  private final SecureRandom random=new SecureRandom(); private final byte[] secret;
- public AuthService(IdentityRepository u,RefreshTokenRepository r,PasswordOtpRepository o,EmailVerificationOtpRepository verificationOtps,JavaMailSender mail,@Value("${security.jwt.secret}") String key,@Value("${app.mail.from}") String mailFrom){
-  users=u;refreshes=r;otps=o;this.verificationOtps=verificationOtps;this.mail=mail;this.mailFrom=mailFrom;secret=key.getBytes(StandardCharsets.UTF_8);
+ public AuthService(IdentityRepository u,RefreshTokenRepository r,PasswordOtpRepository o,EmailVerificationOtpRepository verificationOtps,StaffAccountEventRepository staffEvents,JavaMailSender mail,@Value("${security.jwt.secret}") String key,@Value("${app.mail.from}") String mailFrom){
+  users=u;refreshes=r;otps=o;this.verificationOtps=verificationOtps;this.staffEvents=staffEvents;this.mail=mail;this.mailFrom=mailFrom;secret=key.getBytes(StandardCharsets.UTF_8);
   if(secret.length<32) throw new IllegalArgumentException("JWT_SECRET phải có ít nhất 32 byte");
  }
  public Identity register(String email,String password){
@@ -33,13 +34,35 @@ public class AuthService {
   sendVerificationOtp(user,false);
   return user;
  }
- public Identity createStaff(String email,String password,Identity.Role role){
+ public Identity createStaff(String email,String password,Identity.Role role,String displayName,UUID actorIdentityId){
   if(users.findByEmailIgnoreCase(email).isPresent())throw new IllegalStateException("EMAIL_EXISTS");
-  return users.save(Identity.staff(email,encoder.encode(password),role));
+  if(role==Identity.Role.RECEPTIONIST&&(displayName==null||displayName.isBlank()))throw new StaffManagementException("DISPLAY_NAME_REQUIRED");
+  var staff=users.save(Identity.staff(email,encoder.encode(password),role,displayName));
+  staffEvents.save(new StaffAccountEvent(staff.id,actorIdentityId,"CREATED"));return staff;
  }
  public Identity bootstrapAdmin(String email,String password){
   if(users.count()!=0)throw new IllegalStateException("BOOTSTRAP_CLOSED");
-  return users.save(Identity.staff(email,encoder.encode(password),Identity.Role.ADMIN));
+  return users.save(Identity.staff(email,encoder.encode(password),Identity.Role.ADMIN,null));
+ }
+ @Transactional(readOnly=true) public List<Identity> listStaff(Identity.Role role){
+  if(role==Identity.Role.PATIENT)throw new StaffManagementException("INVALID_STAFF_ROLE");
+  return users.findByRoleOrderByCreatedAtDesc(role);
+ }
+ @Transactional(readOnly=true) public List<StaffAccountEvent> staffEvents(UUID staffIdentityId){
+  receptionist(staffIdentityId);return staffEvents.findTop50ByStaffIdentityIdOrderByCreatedAtDesc(staffIdentityId);
+ }
+ public Identity setStaffBlocked(UUID id,boolean blocked,UUID actorIdentityId){
+  var staff=receptionist(id);staff.status=blocked?Identity.Status.LOCKED:Identity.Status.ACTIVE;
+  if(blocked)revokeSessions(id);
+  staffEvents.save(new StaffAccountEvent(id,actorIdentityId,blocked?"LOCKED":"UNLOCKED"));return staff;
+ }
+ public Identity resetStaffPassword(UUID id,String newPassword,UUID actorIdentityId){
+  var staff=receptionist(id);staff.passwordHash=encoder.encode(newPassword);revokeSessions(id);
+  staffEvents.save(new StaffAccountEvent(id,actorIdentityId,"PASSWORD_RESET"));return staff;
+ }
+ public Identity renameReceptionist(UUID id,String displayName,UUID actorIdentityId){
+  var staff=receptionist(id);staff.displayName=displayName.trim();
+  staffEvents.save(new StaffAccountEvent(id,actorIdentityId,"PROFILE_UPDATED"));return staff;
  }
  @Transactional(readOnly=true) public Optional<Identity> findIdentity(UUID id){return users.findById(id);}
  public Tokens login(String email,String password){
@@ -109,11 +132,15 @@ public class AuthService {
   var user=patientAccount(id);
   user.status=blocked?Identity.Status.LOCKED:Identity.Status.ACTIVE;
   if(blocked){
-   var now=Instant.now();
-   refreshes.findAllByIdentityId(id).forEach(token->token.revokedAt=now);
+   revokeSessions(id);
   }
   return user;
  }
+ private Identity receptionist(UUID id){
+  var user=users.findById(id).orElseThrow(()->new StaffManagementException("STAFF_NOT_FOUND"));
+  if(user.role!=Identity.Role.RECEPTIONIST)throw new StaffManagementException("NOT_RECEPTIONIST");return user;
+ }
+ private void revokeSessions(UUID id){var now=Instant.now();refreshes.findAllByIdentityId(id).forEach(token->token.revokedAt=now);}
  public String createOtp(String email){
   var user=users.findByEmailIgnoreCase(email).orElse(null);
   if(user==null) return null;
@@ -154,4 +181,5 @@ public class AuthService {
  private String hash(String value){try{return HexFormat.of().formatHex(MessageDigest.getInstance("SHA-256").digest(value.getBytes(StandardCharsets.UTF_8)));}catch(NoSuchAlgorithmException e){throw new IllegalStateException(e);}}
  public record Tokens(String accessToken,String refreshToken,long expiresIn,String role){}
  public record GoogleLogin(String accessToken,String refreshToken,long expiresIn,String role,boolean newAccount,String email,String fullName){}
+ static class StaffManagementException extends RuntimeException{StaffManagementException(String code){super(code);}}
 }

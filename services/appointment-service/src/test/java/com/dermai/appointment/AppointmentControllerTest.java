@@ -18,7 +18,7 @@ class AppointmentControllerTest {
     var service = mock(AppointmentService.class);
     var repository = mock(AppointmentRepository.class);
     var recommendations = mock(SchedulingRecommendationService.class);
-    var controller = new AppointmentController(service, repository, recommendations);
+    var controller = new AppointmentController(service, repository, recommendations, mock(AppointmentActionAuditService.class));
     var patientIdentity = UUID.randomUUID();
     var appointmentId = UUID.randomUUID();
     var appointment = new Appointment();
@@ -43,7 +43,7 @@ class AppointmentControllerTest {
     var service = mock(AppointmentService.class);
     var repository = mock(AppointmentRepository.class);
     var recommendations = mock(SchedulingRecommendationService.class);
-    var controller = new AppointmentController(service, repository, recommendations);
+    var controller = new AppointmentController(service, repository, recommendations, mock(AppointmentActionAuditService.class));
     var patientIdentity = UUID.randomUUID();
     var appointmentId = UUID.randomUUID();
     var appointment = new Appointment();
@@ -65,7 +65,7 @@ class AppointmentControllerTest {
     var service = mock(AppointmentService.class);
     var repository = mock(AppointmentRepository.class);
     var recommendations = mock(SchedulingRecommendationService.class);
-    var controller = new AppointmentController(service, repository, recommendations);
+    var controller = new AppointmentController(service, repository, recommendations, mock(AppointmentActionAuditService.class));
     var patientIdentity = UUID.randomUUID();
     var appointmentId = UUID.randomUUID();
     var appointment = new Appointment();
@@ -88,7 +88,7 @@ class AppointmentControllerTest {
     var service = mock(AppointmentService.class);
     var repository = mock(AppointmentRepository.class);
     var recommendations = mock(SchedulingRecommendationService.class);
-    var controller = new AppointmentController(service, repository, recommendations);
+    var controller = new AppointmentController(service, repository, recommendations, mock(AppointmentActionAuditService.class));
     var patientIdentity = UUID.randomUUID();
     var appointmentId = UUID.randomUUID();
     var appointment = new Appointment();
@@ -117,13 +117,19 @@ class AppointmentControllerTest {
     var service = mock(AppointmentService.class);
     var repository = mock(AppointmentRepository.class);
     var recommendations = mock(SchedulingRecommendationService.class);
-    var controller = new AppointmentController(service, repository, recommendations);
+    var audit = mock(AppointmentActionAuditService.class);
+    var controller = new AppointmentController(service, repository, recommendations, audit);
     var appointmentId = UUID.randomUUID();
+    var receptionistIdentity = UUID.randomUUID();
+    var cancelled = new Appointment();
+    cancelled.id = appointmentId;
+    when(service.cancel(appointmentId, "Bệnh nhân yêu cầu hỗ trợ")).thenReturn(cancelled);
 
     controller.cancel(
-        appointmentId, UUID.randomUUID(), "RECEPTIONIST", new AppointmentController.Cancel("Bệnh nhân yêu cầu hỗ trợ")
+        appointmentId, receptionistIdentity, "RECEPTIONIST", new AppointmentController.Cancel("Bệnh nhân yêu cầu hỗ trợ")
     );
 
     verify(service).cancel(appointmentId, "Bệnh nhân yêu cầu hỗ trợ");
+    verify(audit).record(appointmentId, receptionistIdentity, "RECEPTIONIST", "CANCELLED");
   }
 }

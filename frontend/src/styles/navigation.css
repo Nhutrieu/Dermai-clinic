@@ -221,6 +221,15 @@ nav button.active{background:#d9f278;color:#143d34;font-weight:700}
   line-height: 1.35;
 }
 
+.booking-doctor-selector .booking-doctor-fee {
+  display: block;
+  margin-top: 7px;
+  color: var(--color-primary);
+  font-size: 14px;
+  font-weight: 750;
+  line-height: 1.35;
+}
+
 .booking-doctor-selector > button > svg {
   width: 20px;
   height: 20px;
@@ -258,6 +267,22 @@ nav button.active{background:#d9f278;color:#143d34;font-weight:700}
   color: var(--color-text-secondary);
   font-size: 14px;
   line-height: 1.45;
+}
+
+.booking-selected-fee {
+  display: inline-flex;
+  gap: var(--space-1);
+  align-items: baseline;
+  margin-top: var(--space-3);
+  color: var(--color-text-secondary);
+  font-size: 14px;
+  line-height: 1.45;
+}
+
+.booking-selected-fee strong {
+  display: inline;
+  color: var(--color-primary);
+  font-size: 15px;
 }
 
 .booking-field {
@@ -557,6 +582,15 @@ nav button.active{background:#d9f278;color:#143d34;font-weight:700}
   white-space: nowrap;
 }
 
+.booking-payment-note {
+  display: block;
+  margin-top: calc(var(--space-2) * -1);
+  color: var(--color-text-secondary);
+  font-size: 14px;
+  line-height: 1.45;
+  text-align: center;
+}
+
 .booking-confirm:hover:not(:disabled) {
   background: var(--color-primary-strong);
 }
@@ -747,6 +781,20 @@ nav button.active{background:#d9f278;color:#143d34;font-weight:700}
   overflow-wrap: anywhere;
 }
 
+.patient-appointment-details .patient-appointment-fee {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  align-items: baseline;
+  margin-top: var(--space-2);
+  color: var(--color-text-secondary);
+}
+
+.patient-appointment-fee strong {
+  color: var(--color-primary);
+  font-size: 14px;
+}
+
 .patient-appointment-actions {
   display: flex;
   flex-wrap: wrap;
@@ -816,6 +864,7 @@ nav button.active{background:#d9f278;color:#143d34;font-weight:700}
 }
 
 .appointment-status.is-confirmed,
+.appointment-status.is-checked-in,
 .appointment-status.is-in-progress {
   border-color: var(--color-success-border);
   background: var(--color-success-surface);

@@ -1,17 +1,30 @@
 import { FormEvent, useEffect, useRef, useState } from "react";
-import { CalendarCheck } from "lucide-react";
+import { CalendarCheck, Headphones, ShieldCheck, UserCheck, UserMinus } from "lucide-react";
 import { request } from "../../core/api";
 import { enableChimeNotifications, subscribeRealtime, playChimeNotification } from "../../core/realtime";
-import type { Appointment, AvailabilitySlot, Doctor, Patient, SupportMessage, Tokens } from "../../core/types";
+import type { Appointment, AvailabilitySlot, Doctor, Patient, StaffDirectoryEntry, SupportConversation, SupportMessage, Tokens } from "../../core/types";
 import { newIncomingSupportMessages } from "./supportMessageModel";
+
+function tokenSubject(token: string) {
+    try {
+        const encoded = token.split(".")[1].replace(/-/g, "+").replace(/_/g, "/");
+        const padded = encoded.padEnd(Math.ceil(encoded.length / 4) * 4, "=");
+        return (JSON.parse(atob(padded)) as { sub?: string }).sub || "";
+    } catch {
+        return "";
+    }
+}
 
 export default function SupportChat({ session }: { session: Tokens }) {
     const [open, setOpen] = useState(false);
     const [messages, setMessages] = useState<SupportMessage[]>([]);
+    const [conversationStates, setConversationStates] = useState<SupportConversation[]>([]);
+    const [staffDirectory, setStaffDirectory] = useState<Record<string, StaffDirectoryEntry>>({});
     const [conversation, setConversation] = useState("");
     const [patients, setPatients] = useState<Record<string, Patient>>({});
     const [text, setText] = useState("");
     const [error, setError] = useState("");
+    const [assignmentBusy, setAssignmentBusy] = useState(false);
     const [bookingOpen, setBookingOpen] = useState(false);
     const [doctors, setDoctors] = useState<Doctor[]>([]);
     const [bookingDoctorId, setBookingDoctorId] = useState("");
@@ -25,16 +38,30 @@ export default function SupportChat({ session }: { session: Tokens }) {
     const knownMessageIdsRef = useRef<Set<string>>(new Set());
     const messagesInitializedRef = useRef(false);
     const receptionist = session.role === "RECEPTIONIST";
-    const ids = [...new Set(messages.map(x => x.patientIdentityId))];
-    const visible = receptionist ? messages.filter(x => x.patientIdentityId === conversation) : messages;
-    const unread = messages.filter(x => !x.readAt && (receptionist ? x.senderRole === "PATIENT" : x.senderRole !== "PATIENT"));
+    const admin = session.role === "ADMIN";
+    const staffViewer = receptionist || admin;
+    const currentIdentityId = tokenSubject(session.accessToken);
+    const ids = [...new Set([...conversationStates.map(item => item.patientIdentityId), ...messages.map(item => item.patientIdentityId)])];
+    const visible = staffViewer ? messages.filter(item => item.patientIdentityId === conversation) : messages;
+    const activeConversation = conversationStates.find(item => item.patientIdentityId === conversation);
+    const assignedToMe = receptionist && !!currentIdentityId && activeConversation?.assignedReceptionistIdentityId === currentIdentityId;
+    const unread = admin ? [] : messages.filter(item => !item.readAt && (receptionist ? item.senderRole === "PATIENT" : item.senderRole !== "PATIENT"));
+
+    const staffName = (identityId?: string | null) => {
+        if (!identityId) return "Chưa có người phụ trách";
+        return staffDirectory[identityId]?.displayName?.trim() || "Lễ tân DermAI";
+    };
 
     async function load() {
         try {
-            const list = await request<SupportMessage[]>("/appointments/support", session.accessToken);
-            
+            const [list, states, directory] = await Promise.all([
+                request<SupportMessage[]>("/appointments/support", session.accessToken),
+                request<SupportConversation[]>("/appointments/support/conversations", session.accessToken),
+                request<StaffDirectoryEntry[]>("/auth/staff/directory", session.accessToken),
+            ]);
+
             // Compare message IDs so the first message after an empty inbox is not missed.
-            if (messagesInitializedRef.current) {
+            if (messagesInitializedRef.current && !admin) {
                 const incoming = newIncomingSupportMessages(knownMessageIdsRef.current, list, receptionist);
                 if (incoming.length) playChimeNotification();
             }
@@ -42,35 +69,38 @@ export default function SupportChat({ session }: { session: Tokens }) {
             messagesInitializedRef.current = true;
 
             setMessages(list);
-            const patientIds = [...new Set(list.map(x => x.patientIdentityId))];
-            if (receptionist) {
+            setConversationStates(states);
+            setStaffDirectory(Object.fromEntries(directory.map(item => [item.identityId, item])));
+            const patientIds = [...new Set([...states.map(item => item.patientIdentityId), ...list.map(item => item.patientIdentityId)])];
+            if (staffViewer) {
                 const missing = patientIds.filter(id => !patients[id]);
                 if (missing.length) {
-                    const loaded = await Promise.all(
-                        missing.map(async id => {
-                            try { return await request<Patient>(`/patients/identity/${id}`, session.accessToken); }
-                            catch { return null; }
-                        })
-                    );
+                    const loaded = await Promise.all(missing.map(async id => {
+                        try { return await request<Patient>(`/patients/identity/${id}`, session.accessToken); }
+                        catch { return null; }
+                    }));
                     setPatients(current => ({
                         ...current,
-                        ...Object.fromEntries(loaded.filter((p): p is Patient => !!p).map(p => [p.identityId, p]))
+                        ...Object.fromEntries(loaded.filter((patient): patient is Patient => !!patient).map(patient => [patient.identityId, patient])),
                     }));
                 }
-                if (!conversation && list[0]) setConversation(list[0].patientIdentityId);
-            } else if (patientIds[0] && !patients[patientIds[0]]) {
-                const me = await request<Patient>("/patients/me", session.accessToken);
-                setPatients({ [me.identityId]: me });
+                if (!conversation && patientIds[0]) setConversation(patientIds[0]);
+            } else if (patientIds[0]) {
+                if (!conversation) setConversation(patientIds[0]);
+                if (!patients[patientIds[0]]) {
+                    const me = await request<Patient>("/patients/me", session.accessToken);
+                    setPatients({ [me.identityId]: me });
+                }
             }
             setError("");
-        } catch (x) {
-            setError((x as Error).message);
+        } catch (reason) {
+            setError((reason as Error).message);
         }
     }
 
     useEffect(() => {
-        load();
-        const timer = window.setInterval(load, 4000);
+        void load();
+        const timer = window.setInterval(() => void load(), 4000);
         return () => window.clearInterval(timer);
     }, [open, conversation]);
 
@@ -100,33 +130,70 @@ export default function SupportChat({ session }: { session: Tokens }) {
     }, [receptionist]);
 
     useEffect(() => {
-        if (!open || (receptionist && !conversation)) return;
-        const pending = messages.filter(x => !x.readAt && (receptionist ? x.patientIdentityId === conversation && x.senderRole === "PATIENT" : x.senderRole !== "PATIENT"));
+        if (!open || admin || (receptionist && (!conversation || !assignedToMe))) return;
+        const pending = messages.filter(item => !item.readAt && (receptionist ? item.patientIdentityId === conversation && item.senderRole === "PATIENT" : item.senderRole !== "PATIENT"));
         if (!pending.length) return;
         const readAt = new Date().toISOString();
-        setMessages(current => current.map(x => pending.some(p => p.id === x.id) ? { ...x, readAt } : x));
-        Promise.all(pending.map(x => request(`/appointments/support/${x.id}/read`, session.accessToken, { method: "PATCH" }))).catch(x => setError((x as Error).message));
-    }, [open, conversation, messages]);
+        setMessages(current => current.map(item => pending.some(candidate => candidate.id === item.id) ? { ...item, readAt } : item));
+        Promise.all(pending.map(item => request(`/appointments/support/${item.id}/read`, session.accessToken, { method: "PATCH" }))).catch(reason => setError((reason as Error).message));
+    }, [open, conversation, messages, assignedToMe, admin, receptionist, session.accessToken]);
 
     useEffect(() => { setBookingOpen(false); setBookingSlot(null); setBookingSlots([]); setNotice(""); }, [conversation]);
+    useEffect(() => { if (receptionist && !assignedToMe) setBookingOpen(false); }, [receptionist, assignedToMe]);
     useEffect(() => { if (!bookingOpen || !bookingDoctorId || !bookingDate) return; void loadBookingSlots(); }, [bookingOpen, bookingDoctorId, bookingDate]);
 
-    async function send(e: FormEvent) {
-        e.preventDefault();
-        if (!text.trim() || (receptionist && !conversation)) return;
+    async function claimConversation() {
+        if (!conversation || assignmentBusy) return;
+        setAssignmentBusy(true);
+        setError("");
+        try {
+            await request(`/appointments/support/conversations/${conversation}/claim`, session.accessToken, { method: "POST" });
+            setNotice("Bạn đang phụ trách cuộc trò chuyện này.");
+            await load();
+        } catch (reason) {
+            setError((reason as Error).message);
+            await load();
+        } finally {
+            setAssignmentBusy(false);
+        }
+    }
+
+    async function releaseConversation() {
+        if (!conversation || assignmentBusy) return;
+        if (!window.confirm("Nhả cuộc trò chuyện này để lễ tân khác có thể nhận xử lý?")) return;
+        setAssignmentBusy(true);
+        setError("");
+        try {
+            await request(`/appointments/support/conversations/${conversation}/claim`, session.accessToken, { method: "DELETE" });
+            setNotice("Đã nhả cuộc trò chuyện. Lễ tân khác có thể tiếp nhận.");
+            await load();
+        } catch (reason) {
+            setError((reason as Error).message);
+        } finally {
+            setAssignmentBusy(false);
+        }
+    }
+
+    async function send(event: FormEvent) {
+        event.preventDefault();
+        if (!text.trim() || (receptionist && (!conversation || !assignedToMe)) || admin) return;
         try {
             await request("/appointments/support", session.accessToken, {
                 method: "POST",
-                body: JSON.stringify({ patientIdentityId: receptionist ? conversation : null, body: text.trim() })
+                body: JSON.stringify({ patientIdentityId: receptionist ? conversation : null, body: text.trim() }),
             });
             setText("");
             await load();
-        } catch (x) {
-            setError((x as Error).message);
+        } catch (reason) {
+            setError((reason as Error).message);
         }
     }
 
     async function openBooking() {
+        if (!assignedToMe) {
+            setError("Bạn cần nhận cuộc trò chuyện trước khi đặt lịch hộ.");
+            return;
+        }
         if (!conversation || !patients[conversation]) {
             setError("Chưa đọc được hồ sơ bệnh nhân trong cuộc trò chuyện.");
             return;
@@ -145,8 +212,8 @@ export default function SupportChat({ session }: { session: Tokens }) {
             }
             if (!bookingDoctorId) setBookingDoctorId(list[0].id);
             setBookingOpen(true);
-        } catch (x) {
-            setError((x as Error).message);
+        } catch (reason) {
+            setError((reason as Error).message);
         }
     }
 
@@ -155,20 +222,20 @@ export default function SupportChat({ session }: { session: Tokens }) {
         setBookingSlot(null);
         try {
             const result = await request<{ items: AvailabilitySlot[] }>(`/appointments/availability?doctorId=${encodeURIComponent(bookingDoctorId)}&date=${encodeURIComponent(bookingDate)}&durationMinutes=30`, session.accessToken);
-            setBookingSlots(result.items.filter(x => x.status === "AVAILABLE"));
+            setBookingSlots(result.items.filter(item => item.status === "AVAILABLE"));
             setError("");
-        } catch (x) {
+        } catch (reason) {
             setBookingSlots([]);
-            setError((x as Error).message);
+            setError((reason as Error).message);
         } finally {
             setBookingBusy(false);
         }
     }
 
-    async function submitProposal(e: FormEvent) {
-        e.preventDefault();
+    async function submitProposal(event: FormEvent) {
+        event.preventDefault();
         const patient = patients[conversation];
-        if (!patient || !bookingSlot || !bookingReason.trim()) return;
+        if (!assignedToMe || !patient || !bookingSlot || !bookingReason.trim()) return;
         setBookingBusy(true);
         try {
             await request<Appointment>("/appointments/proposals", session.accessToken, {
@@ -180,24 +247,21 @@ export default function SupportChat({ session }: { session: Tokens }) {
                     doctorIdentityId: bookingSlot.doctorIdentityId,
                     startAt: bookingSlot.startAt,
                     endAt: bookingSlot.endAt,
-                    reason: bookingReason.trim()
-                })
+                    reason: bookingReason.trim(),
+                }),
             });
             const time = new Date(bookingSlot.startAt).toLocaleString("vi-VN");
             await request("/appointments/support", session.accessToken, {
                 method: "POST",
-                body: JSON.stringify({
-                    patientIdentityId: conversation,
-                    body: `Lễ tân đã gửi đề nghị lịch ${time} với BS. ${bookingSlot.doctorName}. Bạn vui lòng mở Thông báo và xác nhận trong 10 phút.`
-                })
+                body: JSON.stringify({ patientIdentityId: conversation, body: `Lễ tân đã gửi đề nghị lịch ${time} với BS. ${bookingSlot.doctorName}. Bạn vui lòng mở Thông báo và xác nhận trong 10 phút.` }),
             });
             setBookingOpen(false);
             setBookingSlot(null);
             setBookingReason("");
             setNotice("Đã gửi đề nghị. Đang chờ bệnh nhân xác nhận trong 10 phút.");
             await load();
-        } catch (x) {
-            setError((x as Error).message);
+        } catch (reason) {
+            setError((reason as Error).message);
             await loadBookingSlots();
         } finally {
             setBookingBusy(false);
@@ -205,121 +269,56 @@ export default function SupportChat({ session }: { session: Tokens }) {
     }
 
     const patientLabel = (id: string) => patients[id]?.fullName || `Bệnh nhân · ${id.slice(0, 8)}`;
+    const messageSender = (message: SupportMessage) => message.senderRole === "PATIENT"
+        ? patientLabel(message.patientIdentityId)
+        : message.senderRole === "ADMIN" ? "Quản trị viên" : staffName(message.senderIdentityId);
 
-    return (
-        <div className={`support-chat ${receptionist ? "receptionist-support-chat" : ""}`}>
-            <button
-                className="support-launch"
-                aria-expanded={open}
-                aria-controls="reception-support-panel"
-                onClick={() => setOpen(!open)}
-            >
-                {open ? "Đóng" : receptionist ? "Hộp thư hỗ trợ" : "Chat với lễ tân"}
-                {unread.length > 0 && <span className="support-badge">{unread.length > 99 ? "99+" : unread.length}</span>}
-            </button>
-            {open && (
-                <section id="reception-support-panel" className="support-panel" aria-label={receptionist ? "Hộp thư hỗ trợ bệnh nhân" : "Chat hỗ trợ với lễ tân"}>
-                    <header>
-                        <div>
-                            <b>{receptionist ? "Hỗ trợ bệnh nhân" : "Lễ tân DermAI"}</b>
-                            <small>Hỗ trợ lịch khám và thủ tục</small>
-                        </div>
-                        {receptionist && conversation && (
-                            <button className="support-book-for" onClick={() => bookingOpen ? setBookingOpen(false) : openBooking()}>
-                                {bookingOpen ? "Quay lại chat" : "Đặt lịch hộ"}
-                            </button>
-                        )}
-                    </header>
-                    {receptionist && (
-                        <div className="support-conversations">
-                            {ids.length === 0 ? (
-                                <small>Chưa có hội thoại</small>
-                            ) : (
-                                ids.map(id => (
-                                    <button className={conversation === id ? "active" : ""} onClick={() => setConversation(id)} key={id}>
-                                        <b>{patientLabel(id)}</b>
-                                        <span>
-                                            {patients[id]?.phone || "Chưa có số điện thoại"} · {messages.filter(x => x.patientIdentityId === id).length} tin
-                                            {messages.some(x => x.patientIdentityId === id && x.senderRole === "PATIENT" && !x.readAt) && <i className="conversation-unread" />}
-                                        </span>
-                                    </button>
-                                ))
-                            )}
-                        </div>
-                    )}
-                    {notice && <p className="support-notice">{notice}</p>}
-                    {bookingOpen && receptionist ? (
-                        <form className="support-booking" onSubmit={submitProposal}>
-                            <div className="support-booking-title">
-                                <div>
-                                    <small>ĐẶT LỊCH HỘ</small>
-                                    <b>{patientLabel(conversation)}</b>
-                                </div>
-                                <CalendarCheck />
-                            </div>
-                            <label>
-                                Bác sĩ
-                                <select value={bookingDoctorId} onChange={e => setBookingDoctorId(e.target.value)}>
-                                    {doctors.map(d => (
-                                        <option key={d.id} value={d.id}>BS. {d.fullName} · {d.specialtyCode}</option>
-                                    ))}
-                                </select>
-                            </label>
-                            <label>
-                                Ngày khám
-                                <input type="date" min={new Date().toLocaleDateString("en-CA")} value={bookingDate} onChange={e => setBookingDate(e.target.value)} />
-                            </label>
-                            <div className="support-slot-list">
-                                {bookingBusy && !bookingSlots.length ? (
-                                    <small>Đang tải giờ trống…</small>
-                                ) : bookingSlots.length ? (
-                                    bookingSlots.map(slot => (
-                                        <button type="button" className={bookingSlot?.startAt === slot.startAt ? "selected" : ""} key={slot.startAt} onClick={() => setBookingSlot(slot)}>
-                                            {new Date(slot.startAt).toLocaleTimeString("vi-VN", { hour: "2-digit", minute: "2-digit" })}
-                                        </button>
-                                    ))
-                                ) : (
-                                    <small>Không có giờ trống trong ngày này.</small>
-                                )}
-                            </div>
-                            <label>
-                                Lý do khám
-                                <textarea required maxLength={500} value={bookingReason} onChange={e => setBookingReason(e.target.value)} placeholder="Nhập triệu chứng hoặc nhu cầu bệnh nhân đã trao đổi…" />
-                            </label>
-                            {bookingSlot && (
-                                <p className="support-proposal-summary">
-                                    <b>{new Date(bookingSlot.startAt).toLocaleString("vi-VN")}</b>
-                                    <span>BS. {bookingSlot.doctorName} · bệnh nhân có 10 phút xác nhận</span>
-                                </p>
-                            )}
-                            <button className="support-proposal-submit" disabled={bookingBusy || !bookingSlot || !bookingReason.trim()}>
-                                {bookingBusy ? "Đang gửi…" : "Gửi bệnh nhân xác nhận"}
-                            </button>
-                        </form>
-                    ) : (
-                        <>
-                            <div className="support-messages">
-                                {visible.length === 0 ? (
-                                    <p>Chưa có tin nhắn. Hãy gửi nội dung bạn cần hỗ trợ.</p>
-                                ) : (
-                                    visible.map(m => (
-                                        <article className={m.senderRole === session.role ? "mine" : "theirs"} key={m.id}>
-                                            <b>{m.senderRole === "PATIENT" ? patientLabel(m.patientIdentityId) : "Lễ tân DermAI"}</b>
-                                            <p>{m.body}</p>
-                                            <small>{new Date(m.sentAt).toLocaleString("vi-VN")}</small>
-                                        </article>
-                                    ))
-                                )}
-                            </div>
-                            <form onSubmit={send}>
-                                <textarea maxLength={2000} value={text} onChange={e => setText(e.target.value)} placeholder="Nhập nội dung hỗ trợ về lịch khám…" />
-                                <button disabled={!text.trim()}>Gửi</button>
-                            </form>
-                        </>
-                    )}
-                    {error && <small className="support-error">{error}</small>}
-                </section>
-            )}
-        </div>
-    );
+    return <div className={`support-chat ${staffViewer ? "receptionist-support-chat" : ""}`}>
+        <button className="support-launch" aria-expanded={open} aria-controls="reception-support-panel" onClick={() => setOpen(!open)}>
+            {open ? "Đóng" : admin ? "Giám sát hỗ trợ" : receptionist ? "Hộp thư hỗ trợ" : "Chat với lễ tân"}
+            {unread.length > 0 && <span className="support-badge">{unread.length > 99 ? "99+" : unread.length}</span>}
+        </button>
+        {open && <section id="reception-support-panel" className="support-panel" aria-label={staffViewer ? "Hộp thư hỗ trợ bệnh nhân" : "Chat hỗ trợ với lễ tân"}>
+            <header>
+                <div>
+                    <b>{admin ? "Giám sát hỗ trợ" : receptionist ? "Hỗ trợ bệnh nhân" : "Lễ tân DermAI"}</b>
+                    <small>{admin ? "Chế độ chỉ xem" : receptionist ? "Hộp thư chung của đội ngũ lễ tân" : activeConversation?.assignedReceptionistIdentityId ? `Đang hỗ trợ: ${staffName(activeConversation.assignedReceptionistIdentityId)}` : "Đang chờ lễ tân tiếp nhận"}</small>
+                </div>
+                {receptionist && conversation && assignedToMe && <button className="support-book-for" onClick={() => bookingOpen ? setBookingOpen(false) : openBooking()}>{bookingOpen ? "Quay lại chat" : "Đặt lịch hộ"}</button>}
+            </header>
+
+            {staffViewer && <div className="support-conversations">
+                {ids.length === 0 ? <small>Chưa có hội thoại</small> : ids.map(id => {
+                    const state = conversationStates.find(item => item.patientIdentityId === id);
+                    const mine = receptionist && state?.assignedReceptionistIdentityId === currentIdentityId;
+                    return <button className={conversation === id ? "active" : ""} onClick={() => setConversation(id)} key={id}>
+                        <b>{patientLabel(id)}</b>
+                        <span>{patients[id]?.phone || "Chưa có số điện thoại"} · {messages.filter(item => item.patientIdentityId === id).length} tin{messages.some(item => item.patientIdentityId === id && item.senderRole === "PATIENT" && !item.readAt) && <i className="conversation-unread" />}</span>
+                        <em className={!state?.assignedReceptionistIdentityId ? "is-unassigned" : mine ? "is-mine" : ""}>{!state?.assignedReceptionistIdentityId ? "Chưa tiếp nhận" : mine ? "Bạn đang phụ trách" : staffName(state.assignedReceptionistIdentityId)}</em>
+                    </button>;
+                })}
+            </div>}
+
+            {staffViewer && conversation && <div className={`support-assignment ${assignedToMe ? "is-mine" : activeConversation?.assignedReceptionistIdentityId ? "is-assigned" : "is-unassigned"}`}>
+                <div>{activeConversation?.assignedReceptionistIdentityId ? <UserCheck aria-hidden="true" /> : <Headphones aria-hidden="true" />}<span><b>{activeConversation?.assignedReceptionistIdentityId ? staffName(activeConversation.assignedReceptionistIdentityId) : "Chưa có lễ tân tiếp nhận"}</b><small>{admin ? "Admin đang xem và không thể gửi tin." : assignedToMe ? "Bạn có thể trả lời và đặt lịch hộ bệnh nhân." : activeConversation?.assignedReceptionistIdentityId ? "Bạn vẫn có thể xem nội dung cuộc trò chuyện." : "Nhận xử lý trước khi trả lời bệnh nhân."}</small></span></div>
+                {receptionist && !activeConversation?.assignedReceptionistIdentityId && <button type="button" disabled={assignmentBusy} onClick={claimConversation}><UserCheck aria-hidden="true" />{assignmentBusy ? "Đang nhận…" : "Nhận xử lý"}</button>}
+                {receptionist && assignedToMe && <button type="button" className="support-release" disabled={assignmentBusy} onClick={releaseConversation}><UserMinus aria-hidden="true" />Nhả cuộc trò chuyện</button>}
+            </div>}
+
+            {notice && <p className="support-notice" aria-live="polite">{notice}</p>}
+            {bookingOpen && receptionist && assignedToMe ? <form className="support-booking" onSubmit={submitProposal}>
+                <div className="support-booking-title"><div><small>ĐẶT LỊCH HỘ</small><b>{patientLabel(conversation)}</b></div><CalendarCheck /></div>
+                <label>Bác sĩ<select value={bookingDoctorId} onChange={event => setBookingDoctorId(event.target.value)}>{doctors.map(doctor => <option key={doctor.id} value={doctor.id}>BS. {doctor.fullName} · {doctor.specialtyCode}</option>)}</select></label>
+                <label>Ngày khám<input type="date" min={new Date().toLocaleDateString("en-CA")} value={bookingDate} onChange={event => setBookingDate(event.target.value)} /></label>
+                <div className="support-slot-list">{bookingBusy && !bookingSlots.length ? <small>Đang tải giờ trống…</small> : bookingSlots.length ? bookingSlots.map(slot => <button type="button" className={bookingSlot?.startAt === slot.startAt ? "selected" : ""} key={slot.startAt} onClick={() => setBookingSlot(slot)}>{new Date(slot.startAt).toLocaleTimeString("vi-VN", { hour: "2-digit", minute: "2-digit" })}</button>) : <small>Không có giờ trống trong ngày này.</small>}</div>
+                <label>Lý do khám<textarea required maxLength={500} value={bookingReason} onChange={event => setBookingReason(event.target.value)} placeholder="Nhập triệu chứng hoặc nhu cầu bệnh nhân đã trao đổi…" /></label>
+                {bookingSlot && <p className="support-proposal-summary"><b>{new Date(bookingSlot.startAt).toLocaleString("vi-VN")}</b><span>BS. {bookingSlot.doctorName} · bệnh nhân có 10 phút xác nhận</span></p>}
+                <button className="support-proposal-submit" disabled={bookingBusy || !bookingSlot || !bookingReason.trim()}>{bookingBusy ? "Đang gửi…" : "Gửi bệnh nhân xác nhận"}</button>
+            </form> : <>
+                <div className="support-messages">{visible.length === 0 ? <p>{staffViewer ? "Cuộc trò chuyện chưa có tin nhắn." : "Chưa có tin nhắn. Hãy gửi nội dung bạn cần hỗ trợ."}</p> : visible.map(message => <article className={message.senderIdentityId === currentIdentityId ? "mine" : "theirs"} key={message.id}><b>{messageSender(message)}</b><p>{message.body}</p><small>{new Date(message.sentAt).toLocaleString("vi-VN")}</small></article>)}</div>
+                {admin ? <div className="support-monitor-note"><ShieldCheck aria-hidden="true" /><span><b>Chế độ giám sát</b><small>Admin có thể xem người phụ trách và nội dung nhưng không gửi tin thay lễ tân.</small></span></div> : receptionist && !assignedToMe ? <div className="support-reply-locked"><Headphones aria-hidden="true" /><span>{activeConversation?.assignedReceptionistIdentityId ? `Cuộc trò chuyện đang do ${staffName(activeConversation.assignedReceptionistIdentityId)} phụ trách.` : "Nhận xử lý để trả lời bệnh nhân."}</span></div> : <form onSubmit={send}><textarea aria-label="Nội dung tin nhắn hỗ trợ" maxLength={2000} value={text} onChange={event => setText(event.target.value)} placeholder="Nhập nội dung hỗ trợ về lịch khám…" /><button aria-label="Gửi tin nhắn" disabled={!text.trim()}>Gửi</button></form>}
+            </>}
+            {error && <small className="support-error" role="alert">{error}</small>}
+        </section>}
+    </div>;
 }

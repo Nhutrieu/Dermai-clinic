@@ -335,6 +335,12 @@
   color: var(--color-info);
 }
 
+.accepted-status-badge.is-checked-in {
+  border-color: var(--color-success-border);
+  background: var(--color-success-surface);
+  color: var(--color-success);
+}
+
 .accepted-status-badge.is-in-progress {
   border-color: var(--color-success-border);
   background: var(--color-success-surface);

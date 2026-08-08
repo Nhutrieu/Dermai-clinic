@@ -47,6 +47,7 @@ type Props = {
   onRemind: (appointmentId: string, action: ReminderAction["actionType"]) => Promise<void>;
   onReschedule: (appointmentId: string, startAt: string) => Promise<Appointment>;
   onCancel: (appointmentId: string, reason: string) => Promise<Appointment>;
+  onCheckIn: (appointmentId: string) => Promise<void>;
   onNoShow: (appointmentId: string) => Promise<void>;
   onOpenSupport: (patient: Patient) => void;
   onOpenRequests: () => void;
@@ -56,6 +57,7 @@ type StatusMeta = { label: string; className: string };
 
 const ACCEPTED_STATUSES = new Set([
   "CONFIRMED",
+  "CHECKED_IN",
   "IN_PROGRESS",
   "COMPLETED",
   "FOLLOW_UP_REQUIRED",
@@ -64,6 +66,7 @@ const ACCEPTED_STATUSES = new Set([
 
 const STATUS_OPTIONS = [
   ["CONFIRMED", "Đã xác nhận"],
+  ["CHECKED_IN", "Đã đến phòng khám"],
   ["IN_PROGRESS", "Đang khám"],
   ["COMPLETED", "Hoàn tất"],
   ["FOLLOW_UP_REQUIRED", "Cần tái khám"],
@@ -73,6 +76,7 @@ const STATUS_OPTIONS = [
 function statusMeta(status: string): StatusMeta {
   switch (status) {
     case "CONFIRMED": return { label: "Đã xác nhận", className: "is-confirmed" };
+    case "CHECKED_IN": return { label: "Đã đến phòng khám", className: "is-checked-in" };
     case "IN_PROGRESS": return { label: "Đang khám", className: "is-in-progress" };
     case "COMPLETED": return { label: "Hoàn tất", className: "is-completed" };
     case "FOLLOW_UP_REQUIRED": return { label: "Cần tái khám", className: "is-follow-up" };
@@ -418,6 +422,7 @@ export default function ReceptionAcceptedAppointments(props: Props) {
               const status = statusMeta(appointment.status);
               const expanded = expandedId === appointment.id;
               const canManage = appointment.status === "CONFIRMED";
+              const canCheckIn = canManage && clinicDateKey(appointment.startAt) === clinicDateKey(new Date());
               const canMarkNoShow = canManage && Date.now() >= new Date(appointment.startAt).getTime() + 30 * 60_000;
               return (
                 <li key={appointment.id}>
@@ -463,6 +468,15 @@ export default function ReceptionAcceptedAppointments(props: Props) {
                             {patient && (
                               <button type="button" onClick={() => props.onOpenSupport(patient)}>
                                 <MessageCircle aria-hidden="true" /> Liên hệ bệnh nhân
+                              </button>
+                            )}
+                            {canCheckIn && (
+                              <button
+                                type="button"
+                                disabled={props.busyAppointmentId === appointment.id}
+                                onClick={() => void props.onCheckIn(appointment.id).catch(() => undefined)}
+                              >
+                                <Clock3 aria-hidden="true" /> Xác nhận đã đến
                               </button>
                             )}
                             {canManage && (

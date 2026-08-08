@@ -6,6 +6,7 @@ export type ReceptionStatusTone =
   | "pending"
   | "assigned"
   | "confirmed"
+  | "arrived"
   | "progress"
   | "completed"
   | "followup"
@@ -31,6 +32,7 @@ export type ReceptionQueuePhase =
   | "attention"
   | "upcoming"
   | "overdue"
+  | "checked_in"
   | "in_progress"
   | "completed"
   | "no_show"
@@ -44,6 +46,7 @@ export type ReceptionQueueState = ReceptionStatus & {
 export type ReceptionQueueSummary = {
   upcoming: number;
   overdue: number;
+  checkedIn: number;
   inProgress: number;
   completed: number;
   noShow: number;
@@ -58,6 +61,8 @@ export function getReceptionStatus(status: string): ReceptionStatus {
       return { label: "Đã xếp bác sĩ", tone: "assigned" };
     case "CONFIRMED":
       return { label: "Đã xác nhận", tone: "confirmed" };
+    case "CHECKED_IN":
+      return { label: "Đã đến phòng khám", tone: "arrived" };
     case "IN_PROGRESS":
       return { label: "Đang khám", tone: "progress" };
     case "COMPLETED":
@@ -98,8 +103,8 @@ export function isOverdueForNoShow(appointment: Appointment, now = new Date()): 
 }
 
 /**
- * Derives an operational label from the persisted appointment status and time.
- * It deliberately does not infer patient arrival because the API has no check-in event.
+ * Derives the queue phase from persisted status and time. Patient arrival is
+ * never inferred from the doctor's action; it is backed by CHECKED_IN.
  */
 export function getReceptionQueueState(
   appointment: Appointment,
@@ -130,6 +135,9 @@ export function getReceptionQueueState(
           minutesFromStart: 0,
         };
   }
+  if (appointment.status === "CHECKED_IN") {
+    return { label: "Đã đến phòng khám", tone: "arrived", phase: "checked_in", minutesFromStart };
+  }
   if (appointment.status === "IN_PROGRESS") {
     return { label: "Đang khám", tone: "progress", phase: "in_progress", minutesFromStart };
   }
@@ -155,6 +163,7 @@ export function buildReceptionQueueSummary(
   return {
     upcoming: states.filter(item => item.phase === "upcoming").length,
     overdue: states.filter(item => item.phase === "overdue").length,
+    checkedIn: states.filter(item => item.phase === "checked_in").length,
     inProgress: states.filter(item => item.phase === "in_progress").length,
     completed: states.filter(item => item.phase === "completed").length,
     noShow: states.filter(item => item.phase === "no_show").length,
@@ -167,7 +176,7 @@ export function buildReceptionSummary(appointments: Appointment[], now = new Dat
   return {
     total: today.length,
     pending: today.filter(item => ["PENDING", "ASSIGNED"].includes(item.status)).length,
-    confirmed: today.filter(item => item.status === "CONFIRMED").length,
+    confirmed: today.filter(item => ["CONFIRMED", "CHECKED_IN"].includes(item.status)).length,
     inProgress: today.filter(item => item.status === "IN_PROGRESS").length,
     completed: today.filter(item => ["COMPLETED", "FOLLOW_UP_REQUIRED"].includes(item.status)).length,
     closed: today.filter(item => ["CANCELLED", "NO_SHOW"].includes(item.status)).length,

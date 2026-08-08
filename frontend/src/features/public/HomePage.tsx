@@ -15,7 +15,9 @@ import {
   X,
 } from "lucide-react";
 import { request } from "../../core/api";
+import { formatVnd } from "../../core/currency";
 import type { ClinicReview, Doctor } from "../../core/types";
+import AccessibleDialog from "../../components/AccessibleDialog";
 
 type HomePageProps = {
   openAuth: () => void;
@@ -57,6 +59,9 @@ function DoctorDetails({ doctor }: { doctor: Doctor }) {
         {doctor.experienceYears} năm kinh nghiệm
         {doctor.certificateNo ? `, chứng chỉ ${doctor.certificateNo}` : ""}
       </p>
+      <p className="clinic-home-doctor-fee">
+        Giá khám <strong>{formatVnd(doctor.consultationFee)}</strong>
+      </p>
       <p className="clinic-home-doctor-bio">
         {doctor.bio?.trim() || "Bác sĩ đang cập nhật phần giới thiệu chuyên môn."}
       </p>
@@ -69,6 +74,7 @@ export default function HomePage({ openAuth, chat }: HomePageProps) {
   const [reviews, setReviews] = useState<ClinicReview[]>([]);
   const [doctorState, setDoctorState] = useState<"loading" | "ready" | "error">("loading");
   const [menuOpen, setMenuOpen] = useState(false);
+  const [reviewsOpen, setReviewsOpen] = useState(false);
   const homeRef = useRef<HTMLDivElement>(null);
   const menuButtonRef = useRef<HTMLButtonElement>(null);
 
@@ -137,7 +143,8 @@ export default function HomePage({ openAuth, chat }: HomePageProps) {
   const featuredDoctor = doctors[0];
   const supportingDoctors = doctors.slice(1, 4);
   const featuredReview = reviews[0];
-  const supportingReviews = reviews.slice(1, 3);
+  // Keep the homepage concise; the dialog carries the complete approved review list.
+  const supportingReviews = reviews.slice(1, 2);
 
   return (
     <div ref={homeRef} className="clinic-home home-page">
@@ -370,8 +377,53 @@ export default function HomePage({ openAuth, chat }: HomePageProps) {
                 )}
               </div>
             )}
+
+            {reviews.length > 2 && (
+              <div className="clinic-home-review-more">
+                <button
+                  type="button"
+                  className="clinic-home-text-button"
+                  aria-haspopup="dialog"
+                  onClick={() => setReviewsOpen(true)}
+                >
+                  Xem thêm đánh giá ({reviews.length}) <ArrowRight aria-hidden="true" />
+                </button>
+              </div>
+            )}
           </div>
         </section>
+
+        {reviewsOpen && (
+          <AccessibleDialog
+            title="Đánh giá từ bệnh nhân"
+            titleId="clinic-review-dialog-title"
+            descriptionId="clinic-review-dialog-description"
+            className="clinic-home-review-dialog"
+            backdropClassName="clinic-home-review-dialog-backdrop"
+            closeLabel="Đóng danh sách đánh giá"
+            onClose={() => setReviewsOpen(false)}
+          >
+            <p className="clinic-home-review-dialog-intro">
+              {reviews.length} đánh giá đã được duyệt từ những bệnh nhân hoàn thành buổi khám.
+            </p>
+            <div className="clinic-home-review-dialog-list">
+              {reviews.map((review) => (
+                <article key={review.id}>
+                  <header>
+                    <div className="clinic-home-stars" aria-label={`${review.rating} trên 5 sao`}>
+                      {Array.from({ length: review.rating }, (_, index) => <Star key={index} aria-hidden="true" />)}
+                    </div>
+                    <time dateTime={review.createdAt}>
+                      {new Date(review.createdAt).toLocaleDateString("vi-VN")}
+                    </time>
+                  </header>
+                  <blockquote>{review.comment}</blockquote>
+                  <p><strong>{review.displayName}</strong><span>Bệnh nhân đã khám</span></p>
+                </article>
+              ))}
+            </div>
+          </AccessibleDialog>
+        )}
 
         <section className="clinic-home-final" aria-labelledby="home-final-title" data-home-reveal="final">
           <div className="clinic-home-container clinic-home-final-layout">

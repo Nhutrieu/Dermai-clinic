@@ -26,7 +26,7 @@ class AuthServiceEmailVerificationTest {
     when(identities.save(any(Identity.class))).thenAnswer(call -> call.getArgument(0));
     when(verificationOtps.save(any(EmailVerificationOtp.class))).thenAnswer(call -> call.getArgument(0));
     service = new AuthService(identities, mock(RefreshTokenRepository.class),
-        mock(PasswordOtpRepository.class), verificationOtps, mail,
+        mock(PasswordOtpRepository.class), verificationOtps, mock(StaffAccountEventRepository.class), mail,
         "test-jwt-secret-that-is-longer-than-32-bytes", "no-reply@dermai.local");
   }
 

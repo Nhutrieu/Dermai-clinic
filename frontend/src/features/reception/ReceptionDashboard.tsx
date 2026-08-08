@@ -44,6 +44,7 @@ type Props = {
   onOpenRequests: () => void;
   onOpenAccepted: () => void;
   onConfirm: (appointmentId: string) => Promise<void>;
+  onCheckIn: (appointmentId: string) => Promise<void>;
   onNoShow: (appointmentId: string) => Promise<void>;
   onRemind: (appointmentId: string, action: ReminderAction["actionType"]) => Promise<void>;
   onRetryQueue: () => Promise<void>;
@@ -136,6 +137,7 @@ export default function ReceptionDashboard(props: Props) {
         onOpenRequests={props.onOpenRequests}
         onOpenAccepted={props.onOpenAccepted}
         onConfirm={props.onConfirm}
+        onCheckIn={props.onCheckIn}
         onNoShow={props.onNoShow}
         onRetryQueue={props.onRetryQueue}
       />

@@ -38,13 +38,14 @@ import {
 } from "../../components/PatientAppointmentList";
 import PatientProfile from "./PatientProfile";
 
-const ACTIVE_APPOINTMENT_STATUSES = new Set(["PROPOSED", "PENDING", "ASSIGNED", "CONFIRMED", "IN_PROGRESS"]);
+const ACTIVE_APPOINTMENT_STATUSES = new Set(["PROPOSED", "PENDING", "ASSIGNED", "CONFIRMED", "CHECKED_IN", "IN_PROGRESS"]);
 const RESCHEDULABLE_STATUSES = new Set(["PENDING", "ASSIGNED", "CONFIRMED"]);
 const IMPORTANT_NOTIFICATION_TYPES = new Set([
     "REQUEST_CREATED",
     "BOOKING_PROPOSAL",
     "PROPOSAL_ACCEPTED",
     "CONFIRMED",
+    "CHECKED_IN",
     "RESCHEDULED",
     "CANCELLED",
     "REMINDER_24H",
@@ -240,7 +241,7 @@ export default function PatientDashboard({
     }, [loadDoctors]);
 
     const upcoming = useMemo(() => appointments
-        .filter(item => ACTIVE_APPOINTMENT_STATUSES.has(item.status) && new Date(item.endAt).getTime() > Date.now())
+        .filter(item => ACTIVE_APPOINTMENT_STATUSES.has(item.status) && (["CHECKED_IN", "IN_PROGRESS"].includes(item.status) || new Date(item.endAt).getTime() > Date.now()))
         .sort((left, right) => new Date(left.startAt).getTime() - new Date(right.startAt).getTime()), [appointments]);
     const nextAppointment = upcoming[0];
     const nextDoctor = doctors.find(item => item.id === nextAppointment?.doctorId);
@@ -563,26 +564,26 @@ export default function PatientDashboard({
 
         <section className="patient-dashboard-medical patient-dashboard-reveal" aria-labelledby="patient-medical-title">
             <header className="patient-dashboard-section-heading">
-                <div><h2 id="patient-medical-title">Hồ sơ khám và đơn thuốc gần đây</h2><p>Chỉ hiển thị tóm tắt từ nội dung đã được ký xác nhận.</p></div>
-                {(latestRecord || latestPrescription) && <button type="button" className="patient-dashboard-text-action" onClick={openRecords}>Xem hồ sơ</button>}
+                <div><h2 id="patient-medical-title">Kết quả khám và đơn thuốc gần đây</h2><p>Chỉ hiển thị tóm tắt từ nội dung đã được bác sĩ ký xác nhận.</p></div>
+                {(latestRecord || latestPrescription) && <button type="button" className="patient-dashboard-text-action" onClick={openRecords}>Xem kết quả</button>}
             </header>
             {(resourceState.records.loading || resourceState.prescriptions.loading) && !latestRecord && !latestPrescription ? (
-                <DashboardState tone="loading" title="Đang tải hồ sơ y khoa..." />
+                <DashboardState tone="loading" title="Đang tải kết quả khám..." />
             ) : resourceState.records.error && resourceState.prescriptions.error ? (
-                <DashboardState tone="error" title="Chưa tải được hồ sơ và đơn thuốc" description="Bạn có thể thử mở lại mục Hồ sơ y khoa sau." />
+                <DashboardState tone="error" title="Chưa tải được kết quả và đơn thuốc" description="Bạn có thể thử mở lại mục Kết quả khám sau." />
             ) : !latestRecord && !latestPrescription ? (
-                <DashboardState tone="empty" title="Chưa có hồ sơ y khoa" description="Hồ sơ và đơn thuốc đã ký sẽ xuất hiện sau khi buổi khám hoàn tất." />
+                <DashboardState tone="empty" title="Chưa có kết quả khám" description="Kết luận và đơn thuốc sẽ xuất hiện sau khi bác sĩ hoàn tất buổi khám." />
             ) : <div className="patient-dashboard-medical-summary">
                 <article>
                     <span aria-hidden="true"><FileText /></span>
                     <div>
-                        <h3>Hồ sơ khám gần nhất</h3>
+                        <h3>Kết quả khám gần nhất</h3>
                         {latestRecord ? <>
                             <time dateTime={latestRecord.signedAt}>{formatDate(latestRecord.signedAt, { day: "2-digit", month: "2-digit", year: "numeric" })}</time>
                             {recordAppointment?.doctorName && <p>Bác sĩ: <strong>{recordAppointment.doctorName}</strong></p>}
                             <p>Kết luận chuyên môn: <strong>{latestRecord.finalDiagnosis}</strong></p>
                             {latestRecord.followUpAt && <p>Tái khám: {new Date(latestRecord.followUpAt).toLocaleString("vi-VN")}</p>}
-                        </> : <p role={resourceState.records.error ? "alert" : undefined}>{resourceState.records.error || "Chưa có hồ sơ khám đã ký."}</p>}
+                        </> : <p role={resourceState.records.error ? "alert" : undefined}>{resourceState.records.error || "Chưa có kết quả khám đã ký."}</p>}
                     </div>
                 </article>
                 <article>
@@ -605,7 +606,7 @@ export default function PatientDashboard({
                 <button type="button" onClick={openAppointments}><CalendarDays aria-hidden="true" /><span><strong>Đặt lịch khám</strong><small>Chọn bác sĩ và khung giờ</small></span><ArrowRight aria-hidden="true" /></button>
                 <button type="button" onClick={openAi}><BrainCircuit aria-hidden="true" /><span><strong>Kiểm tra da bằng AI</strong><small>Phân tích hình ảnh tham khảo</small></span><ArrowRight aria-hidden="true" /></button>
                 <button type="button" onClick={openAppointments}><CalendarCheck2 aria-hidden="true" /><span><strong>Xem lịch hẹn</strong><small>Theo dõi và điều chỉnh lịch</small></span><ArrowRight aria-hidden="true" /></button>
-                <button type="button" onClick={openRecords}><Stethoscope aria-hidden="true" /><span><strong>Xem hồ sơ</strong><small>Hồ sơ khám và đơn thuốc</small></span><ArrowRight aria-hidden="true" /></button>
+                <button type="button" onClick={openRecords}><Stethoscope aria-hidden="true" /><span><strong>Xem kết quả</strong><small>Kết luận khám và đơn thuốc</small></span><ArrowRight aria-hidden="true" /></button>
             </nav>
         </section>
 

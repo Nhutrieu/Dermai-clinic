@@ -133,7 +133,7 @@ function RecordState({
 function RecordStatus({ complete }: { complete: boolean }) {
     return <span className={`patient-medical-status ${complete ? "is-complete" : "is-updating"}`}>
         {complete && <CheckCircle2 aria-hidden="true" />}
-        {complete ? "Hồ sơ đã hoàn tất" : "Bác sĩ đang cập nhật"}
+        {complete ? "Kết quả đã hoàn tất" : "Bác sĩ đang cập nhật"}
     </span>;
 }
 
@@ -180,7 +180,7 @@ function StandalonePrescriptions({
     return <section className="patient-medical-orphans" aria-labelledby="patient-orphan-prescriptions-title">
         <div>
             <h2 id="patient-orphan-prescriptions-title">Đơn thuốc đã ký</h2>
-            <p>Nội dung đơn thuốc vẫn được hiển thị ngay cả khi hồ sơ khám chưa tải được.</p>
+            <p>Nội dung đơn thuốc vẫn được hiển thị ngay cả khi kết quả khám chưa tải được.</p>
         </div>
         <ul>
             {prescriptions.map(prescription => <li key={prescription.id}>
@@ -296,20 +296,20 @@ export default function PatientMedicalRecords({
     return <div className="patient-medical-records">
         <header className="patient-medical-heading">
             <div>
-                <h2>Hồ sơ y khoa của bạn</h2>
+                <h2>Kết quả khám của bạn</h2>
                 <p>Xem kết luận đã được bác sĩ ghi nhận, đơn thuốc và khuyến nghị tái khám theo từng lần khám.</p>
             </div>
-            <span>{records.length} hồ sơ đã ký</span>
+            <span>{records.length} lần khám</span>
         </header>
 
         {doctorError && records.length > 0 && <div className="patient-medical-alert is-info" role="status">
-            Hồ sơ vẫn xem được. Thông tin tên hoặc chuyên khoa bác sĩ chưa tải đầy đủ.
+            Kết quả vẫn xem được. Thông tin tên hoặc chuyên khoa bác sĩ chưa tải đầy đủ.
         </div>}
         {resourceState.appointments.error && records.length > 0 && <div className="patient-medical-alert is-info" role="status">
-            Hồ sơ vẫn xem được. Ngày khám, lý do hoặc bác sĩ của một số lần khám chưa tải đầy đủ.
+            Kết quả vẫn xem được. Ngày khám, lý do hoặc bác sĩ của một số lần khám chưa tải đầy đủ.
         </div>}
         {resourceState.records.error && records.length > 0 && <div className="patient-medical-alert is-error" role="alert">
-            Một phần danh sách hồ sơ có thể chưa được cập nhật: {resourceState.records.error}
+            Một phần danh sách kết quả có thể chưa được cập nhật: {resourceState.records.error}
         </div>}
 
         <div className="patient-medical-layout">
@@ -319,21 +319,21 @@ export default function PatientMedicalRecords({
                     <span aria-live="polite">{filteredEntries.length}/{entries.length}</span>
                 </div>
 
-                {records.length > 0 && <div className="patient-medical-filters" aria-label="Bộ lọc hồ sơ y khoa">
-                    <label className="patient-medical-search"><span>Tìm trong hồ sơ</span><div><Search aria-hidden="true" /><input value={query} onChange={event => setQuery(event.target.value)} placeholder="Bác sĩ, lý do hoặc kết luận" />{query && <button type="button" onClick={() => setQuery("")} aria-label="Xóa nội dung tìm kiếm"><X aria-hidden="true" /></button>}</div></label>
+                {records.length > 0 && <div className="patient-medical-filters" aria-label="Bộ lọc kết quả khám">
+                    <label className="patient-medical-search"><span>Tìm trong kết quả</span><div><Search aria-hidden="true" /><input value={query} onChange={event => setQuery(event.target.value)} placeholder="Bác sĩ, lý do hoặc kết luận" />{query && <button type="button" onClick={() => setQuery("")} aria-label="Xóa nội dung tìm kiếm"><X aria-hidden="true" /></button>}</div></label>
                     <label><span>Thời gian</span><select value={period} onChange={event => setPeriod(event.target.value)}><option value="all">Tất cả</option><option value="90">3 tháng gần đây</option><option value="365">1 năm gần đây</option></select></label>
-                    <label><span>Nội dung</span><select value={kind} onChange={event => setKind(event.target.value)}><option value="all">Tất cả hồ sơ</option><option value="prescription">Có đơn thuốc</option><option value="followup">Có tái khám</option></select></label>
+                    <label><span>Nội dung</span><select value={kind} onChange={event => setKind(event.target.value)}><option value="all">Tất cả kết quả</option><option value="prescription">Có đơn thuốc</option><option value="followup">Có tái khám</option></select></label>
                     <label><span>Sắp xếp</span><select value={order} onChange={event => setOrder(event.target.value)}><option value="newest">Mới nhất</option><option value="oldest">Cũ nhất</option></select></label>
                 </div>}
 
                 {resourceState.records.loading && records.length === 0 ? (
-                    <RecordState tone="loading" title="Đang tải hồ sơ y khoa..." description="Nội dung đã ký sẽ xuất hiện khi dịch vụ phản hồi." />
+                    <RecordState tone="loading" title="Đang tải kết quả khám..." description="Nội dung đã ký sẽ xuất hiện khi dịch vụ phản hồi." />
                 ) : resourceState.records.error && records.length === 0 ? (
-                    <RecordState tone="error" title="Chưa tải được hồ sơ y khoa" description={resourceState.records.error} />
+                    <RecordState tone="error" title="Chưa tải được kết quả khám" description={resourceState.records.error} />
                 ) : records.length === 0 ? (
-                    <RecordState tone="empty" title="Chưa có hồ sơ y khoa" description="Hồ sơ sẽ xuất hiện sau khi bác sĩ hoàn tất và ký nội dung buổi khám." action={openAppointments} actionLabel="Đặt lịch khám" />
+                    <RecordState tone="empty" title="Chưa có kết quả khám" description="Kết quả sẽ xuất hiện sau khi bác sĩ hoàn tất và ký nội dung buổi khám." action={openAppointments} actionLabel="Đặt lịch khám" />
                 ) : filteredEntries.length === 0 ? (
-                    <RecordState tone="empty" title="Không có hồ sơ phù hợp" description="Hãy thay đổi từ khóa hoặc bộ lọc để xem các lần khám khác." />
+                    <RecordState tone="empty" title="Không có kết quả phù hợp" description="Hãy thay đổi từ khóa hoặc bộ lọc để xem các lần khám khác." />
                 ) : <ol className="patient-medical-list">
                     {filteredEntries.map(entry => {
                         const appointment = entry.appointment;
@@ -364,9 +364,9 @@ export default function PatientMedicalRecords({
             {selectedEntry && <article className="patient-medical-detail" ref={detailRef} tabIndex={-1} aria-labelledby="patient-medical-detail-title">
                 <header>
                     <div>
-                        <span>Hồ sơ lần khám</span>
-                        <h3 id="patient-medical-detail-title">{selectedEntry.record.finalDiagnosis || "Hồ sơ đang được bác sĩ cập nhật"}</h3>
-                        <p>{selectedEntry.appointment ? "Khám ngày" : "Ký hồ sơ ngày"} <time dateTime={selectedDate}>{formatDate(selectedDate, { weekday: "long", day: "2-digit", month: "long", year: "numeric" })}</time></p>
+                        <span>Kết quả lần khám</span>
+                        <h3 id="patient-medical-detail-title">{selectedEntry.record.finalDiagnosis || "Kết quả đang được bác sĩ cập nhật"}</h3>
+                        <p>{selectedEntry.appointment ? "Khám ngày" : "Bác sĩ ký ngày"} <time dateTime={selectedDate}>{formatDate(selectedDate, { weekday: "long", day: "2-digit", month: "long", year: "numeric" })}</time></p>
                     </div>
                     <RecordStatus complete={isPatientRecordComplete(selectedEntry)} />
                 </header>
@@ -377,7 +377,7 @@ export default function PatientMedicalRecords({
                         <div><dt>Bác sĩ</dt><dd>BS. {selectedDoctorName}</dd></div>
                         {selectedDoctor && <div><dt>Chuyên khoa</dt><dd>{doctorSpecialty(selectedDoctor.specialtyCode)}</dd></div>}
                         {selectedEntry.appointment && <div><dt>Thời gian</dt><dd>{formatTime(selectedEntry.appointment.startAt)} - {formatTime(selectedEntry.appointment.endAt)}</dd></div>}
-                        <div><dt>Ngày ký hồ sơ</dt><dd>{formatDate(selectedEntry.record.signedAt)} lúc {formatTime(selectedEntry.record.signedAt)}</dd></div>
+                        <div><dt>Ngày xác nhận</dt><dd>{formatDate(selectedEntry.record.signedAt)} lúc {formatTime(selectedEntry.record.signedAt)}</dd></div>
                     </dl>
                     {!reasonIsAiSupport && <div className="patient-medical-provided">
                         <strong>Triệu chứng hoặc lý do khám do bệnh nhân cung cấp</strong>
@@ -403,7 +403,7 @@ export default function PatientMedicalRecords({
                 <section className="patient-medical-section" aria-labelledby="patient-doctor-notes-title">
                     <div className="patient-medical-section-heading"><FileText aria-hidden="true" /><h4 id="patient-doctor-notes-title">Ghi chú và hướng điều trị</h4></div>
                     <div className="patient-medical-notes">
-                        <div><strong>Nhận xét của bác sĩ</strong><p>{selectedEntry.record.clinicalNotes || "Không có ghi chú lâm sàng trong hồ sơ này."}</p></div>
+                        <div><strong>Nhận xét của bác sĩ</strong><p>{selectedEntry.record.clinicalNotes || "Bác sĩ không ghi thêm nhận xét lâm sàng cho lần khám này."}</p></div>
                         <div><strong>Hướng điều trị</strong><p>{selectedEntry.record.treatmentPlan || "Không có kế hoạch điều trị được ghi nhận."}</p></div>
                     </div>
                 </section>
@@ -418,7 +418,7 @@ export default function PatientMedicalRecords({
                     ) : resourceState.prescriptions.error ? null : !isPatientRecordComplete(selectedEntry) ? (
                         <div className="patient-medical-inline-empty"><strong>Đơn thuốc đang được cập nhật</strong><p>Bác sĩ đang hoàn tất nội dung của lần khám này.</p></div>
                     ) : (
-                        <div className="patient-medical-inline-empty"><strong>Không có đơn thuốc cho lần khám này</strong><p>Bác sĩ không kê đơn thuốc trong hồ sơ đã ký.</p></div>
+                        <div className="patient-medical-inline-empty"><strong>Không có đơn thuốc cho lần khám này</strong><p>Bác sĩ không kê đơn thuốc sau khi hoàn tất khám.</p></div>
                     )}
                     {selectedEntry.prescription && <button type="button" className="patient-medical-pdf-action" onClick={() => setPdfPrescription(selectedEntry.prescription || null)}><FileText aria-hidden="true" />Xem và in đơn thuốc</button>}
                 </section>
@@ -429,11 +429,11 @@ export default function PatientMedicalRecords({
                         <p>Bác sĩ khuyến nghị tái khám vào <strong>{formatDate(selectedEntry.record.followUpAt, { weekday: "long", day: "2-digit", month: "long", year: "numeric" })}</strong>.</p>
                         {selectedEntry.appointment?.followUpReason && <p>Lý do: {selectedEntry.appointment.followUpReason}</p>}
                         <button type="button" onClick={openAppointments}>Xem lịch khám<ArrowRight aria-hidden="true" /></button>
-                    </> : <p>Không có khuyến nghị tái khám trong hồ sơ này.</p>}
+                    </> : <p>Không có khuyến nghị tái khám cho lần khám này.</p>}
                 </section>
 
                 <footer className="patient-medical-detail-footer">
-                    <p>Liên hệ phòng khám nếu bạn cần hỗ trợ thêm về hồ sơ hoặc lịch tái khám.</p>
+                    <p>Liên hệ phòng khám nếu bạn cần hỗ trợ thêm về kết quả hoặc lịch tái khám.</p>
                     <button type="button" onClick={openSupport}><MessageCircle aria-hidden="true" />Liên hệ hỗ trợ</button>
                 </footer>
             </article>}
@@ -443,7 +443,7 @@ export default function PatientMedicalRecords({
         {!resourceState.records.error && unmatchedPrescriptions.length > 0 && <StandalonePrescriptions prescriptions={unmatchedPrescriptions} token={token} patient={patient} />}
 
         <div className="patient-medical-live" role="status" aria-live="polite">
-            {selectedEntry ? `Đang xem hồ sơ ngày ${formatDate(selectedDate)}` : ""}
+            {selectedEntry ? `Đang xem kết quả ngày ${formatDate(selectedDate)}` : ""}
         </div>
 
         {pdfPrescription && selectedEntry && <PrescriptionPdfModal

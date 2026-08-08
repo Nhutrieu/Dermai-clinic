@@ -16,6 +16,7 @@ const doctor: Doctor = {
   fullName: "Bình",
   specialtyCode: "GENERAL_DERMATOLOGY",
   experienceYears: 4,
+  consultationFee: 150000,
 };
 
 const request: Appointment = {

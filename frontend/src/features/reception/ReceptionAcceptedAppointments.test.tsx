@@ -1,5 +1,5 @@
 import { renderToStaticMarkup } from "react-dom/server";
-import { describe, expect, it, vi } from "vitest";
+import { afterAll, beforeAll, describe, expect, it, vi } from "vitest";
 import type { Appointment, Doctor, Patient, ReminderItem } from "../../core/types";
 import ReceptionAcceptedAppointments from "./ReceptionAcceptedAppointments";
 
@@ -16,6 +16,7 @@ const doctor: Doctor = {
   fullName: "Bình",
   specialtyCode: "GENERAL_DERMATOLOGY",
   experienceYears: 4,
+  consultationFee: 150000,
 };
 
 const appointment: Appointment = {
@@ -28,6 +29,14 @@ const appointment: Appointment = {
   reason: "Ngứa da kéo dài",
   createdAt: "2026-08-02T03:00:00.000Z",
 };
+
+// Keep date-sensitive receptionist controls deterministic regardless of the day the suite runs.
+beforeAll(() => {
+  vi.useFakeTimers();
+  vi.setSystemTime(new Date("2026-08-08T05:00:00.000Z"));
+});
+
+afterAll(() => vi.useRealTimers());
 
 function render(overrides: Partial<Parameters<typeof ReceptionAcceptedAppointments>[0]> = {}) {
   const action = vi.fn(async () => undefined);
@@ -54,6 +63,7 @@ function render(overrides: Partial<Parameters<typeof ReceptionAcceptedAppointmen
     onRemind={action}
     onReschedule={update}
     onCancel={update}
+    onCheckIn={action}
     onNoShow={action}
     onOpenSupport={vi.fn()}
     onOpenRequests={vi.fn()}
@@ -88,6 +98,7 @@ describe("ReceptionAcceptedAppointments", () => {
     const confirmedHtml = render({ appointments: [appointment] });
     expect(confirmedHtml).toContain("Đổi lịch");
     expect(confirmedHtml).toContain("Hủy lịch");
+    expect(confirmedHtml).toContain("Xác nhận đã đến");
 
     const completedHtml = render({ appointments: [{ ...appointment, status: "COMPLETED" }] });
     expect(completedHtml).toContain("Hoàn tất");

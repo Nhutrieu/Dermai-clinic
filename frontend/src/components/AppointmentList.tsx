@@ -22,6 +22,7 @@ function getStatusBadge(status: string) {
         case "PENDING": return { label: "Chờ tiếp nhận", badgeClass: "badge-pending" };
         case "ASSIGNED": return { label: "Đã xếp bác sĩ", badgeClass: "badge-assigned" };
         case "CONFIRMED": return { label: "Đã xác nhận", badgeClass: "badge-confirmed" };
+        case "CHECKED_IN": return { label: "Đã đến phòng khám", badgeClass: "badge-confirmed" };
         case "IN_PROGRESS": return { label: "Đang khám", badgeClass: "badge-in-progress" };
         case "COMPLETED": return { label: "Đã hoàn thành", badgeClass: "badge-completed" };
         case "CANCELLED": return { label: "Đã hủy", badgeClass: "badge-cancelled" };
@@ -72,6 +73,7 @@ function LegacyAppointmentList({ appointments, token, cancel, reschedule, bookFo
                         <option value="ALL">Tất cả ({appointments.length})</option>
                         <option value="PENDING">Chờ tiếp nhận</option>
                         <option value="CONFIRMED">Đã xác nhận</option>
+                        <option value="CHECKED_IN">Đã đến phòng khám</option>
                         <option value="COMPLETED">Đã hoàn thành</option>
                         <option value="CANCELLED">Đã hủy</option>
                         <option value="FOLLOW_UP_REQUIRED">Yêu cầu tái khám</option>

@@ -1,0 +1,155 @@
+.admin-doctor-fee {
+  margin-top: var(--space-5);
+  padding-top: var(--space-5);
+  border-top: 1px solid var(--color-border);
+}
+
+.admin-doctor-fee-heading {
+  display: grid;
+  grid-template-columns: 40px minmax(0, 1fr);
+  gap: var(--space-3);
+  align-items: start;
+}
+
+.admin-doctor-fee-heading > span {
+  display: grid;
+  width: 40px;
+  height: 40px;
+  place-items: center;
+  border-radius: var(--radius-control);
+  background: var(--color-success-surface);
+  color: var(--color-primary);
+}
+
+.admin-doctor-fee-heading svg {
+  width: 20px;
+  height: 20px;
+}
+
+.admin-doctor-fee-heading h4,
+.admin-doctor-fee-heading p {
+  margin: 0;
+}
+
+.admin-doctor-fee-heading h4 {
+  color: var(--color-ink);
+  font-size: 17px;
+  line-height: 1.4;
+}
+
+.admin-doctor-fee-heading p {
+  margin-top: var(--space-1);
+  color: var(--color-text-secondary);
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+.admin-doctor-fee form {
+  display: grid;
+  gap: var(--space-2);
+  margin-top: var(--space-4);
+}
+
+.admin-doctor-fee form > label {
+  color: var(--color-ink);
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.admin-doctor-fee-control {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: var(--space-3);
+  align-items: stretch;
+}
+
+.admin-doctor-fee-control button {
+  min-height: var(--control-min-height);
+}
+
+.admin-doctor-fee-input {
+  position: relative;
+  min-width: 0;
+}
+
+.admin-doctor-fee-input input {
+  width: 100%;
+  min-width: 0;
+  min-height: var(--control-min-height);
+  padding: 10px 44px 10px 12px;
+  border: 1px solid var(--color-border-strong);
+  border-radius: var(--radius-control);
+  background: var(--color-surface);
+  color: var(--color-ink);
+  font-size: 16px;
+  font-variant-numeric: tabular-nums;
+}
+
+.admin-doctor-fee-input input:hover {
+  border-color: var(--color-primary);
+}
+
+.admin-doctor-fee-input input[aria-invalid="true"] {
+  border-color: var(--color-danger);
+}
+
+.admin-doctor-fee-input > span {
+  position: absolute;
+  top: 50%;
+  right: 14px;
+  color: var(--color-text-secondary);
+  font-size: 15px;
+  font-weight: 700;
+  pointer-events: none;
+  transform: translateY(-50%);
+}
+
+.admin-doctor-fee-control button {
+  min-width: 132px;
+  padding-inline: var(--space-4);
+  white-space: nowrap;
+}
+
+.admin-doctor-fee form > small,
+.admin-doctor-fee-note,
+.admin-doctor-fee-feedback {
+  margin: 0;
+  color: var(--color-text-secondary);
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+.admin-doctor-fee-note {
+  margin-top: var(--space-4);
+  padding-left: var(--space-3);
+  border-left: 3px solid var(--color-success-border);
+}
+
+.admin-doctor-fee-feedback {
+  margin-top: var(--space-3);
+  padding: 10px 12px;
+  border: 1px solid;
+  border-radius: var(--radius-control);
+}
+
+.admin-doctor-fee-feedback.is-error {
+  border-color: var(--color-danger-border);
+  background: var(--color-danger-surface);
+  color: var(--color-danger-strong);
+}
+
+.admin-doctor-fee-feedback.is-success {
+  border-color: var(--color-success-border);
+  background: var(--color-success-surface);
+  color: var(--color-success);
+}
+
+@media (max-width: 700px) {
+  .admin-doctor-fee-control {
+    grid-template-columns: 1fr;
+  }
+
+  .admin-doctor-fee-control button {
+    width: 100%;
+  }
+}

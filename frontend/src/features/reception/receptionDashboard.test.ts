@@ -95,10 +95,20 @@ describe("reception dashboard presentation", () => {
     expect(buildReceptionQueueSummary(items, [], now)).toEqual({
       upcoming: 1,
       overdue: 1,
+      checkedIn: 0,
       inProgress: 1,
       completed: 1,
       noShow: 1,
       attention: 2,
+    });
+  });
+
+  it("keeps an arrived patient out of the no-show path", () => {
+    const arrived = appointment("arrived", "CHECKED_IN", "2026-08-01T01:00:00.000Z");
+    expect(isOverdueForNoShow(arrived, now)).toBe(false);
+    expect(getReceptionQueueState(arrived, now)).toMatchObject({
+      phase: "checked_in",
+      label: "Đã đến phòng khám",
     });
   });
 });

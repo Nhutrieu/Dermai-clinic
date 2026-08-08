@@ -9,6 +9,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import java.time.Instant;
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.ZoneId;
 import java.util.List;
@@ -56,7 +57,7 @@ class BookingPolicyTest {
     var start = LocalDate.now(CLINIC_ZONE).plusDays(2).atTime(15, 30).atZone(CLINIC_ZONE).toInstant();
     var existing = Appointment.held(
         UUID.randomUUID(), patient, doctor, UUID.randomUUID(),
-        start.minusSeconds(3_600), start.minusSeconds(1_800)
+        start.minusSeconds(3_600), start.minusSeconds(1_800), new BigDecimal("150000")
     );
     when(repository.findByPatientIdentityIdAndDoctorIdAndStatusInAndStartAtGreaterThanEqualAndStartAtLessThan(
         eq(patient), eq(doctor), eq(BookingPolicy.ACTIVE), any(Instant.class), any(Instant.class)
@@ -74,7 +75,7 @@ class BookingPolicyTest {
     var doctor = UUID.randomUUID();
     var start = Instant.now().plusSeconds(86_400);
     var current = Appointment.held(
-        UUID.randomUUID(), patient, doctor, UUID.randomUUID(), start, start.plusSeconds(1_800)
+        UUID.randomUUID(), patient, doctor, UUID.randomUUID(), start, start.plusSeconds(1_800), new BigDecimal("150000")
     );
     when(repository.findByPatientIdentityIdAndDoctorIdAndStatusInAndStartAtGreaterThanEqualAndStartAtLessThan(
         eq(patient), eq(doctor), eq(BookingPolicy.ACTIVE), any(Instant.class), any(Instant.class)

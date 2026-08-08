@@ -5,16 +5,20 @@ import { request } from "../../core/api";
 import type { AiAssessment } from "../../core/types";
 import DoctorSharedAi from "./DoctorSharedAi";
 
-export default function DoctorAiPreviewButton({ token, appointmentId }: { token: string; appointmentId: string }) {
-  const [available, setAvailable] = useState(false);
+export default function DoctorAiPreviewButton({ token, appointmentId, available: explicitAvailable }: { token: string; appointmentId: string; available?: boolean }) {
+  const [available, setAvailable] = useState(explicitAvailable ?? false);
   const [open, setOpen] = useState(false);
 
   useEffect(() => {
+    if (explicitAvailable !== undefined) {
+      setAvailable(explicitAvailable);
+      return;
+    }
     // Chỉ hiện nút khi lịch này thực sự có kết quả được bệnh nhân chia sẻ.
     request<AiAssessment | undefined>(`/patients/appointments/${appointmentId}/shared-ai-assessment`, token)
       .then(value => setAvailable(Boolean(value)))
       .catch(() => setAvailable(false));
-  }, [appointmentId, token]);
+  }, [appointmentId, token, explicitAvailable]);
 
   if (!available) return null;
   return <>

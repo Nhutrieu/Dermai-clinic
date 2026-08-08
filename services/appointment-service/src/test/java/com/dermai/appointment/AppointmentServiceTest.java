@@ -4,14 +4,79 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+import static org.mockito.ArgumentMatchers.any;
 
+import java.math.BigDecimal;
 import java.time.Instant;
+import java.time.LocalDate;
+import java.time.ZoneId;
 import java.util.Optional;
 import java.util.UUID;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 
 class AppointmentServiceTest {
+  @Test
+  void checkInRecordsArrivalAndProtectsTheVisitFromNoShow() {
+    var appointments = mock(AppointmentRepository.class);
+    var outbox = mock(OutboxRepository.class);
+    var updates = mock(SlotUpdateBroadcaster.class);
+    var notifications = mock(AppointmentNotificationRepository.class);
+    var bookingPolicy = mock(BookingPolicy.class);
+    var service = new AppointmentService(appointments, outbox, updates, notifications, bookingPolicy);
+    var appointmentId = UUID.randomUUID();
+    var zone = ZoneId.of("Asia/Ho_Chi_Minh");
+    var start = LocalDate.now(zone).atTime(14, 30).atZone(zone).toInstant();
+    var appointment = Appointment.pending(
+        UUID.randomUUID(), UUID.randomUUID(), UUID.randomUUID(), UUID.randomUUID(),
+        start, start.plusSeconds(1_800), "Khám da", null, new BigDecimal("150000")
+    );
+    appointment.id = appointmentId;
+    appointment.status = AppointmentStatus.CONFIRMED;
+    when(appointments.findLocked(appointmentId)).thenReturn(Optional.of(appointment));
+
+    var checkedIn = service.checkIn(appointmentId);
+
+    assertThat(checkedIn.status).isEqualTo(AppointmentStatus.CHECKED_IN);
+    assertThat(checkedIn.checkedInAt).isNotNull();
+    assertThat(checkedIn.status.mayTransitionTo(AppointmentStatus.NO_SHOW)).isFalse();
+    verify(updates).afterCommit();
+  }
+
+  @Test
+  void reschedulingKeepsTheOriginalConsultationFeeSnapshot() {
+    var appointments = mock(AppointmentRepository.class);
+    var outbox = mock(OutboxRepository.class);
+    var updates = mock(SlotUpdateBroadcaster.class);
+    var notifications = mock(AppointmentNotificationRepository.class);
+    var bookingPolicy = mock(BookingPolicy.class);
+    var service = new AppointmentService(appointments, outbox, updates, notifications, bookingPolicy);
+    var originalFee = new BigDecimal("150000");
+    var original = Appointment.pending(
+        UUID.randomUUID(),
+        UUID.randomUUID(),
+        UUID.randomUUID(),
+        UUID.randomUUID(),
+        Instant.now().plusSeconds(86_400),
+        Instant.now().plusSeconds(88_200),
+        "Khám da",
+        null,
+        originalFee
+    );
+    when(appointments.findLocked(original.id)).thenReturn(Optional.of(original));
+    when(appointments.saveAndFlush(any(Appointment.class))).thenAnswer(invocation -> invocation.getArgument(0));
+
+    var rescheduled = service.reschedule(
+        original.id,
+        Instant.now().plusSeconds(172_800),
+        Instant.now().plusSeconds(174_600),
+        "reschedule-key",
+        false
+    );
+
+    assertThat(rescheduled.consultationFeeSnapshot).isEqualByComparingTo(originalFee);
+  }
+
   @Test
   void receptionistConfirmationBroadcastsTheNewAppointmentStatus() {
     var appointments = mock(AppointmentRepository.class);
@@ -29,7 +94,8 @@ class AppointmentServiceTest {
         Instant.now().plusSeconds(86_400),
         Instant.now().plusSeconds(86_400 + 1_800),
         "Khám da",
-        null
+        null,
+        new BigDecimal("150000")
     );
     appointment.id = appointmentId;
     when(appointments.findLocked(appointmentId)).thenReturn(Optional.of(appointment));
@@ -57,7 +123,8 @@ class AppointmentServiceTest {
         Instant.now().minusSeconds(3_600),
         Instant.now().minusSeconds(1_800),
         "Khám da",
-        null
+        null,
+        new BigDecimal("150000")
     );
     appointment.id = appointmentId;
     appointment.status = AppointmentStatus.CONFIRMED;

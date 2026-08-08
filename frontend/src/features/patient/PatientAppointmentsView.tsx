@@ -1,12 +1,13 @@
 import { useEffect, useState, type ReactNode } from "react";
 import { AlertTriangle, BrainCircuit, CalendarDays, CheckCircle2, Clock3, Stethoscope } from "lucide-react";
 import { request } from "../../core/api";
+import { formatVnd } from "../../core/currency";
 import { subscribeRealtime } from "../../core/realtime";
 import type { AiAssessment, Appointment, AvailabilitySlot, Doctor, Patient } from "../../core/types";
 import AppointmentList from "../../components/AppointmentList";
 import AccessibleDialog from "../../components/AccessibleDialog";
 
-const ACTIVE_UPCOMING_STATUSES = new Set(["PROPOSED", "PENDING", "ASSIGNED", "CONFIRMED", "IN_PROGRESS"]);
+const ACTIVE_UPCOMING_STATUSES = new Set(["PROPOSED", "PENDING", "ASSIGNED", "CONFIRMED", "CHECKED_IN", "IN_PROGRESS"]);
 type Feedback = { tone: "info" | "success" | "error"; text: string };
 type BookingDialogProps = {
     title: string;
@@ -23,7 +24,7 @@ type BookingDialogProps = {
 
 function activeUpcoming(list: Appointment[]) {
     const now = Date.now();
-    return list.filter(item => ACTIVE_UPCOMING_STATUSES.has(item.status) && new Date(item.endAt).getTime() > now);
+    return list.filter(item => ACTIVE_UPCOMING_STATUSES.has(item.status) && (["CHECKED_IN", "IN_PROGRESS"].includes(item.status) || new Date(item.endAt).getTime() > now));
 }
 
 function clinicDate(value: string) {
@@ -103,6 +104,7 @@ export default function PatientAppointmentsView({
     const [timeConflict, setTimeConflict] = useState<{ slot: AvailabilitySlot; existing: Appointment; doctorName: string } | null>(null);
     const [holdId, setHoldId] = useState("");
     const [holdUntil, setHoldUntil] = useState("");
+    const [heldFee, setHeldFee] = useState<number | null>(null);
     const [holdClock, setHoldClock] = useState(Date.now());
     const [reason, setReason] = useState("");
     const [sharedAi, setSharedAi] = useState<AiAssessment | null>(null);
@@ -184,6 +186,7 @@ export default function PatientAppointmentsView({
                 setSelected(null);
                 setHoldId("");
                 setHoldUntil("");
+                setHeldFee(null);
             }
             const available = result.items.filter(item => item.status === "AVAILABLE").length;
             const text = result.items.length
@@ -243,6 +246,7 @@ export default function PatientAppointmentsView({
         const id = holdId;
         setHoldId("");
         setHoldUntil("");
+        setHeldFee(null);
         setSelected(null);
         await request("/appointments/holds/" + id, token, { method: "DELETE" }).catch(() => undefined);
     }
@@ -277,6 +281,8 @@ export default function PatientAppointmentsView({
             setSelected({ ...slot, status: "HELD_BY_YOU", holdId: held.id, holdExpiresAt: held.holdExpiresAt });
             setHoldId(held.id);
             setHoldUntil(held.holdExpiresAt || "");
+            // Show the exact server-side quote retained by this hold, even if Admin changes the doctor's price meanwhile.
+            setHeldFee(held.consultationFeeSnapshot ?? null);
             setFeedback({ tone: "success", text: "Khung giờ được giữ riêng cho bạn trong 5 phút." });
         } catch (error) {
             await findSlots(true);
@@ -521,6 +527,7 @@ export default function PatientAppointmentsView({
                                                 <strong>BS. {item.fullName}</strong>
                                                 <small>{item.specialtyCode}</small>
                                                 <em>{item.experienceYears} năm kinh nghiệm</em>
+                                                <span className="booking-doctor-fee">{formatVnd(item.consultationFee)} / lượt</span>
                                             </div>
                                             <CheckCircle2 aria-hidden="true" />
                                         </button>
@@ -533,6 +540,9 @@ export default function PatientAppointmentsView({
                                 <div className="booking-doctor-description" aria-live="polite">
                                     <strong>Giới thiệu BS. {doctor.fullName}</strong>
                                     <p>{doctor.bio?.trim() || "Bác sĩ chưa cập nhật phần giới thiệu chuyên môn."}</p>
+                                    <span className="booking-selected-fee">
+                                        Giá khám cơ bản: <strong>{formatVnd(doctor.consultationFee)}</strong>
+                                    </span>
                                     {doctor.certificateNo && (
                                         <small>Số chứng chỉ hành nghề: {doctor.certificateNo}</small>
                                     )}
@@ -671,6 +681,7 @@ export default function PatientAppointmentsView({
                                 <dd>{date ? new Date(date + "T00:00:00").toLocaleDateString("vi-VN") : "Chưa chọn"}</dd>
                             </div>
                             <div><dt>Khung giờ</dt><dd>{selected ? formatTime(selected.startAt) : "Chưa chọn"}</dd></div>
+                            <div><dt>Giá khám</dt><dd>{doctor ? formatVnd(heldFee ?? doctor.consultationFee) : "Chưa chọn bác sĩ"}</dd></div>
                             <div><dt>Lý do khám</dt><dd className="booking-review-reason">{reason.trim() || "Chưa nhập"}</dd></div>
                         </dl>
                         {holdUntil && (
@@ -687,6 +698,7 @@ export default function PatientAppointmentsView({
                         >
                             {busy && selected ? "Đang xử lý..." : "Xác nhận đặt lịch"}
                         </button>
+                        <small className="booking-payment-note">Thanh toán trực tiếp tại phòng khám.</small>
                         {(!selected || !reason.trim()) && (
                             <small className="booking-confirm-help">
                                 {!selected ? "Chọn một khung giờ để tiếp tục." : "Nhập lý do khám để xác nhận."}

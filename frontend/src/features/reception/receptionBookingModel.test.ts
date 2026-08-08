@@ -2,6 +2,8 @@ import { describe, expect, it } from "vitest";
 import { ApiError } from "../../core/api";
 import type { AvailabilitySlot } from "../../core/types";
 import {
+  APPOINTMENT_ALREADY_HANDLED_MESSAGE,
+  isAppointmentAlreadyHandledError,
   isConfirmedAppointmentStatus,
   receptionSlotDetails,
   toBookingIssue,
@@ -45,5 +47,17 @@ describe("reception booking presentation rules", () => {
     expect(isConfirmedAppointmentStatus("PENDING")).toBe(false);
     expect(isConfirmedAppointmentStatus("ASSIGNED")).toBe(false);
     expect(isConfirmedAppointmentStatus("CONFIRMED")).toBe(true);
+  });
+
+  it("recognizes a confirmation that another receptionist already handled", () => {
+    const error = new ApiError(
+      "Không thể chuyển trạng thái lịch khám.",
+      409,
+      "INVALID_TRANSITION",
+    );
+
+    expect(isAppointmentAlreadyHandledError(error)).toBe(true);
+    expect(APPOINTMENT_ALREADY_HANDLED_MESSAGE).toContain("lễ tân khác xử lý");
+    expect(isAppointmentAlreadyHandledError(new ApiError("Lỗi", 500))).toBe(false);
   });
 });

@@ -38,6 +38,7 @@ function props(overrides: Record<string, unknown> = {}) {
     onOpenRequests: vi.fn(),
     onOpenAccepted: vi.fn(),
     onConfirm: action,
+    onCheckIn: action,
     onNoShow: action,
     onRemind: action,
     onRetryQueue: action,
@@ -54,31 +55,38 @@ describe("ReceptionDashboard", () => {
     expect(html).toContain('for="reception-patient-search"');
     expect(html).toContain("Hôm nay chưa có lịch hẹn");
     expect(html).toContain("Đã kết nối trực tiếp");
-    expect(html).toContain("Hệ thống chưa ghi nhận bước tiếp nhận tại quầy");
+    expect(html).toContain("Xác nhận bệnh nhân đã đến trước khi bác sĩ bắt đầu khám");
   });
 
-  it("renders only real queue actions and does not invent check-in controls", () => {
-    const start = new Date(Date.now() - 40 * 60_000);
-    const html = renderToStaticMarkup(<ReceptionDashboard {...props({
-      appointments: [{
-        id: "appointment-1",
-        patientId: "patient-1",
-        doctorId: "doctor-1",
-        startAt: start.toISOString(),
-        endAt: new Date(start.getTime() + 30 * 60_000).toISOString(),
-        status: "CONFIRMED",
-        reason: "Khám da",
-        createdAt: start.toISOString(),
-      }],
-    })} />);
-    expect(html).toContain("Quá giờ hẹn");
-    expect(html).toContain("Ghi nhận vắng");
-    expect(html).not.toContain("Gọi bệnh nhân tiếp theo");
-    expect(html).not.toContain("Xác nhận đã đến");
+  it("offers persisted check-in and no-show actions for an overdue confirmed visit", () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date("2026-08-09T05:00:00.000Z"));
+    try {
+      const start = new Date(Date.now() - 40 * 60_000);
+      const html = renderToStaticMarkup(<ReceptionDashboard {...props({
+        appointments: [{
+          id: "appointment-1",
+          patientId: "patient-1",
+          doctorId: "doctor-1",
+          startAt: start.toISOString(),
+          endAt: new Date(start.getTime() + 30 * 60_000).toISOString(),
+          status: "CONFIRMED",
+          reason: "Khám da",
+          createdAt: start.toISOString(),
+        }],
+      })} />);
+      expect(html).toContain("Quá giờ hẹn");
+      expect(html).toContain("Ghi nhận vắng");
+      expect(html).not.toContain("Gọi bệnh nhân tiếp theo");
+      expect(html).toContain("Xác nhận đã đến");
+    } finally {
+      vi.useRealTimers();
+    }
   });
 
   it("keeps the latest rows visible when realtime and refresh are unavailable", () => {
-    const start = new Date(Date.now() + 30 * 60_000);
+    // Keep the stale row on the clinic's current day even when the test runs near midnight.
+    const start = new Date(Date.now() - 5 * 60_000);
     const html = renderToStaticMarkup(<ReceptionDashboard {...props({
       realtimeState: "closed",
       lastSyncedAt: new Date(),
