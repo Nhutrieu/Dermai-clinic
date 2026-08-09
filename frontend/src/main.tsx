@@ -2,7 +2,7 @@ import { FormEvent, lazy, Suspense, useEffect, useState } from "react";
 import { createRoot } from "react-dom/client";
 import { createPortal } from "react-dom";
 import { Activity, ArrowRight, BrainCircuit, CalendarDays, LayoutDashboard, LogOut, ShieldCheck, Sparkles, Stethoscope, UserRound, X } from "lucide-react";
-import { ApiError, request } from "./core/api";
+import { ApiError, configureAccessTokenRecovery, request } from "./core/api";
 import { subscribeRealtime } from "./core/realtime";
 import type { Appointment, Doctor, LeavePeriod, MedicalRecord, Patient, Prescription, Tokens, WorkSchedule } from "./core/types";
 import { RecordList } from "./components/Records";
@@ -41,11 +41,70 @@ const SupportChat = lazy(() => import("./features/support/SupportChat"));
 function App() {
     const [session, setSession] = useState<Tokens | null>(() => { try { return JSON.parse(sessionStorage.getItem("dermai-session") || "null") } catch { return null } });
     const [authOpen, setAuthOpen] = useState(false); const [forgotOpen, setForgotOpen] = useState(false);
+    const [authNotice, setAuthNotice] = useState("");
+    const [sessionRecoveryReady, setSessionRecoveryReady] = useState(false);
+
+    useEffect(() => {
+        if (!session) {
+            setSessionRecoveryReady(false);
+            return configureAccessTokenRecovery(null);
+        }
+
+        // The refresh token is rotated by the backend. Always read the latest
+        // stored session so concurrent requests cannot reuse an older token.
+        const dispose = configureAccessTokenRecovery(async failedAccessToken => {
+            let current: Tokens | null = null;
+            try { current = JSON.parse(sessionStorage.getItem("dermai-session") || "null") as Tokens | null } catch { current = null }
+
+            if (!current?.refreshToken) {
+                sessionStorage.removeItem("dermai-session");
+                setSession(null);
+                setForgotOpen(false);
+                setAuthOpen(true);
+                setAuthNotice("Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.");
+                return null;
+            }
+
+            // Another request may already have refreshed and stored a newer token.
+            if (current.accessToken !== failedAccessToken) return current.accessToken;
+
+            try {
+                const renewed = await request<Tokens>("/auth/refresh", undefined, {
+                    method: "POST",
+                    body: JSON.stringify({ refreshToken: current.refreshToken }),
+                });
+                sessionStorage.setItem("dermai-session", JSON.stringify(renewed));
+                setSession(renewed);
+                return renewed.accessToken;
+            } catch {
+                sessionStorage.removeItem("dermai-session");
+                setSession(null);
+                setForgotOpen(false);
+                setAuthOpen(true);
+                setAuthNotice("Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.");
+                return null;
+            }
+        });
+
+        setSessionRecoveryReady(true);
+        return dispose;
+    }, [session?.accessToken, session?.refreshToken]);
+
     useEffect(() => subscribeRealtime(event => {
         if (event.type === "DOCTOR_PROFILE_UPDATED") window.dispatchEvent(new CustomEvent("doctor-profiles-changed", { detail: event }));
     }, { path: "/api/v1/doctors/ws/profile" }), []);
-    if (!session) return <Suspense fallback={<State text="Đang tải giao diện..." />}><PublicRoute>{forgotOpen ? <ForgotPassword close={() => setForgotOpen(false)} /> : authOpen ? <><button className="auth-home" onClick={() => setAuthOpen(false)}><X /> Về trang chủ</button><button className="auth-forgot" onClick={() => setForgotOpen(true)}>Quên mật khẩu?</button><Login onLogin={x => { sessionStorage.setItem("dermai-session", JSON.stringify(x)); setSession(x) }} /></> : <HomePage openAuth={() => setAuthOpen(true)} chat={<ChatBox openAuth={() => setAuthOpen(true)} />} />}</PublicRoute></Suspense>;
-    const workspace = <><Dashboard session={session} logout={() => { sessionStorage.removeItem("dermai-session"); setSession(null) }} />{session.role === "PATIENT" && <PatientNotifications session={session} />}{session.role === "RECEPTIONIST" && <ReceptionHotlineBooking session={session} />}{["PATIENT", "RECEPTIONIST", "ADMIN"].includes(session.role) && <SupportChat session={session} />}</>;
+    if (!session) return <Suspense fallback={<State text="Đang tải giao diện..." />}><PublicRoute>{forgotOpen ? <ForgotPassword close={() => setForgotOpen(false)} /> : authOpen ? <><button className="auth-home" onClick={() => setAuthOpen(false)}><X /> Về trang chủ</button><button className="auth-forgot" onClick={() => setForgotOpen(true)}>Quên mật khẩu?</button><Login notice={authNotice} onLogin={tokens => { sessionStorage.setItem("dermai-session", JSON.stringify(tokens)); setAuthNotice(""); setSession(tokens) }} /></> : <HomePage openAuth={() => { setAuthNotice(""); setAuthOpen(true) }} chat={<ChatBox openAuth={() => { setAuthNotice(""); setAuthOpen(true) }} />} />}</PublicRoute></Suspense>;
+    if (!sessionRecoveryReady) return <State text="Đang khôi phục phiên đăng nhập..." />;
+
+    function logout() {
+        // Revoke the refresh token server-side, then clear the local session immediately.
+        void request("/auth/logout", undefined, { method: "POST", body: JSON.stringify({ refreshToken: session!.refreshToken }) }).catch(() => undefined);
+        sessionStorage.removeItem("dermai-session");
+        setAuthNotice("");
+        setSession(null);
+    }
+
+    const workspace = <><Dashboard session={session} logout={logout} />{session.role === "PATIENT" && <PatientNotifications session={session} />}{session.role === "RECEPTIONIST" && <ReceptionHotlineBooking session={session} />}{["PATIENT", "RECEPTIONIST", "ADMIN"].includes(session.role) && <SupportChat session={session} />}</>;
     const Route = session.role === "PATIENT" ? PatientRoute : session.role === "DOCTOR" ? DoctorRoute : session.role === "RECEPTIONIST" ? ReceptionistRoute : AdminRoute;
     return <Suspense fallback={<State text="Đang mở không gian làm việc..." />}><Route>{workspace}</Route></Suspense>;
 }
@@ -61,7 +120,7 @@ function ForgotPassword({ close }: { close: () => void }) {
     async function reset(e: FormEvent) { e.preventDefault(); setBusy(true); setMessage(""); try { await request("/auth/reset-password", undefined, { method: "POST", body: JSON.stringify({ email, otp, newPassword: password }) }); setStep("done"); setMessage("Mật khẩu đã được cập nhật thành công.") } catch (x) { setMessage((x as Error).message) } finally { setBusy(false) } }
     return <div className="auth-page"><button className="auth-home" onClick={close}><X /> Quay lại đăng nhập</button><form className="auth-card" onSubmit={step === "request" ? requestOtp : reset}><div className="brand dark"><div className="mark"><ShieldCheck /></div><div><b>Khôi phục</b><span>Tài khoản</span></div></div><h1>{step === "done" ? "Đã đổi mật khẩu" : step === "request" ? "Quên mật khẩu" : "Nhập mã xác nhận"}</h1>{step === "request" && <label>Email tài khoản<input type="email" required value={email} onChange={e => setEmail(e.target.value)} /></label>}{step === "reset" && <><p>Mã OTP đã được gửi đến email nếu tài khoản tồn tại.</p><label>Mã OTP<input inputMode="numeric" pattern="\d{6}" maxLength={6} required value={otp} onChange={e => setOtp(e.target.value.replace(/\D/g, ""))} /></label><label>Mật khẩu mới<input type="password" minLength={10} required value={password} onChange={e => setPassword(e.target.value)} /></label></>}{message && <div className={step === "done" ? "form-message" : "safety-note"}>{message}</div>}{step !== "done" && <button className="primary" disabled={busy}>{busy ? "Đang xử lý…" : step === "request" ? "Gửi mã OTP" : "Đặt lại mật khẩu"}</button>}{step === "done" && <button type="button" className="primary" onClick={close}>Về đăng nhập</button>}</form></div>
 }
-function Login({ onLogin }: { onLogin: (tokens: Tokens) => void }) {
+function Login({ onLogin, notice = "" }: { onLogin: (tokens: Tokens) => void; notice?: string }) {
     const [register, setRegister] = useState(false);
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
@@ -204,6 +263,7 @@ function Login({ onLogin }: { onLogin: (tokens: Tokens) => void }) {
     return <div className="auth-page"><form className="auth-card" onSubmit={submit}>
         <div className="brand dark"><div className="mark"><Activity /></div><div><b>DermAI</b><span>Clinic</span></div></div>
         <h1>{register ? "Đăng ký bệnh nhân" : "Đăng nhập hệ thống"}</h1>
+        {notice && !register && <div className="auth-session-notice" role="status"><ShieldCheck /> <span>{notice}</span></div>}
         {register && <><label>Họ và tên<input value={fullName} onChange={event => setFullName(event.target.value)} required /></label><label>Số điện thoại<input type="tel" inputMode="tel" pattern="[0-9+ .()\\-]{8,20}" value={phone} onChange={event => setPhone(event.target.value)} required placeholder="Ví dụ: 0352790904" /></label></>}
         <label>Email<input type="email" value={email} onChange={event => setEmail(event.target.value)} required /></label>
         <label>Mật khẩu<input type="password" minLength={10} value={password} onChange={event => setPassword(event.target.value)} required /></label>
@@ -223,7 +283,8 @@ function Dashboard({ session, logout }: { session: Tokens; logout: () => void })
     });
     async function loadDoctor() {
         const d = await request<Doctor>("/doctors/me", session.accessToken); const schedule = await request<{ workSchedules: WorkSchedule[]; leavePeriods: LeavePeriod[] }>("/doctors/me/schedule", session.accessToken);
-        const from = new Date(); from.setHours(0, 0, 0, 0); const to = new Date(from); to.setFullYear(to.getFullYear() + 1);
+        // Include recent history so a forgotten IN_PROGRESS visit remains visible to the doctor.
+        const from = new Date(); from.setDate(from.getDate() - 90); from.setHours(0, 0, 0, 0); const to = new Date(); to.setFullYear(to.getFullYear() + 1);
         const [a, r] = await Promise.all([request<Appointment[]>(`/appointments/doctor/mine?from=${encodeURIComponent(from.toISOString())}&to=${encodeURIComponent(to.toISOString())}`, session.accessToken), request<MedicalRecord[]>("/medical-records/doctor/mine", session.accessToken)]);
         const unique = [...new Set(a.map(x => x.patientId))]; const entries = await Promise.all(unique.map(async id => [id, await request<Patient>(`/patients/${id}`, session.accessToken)] as const));
         setDoctor(d); setWork(schedule.workSchedules); setLeave(schedule.leavePeriods); setAppointments(a); setRecords(r); setPatients(Object.fromEntries(entries));
@@ -324,7 +385,20 @@ function Dashboard({ session, logout }: { session: Tokens; logout: () => void })
         window.addEventListener("appointments-changed", refresh);
         return () => window.removeEventListener("appointments-changed", refresh);
     }, [session]);
-    async function transition(id: string, action: "start" | "complete") { setError(""); try { await request(`/appointments/${id}/${action}`, session.accessToken, { method: "POST" }); await loadDoctor() } catch (x) { setError((x as Error).message) } }
+    useEffect(() => {
+        if (session.role !== "DOCTOR") return;
+        let refreshTimer: number | undefined;
+        const unsubscribe = subscribeRealtime(event => {
+            if (event.type !== "SLOTS_CHANGED") return;
+            window.clearTimeout(refreshTimer);
+            refreshTimer = window.setTimeout(() => { void loadDoctor().catch(() => undefined) }, 150);
+        });
+        return () => {
+            unsubscribe();
+            window.clearTimeout(refreshTimer);
+        };
+    }, [session]);
+    async function transition(id: string, action: "start" | "complete") { setError(""); try { await request(`/appointments/${id}/${action}`, session.accessToken, { method: "POST" }); await loadDoctor() } catch (x) { setError((x as Error).message); throw x } }
     async function requireFollowUp(id: string, reason: string, notBefore: string) { setError(""); try { await request(`/appointments/${id}/require-follow-up`, session.accessToken, { method: "POST", body: JSON.stringify({ reason, notBefore }) }); await loadDoctor() } catch (x) { setError((x as Error).message); throw x } }
     const labels = session.role === "ADMIN" ? ["Bệnh nhân", "Bác sĩ", "Nhân sự"] : session.role === "RECEPTIONIST" ? ["Tổng quan", "Yêu cầu đặt lịch", "Lịch đã nhận"] : session.role === "PATIENT" ? ["Tổng quan", "Lịch khám", "Kết quả khám"] : ["Hồ sơ", "Lịch khám", "Hồ sơ y khoa"];
     const roleName = session.role === "PATIENT" ? "Bệnh nhân" : session.role === "DOCTOR" ? "Bác sĩ" : session.role === "RECEPTIONIST" ? "Lễ tân" : "Quản trị viên";

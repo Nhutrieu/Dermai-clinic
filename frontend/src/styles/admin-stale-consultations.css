@@ -1,0 +1,135 @@
+/* Admin may correct only stale in-progress visits, not arbitrary appointment states. */
+.admin-stale-consultations {
+  display: grid;
+  gap: var(--space-4);
+}
+
+.admin-stale-consultations > header,
+.admin-stale-consultations > header > div {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--space-3);
+}
+
+.admin-stale-consultations > header > div {
+  justify-content: flex-start;
+}
+
+.admin-stale-consultations header svg {
+  width: 22px;
+  height: 22px;
+  margin-top: 3px;
+  color: var(--color-warning);
+  flex: 0 0 auto;
+}
+
+.admin-stale-consultations h2,
+.admin-stale-consultations p {
+  margin: 0;
+}
+
+.admin-stale-consultations header p {
+  margin-top: var(--space-1);
+  color: var(--color-text-secondary);
+  font-size: 14px;
+}
+
+.admin-stale-consultations > header > span {
+  min-width: 30px;
+  min-height: 30px;
+  display: grid;
+  place-items: center;
+  color: var(--color-warning);
+  background: var(--color-warning-surface);
+  border: 1px solid var(--color-warning-border);
+  border-radius: 999px;
+  font-weight: 750;
+}
+
+.admin-stale-consultations > p {
+  padding: 10px 12px;
+  border-radius: var(--radius-control);
+  font-size: 14px;
+}
+
+.admin-stale-consultations > p.is-success {
+  color: var(--color-success);
+  background: var(--color-success-surface);
+  border: 1px solid var(--color-success-border);
+}
+
+.admin-stale-consultations > p.is-error {
+  color: var(--color-danger-strong);
+  background: var(--color-danger-surface);
+  border: 1px solid var(--color-danger-border);
+}
+
+.admin-stale-list {
+  display: grid;
+  border-top: 1px solid var(--color-border);
+}
+
+.admin-stale-list article {
+  min-height: 72px;
+  display: grid;
+  grid-template-columns: minmax(200px, 1fr) minmax(190px, auto) auto;
+  align-items: center;
+  gap: var(--space-4);
+  padding: var(--space-3) 0;
+  border-bottom: 1px solid var(--color-border);
+}
+
+.admin-stale-list article > div {
+  min-width: 0;
+  display: grid;
+  gap: 2px;
+}
+
+.admin-stale-list strong {
+  color: var(--color-ink);
+  font-size: 15px;
+}
+
+.admin-stale-list span,
+.admin-stale-list time {
+  color: var(--color-text-secondary);
+  font-size: 14px;
+}
+
+.admin-stale-list button {
+  min-height: var(--control-min-height);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+  padding: 9px var(--space-3);
+  color: #fff;
+  background: var(--color-primary);
+  border: 1px solid var(--color-primary);
+  border-radius: var(--radius-control);
+  font-weight: 750;
+  cursor: pointer;
+}
+
+.admin-stale-list button:disabled {
+  color: var(--color-disabled);
+  background: var(--color-disabled-surface);
+  border-color: var(--color-border);
+  cursor: wait;
+}
+
+.admin-stale-list button svg {
+  width: 17px;
+  height: 17px;
+}
+
+@media (max-width: 760px) {
+  .admin-stale-list article {
+    grid-template-columns: 1fr;
+  }
+
+  .admin-stale-list button {
+    width: 100%;
+  }
+}

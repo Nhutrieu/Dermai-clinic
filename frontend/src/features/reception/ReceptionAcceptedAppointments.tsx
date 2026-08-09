@@ -13,6 +13,7 @@ import {
   X,
 } from "lucide-react";
 import type { RealtimeConnectionState } from "../../core/realtime";
+import { isStaleInProgressAppointment } from "../../core/appointmentPolicy";
 import type {
   Appointment,
   Doctor,
@@ -49,6 +50,7 @@ type Props = {
   onCancel: (appointmentId: string, reason: string) => Promise<Appointment>;
   onCheckIn: (appointmentId: string) => Promise<void>;
   onNoShow: (appointmentId: string) => Promise<void>;
+  onComplete: (appointmentId: string) => Promise<void>;
   onOpenSupport: (patient: Patient) => void;
   onOpenRequests: () => void;
 };
@@ -419,7 +421,10 @@ export default function ReceptionAcceptedAppointments(props: Props) {
           <ol className="accepted-appointment-list">
             {filtered.map(appointment => {
               const patient = patientFor(appointment);
-              const status = statusMeta(appointment.status);
+              const needsCompletion = isStaleInProgressAppointment(appointment);
+              const status = needsCompletion
+                ? { label: "Cần hoàn tất", className: "is-needs-completion" }
+                : statusMeta(appointment.status);
               const expanded = expandedId === appointment.id;
               const canManage = appointment.status === "CONFIRMED";
               const canCheckIn = canManage && clinicDateKey(appointment.startAt) === clinicDateKey(new Date());
@@ -457,7 +462,7 @@ export default function ReceptionAcceptedAppointments(props: Props) {
                       >
                         {expanded ? "Thu gọn" : "Xem chi tiết"}
                       </button>
-                      {(patient || canManage) && (
+                      {(patient || canManage || needsCompletion) && (
                         <details className="accepted-action-menu">
                           <summary aria-label={`Mở thao tác cho lịch của ${patientName(appointment)}`}>
                             <MoreHorizontal aria-hidden="true" />
@@ -503,6 +508,15 @@ export default function ReceptionAcceptedAppointments(props: Props) {
                                 onClick={() => void props.onNoShow(appointment.id)}
                               >
                                 <Clock3 aria-hidden="true" /> Ghi nhận vắng mặt
+                              </button>
+                            )}
+                            {needsCompletion && (
+                              <button
+                                type="button"
+                                disabled={props.busyAppointmentId === appointment.id}
+                                onClick={() => void props.onComplete(appointment.id)}
+                              >
+                                <Clock3 aria-hidden="true" /> Hoàn tất lượt khám
                               </button>
                             )}
                           </div>

@@ -128,6 +128,15 @@
   pointer-events: none;
 }
 
+.patient-dashboard-next.is-awaiting-clinic {
+  border-top-color: var(--color-warning);
+}
+
+.patient-dashboard-next.is-awaiting-clinic::after {
+  background: var(--color-warning-surface);
+  opacity: 0.45;
+}
+
 .patient-dashboard-appointment {
   display: grid;
   grid-template-columns: 112px minmax(0, 1fr);

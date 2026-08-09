@@ -5,6 +5,7 @@ import type { AppointmentActionLog, StaffAccount, StaffAccountEvent } from "../.
 
 type Props = { token: string; revision: number };
 type AccountFilter = "ALL" | "ACTIVE" | "LOCKED";
+const APPOINTMENT_ACTION_PREVIEW_COUNT = 5;
 
 const accountEventLabels: Record<string, string> = {
   CREATED: "Tài khoản được tạo",
@@ -40,6 +41,7 @@ export default function AdminReceptionistAccounts({ token, revision }: Props) {
   const [filter, setFilter] = useState<AccountFilter>("ALL");
   const [accountEvents, setAccountEvents] = useState<StaffAccountEvent[]>([]);
   const [appointmentActions, setAppointmentActions] = useState<AppointmentActionLog[]>([]);
+  const [showAllAppointmentActions, setShowAllAppointmentActions] = useState(false);
   const [password, setPassword] = useState("");
   const [displayName, setDisplayName] = useState("");
   const [loading, setLoading] = useState(true);
@@ -68,6 +70,8 @@ export default function AdminReceptionistAccounts({ token, revision }: Props) {
   }, [token, revision]);
 
   useEffect(() => {
+    // Each receptionist detail starts with a compact audit preview; the full history remains available on demand.
+    setShowAllAppointmentActions(false);
     if (!selectedId) {
       setAccountEvents([]);
       setAppointmentActions([]);
@@ -100,6 +104,11 @@ export default function AdminReceptionistAccounts({ token, revision }: Props) {
   }, [accounts, filter, query]);
 
   const selected = accounts.find(account => account.identityId === selectedId);
+  const activeCount = accounts.filter(account => account.status !== "LOCKED").length;
+  const lockedCount = accounts.length - activeCount;
+  const visibleAppointmentActions = showAllAppointmentActions
+    ? appointmentActions
+    : appointmentActions.slice(0, APPOINTMENT_ACTION_PREVIEW_COUNT);
 
   useEffect(() => {
     setDisplayName(selected?.displayName?.trim() || "");
@@ -171,19 +180,22 @@ export default function AdminReceptionistAccounts({ token, revision }: Props) {
     }
   }
 
-  return <section className="panel admin-staff" aria-labelledby="receptionist-accounts-title">
+  return <section className="admin-staff" aria-labelledby="receptionist-accounts-title">
     <header className="admin-staff-heading">
       <div>
-        <h2 id="receptionist-accounts-title">Quản lý tài khoản lễ tân</h2>
-        <p>Mỗi nhân viên dùng một tài khoản riêng để hệ thống ghi nhận đúng người thao tác.</p>
+        <h2 id="receptionist-accounts-title">Đội ngũ lễ tân</h2>
+        <p>Tìm nhân viên, cập nhật thông tin đăng nhập và kiểm tra lịch sử xử lý lịch khám.</p>
       </div>
-      <span className="admin-staff-count">{accounts.length} tài khoản</span>
+      <div className="admin-staff-counts" aria-label="Tổng hợp tài khoản lễ tân">
+        <span><strong>{activeCount}</strong> có thể đăng nhập</span>
+        {lockedCount > 0 && <span className="is-locked"><strong>{lockedCount}</strong> đã khóa</span>}
+      </div>
     </header>
 
     <div className="admin-staff-toolbar" aria-label="Bộ lọc tài khoản lễ tân">
       <label className="admin-staff-search">
         <span>Tìm nhân viên</span>
-        <span><Search aria-hidden="true" /><input value={query} onChange={event => setQuery(event.target.value)} placeholder="Tên hoặc email" /></span>
+        <span><Search aria-hidden="true" /><input type="search" value={query} onChange={event => setQuery(event.target.value)} placeholder="Nhập tên hoặc email" /></span>
       </label>
       <label>
         <span>Trạng thái</span>
@@ -207,48 +219,70 @@ export default function AdminReceptionistAccounts({ token, revision }: Props) {
           onClick={() => { setSelectedId(account.identityId); setMessage(""); setError(""); }}
           aria-current={selectedId === account.identityId ? "true" : undefined}
         >
-          <span className="admin-staff-avatar">{accountName(account).slice(0, 1).toUpperCase()}</span>
+          <span className="admin-staff-avatar" aria-hidden="true">{accountName(account).slice(0, 1).toUpperCase()}</span>
           <span className="admin-staff-identity"><b>{accountName(account)}</b><small>{account.email}</small></span>
-          <span className={`admin-staff-status ${account.status === "LOCKED" ? "is-locked" : ""}`}>{account.status === "LOCKED" ? "Đã khóa" : "Đang sử dụng"}</span>
+          <span className={`admin-staff-status ${account.status === "LOCKED" ? "is-locked" : ""}`}>{account.status === "LOCKED" ? "Đã khóa" : "Có thể đăng nhập"}</span>
         </button>)}
       </nav>
 
       {selected && <article className="admin-staff-detail" aria-busy={detailLoading}>
         <header>
-          <div><small>HỒ SƠ NHÂN VIÊN</small><h3>{accountName(selected)}</h3><p>{selected.email}</p></div>
-          <span className={`admin-staff-status ${selected.status === "LOCKED" ? "is-locked" : ""}`}>{selected.status === "LOCKED" ? "Đã khóa" : "Đang sử dụng"}</span>
+          <div className="admin-staff-detail-identity">
+            <span className="admin-staff-avatar" aria-hidden="true">{accountName(selected).slice(0, 1).toUpperCase()}</span>
+            <div><small>Thông tin nhân viên</small><h3>{accountName(selected)}</h3><p>{selected.email}</p></div>
+          </div>
+          <span className={`admin-staff-status ${selected.status === "LOCKED" ? "is-locked" : ""}`}>{selected.status === "LOCKED" ? "Đã khóa" : "Có thể đăng nhập"}</span>
         </header>
         <dl>
           <div><dt>Vai trò</dt><dd>Lễ tân</dd></div>
           <div><dt>Ngày tạo</dt><dd>{formatDateTime(selected.createdAt)}</dd></div>
         </dl>
 
-        <form className="admin-staff-name-form" onSubmit={updateName}>
-          <label htmlFor="receptionist-display-name">Họ tên nhân viên</label>
-          <div><input id="receptionist-display-name" required maxLength={150} value={displayName} onChange={event => setDisplayName(event.target.value)} placeholder="Nhập họ tên lễ tân" /><button type="submit" className="secondary" disabled={busy || !displayName.trim()}>Lưu tên</button></div>
-          {!selected.displayName && <small>Tài khoản cũ chưa có tên. Hãy bổ sung để phân biệt nhân viên và theo dõi thao tác chính xác.</small>}
-        </form>
-
-        <div className="admin-staff-actions">
-          <button type="button" className={selected.status === "LOCKED" ? "secondary" : "danger"} disabled={busy} onClick={toggleAccount}>
-            {selected.status === "LOCKED" ? <Unlock aria-hidden="true" /> : <LockKeyhole aria-hidden="true" />}
-            {selected.status === "LOCKED" ? "Mở khóa tài khoản" : "Khóa tài khoản"}
-          </button>
-          <form onSubmit={resetPassword}>
-            <label htmlFor="receptionist-temporary-password">Mật khẩu tạm thời mới</label>
-            <div><input id="receptionist-temporary-password" type="password" minLength={10} required autoComplete="new-password" value={password} onChange={event => setPassword(event.target.value)} placeholder="Tối thiểu 10 ký tự" /><button type="submit" className="secondary" disabled={busy || password.length < 10}><KeyRound aria-hidden="true" />Đặt lại</button></div>
+        <section className="admin-staff-profile-section" aria-labelledby="staff-profile-heading">
+          <div><h4 id="staff-profile-heading">Tên hiển thị</h4><p>Tên này giúp phân biệt người phụ trách trong hộp thư và nhật ký thao tác.</p></div>
+          <form className="admin-staff-name-form" onSubmit={updateName}>
+            <label htmlFor="receptionist-display-name">Họ tên nhân viên</label>
+            <div><input id="receptionist-display-name" required maxLength={150} value={displayName} onChange={event => setDisplayName(event.target.value)} placeholder="Nhập họ tên lễ tân" /><button type="submit" className="secondary" disabled={busy || !displayName.trim()}>Lưu tên</button></div>
+            {!selected.displayName && <small>Tài khoản cũ chưa có tên. Hãy bổ sung để theo dõi thao tác chính xác.</small>}
           </form>
+        </section>
+
+        <section className="admin-staff-security" aria-labelledby="staff-security-heading">
+          <header><div><h4 id="staff-security-heading">Bảo mật và truy cập</h4><p>Khóa tài khoản hoặc cấp mật khẩu tạm thời khi cần hỗ trợ nhân viên.</p></div></header>
+          <div className="admin-staff-actions">
+            <button type="button" className={selected.status === "LOCKED" ? "secondary" : "danger"} disabled={busy} onClick={toggleAccount}>
+              {selected.status === "LOCKED" ? <Unlock aria-hidden="true" /> : <LockKeyhole aria-hidden="true" />}
+              {selected.status === "LOCKED" ? "Mở khóa tài khoản" : "Khóa tài khoản"}
+            </button>
+            <form onSubmit={resetPassword}>
+              <label htmlFor="receptionist-temporary-password">Mật khẩu tạm thời mới</label>
+              <div><input id="receptionist-temporary-password" type="password" minLength={10} required autoComplete="new-password" value={password} onChange={event => setPassword(event.target.value)} placeholder="Tối thiểu 10 ký tự" /><button type="submit" className="secondary" disabled={busy || password.length < 10}><KeyRound aria-hidden="true" />Đặt lại</button></div>
+            </form>
+          </div>
+        </section>
+
+        <div className="admin-staff-activity-grid">
+          <section className="admin-staff-history" aria-labelledby="staff-history-title">
+            <h4 id="staff-history-title"><History aria-hidden="true" />Lịch sử tài khoản</h4>
+            {detailLoading ? <p>Đang tải lịch sử…</p> : accountEvents.length === 0 ? <p>Chưa có thay đổi tài khoản.</p> : <ol>{accountEvents.map(item => <li key={item.id}><span>{accountEventLabels[item.actionType] || item.actionType}</span><time dateTime={item.createdAt}>{formatDateTime(item.createdAt)}</time></li>)}</ol>}
+          </section>
+
+          <section className="admin-staff-history" aria-labelledby="operation-history-title">
+            <h4 id="operation-history-title"><History aria-hidden="true" />Thao tác lịch khám gần đây</h4>
+            {detailLoading ? <p>Đang tải thao tác…</p> : appointmentActions.length === 0 ? <p>Chưa ghi nhận thao tác lịch khám.</p> : <>
+              <ol id="receptionist-appointment-actions">{visibleAppointmentActions.map(item => <li key={item.id}><span>{appointmentActionLabels[item.actionType] || item.actionType}</span><time dateTime={item.createdAt}>{formatDateTime(item.createdAt)}</time></li>)}</ol>
+              {appointmentActions.length > APPOINTMENT_ACTION_PREVIEW_COUNT && <button
+                type="button"
+                className="admin-staff-history-toggle"
+                aria-controls="receptionist-appointment-actions"
+                aria-expanded={showAllAppointmentActions}
+                onClick={() => setShowAllAppointmentActions(current => !current)}
+              >
+                {showAllAppointmentActions ? "Thu gọn" : `Xem tất cả (${appointmentActions.length})`}
+              </button>}
+            </>}
+          </section>
         </div>
-
-        <section className="admin-staff-history" aria-labelledby="staff-history-title">
-          <h4 id="staff-history-title"><History aria-hidden="true" />Lịch sử tài khoản</h4>
-          {detailLoading ? <p>Đang tải lịch sử…</p> : accountEvents.length === 0 ? <p>Chưa có thay đổi tài khoản.</p> : <ol>{accountEvents.map(item => <li key={item.id}><span>{accountEventLabels[item.actionType] || item.actionType}</span><time dateTime={item.createdAt}>{formatDateTime(item.createdAt)}</time></li>)}</ol>}
-        </section>
-
-        <section className="admin-staff-history" aria-labelledby="operation-history-title">
-          <h4 id="operation-history-title"><History aria-hidden="true" />Thao tác lịch khám gần đây</h4>
-          {detailLoading ? <p>Đang tải thao tác…</p> : appointmentActions.length === 0 ? <p>Chưa ghi nhận thao tác lịch khám.</p> : <ol>{appointmentActions.map(item => <li key={item.id}><span>{appointmentActionLabels[item.actionType] || item.actionType}</span><time dateTime={item.createdAt}>{formatDateTime(item.createdAt)}</time></li>)}</ol>}
-        </section>
       </article>}
     </div>}
   </section>;

@@ -284,6 +284,17 @@
   border-left-color: var(--color-success);
 }
 
+.doctor-focus-panel.is-stale {
+  background: var(--color-warning-surface);
+  border-color: var(--color-warning-border);
+  border-left-color: var(--color-warning);
+}
+
+.doctor-focus-panel.is-stale .doctor-focus-icon {
+  color: var(--color-warning);
+  background: #fff;
+}
+
 .doctor-focus-icon {
   width: 48px;
   height: 48px;
@@ -645,6 +656,13 @@
 }
 
 .doctor-appointment-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: var(--space-2);
+}
+
+.doctor-completion-actions {
   display: flex;
   align-items: center;
   justify-content: flex-end;
@@ -1045,6 +1063,15 @@
     width: 100%;
   }
 
+  .doctor-focus-panel > .doctor-completion-actions {
+    grid-column: 1 / -1;
+    width: 100%;
+  }
+
+  .doctor-focus-panel > .doctor-completion-actions .doctor-button {
+    flex: 1 1 150px;
+  }
+
   .doctor-schedule-section > header {
     align-items: flex-start;
   }
@@ -1068,6 +1095,11 @@
     grid-column: 2;
     grid-row: auto;
     justify-content: flex-start;
+  }
+
+  .doctor-completion-actions {
+    width: 100%;
+    flex-wrap: wrap;
   }
 
   .doctor-appointment-actions {

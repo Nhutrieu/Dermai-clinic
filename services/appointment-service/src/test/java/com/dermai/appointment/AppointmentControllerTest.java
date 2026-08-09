@@ -132,4 +132,22 @@ class AppointmentControllerTest {
     verify(service).cancel(appointmentId, "Bệnh nhân yêu cầu hỗ trợ");
     verify(audit).record(appointmentId, receptionistIdentity, "RECEPTIONIST", "CANCELLED");
   }
+
+  @Test
+  void receptionistCanCompleteOnlyThroughTheStaleConsultationPath() {
+    var service = mock(AppointmentService.class);
+    var repository = mock(AppointmentRepository.class);
+    var audit = mock(AppointmentActionAuditService.class);
+    var controller = new AppointmentController(service, repository, mock(SchedulingRecommendationService.class), audit);
+    var appointmentId = UUID.randomUUID();
+    var receptionistIdentity = UUID.randomUUID();
+    var completed = new Appointment();
+    completed.id = appointmentId;
+    when(service.completeStaleConsultation(appointmentId)).thenReturn(completed);
+
+    controller.complete(appointmentId, receptionistIdentity, "RECEPTIONIST");
+
+    verify(service).completeStaleConsultation(appointmentId);
+    verify(audit).record(appointmentId, receptionistIdentity, "RECEPTIONIST", "COMPLETED_VISIT");
+  }
 }

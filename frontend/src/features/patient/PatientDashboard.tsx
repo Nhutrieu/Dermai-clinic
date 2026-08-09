@@ -19,6 +19,7 @@ import {
 import { request, requestBlob } from "../../core/api";
 import {
     canPatientSelfManageAppointment,
+    isStaleInProgressAppointment,
     patientAppointmentSelfServiceClosesAt,
 } from "../../core/appointmentPolicy";
 import { subscribeRealtime } from "../../core/realtime";
@@ -190,6 +191,7 @@ export default function PatientDashboard({
     const [feedback, setFeedback] = useState<{ tone: "success" | "error"; text: string } | null>(null);
     const [appointmentRefreshed, setAppointmentRefreshed] = useState(false);
     const [selfServiceNow, setSelfServiceNow] = useState(Date.now());
+    const [timelineNow, setTimelineNow] = useState(Date.now());
     const dashboardRef = useRef<HTMLDivElement>(null);
     const previousAppointmentRef = useRef("");
     const profileDetailsRef = useRef<HTMLDetailsElement>(null);
@@ -223,6 +225,11 @@ export default function PatientDashboard({
     useEffect(() => { void loadDoctors() }, [loadDoctors]);
     useEffect(() => { void loadAi() }, [loadAi]);
     useEffect(() => {
+        // Time-based labels advance without requiring a page refresh.
+        const timer = window.setInterval(() => setTimelineNow(Date.now()), 60_000);
+        return () => window.clearInterval(timer);
+    }, []);
+    useEffect(() => {
         void loadNotifications();
         const unsubscribe = subscribeRealtime(() => { void loadNotifications() });
         const refresh = () => { void loadNotifications() };
@@ -240,10 +247,17 @@ export default function PatientDashboard({
         return () => window.removeEventListener("doctor-profiles-changed", refresh);
     }, [loadDoctors]);
 
+    const awaitingClinicUpdate = useMemo(() => appointments
+        .filter(item => isStaleInProgressAppointment(item, timelineNow))
+        .sort((left, right) => new Date(left.startAt).getTime() - new Date(right.startAt).getTime()), [appointments, timelineNow]);
     const upcoming = useMemo(() => appointments
-        .filter(item => ACTIVE_APPOINTMENT_STATUSES.has(item.status) && (["CHECKED_IN", "IN_PROGRESS"].includes(item.status) || new Date(item.endAt).getTime() > Date.now()))
-        .sort((left, right) => new Date(left.startAt).getTime() - new Date(right.startAt).getTime()), [appointments]);
-    const nextAppointment = upcoming[0];
+        .filter(item => ACTIVE_APPOINTMENT_STATUSES.has(item.status)
+            && !isStaleInProgressAppointment(item, timelineNow)
+            && (["CHECKED_IN", "IN_PROGRESS"].includes(item.status) || new Date(item.endAt).getTime() > timelineNow))
+        .sort((left, right) => new Date(left.startAt).getTime() - new Date(right.startAt).getTime()), [appointments, timelineNow]);
+    const pendingClinicAppointment = awaitingClinicUpdate[0];
+    const nextAppointment = pendingClinicAppointment || upcoming[0];
+    const isAwaitingClinicUpdate = Boolean(pendingClinicAppointment);
     const nextDoctor = doctors.find(item => item.id === nextAppointment?.doctorId);
     const canSelfManageNextAppointment = nextAppointment
         ? canPatientSelfManageAppointment(nextAppointment.status, nextAppointment.createdAt, selfServiceNow)
@@ -434,15 +448,21 @@ export default function PatientDashboard({
         <div className="patient-dashboard-live" role="status" aria-live="polite">{appointmentRefreshed ? "Lịch khám vừa được cập nhật." : ""}</div>
 
         <section
-            className={"patient-dashboard-next patient-dashboard-reveal" + (appointmentRefreshed ? " is-refreshed" : "")}
+            className={"patient-dashboard-next patient-dashboard-reveal" + (appointmentRefreshed ? " is-refreshed" : "") + (isAwaitingClinicUpdate ? " is-awaiting-clinic" : "")}
             aria-labelledby="patient-next-appointment-title"
         >
             <header className="patient-dashboard-section-heading">
                 <div>
-                    <h2 id="patient-next-appointment-title">Lịch khám sắp tới</h2>
-                    <p>Thông tin quan trọng nhất cho lần thăm khám tiếp theo của bạn.</p>
+                    <h2 id="patient-next-appointment-title">{isAwaitingClinicUpdate ? "Trạng thái lượt khám" : "Lịch khám sắp tới"}</h2>
+                    <p>{isAwaitingClinicUpdate
+                        ? "Buổi khám đã qua giờ dự kiến và đang chờ phòng khám xác nhận hoàn tất."
+                        : "Thông tin quan trọng nhất cho lần thăm khám tiếp theo của bạn."}</p>
                 </div>
-                {upcoming.length > 1 && <button type="button" className="patient-dashboard-text-action" onClick={openAppointments}>Xem {upcoming.length} lịch</button>}
+                {((isAwaitingClinicUpdate && upcoming.length > 0) || (!isAwaitingClinicUpdate && upcoming.length > 1)) && (
+                    <button type="button" className="patient-dashboard-text-action" onClick={openAppointments}>
+                        Xem {upcoming.length} lịch sắp tới
+                    </button>
+                )}
             </header>
 
             {resourceState.appointments.loading ? (
@@ -467,7 +487,7 @@ export default function PatientDashboard({
                                 <h3>BS. {nextDoctor?.fullName || nextAppointment.doctorName || "Bác sĩ phụ trách"}</h3>
                                 <p>{doctorState.loading ? "Đang tải chuyên khoa..." : doctorState.error ? "Chuyên khoa Da liễu" : doctorSpecialty(nextDoctor?.specialtyCode)}</p>
                             </div>
-                            <AppointmentStatusBadge status={nextAppointment.status} />
+                            <AppointmentStatusBadge status={nextAppointment.status} awaitingClinicUpdate={isAwaitingClinicUpdate} />
                         </div>
                         <dl className="patient-dashboard-appointment-facts">
                             <div><dt><Clock3 aria-hidden="true" />Thời gian</dt><dd>{formatTime(nextAppointment.startAt)} - {formatTime(nextAppointment.endAt)}, {formatDate(nextAppointment.startAt, { day: "2-digit", month: "2-digit", year: "numeric" })}</dd></div>
@@ -475,6 +495,11 @@ export default function PatientDashboard({
                             {nextAppointment.reason && <div><dt><ClipboardList aria-hidden="true" />Lý do khám</dt><dd>{nextAppointment.reason}</dd></div>}
                         </dl>
                         <div className="patient-dashboard-appointment-actions">
+                            {isAwaitingClinicUpdate && (
+                                <button type="button" className="patient-dashboard-support-action" onClick={openSupport}>
+                                    <MessageCircle aria-hidden="true" /> Liên hệ phòng khám
+                                </button>
+                            )}
                             {RESCHEDULABLE_STATUSES.has(nextAppointment.status)
                                 && canSelfManageNextAppointment && (
                                     <>
@@ -482,7 +507,7 @@ export default function PatientDashboard({
                                         <CancelAppointmentControl submit={reason => cancelAppointment(nextAppointment.id, reason)} />
                                     </>
                                 )}
-                            {RESCHEDULABLE_STATUSES.has(nextAppointment.status)
+                            {!isAwaitingClinicUpdate && (RESCHEDULABLE_STATUSES.has(nextAppointment.status)
                                 && !canSelfManageNextAppointment ? (
                                     <button type="button" className="patient-dashboard-support-action" onClick={openSupport}>
                                         <MessageCircle aria-hidden="true" />Liên hệ hỗ trợ để đổi hoặc hủy lịch
@@ -491,7 +516,7 @@ export default function PatientDashboard({
                                     <button type="button" className="patient-dashboard-support-action" onClick={openSupport}>
                                         <MessageCircle aria-hidden="true" />Liên hệ hỗ trợ
                                     </button>
-                                )}
+                                ))}
                         </div>
                     </div>
                 </div>

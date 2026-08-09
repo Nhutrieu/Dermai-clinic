@@ -103,6 +103,25 @@
   --reception-accepted-time-width: 150px;
   --reception-accepted-muted-surface: #f7f9f8;
   --reception-accepted-reminder-surface: #fbfcf8;
+  /* Admin overview uses a denser operational rhythm without introducing a second visual system. */
+  --admin-overview-content-width: 1360px;
+  --admin-overview-surface: #fffefb;
+  --admin-overview-surface-muted: #f3f7f5;
+  --admin-overview-border: #d7e1dd;
+  --admin-overview-accent: #356f61;
+  --admin-overview-chart-line: #c7d5d0;
+  /* Admin staff management uses the same calm operational density as the overview. */
+  --admin-staff-content-width: 1360px;
+  --admin-staff-list-width: 350px;
+  --admin-staff-surface: #fffefb;
+  --admin-staff-surface-muted: #f3f7f5;
+  --admin-staff-border: #d7e1dd;
+  /* Admin doctor directory keeps identity and fee configuration in one workspace. */
+  --admin-doctors-content-width: 1360px;
+  --admin-doctors-list-width: 410px;
+  --admin-doctors-surface: #fffefb;
+  --admin-doctors-surface-muted: #f3f7f5;
+  --admin-doctors-border: #d7e1dd;
   /* Public clinic experience: restrained semantic tokens for the homepage only. */
   --home-canvas: #f6f4ef;
   --home-surface: #fffefb;

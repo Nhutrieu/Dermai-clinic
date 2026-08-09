@@ -31,7 +31,7 @@ export default function DoctorView({ token, doctor, appointments, records = [], 
     }
 
     return <>
-        <DoctorDashboard token={token} doctor={doctor} appointments={appointments} records={records} patients={patients} work={work} resources={resources} realtimeState={realtimeState} lastUpdated={lastUpdated} onRetry={retry} onStart={startConsultation} onContinue={setSelected} />
+        <DoctorDashboard token={token} doctor={doctor} appointments={appointments} records={records} patients={patients} work={work} resources={resources} realtimeState={realtimeState} lastUpdated={lastUpdated} onRetry={retry} onStart={startConsultation} onComplete={appointmentId => transition(appointmentId, "complete")} onContinue={setSelected} />
         {selected && <Consultation token={token} appointment={selected} patient={patients[selected.patientId]} close={() => setSelected(null)} complete={() => transition(selected.id, "complete")} requireFollowUp={(reason, notBefore) => requireFollowUp(selected.id, reason, notBefore)} />}
     </>;
 }

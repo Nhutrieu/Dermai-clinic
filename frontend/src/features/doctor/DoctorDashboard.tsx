@@ -31,10 +31,11 @@ import {
   formatDurationFrom,
   getActiveConsultations,
   getDoctorStatus,
-  getIncompleteClinicalTasks,
+  getStaleConsultationTasks,
   getNextPatient,
   getTodayAppointments,
   getTodayShift,
+  isStaleConsultation,
 } from "./doctorDashboardModel";
 
 export type DoctorDashboardResources = {
@@ -56,6 +57,7 @@ type Props = {
   lastUpdated?: Date;
   onRetry: () => void;
   onStart: (appointmentId: string) => Promise<void>;
+  onComplete: (appointmentId: string) => Promise<void>;
   onContinue: (appointment: Appointment) => void;
 };
 
@@ -116,18 +118,27 @@ function AppointmentAction({
   appointment,
   busy,
   onStart,
+  onComplete,
   onContinue,
 }: {
   appointment: Appointment;
   busy: boolean;
   onStart: (appointmentId: string) => void;
+  onComplete: (appointmentId: string) => void;
   onContinue: (appointment: Appointment) => void;
 }) {
   if (["CONFIRMED", "CHECKED_IN"].includes(appointment.status)) {
     return <button type="button" className="doctor-button doctor-button-primary" disabled={busy} onClick={() => onStart(appointment.id)}>{busy ? "Đang mở..." : "Bắt đầu khám"}</button>;
   }
   if (appointment.status === "IN_PROGRESS") {
-    return <button type="button" className="doctor-button doctor-button-primary" onClick={() => onContinue(appointment)}>Tiếp tục khám</button>;
+    return (
+      <div className="doctor-completion-actions">
+        <button type="button" className="doctor-button doctor-button-secondary" onClick={() => onContinue(appointment)}>Mở chi tiết</button>
+        <button type="button" className="doctor-button doctor-button-primary" disabled={busy} onClick={() => onComplete(appointment.id)}>
+          {busy ? "Đang hoàn tất..." : "Hoàn tất lượt khám"}
+        </button>
+      </div>
+    );
   }
   return null;
 }
@@ -144,6 +155,7 @@ export default function DoctorDashboard({
   lastUpdated,
   onRetry,
   onStart,
+  onComplete,
   onContinue,
 }: Props) {
   const [query, setQuery] = useState("");
@@ -160,7 +172,7 @@ export default function DoctorDashboard({
   const active = useMemo(() => getActiveConsultations(appointments), [appointments]);
   const nextPatient = useMemo(() => getNextPatient(appointments, now), [appointments, now]);
   const summary = useMemo(() => buildDoctorTodaySummary(appointments, records, now), [appointments, records, now]);
-  const tasks = useMemo(() => getIncompleteClinicalTasks(appointments, records), [appointments, records]);
+  const tasks = useMemo(() => getStaleConsultationTasks(appointments, now), [appointments, now]);
   const todayShift = useMemo(() => getTodayShift(work, now), [work, now]);
   const recordAppointmentIds = useMemo(() => new Set(records.map(item => item.appointmentId)), [records]);
   const aiCandidateIds = useMemo(
@@ -227,6 +239,18 @@ export default function DoctorDashboard({
     }
   }
 
+  async function completeAppointment(appointmentId: string) {
+    setBusyAppointmentId(appointmentId);
+    setRowError("");
+    try {
+      await onComplete(appointmentId);
+    } catch (cause) {
+      setRowError((cause as Error).message || "Không thể hoàn tất lượt khám.");
+    } finally {
+      setBusyAppointmentId("");
+    }
+  }
+
   function clearFilters() {
     setQuery("");
     setStatusFilter("ALL");
@@ -235,6 +259,7 @@ export default function DoctorDashboard({
 
   const hasFilters = Boolean(query || statusFilter !== "ALL" || onlyWithAi);
   const firstActive = active[0];
+  const firstActiveNeedsCompletion = firstActive ? isStaleConsultation(firstActive, now) : false;
 
   return (
     <div className="doctor-dashboard">
@@ -271,19 +296,21 @@ export default function DoctorDashboard({
       <div className="doctor-dashboard-layout">
         <div className="doctor-dashboard-primary">
           {firstActive && (
-            <section className="doctor-focus-panel is-active" aria-labelledby="doctor-active-title">
+            <section className={`doctor-focus-panel is-active${firstActiveNeedsCompletion ? " is-stale" : ""}`} aria-labelledby="doctor-active-title">
               <div className="doctor-focus-icon"><Stethoscope aria-hidden="true" /></div>
               <div className="doctor-focus-copy">
-                <span className="doctor-status is-progress">Đang khám</span>
+                <span className={`doctor-status ${firstActiveNeedsCompletion ? "is-attention" : "is-progress"}`}>
+                  {firstActiveNeedsCompletion ? "Cần hoàn tất" : "Đang khám"}
+                </span>
                 <h3 id="doctor-active-title">{patientName(firstActive.patientId, patients)}</h3>
                 <p>{compactReason(firstActive.reason)}</p>
                 <dl>
                   <div><dt>Giờ hẹn</dt><dd>{formatClinicTime(firstActive.startAt)}</dd></div>
                   <div><dt>Thời gian từ giờ hẹn</dt><dd>{formatDurationFrom(firstActive.startAt, now)}</dd></div>
-                  <div><dt>Hồ sơ</dt><dd>{recordAppointmentIds.has(firstActive.id) ? "Đã ký, chờ hoàn tất ca" : "Chưa ký"}</dd></div>
+                  <div><dt>Kết quả khám</dt><dd>{recordAppointmentIds.has(firstActive.id) ? "Đã lưu" : "Không bắt buộc"}</dd></div>
                 </dl>
               </div>
-              <button type="button" className="doctor-button doctor-button-primary" onClick={() => onContinue(firstActive)}>Tiếp tục khám <ChevronRight aria-hidden="true" /></button>
+              <AppointmentAction appointment={firstActive} busy={busyAppointmentId === firstActive.id} onStart={startAppointment} onComplete={completeAppointment} onContinue={onContinue} />
             </section>
           )}
 
@@ -300,7 +327,7 @@ export default function DoctorDashboard({
                   <div><dt>Tiếp nhận</dt><dd>{nextPatient.status === "CHECKED_IN" ? `Đã đến${nextPatient.checkedInAt ? ` lúc ${formatClinicTime(nextPatient.checkedInAt)}` : ""}` : "Chưa xác nhận có mặt"}</dd></div>
                 </dl>
               </div>
-              <AppointmentAction appointment={nextPatient} busy={busyAppointmentId === nextPatient.id} onStart={startAppointment} onContinue={onContinue} />
+              <AppointmentAction appointment={nextPatient} busy={busyAppointmentId === nextPatient.id} onStart={startAppointment} onComplete={completeAppointment} onContinue={onContinue} />
             </section>
           ) : !resources.appointments.loading && (
             <section className="doctor-compact-empty" aria-labelledby="doctor-next-empty-title">
@@ -333,7 +360,9 @@ export default function DoctorDashboard({
             ) : (
               <div className="doctor-appointment-list" aria-live="polite">
                 {visibleAppointments.map(appointment => {
-                  const status = getDoctorStatus(appointment.status, appointment.startAt, now);
+                  const status = isStaleConsultation(appointment, now)
+                    ? { label: "Cần hoàn tất", tone: "attention" as const }
+                    : getDoctorStatus(appointment.status, appointment.startAt, now);
                   return (
                     <article className="doctor-appointment-row" key={appointment.id}>
                       <time dateTime={appointment.startAt}>{formatClinicTime(appointment.startAt)}</time>
@@ -347,7 +376,7 @@ export default function DoctorDashboard({
                       </div>
                       <div className="doctor-appointment-actions">
                         <DoctorAiPreviewButton token={token} appointmentId={appointment.id} available={Boolean(assessments[appointment.id])} />
-                        <AppointmentAction appointment={appointment} busy={busyAppointmentId === appointment.id} onStart={startAppointment} onContinue={onContinue} />
+                        <AppointmentAction appointment={appointment} busy={busyAppointmentId === appointment.id} onStart={startAppointment} onComplete={completeAppointment} onContinue={onContinue} />
                       </div>
                     </article>
                   );
@@ -383,14 +412,14 @@ export default function DoctorDashboard({
 
           {tasks.length > 0 && (
             <section className="doctor-side-section" aria-labelledby="doctor-tasks-title">
-              <header><div><ClipboardCheck aria-hidden="true" /><h3 id="doctor-tasks-title">Hồ sơ cần hoàn tất</h3></div><span>{tasks.length}</span></header>
+              <header><div><ClipboardCheck aria-hidden="true" /><h3 id="doctor-tasks-title">Lượt khám cần hoàn tất</h3></div><span>{tasks.length}</span></header>
               {resources.records.error && <SectionError message={resources.records.error} retry={onRetry} />}
               <div className="doctor-task-list">
                 {tasks.map(task => (
                   <article key={task.appointment.id}>
                     <Clock3 aria-hidden="true" />
                     <div><b>{task.label}</b><span>{patientName(task.appointment.patientId, patients)} · {formatClinicTime(task.appointment.startAt)}</span></div>
-                    <button type="button" aria-label={`${task.label} cho ${patientName(task.appointment.patientId, patients)}`} onClick={() => onContinue(task.appointment)}><ChevronRight aria-hidden="true" /></button>
+                    <button type="button" disabled={busyAppointmentId === task.appointment.id} aria-label={`${task.label} cho ${patientName(task.appointment.patientId, patients)}`} onClick={() => void completeAppointment(task.appointment.id)}><ChevronRight aria-hidden="true" /></button>
                   </article>
                 ))}
               </div>
@@ -400,7 +429,7 @@ export default function DoctorDashboard({
           {summary.needsAttention > 0 && (
             <section className="doctor-side-section is-attention" aria-labelledby="doctor-attention-title">
               <header><div><AlertTriangle aria-hidden="true" /><h3 id="doctor-attention-title">Cần chú ý</h3></div><span>{summary.needsAttention}</span></header>
-              <p className="doctor-section-description">Lịch đã qua giờ hẹn hoặc ca đang khám chưa có hồ sơ ký. Trạng thái vắng mặt vẫn do lễ tân xử lý.</p>
+              <p className="doctor-section-description">Lịch đã qua giờ hẹn hoặc lượt khám đã quá giờ kết thúc trên 60 phút. Hệ thống không tự động hoàn tất ca.</p>
             </section>
           )}
         </aside>

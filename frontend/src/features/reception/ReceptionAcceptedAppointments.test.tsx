@@ -65,6 +65,7 @@ function render(overrides: Partial<Parameters<typeof ReceptionAcceptedAppointmen
     onCancel={update}
     onCheckIn={action}
     onNoShow={action}
+    onComplete={action}
     onOpenSupport={vi.fn()}
     onOpenRequests={vi.fn()}
     {...overrides}
@@ -118,6 +119,18 @@ describe("ReceptionAcceptedAppointments", () => {
     expect(html).toContain("Mất kết nối trực tiếp");
     expect(html).toContain("Nguyễn An");
     expect(html).toContain("Thử lại");
+  });
+
+  it("lets reception complete an in-progress visit only after the grace period", () => {
+    const stale = {
+      ...appointment,
+      status: "IN_PROGRESS",
+      startAt: "2026-08-08T01:00:00.000Z",
+      endAt: "2026-08-08T01:30:00.000Z",
+    };
+    const html = render({ appointments: [stale] });
+    expect(html).toContain("Cần hoàn tất");
+    expect(html).toContain("Hoàn tất lượt khám");
   });
 
   it("shows local retry states instead of misleading empty states after an initial failure", () => {

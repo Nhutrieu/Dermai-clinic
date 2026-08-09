@@ -189,6 +189,25 @@ export default function ReceptionPanel({ token, tab }: { token: string; tab: str
             setBusyAppointmentId("");
         }
     }
+    async function completeStale(id: string) {
+        setBusyAppointmentId(id);
+        setMessageError(false);
+        try {
+            await request(`/appointments/${id}/complete`, token, { method: "POST" });
+            setMessage("Đã cập nhật lượt khám là hoàn tất.");
+        } catch (x) {
+            if (isAppointmentAlreadyHandledError(x)) {
+                setMessage("Lịch này đã được người khác cập nhật. Danh sách vừa được làm mới.");
+                setMessageError(false);
+            } else {
+                setMessage((x as Error).message);
+                setMessageError(true);
+            }
+        } finally {
+            await Promise.all([loadQueue(), loadReminders()]);
+            setBusyAppointmentId("");
+        }
+    }
     async function checkIn(id: string) {
         setBusyAppointmentId(id);
         setMessageError(false);
@@ -330,6 +349,7 @@ export default function ReceptionPanel({ token, tab }: { token: string; tab: str
         onCancel={cancel}
         onCheckIn={checkIn}
         onNoShow={async id => { await noShow(id); }}
+        onComplete={completeStale}
         onOpenSupport={openSupport}
         onOpenRequests={() => window.dispatchEvent(new CustomEvent("reception-navigate", { detail: "appointments" }))}
     />

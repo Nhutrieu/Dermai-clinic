@@ -4,6 +4,7 @@ import { request } from "../core/api";
 import { formatVnd } from "../core/currency";
 import {
     canPatientSelfManageAppointment,
+    isStaleInProgressAppointment,
     patientAppointmentSelfServiceClosesAt,
 } from "../core/appointmentPolicy";
 import type { Appointment, ClinicReview, Recommendation, RecommendationResult } from "../core/types";
@@ -41,7 +42,10 @@ export function statusDetails(status: string) {
     }
 }
 
-export function AppointmentStatusBadge({ status }: { status: string }) {
+export function AppointmentStatusBadge({ status, awaitingClinicUpdate = false }: { status: string; awaitingClinicUpdate?: boolean }) {
+    if (awaitingClinicUpdate) {
+        return <span className="appointment-status is-clinic-update">Chờ phòng khám cập nhật</span>;
+    }
     const details = statusDetails(status);
     return <span className={"appointment-status " + details.className}>{details.label}</span>;
 }
@@ -255,7 +259,8 @@ function AppointmentReviewControl({
             });
             setSubmitted(true);
             setOpen(false);
-            setMessage("Đã gửi đánh giá, đang chờ quản trị viên duyệt.");
+            // Patient only needs confirmation that the review was received; moderation remains internal.
+            setMessage("Cảm ơn bạn đã gửi đánh giá.");
         } catch (cause) {
             setMessage((cause as Error).message);
         }
@@ -427,7 +432,7 @@ export default function PatientAppointmentList({
                                     )}
                                 </div>
                                 <div className="patient-appointment-actions">
-                                    <AppointmentStatusBadge status={item.status} />
+                                    <AppointmentStatusBadge status={item.status} awaitingClinicUpdate={isStaleInProgressAppointment(item, selfServiceNow)} />
                                     {hasSelfServiceAction && canSelfManage && reschedule && token && (
                                             <RescheduleAppointmentControl
                                                 token={token}

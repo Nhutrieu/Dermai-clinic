@@ -1,283 +1,171 @@
-import { useState } from "react";
-import { TrendingUp, CalendarCheck, Award, Clock, UserCheck } from "lucide-react";
+import { useState, type CSSProperties } from "react";
+import { Award, CalendarCheck, Clock, UserCheck } from "lucide-react";
 import type { Appointment, Doctor, Patient } from "../../core/types";
 
-export function AdminAnalytics({
-    appointments,
-    doctors,
-    patients,
-    patientTotal
-}: {
+type AnalyticsPeriod = "DAILY" | "STATUS";
+
+type Props = {
     appointments: Appointment[];
     doctors: Doctor[];
     patients: Patient[];
     patientTotal: number;
-}) {
-    const [period, setPeriod] = useState<"DAILY" | "STATUS">("DAILY");
+    loading?: boolean;
+};
 
-    // Real KPI metrics calculated from database
+function percentage(value: number, total: number) {
+    return total > 0 ? Math.round((value / total) * 100) : 0;
+}
+
+function localDateKey(value: string) {
+    const date = new Date(value);
+    const month = String(date.getMonth() + 1).padStart(2, "0");
+    const day = String(date.getDate()).padStart(2, "0");
+    return `${date.getFullYear()}-${month}-${day}`;
+}
+
+function shortDate(value: string) {
+    return new Intl.DateTimeFormat("vi-VN", { day: "2-digit", month: "2-digit" })
+        .format(new Date(`${value}T00:00:00`));
+}
+
+export function AdminAnalytics({ appointments, doctors, patients, patientTotal, loading = false }: Props) {
+    const [period, setPeriod] = useState<AnalyticsPeriod>("DAILY");
     const totalAppointments = appointments.length;
-    const completedAppointments = appointments.filter(a => a.status === "COMPLETED");
-    const cancelledAppointments = appointments.filter(a => a.status === "CANCELLED");
-    const pendingAppointments = appointments.filter(a => ["PENDING", "ASSIGNED", "CONFIRMED"].includes(a.status));
-    
-    const completionRate = totalAppointments > 0 ? Math.round((completedAppointments.length / totalAppointments) * 100) : 0;
+    const completedAppointments = appointments.filter(item => item.status === "COMPLETED");
+    const cancelledAppointments = appointments.filter(item => item.status === "CANCELLED");
+    const pendingAppointments = appointments.filter(item => ["PENDING", "ASSIGNED", "CONFIRMED"].includes(item.status));
+    const otherAppointments = Math.max(0, totalAppointments - completedAppointments.length - cancelledAppointments.length - pendingAppointments.length);
+    const completionRate = percentage(completedAppointments.length, totalAppointments);
 
-    // Group real appointments by date for the chart
+    // Aggregate real appointment data by clinic-local calendar day, then retain the latest seven active dates.
     const dateMap = new Map<string, number>();
-    appointments.forEach(a => {
-        if (!a.startAt) return;
-        const d = new Date(a.startAt);
-        const dateKey = d.toLocaleDateString("vi-VN", { day: "2-digit", month: "2-digit" });
-        dateMap.set(dateKey, (dateMap.get(dateKey) || 0) + 1);
+    appointments.forEach(item => {
+        if (!item.startAt) return;
+        const key = localDateKey(item.startAt);
+        dateMap.set(key, (dateMap.get(key) || 0) + 1);
     });
+    const dateChartData = Array.from(dateMap.entries())
+        .sort(([left], [right]) => left.localeCompare(right))
+        .slice(-7)
+        .map(([date, count]) => ({ date, label: shortDate(date), count }));
+    const maxChartCount = Math.max(...dateChartData.map(item => item.count), 1);
 
-    const dateChartData = Array.from(dateMap.entries()).slice(-7).map(([dateLabel, count]) => ({
-        label: dateLabel,
-        count
-    }));
-
-    const maxChartCount = Math.max(...dateChartData.map(d => d.count), 1);
-
-    // Doctor performance calculated from real database appointments
-    const doctorStats = doctors.map(doc => {
-        const docAppts = appointments.filter(a => a.doctorId === doc.id);
-        const docCompleted = docAppts.filter(a => a.status === "COMPLETED").length;
-        const rate = docAppts.length > 0 ? Math.round((docCompleted / docAppts.length) * 100) : 100;
+    const doctorStats = doctors.map(doctor => {
+        const doctorAppointments = appointments.filter(item => item.doctorId === doctor.id);
+        const completed = doctorAppointments.filter(item => item.status === "COMPLETED").length;
         return {
-            id: doc.id,
-            name: doc.fullName,
-            specialty: doc.specialtyCode || "Chuyên khoa Da liễu",
-            total: docAppts.length,
-            completed: docCompleted,
-            rate
+            id: doctor.id,
+            name: doctor.fullName,
+            specialty: doctor.specialtyCode || "Chuyên khoa Da liễu",
+            total: doctorAppointments.length,
+            completed,
+            rate: percentage(completed, doctorAppointments.length),
         };
     });
 
-    // Patient type ratio calculated from real patient appointment counts
-    const patientApptCounts = new Map<string, number>();
-    appointments.forEach(a => {
-        patientApptCounts.set(a.patientId, (patientApptCounts.get(a.patientId) || 0) + 1);
-    });
+    const patientAppointmentCounts = new Map<string, number>();
+    appointments.forEach(item => patientAppointmentCounts.set(item.patientId, (patientAppointmentCounts.get(item.patientId) || 0) + 1));
+    let oneVisitPatients = 0;
+    let returningPatients = 0;
+    patientAppointmentCounts.forEach(count => count === 1 ? oneVisitPatients++ : returningPatients++);
+    const trackedPatients = oneVisitPatients + returningPatients;
+    const oneVisitPercent = percentage(oneVisitPatients, trackedPatients);
+    const returningPercent = trackedPatients > 0 ? 100 - oneVisitPercent : 0;
 
-    let newPatientCount = 0;
-    let returningPatientCount = 0;
-    patientApptCounts.forEach(count => {
-        if (count === 1) newPatientCount++;
-        else returningPatientCount++;
-    });
+    const statusRows = [
+        { key: "completed", label: "Đã hoàn thành", count: completedAppointments.length, tone: "success" },
+        { key: "pending", label: "Chờ tiếp nhận", count: pendingAppointments.length, tone: "warning" },
+        { key: "other", label: "Trạng thái khác", count: otherAppointments, tone: "neutral" },
+        { key: "cancelled", label: "Đã hủy", count: cancelledAppointments.length, tone: "danger" },
+    ];
 
-    const totalTrackedPatients = newPatientCount + returningPatientCount || 1;
-    const newPercent = Math.round((newPatientCount / totalTrackedPatients) * 100);
-    const returnPercent = 100 - newPercent;
+    if (loading) {
+        return <section className="admin-analytics is-loading" aria-busy="true" aria-label="Đang tải tổng quan vận hành">
+            <header className="admin-analytics-heading"><div><h2>Tổng quan vận hành</h2><p>Đang tổng hợp dữ liệu lịch khám và nhân sự.</p></div></header>
+            <div className="admin-analytics-skeleton" role="status"><span>Đang tải dữ liệu tổng quan...</span></div>
+        </section>;
+    }
 
-    return (
-        <section className="analytics-dashboard">
-            {/* Header Controls */}
-            <div className="analytics-header">
-                <div>
-                    <h2>Báo cáo Thống kê Đặt Lịch Khám Realtime</h2>
-                    <p>Theo dõi tần suất đặt lịch, tỷ lệ hoàn thành ca khám và lưu lượng bệnh nhân trong DB.</p>
-                </div>
-
-                <div className="analytics-toggle">
-                    <button
-                        type="button"
-                        className={period === "DAILY" ? "active" : ""}
-                        onClick={() => setPeriod("DAILY")}
-                    >
-                        Theo Ngày
-                    </button>
-                    <button
-                        type="button"
-                        className={period === "STATUS" ? "active" : ""}
-                        onClick={() => setPeriod("STATUS")}
-                    >
-                        Theo Trạng Thái
-                    </button>
-                </div>
+    return <section className="admin-analytics" aria-labelledby="admin-analytics-title">
+        <header className="admin-analytics-heading">
+            <div>
+                <h2 id="admin-analytics-title">Tổng quan vận hành</h2>
+                <p>Dữ liệu gồm 30 ngày trước và 30 ngày tới, cập nhật từ các lịch khám hiện có.</p>
             </div>
-
-            {/* Real KPI Cards */}
-            <div className="kpi-grid">
-                <div className="kpi-card">
-                    <div className="kpi-icon icon-green">
-                        <CalendarCheck />
-                    </div>
-                    <div className="kpi-data">
-                        <small>Ca khám đã hoàn thành</small>
-                        <b>{completedAppointments.length} / {totalAppointments} ca</b>
-                        <span className="trend-up"><TrendingUp /> Tỷ lệ hoàn thành {completionRate}%</span>
-                    </div>
-                </div>
-
-                <div className="kpi-card">
-                    <div className="kpi-icon icon-blue">
-                        <Clock />
-                    </div>
-                    <div className="kpi-data">
-                        <small>Ca khám chờ tiếp nhận & xử lý</small>
-                        <b>{pendingAppointments.length} ca đang chờ</b>
-                        <span>Chờ xếp bác sĩ / chờ khám</span>
-                    </div>
-                </div>
-
-                <div className="kpi-card">
-                    <div className="kpi-icon icon-purple">
-                        <UserCheck />
-                    </div>
-                    <div className="kpi-data">
-                        <small>Tổng bệnh nhân trong hệ thống</small>
-                        <b>{patientTotal || patients.length} bệnh nhân</b>
-                        <span>Đã lưu tài khoản đặt lịch</span>
-                    </div>
-                </div>
-
-                <div className="kpi-card">
-                    <div className="kpi-icon icon-gold">
-                        <Award />
-                    </div>
-                    <div className="kpi-data">
-                        <small>Số bác sĩ tiếp nhận lịch</small>
-                        <b>{doctors.length} Bác sĩ</b>
-                        <span>Đang hoạt động trên hệ thống</span>
-                    </div>
-                </div>
+            <div className="admin-analytics-switch" role="group" aria-label="Chọn cách xem biểu đồ">
+                <button type="button" aria-pressed={period === "DAILY"} className={period === "DAILY" ? "is-active" : ""} onClick={() => setPeriod("DAILY")}>Theo ngày</button>
+                <button type="button" aria-pressed={period === "STATUS"} className={period === "STATUS" ? "is-active" : ""} onClick={() => setPeriod("STATUS")}>Theo trạng thái</button>
             </div>
+        </header>
 
-            {/* Charts Grid */}
-            <div className="charts-grid">
-                {/* Real Appointment Trend Chart */}
-                <div className="chart-panel">
-                    <div className="chart-header">
-                        <h3>Biểu đồ lượt đặt lịch theo {period === "DAILY" ? "ngày gần nhất" : "trạng thái"}</h3>
+        <div className="admin-analytics-summary" aria-label="Các chỉ số chính">
+            <article>
+                <span className="admin-summary-icon"><CalendarCheck aria-hidden="true" /></span>
+                <div><small>Lịch đã hoàn thành</small><strong>{completedAppointments.length}<span> / {totalAppointments} ca</span></strong><p>{completionRate}% trên tổng lịch trong phạm vi</p></div>
+            </article>
+            <article className="is-attention">
+                <span className="admin-summary-icon"><Clock aria-hidden="true" /></span>
+                <div><small>Chờ tiếp nhận</small><strong>{pendingAppointments.length}<span> ca</span></strong><p>Đang chờ phân công hoặc xác nhận</p></div>
+            </article>
+            <article>
+                <span className="admin-summary-icon"><UserCheck aria-hidden="true" /></span>
+                <div><small>Bệnh nhân</small><strong>{patientTotal || patients.length}<span> người</span></strong><p>Hồ sơ đang có trên hệ thống</p></div>
+            </article>
+            <article>
+                <span className="admin-summary-icon"><Award aria-hidden="true" /></span>
+                <div><small>Bác sĩ</small><strong>{doctors.length}<span> người</span></strong><p>Hồ sơ chuyên môn đã cấu hình</p></div>
+            </article>
+        </div>
+
+        <div className="admin-analytics-grid">
+            <section className="admin-chart-panel" aria-labelledby="admin-volume-chart-title">
+                <header><div><h3 id="admin-volume-chart-title">{period === "DAILY" ? "Lượt đặt lịch theo ngày" : "Phân bố trạng thái lịch"}</h3><p>{period === "DAILY" ? "Bảy ngày có dữ liệu gần nhất" : `${totalAppointments} lịch trong phạm vi báo cáo`}</p></div></header>
+                {period === "DAILY" ? (
+                    dateChartData.length === 0
+                        ? <div className="admin-chart-empty">Chưa có lượt khám được ghi nhận.</div>
+                        : <ol className="admin-volume-chart" aria-label="Số lượt đặt lịch theo ngày">
+                            {dateChartData.map(item => {
+                                const height = Math.max(12, Math.round((item.count / maxChartCount) * 100));
+                                return <li key={item.date} style={{ "--admin-bar-height": `${height}%` } as CSSProperties}>
+                                    <span className="admin-volume-value">{item.count}</span>
+                                    <span className="admin-volume-bar" aria-hidden="true" />
+                                    <time dateTime={item.date}>{item.label}</time>
+                                </li>;
+                            })}
+                        </ol>
+                ) : (
+                    <div className="admin-status-breakdown">
+                        {statusRows.map(item => <article key={item.key} className={`is-${item.tone}`}>
+                            <div><span aria-hidden="true" /><strong>{item.label}</strong></div>
+                            <b>{item.count} ca</b>
+                            <small>{percentage(item.count, totalAppointments)}%</small>
+                        </article>)}
                     </div>
+                )}
+            </section>
 
-                    {period === "DAILY" ? (
-                        <div className="bar-chart-container">
-                            {dateChartData.length === 0 ? (
-                                <p style={{ color: "#69837a", fontSize: "13px", margin: "auto" }}>Chưa có lượt khám được ghi nhận.</p>
-                            ) : (
-                                dateChartData.map((item, index) => {
-                                    const heightPct = Math.max(15, Math.round((item.count / maxChartCount) * 100));
-                                    return (
-                                        <div key={index} className="bar-column">
-                                            <div
-                                                className="bar-fill"
-                                                style={{ height: `${heightPct}%` }}
-                                            >
-                                                <span className="bar-value">{item.count}</span>
-                                            </div>
-                                            <small className="bar-label">{item.label}</small>
-                                        </div>
-                                    );
-                                })
-                            )}
-                        </div>
-                    ) : (
-                        <div className="doctor-performance-list">
-                            <div className="doc-perf-item">
-                                <div className="doc-perf-info">
-                                    <b>Hoàn thành ca khám</b>
-                                    <small>{completedAppointments.length} ca</small>
-                                </div>
-                                <div className="progress-track">
-                                    <div className="progress-fill" style={{ width: `${totalAppointments > 0 ? (completedAppointments.length / totalAppointments) * 100 : 0}%` }} />
-                                </div>
-                            </div>
-                            <div className="doc-perf-item">
-                                <div className="doc-perf-info">
-                                    <b>Đang xử lý / Chờ khám</b>
-                                    <small>{pendingAppointments.length} ca</small>
-                                </div>
-                                <div className="progress-track">
-                                    <div className="progress-fill" style={{ width: `${totalAppointments > 0 ? (pendingAppointments.length / totalAppointments) * 100 : 0}%`, background: "#3b82f6" }} />
-                                </div>
-                            </div>
-                            <div className="doc-perf-item">
-                                <div className="doc-perf-info">
-                                    <b>Đã hủy</b>
-                                    <small>{cancelledAppointments.length} ca</small>
-                                </div>
-                                <div className="progress-track">
-                                    <div className="progress-fill" style={{ width: `${totalAppointments > 0 ? (cancelledAppointments.length / totalAppointments) * 100 : 0}%`, background: "#ef4444" }} />
-                                </div>
-                            </div>
-                        </div>
-                    )}
-                </div>
+            <section className="admin-chart-panel admin-patient-frequency" aria-labelledby="admin-patient-frequency-title">
+                <header><div><h3 id="admin-patient-frequency-title">Tần suất quay lại</h3><p>Theo số lần đặt lịch trong phạm vi báo cáo</p></div></header>
+                {trackedPatients === 0 ? <div className="admin-chart-empty">Chưa đủ dữ liệu để phân tích.</div> : <div className="admin-patient-frequency-grid">
+                    <article><small>Đặt lịch một lần</small><strong>{oneVisitPercent}%</strong><p>{oneVisitPatients} bệnh nhân</p></article>
+                    <article><small>Đặt từ hai lần</small><strong>{returningPercent}%</strong><p>{returningPatients} bệnh nhân</p></article>
+                </div>}
+                <p className="admin-patient-frequency-note">Chỉ số phản ánh tần suất trong khoảng dữ liệu hiện tại, không thay thế hồ sơ lịch sử toàn thời gian.</p>
+            </section>
+        </div>
 
-                {/* Patient Type Ratio */}
-                <div className="chart-panel">
-                    <div className="chart-header">
-                        <h3>Tỷ lệ Bệnh nhân Mới vs Tái khám</h3>
-                        <small>Tự động phân tích theo số lần đặt lịch</small>
-                    </div>
-
-                    <div className="patient-type-card" style={{ marginTop: 0, paddingTop: 0, borderTop: "none" }}>
-                        <div className="ratio-bar">
-                            <div
-                                className="segment-new"
-                                style={{ width: `${newPercent}%` }}
-                                title={`Mới: ${newPercent}%`}
-                            >
-                                {newPercent > 10 ? `${newPercent}%` : ""}
-                            </div>
-                            <div
-                                className="segment-return"
-                                style={{ width: `${returnPercent}%` }}
-                                title={`Tái khám: ${returnPercent}%`}
-                            >
-                                {returnPercent > 10 ? `${returnPercent}%` : ""}
-                            </div>
-                        </div>
-
-                        <div className="ratio-legend" style={{ marginTop: "16px" }}>
-                            <div>
-                                <span className="dot dot-new" />
-                                <b>Bệnh nhân mới ({newPercent}%)</b>
-                                <p style={{ margin: "2px 0 0", fontSize: "11px", color: "#69837a" }}>{newPatientCount} bệnh nhân đặt lịch 1 lần</p>
-                            </div>
-                            <div>
-                                <span className="dot dot-return" />
-                                <b>Bệnh nhân tái khám ({returnPercent}%)</b>
-                                <p style={{ margin: "2px 0 0", fontSize: "11px", color: "#69837a" }}>{returningPatientCount} bệnh nhân đặt lịch từ 2 lần trở lên</p>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            {/* Doctor Performance List */}
-            <div className="chart-panel">
-                <div className="chart-header">
-                    <h3>Tỷ lệ hoàn thành lịch hẹn của từng Bác sĩ</h3>
-                    <small>Dựa trên {totalAppointments} ca khám toàn hệ thống</small>
-                </div>
-
-                <div className="doctor-performance-list">
-                    {doctorStats.length === 0 ? (
-                        <p style={{ color: "#69837a", fontSize: "13px" }}>Chưa có thông tin bác sĩ.</p>
-                    ) : (
-                        doctorStats.map(doc => (
-                            <div className="doc-perf-item" key={doc.id}>
-                                <div className="doc-perf-info">
-                                    <div>
-                                        <b>BS. {doc.name}</b>
-                                        <small>{doc.specialty} · Phụ trách {doc.total} ca (Hoàn thành {doc.completed} ca)</small>
-                                    </div>
-                                    <div className="doc-perf-score">
-                                        <b>{doc.rate}%</b>
-                                    </div>
-                                </div>
-                                <div className="progress-track">
-                                    <div className="progress-fill" style={{ width: `${doc.rate}%` }} />
-                                </div>
-                            </div>
-                        ))
-                    )}
-                </div>
-            </div>
+        <section className="admin-doctor-performance" aria-labelledby="admin-doctor-performance-title">
+            <header><div><h3 id="admin-doctor-performance-title">Hiệu suất lịch theo bác sĩ</h3><p>Đối chiếu số lịch được phân công và số lượt đã hoàn thành.</p></div><span>{doctors.length} bác sĩ</span></header>
+            {doctorStats.length === 0 ? <div className="admin-chart-empty">Chưa có thông tin bác sĩ.</div> : <div className="admin-doctor-table-wrap">
+                <table>
+                    <caption className="visually-hidden">Hiệu suất hoàn thành lịch khám của từng bác sĩ</caption>
+                    <thead><tr><th scope="col">Bác sĩ</th><th scope="col">Tổng lịch</th><th scope="col">Hoàn thành</th><th scope="col">Tỷ lệ</th></tr></thead>
+                    <tbody>{doctorStats.map(doctor => <tr key={doctor.id}>
+                        <th scope="row"><strong>BS. {doctor.name}</strong><small>{doctor.specialty}</small></th>
+                        <td>{doctor.total}</td><td>{doctor.completed}</td><td><strong>{doctor.rate}%</strong></td>
+                    </tr>)}</tbody>
+                </table>
+            </div>}
         </section>
-    );
+    </section>;
 }

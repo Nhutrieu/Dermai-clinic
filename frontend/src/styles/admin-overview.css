@@ -1,0 +1,976 @@
+/* Admin overview: a compact clinical operations surface built from shared DermAI tokens. */
+.admin-overview {
+  display: grid;
+  width: min(100%, var(--admin-overview-content-width));
+  gap: var(--space-5);
+  margin: 0 auto;
+  color: var(--color-ink);
+}
+
+.admin-analytics {
+  display: grid;
+  gap: var(--space-5);
+}
+
+.admin-analytics-heading,
+.admin-overview-section > header,
+.admin-doctor-performance > header,
+.admin-chart-panel > header {
+  display: flex;
+  gap: var(--space-5);
+  align-items: flex-end;
+  justify-content: space-between;
+  margin: 0;
+}
+
+.admin-analytics-heading h2,
+.admin-overview-section > header h2 {
+  margin: 0;
+  color: var(--color-ink);
+  font-family: Manrope, system-ui, sans-serif;
+  font-size: clamp(24px, 2.1vw, 32px);
+  line-height: 1.2;
+  letter-spacing: -0.035em;
+}
+
+.admin-analytics-heading p,
+.admin-overview-section > header p,
+.admin-doctor-performance > header p,
+.admin-chart-panel > header p {
+  max-width: 68ch;
+  margin: var(--space-2) 0 0;
+  color: var(--color-text-secondary);
+  font-size: 14px;
+  line-height: 1.6;
+}
+
+.admin-analytics-switch {
+  display: inline-grid;
+  grid-template-columns: 1fr 1fr;
+  min-width: 250px;
+  padding: var(--space-1);
+  border: 1px solid var(--admin-overview-border);
+  border-radius: var(--radius-panel);
+  background: var(--admin-overview-surface-muted);
+}
+
+.admin-analytics-switch button {
+  min-height: var(--control-min-height);
+  padding: 0 var(--space-4);
+  color: var(--color-text-secondary);
+  border: 0;
+  border-radius: var(--radius-control);
+  background: transparent;
+  font-size: 14px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.admin-analytics-switch button:hover {
+  color: var(--color-primary-strong);
+  background: var(--color-surface);
+}
+
+.admin-analytics-switch button.is-active {
+  color: var(--color-surface);
+  background: var(--color-primary);
+}
+
+.admin-analytics-switch button:active,
+.admin-patient-search button:active,
+.admin-patient-directory nav button:active {
+  transform: translateY(1px);
+}
+
+.admin-analytics-summary {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  overflow: hidden;
+  border: 1px solid var(--admin-overview-border);
+  border-radius: var(--radius-panel);
+  background: var(--admin-overview-surface);
+  box-shadow: var(--shadow-sm);
+}
+
+.admin-analytics-summary article {
+  display: grid;
+  grid-template-columns: 38px minmax(0, 1fr);
+  gap: var(--space-3);
+  min-width: 0;
+  padding: var(--space-5);
+  border-left: 1px solid var(--admin-overview-border);
+}
+
+.admin-analytics-summary article:first-child {
+  border-left: 0;
+}
+
+.admin-summary-icon {
+  display: grid;
+  width: 38px;
+  height: 38px;
+  place-items: center;
+  color: var(--admin-overview-accent);
+  border: 1px solid var(--admin-overview-border);
+  border-radius: var(--radius-control);
+  background: var(--admin-overview-surface-muted);
+}
+
+.admin-summary-icon svg {
+  width: 19px;
+  height: 19px;
+  stroke-width: 1.8;
+}
+
+.admin-analytics-summary article.is-attention .admin-summary-icon {
+  color: var(--color-warning);
+  border-color: var(--color-warning-border);
+  background: var(--color-warning-surface);
+}
+
+.admin-analytics-summary small,
+.admin-analytics-summary strong,
+.admin-analytics-summary p {
+  display: block;
+}
+
+.admin-analytics-summary small {
+  color: var(--color-text-secondary);
+  font-size: 14px;
+  font-weight: 700;
+  line-height: 1.35;
+}
+
+.admin-analytics-summary strong {
+  margin-top: 6px;
+  color: var(--color-ink);
+  font-size: clamp(25px, 2vw, 31px);
+  line-height: 1.1;
+  letter-spacing: -0.035em;
+}
+
+.admin-analytics-summary strong span {
+  color: var(--color-text-secondary);
+  font-size: 15px;
+  font-weight: 700;
+  letter-spacing: 0;
+}
+
+.admin-analytics-summary p {
+  margin: var(--space-2) 0 0;
+  color: var(--color-muted);
+  font-size: 14px;
+  line-height: 1.45;
+}
+
+.admin-analytics-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.55fr) minmax(300px, 0.75fr);
+  gap: var(--space-5);
+}
+
+.admin-chart-panel,
+.admin-doctor-performance,
+.admin-overview-section {
+  min-width: 0;
+  padding: var(--space-5);
+  border: 1px solid var(--admin-overview-border);
+  border-radius: var(--radius-panel);
+  background: var(--admin-overview-surface);
+  box-shadow: var(--shadow-sm);
+}
+
+.admin-chart-panel > header,
+.admin-doctor-performance > header {
+  align-items: flex-start;
+  padding-bottom: var(--space-4);
+  border-bottom: 1px solid var(--admin-overview-border);
+}
+
+.admin-chart-panel h3,
+.admin-doctor-performance h3 {
+  margin: 0;
+  color: var(--color-ink);
+  font-size: 18px;
+  line-height: 1.35;
+}
+
+.admin-volume-chart {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(40px, 1fr));
+  height: 260px;
+  gap: clamp(8px, 1.8vw, 22px);
+  margin: var(--space-5) 0 0;
+  padding: 0 var(--space-2);
+  list-style: none;
+  border-bottom: 1px solid var(--admin-overview-chart-line);
+}
+
+.admin-volume-chart li {
+  display: grid;
+  grid-template-rows: 28px minmax(0, 1fr) 32px;
+  min-width: 0;
+  height: 100%;
+  align-items: end;
+  justify-items: center;
+}
+
+.admin-volume-value {
+  align-self: center;
+  color: var(--color-ink);
+  font-size: 14px;
+  font-weight: 800;
+}
+
+.admin-volume-bar {
+  width: min(42px, 75%);
+  height: var(--admin-bar-height);
+  min-height: 10px;
+  border-radius: 5px 5px 0 0;
+  background: var(--admin-overview-accent);
+}
+
+.admin-volume-chart time {
+  align-self: center;
+  color: var(--color-text-secondary);
+  font-size: 14px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.admin-chart-empty,
+.admin-overview-state,
+.admin-patient-detail-empty {
+  display: grid;
+  min-height: 190px;
+  place-content: center;
+  padding: var(--space-5);
+  color: var(--color-text-secondary);
+  text-align: center;
+  border: 1px dashed var(--color-border-strong);
+  border-radius: var(--radius-panel);
+  background: var(--color-surface-subtle);
+  font-size: 14px;
+  line-height: 1.6;
+}
+
+.admin-chart-panel .admin-chart-empty {
+  margin-top: var(--space-5);
+}
+
+.admin-status-breakdown {
+  display: grid;
+  margin-top: var(--space-3);
+}
+
+.admin-status-breakdown article {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto 56px;
+  gap: var(--space-4);
+  align-items: center;
+  min-height: 54px;
+  border-bottom: 1px solid var(--admin-overview-border);
+  font-size: 14px;
+}
+
+.admin-status-breakdown article:last-child {
+  border-bottom: 0;
+}
+
+.admin-status-breakdown article > div {
+  display: flex;
+  gap: var(--space-3);
+  align-items: center;
+  min-width: 0;
+}
+
+.admin-status-breakdown article > div > span {
+  width: 4px;
+  height: 26px;
+  border-radius: 3px;
+  background: var(--color-border-strong);
+}
+
+.admin-status-breakdown article.is-success > div > span { background: var(--color-success); }
+.admin-status-breakdown article.is-warning > div > span { background: var(--color-warning); }
+.admin-status-breakdown article.is-danger > div > span { background: var(--color-danger); }
+
+.admin-status-breakdown b,
+.admin-status-breakdown small {
+  color: var(--color-ink);
+  font-size: 14px;
+  text-align: right;
+}
+
+.admin-status-breakdown small {
+  color: var(--color-text-secondary);
+  font-weight: 700;
+}
+
+.admin-patient-frequency {
+  display: flex;
+  flex-direction: column;
+}
+
+.admin-patient-frequency-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  margin-top: var(--space-5);
+  border: 1px solid var(--admin-overview-border);
+  border-radius: var(--radius-panel);
+  background: var(--admin-overview-surface-muted);
+}
+
+.admin-patient-frequency-grid article {
+  min-width: 0;
+  padding: var(--space-4);
+}
+
+.admin-patient-frequency-grid article + article {
+  border-left: 1px solid var(--admin-overview-border);
+}
+
+.admin-patient-frequency-grid small,
+.admin-patient-frequency-grid strong,
+.admin-patient-frequency-grid p {
+  display: block;
+}
+
+.admin-patient-frequency-grid small {
+  color: var(--color-text-secondary);
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.admin-patient-frequency-grid strong {
+  margin-top: var(--space-3);
+  color: var(--color-primary-strong);
+  font-size: clamp(28px, 3vw, 40px);
+  line-height: 1;
+}
+
+.admin-patient-frequency-grid p,
+.admin-patient-frequency-note {
+  margin: var(--space-2) 0 0;
+  color: var(--color-text-secondary);
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+.admin-patient-frequency-note {
+  margin-top: auto;
+  padding-top: var(--space-5);
+}
+
+.admin-doctor-performance > header > span,
+.admin-overview-section > header > span {
+  flex: 0 0 auto;
+  padding: 7px 10px;
+  color: var(--color-primary-strong);
+  border: 1px solid var(--admin-overview-border);
+  border-radius: var(--radius-control);
+  background: var(--admin-overview-surface-muted);
+  font-size: 14px;
+  font-weight: 800;
+}
+
+.admin-doctor-table-wrap {
+  overflow-x: auto;
+}
+
+.admin-doctor-performance table {
+  width: 100%;
+  border-collapse: collapse;
+  color: var(--color-ink);
+  font-size: 14px;
+}
+
+.admin-doctor-performance th,
+.admin-doctor-performance td {
+  padding: 14px var(--space-3);
+  text-align: right;
+  border-bottom: 1px solid var(--admin-overview-border);
+}
+
+.admin-doctor-performance thead th {
+  color: var(--color-text-secondary);
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.admin-doctor-performance th:first-child,
+.admin-doctor-performance td:first-child {
+  text-align: left;
+}
+
+.admin-doctor-performance tbody tr:last-child > * {
+  border-bottom: 0;
+}
+
+.admin-doctor-performance tbody th strong,
+.admin-doctor-performance tbody th small {
+  display: block;
+}
+
+.admin-doctor-performance tbody th strong {
+  font-size: 15px;
+}
+
+.admin-doctor-performance tbody th small {
+  margin-top: 4px;
+  color: var(--color-text-secondary);
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.admin-analytics-skeleton {
+  display: grid;
+  min-height: 420px;
+  place-content: center;
+  color: var(--color-text-secondary);
+  border: 1px dashed var(--color-border-strong);
+  border-radius: var(--radius-panel);
+  background: var(--admin-overview-surface-muted);
+  font-size: 14px;
+}
+
+.admin-overview-upcoming > header,
+.admin-patient-management > header {
+  align-items: flex-start;
+  padding-bottom: var(--space-4);
+  border-bottom: 1px solid var(--admin-overview-border);
+}
+
+.admin-overview-upcoming > header h2,
+.admin-patient-management > header h2 {
+  font-size: 21px;
+  letter-spacing: -0.02em;
+}
+
+.admin-upcoming-list {
+  display: grid;
+}
+
+.admin-upcoming-list article {
+  display: grid;
+  grid-template-columns: minmax(185px, 0.8fr) minmax(180px, 1fr) minmax(220px, 1.35fr) auto;
+  gap: var(--space-5);
+  align-items: center;
+  min-height: 72px;
+  border-bottom: 1px solid var(--admin-overview-border);
+}
+
+.admin-upcoming-list article:last-child {
+  border-bottom: 0;
+}
+
+.admin-upcoming-date {
+  display: flex;
+  gap: var(--space-3);
+  align-items: center;
+  color: var(--color-ink);
+  font-size: 14px;
+  font-weight: 800;
+}
+
+.admin-upcoming-date svg {
+  width: 18px;
+  color: var(--admin-overview-accent);
+}
+
+.admin-upcoming-person strong,
+.admin-upcoming-person span {
+  display: block;
+}
+
+.admin-upcoming-person strong {
+  color: var(--color-ink);
+  font-size: 14px;
+}
+
+.admin-upcoming-person span,
+.admin-upcoming-list article > p {
+  margin: 4px 0 0;
+  color: var(--color-text-secondary);
+  font-size: 14px;
+  line-height: 1.45;
+}
+
+.admin-status-label {
+  justify-self: end;
+  padding: 6px 9px;
+  color: var(--color-text-secondary);
+  border: 1px solid var(--admin-overview-border);
+  border-radius: var(--radius-control);
+  background: var(--admin-overview-surface-muted);
+  font-size: 14px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.admin-status-label.is-confirmed,
+.admin-status-label.is-completed {
+  color: var(--color-success);
+  border-color: var(--color-success-border);
+  background: var(--color-success-surface);
+}
+
+.admin-status-label.is-pending,
+.admin-status-label.is-assigned,
+.admin-status-label.is-proposed {
+  color: var(--color-warning);
+  border-color: var(--color-warning-border);
+  background: var(--color-warning-surface);
+}
+
+.admin-patient-search {
+  display: grid;
+  max-width: 680px;
+  gap: var(--space-2);
+  margin-top: var(--space-5);
+}
+
+.admin-patient-search label {
+  color: var(--color-ink);
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.admin-patient-search > div {
+  display: grid;
+  grid-template-columns: 20px minmax(0, 1fr) auto;
+  gap: var(--space-2);
+  align-items: center;
+  padding-left: var(--space-3);
+  border: 1px solid var(--color-border-strong);
+  border-radius: var(--radius-control);
+  background: var(--color-surface);
+}
+
+.admin-patient-search svg {
+  width: 18px;
+  color: var(--color-text-secondary);
+}
+
+.admin-patient-search input {
+  width: 100%;
+  min-height: var(--control-min-height);
+  padding: 0 var(--space-2);
+  color: var(--color-ink);
+  border: 0;
+  outline: 0;
+  background: transparent;
+  font-size: 15px;
+}
+
+.admin-patient-search > div:focus-within {
+  border-color: var(--color-primary);
+  box-shadow: var(--focus-ring);
+}
+
+.admin-patient-search button {
+  min-height: var(--control-min-height);
+  padding: 0 var(--space-4);
+  color: var(--color-surface);
+  border: 0;
+  border-radius: 0 var(--radius-control) var(--radius-control) 0;
+  background: var(--color-primary);
+  font-size: 14px;
+  font-weight: 800;
+}
+
+.admin-overview-feedback {
+  margin: var(--space-3) 0 0;
+  padding: 10px var(--space-3);
+  color: var(--color-primary-strong);
+  border-left: 3px solid var(--admin-overview-accent);
+  background: var(--admin-overview-surface-muted);
+  font-size: 14px;
+}
+
+.admin-patient-directory {
+  display: grid;
+  grid-template-columns: minmax(280px, 360px) minmax(0, 1fr);
+  gap: var(--space-5);
+  margin-top: var(--space-5);
+  align-items: stretch;
+}
+
+.admin-patient-directory > nav {
+  display: grid;
+  max-height: 440px;
+  gap: var(--space-2);
+  align-content: start;
+  margin: 0;
+  padding-right: var(--space-2);
+  overflow-y: auto;
+}
+
+.admin-patient-directory nav button {
+  display: grid;
+  grid-template-columns: 42px minmax(0, 1fr);
+  gap: var(--space-3);
+  align-items: center;
+  width: 100%;
+  min-height: 66px;
+  padding: 10px var(--space-3);
+  color: var(--color-ink);
+  text-align: left;
+  border: 1px solid transparent;
+  border-radius: var(--radius-panel);
+  background: transparent;
+}
+
+.admin-patient-directory nav button:hover {
+  border-color: var(--admin-overview-border);
+  background: var(--admin-overview-surface-muted);
+}
+
+.admin-patient-directory nav button.is-selected {
+  border-color: var(--color-primary);
+  background: var(--color-success-surface);
+}
+
+.admin-patient-avatar {
+  display: grid;
+  width: 42px;
+  height: 42px;
+  place-items: center;
+  color: var(--color-primary-strong);
+  border-radius: 50%;
+  background: var(--color-success-surface);
+  font-size: 14px;
+  font-weight: 800;
+}
+
+.admin-patient-directory nav strong,
+.admin-patient-directory nav small {
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.admin-patient-directory nav strong {
+  font-size: 14px;
+}
+
+.admin-patient-directory nav small {
+  margin-top: 4px;
+  color: var(--color-text-secondary);
+  font-size: 14px;
+}
+
+.admin-patient-detail,
+.admin-patient-detail-empty {
+  min-height: 300px;
+  margin: 0;
+}
+
+.admin-patient-detail {
+  padding: var(--space-5);
+  border: 1px solid var(--admin-overview-border);
+  border-radius: var(--radius-panel);
+  background: var(--admin-overview-surface-muted);
+}
+
+.admin-patient-detail > header {
+  display: grid;
+  grid-template-columns: 42px minmax(0, 1fr) 44px;
+  gap: var(--space-3);
+  align-items: center;
+  margin: 0;
+  padding-bottom: var(--space-4);
+  border-bottom: 1px solid var(--admin-overview-border);
+}
+
+.admin-patient-detail > header small {
+  color: var(--color-text-secondary);
+  font-size: 14px;
+}
+
+.admin-patient-detail > header h3 {
+  margin: 3px 0 0;
+  color: var(--color-ink);
+  font-size: 19px;
+}
+
+.admin-patient-detail > header button {
+  display: grid;
+  width: 44px;
+  height: 44px;
+  place-items: center;
+  color: var(--color-primary-strong);
+  border: 1px solid var(--admin-overview-border);
+  border-radius: var(--radius-control);
+  background: var(--color-surface);
+}
+
+.admin-patient-detail > header button:hover {
+  border-color: var(--color-primary);
+}
+
+.admin-patient-detail > header button svg {
+  width: 18px;
+}
+
+.admin-patient-detail dl {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--space-4);
+  margin: var(--space-5) 0;
+}
+
+.admin-patient-detail dl > div {
+  min-width: 0;
+}
+
+.admin-patient-detail dt {
+  color: var(--color-text-secondary);
+  font-size: 14px;
+}
+
+.admin-patient-detail dd {
+  margin: 5px 0 0;
+  color: var(--color-ink);
+  font-size: 14px;
+  font-weight: 800;
+  overflow-wrap: anywhere;
+}
+
+.admin-patient-recent {
+  padding-top: var(--space-4);
+  border-top: 1px solid var(--admin-overview-border);
+}
+
+.admin-patient-recent h4 {
+  margin: 0 0 var(--space-3);
+  color: var(--color-ink);
+  font-size: 15px;
+}
+
+.admin-patient-recent ol {
+  display: grid;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.admin-patient-recent li {
+  display: flex;
+  min-height: 44px;
+  gap: var(--space-4);
+  align-items: center;
+  justify-content: space-between;
+  border-bottom: 1px solid var(--admin-overview-border);
+  font-size: 14px;
+}
+
+.admin-patient-recent li:last-child {
+  border-bottom: 0;
+}
+
+.admin-patient-recent li span,
+.admin-patient-recent > p,
+.admin-patient-detail-empty p {
+  color: var(--color-text-secondary);
+  font-size: 14px;
+}
+
+.admin-patient-detail-empty strong {
+  color: var(--color-ink);
+  font-size: 16px;
+}
+
+.admin-patient-detail-empty p {
+  margin: var(--space-2) 0 0;
+}
+
+.admin-overview .empty {
+  min-height: 150px;
+  margin-top: var(--space-4);
+  font-size: 14px;
+}
+
+@media (max-width: 1180px) {
+  .admin-analytics-summary {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .admin-analytics-summary article:nth-child(3) {
+    border-top: 1px solid var(--admin-overview-border);
+    border-left: 0;
+  }
+
+  .admin-analytics-summary article:nth-child(4) {
+    border-top: 1px solid var(--admin-overview-border);
+  }
+
+  .admin-analytics-grid {
+    grid-template-columns: minmax(0, 1.25fr) minmax(280px, 0.75fr);
+  }
+
+  .admin-upcoming-list article {
+    grid-template-columns: minmax(175px, 0.8fr) minmax(170px, 1fr) auto;
+    gap: var(--space-4);
+  }
+
+  .admin-upcoming-list article > p {
+    grid-column: 2 / 3;
+    margin-top: -14px;
+  }
+
+  .admin-status-label {
+    grid-column: 3;
+    grid-row: 1 / span 2;
+  }
+}
+
+@media (max-width: 900px) {
+  .admin-analytics-grid,
+  .admin-patient-directory {
+    grid-template-columns: 1fr;
+  }
+
+  .admin-patient-directory > nav {
+    max-height: 300px;
+    padding-right: 0;
+  }
+
+  .admin-patient-detail-empty {
+    min-height: 190px;
+  }
+}
+
+@media (max-width: 720px) {
+  .admin-overview {
+    gap: var(--space-4);
+  }
+
+  .admin-analytics-heading,
+  .admin-overview-section > header,
+  .admin-doctor-performance > header {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .admin-analytics-switch {
+    width: 100%;
+    min-width: 0;
+  }
+
+  .admin-analytics-summary {
+    grid-template-columns: 1fr;
+  }
+
+  .admin-analytics-summary article,
+  .admin-analytics-summary article:nth-child(3),
+  .admin-analytics-summary article:nth-child(4) {
+    border-top: 1px solid var(--admin-overview-border);
+    border-left: 0;
+  }
+
+  .admin-analytics-summary article:first-child {
+    border-top: 0;
+  }
+
+  .admin-chart-panel,
+  .admin-doctor-performance,
+  .admin-overview-section {
+    padding: var(--space-4);
+  }
+
+  .admin-volume-chart {
+    gap: var(--space-2);
+    height: 230px;
+    padding: 0;
+  }
+
+  .admin-volume-chart time {
+    font-size: 14px;
+  }
+
+  .admin-upcoming-list article {
+    grid-template-columns: 1fr auto;
+    gap: var(--space-2) var(--space-4);
+    padding: var(--space-4) 0;
+  }
+
+  .admin-upcoming-date,
+  .admin-upcoming-person,
+  .admin-upcoming-list article > p {
+    grid-column: 1;
+    margin: 0;
+  }
+
+  .admin-status-label {
+    grid-column: 2;
+    grid-row: 1 / span 3;
+  }
+
+  .admin-patient-detail dl {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 480px) {
+  .admin-analytics-summary article {
+    padding: var(--space-4);
+  }
+
+  .admin-volume-chart {
+    grid-template-columns: repeat(7, minmax(32px, 1fr));
+    gap: 3px;
+    overflow-x: auto;
+  }
+
+  .admin-volume-bar {
+    width: 60%;
+  }
+
+  .admin-patient-frequency-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .admin-patient-frequency-grid article + article {
+    border-top: 1px solid var(--admin-overview-border);
+    border-left: 0;
+  }
+
+  .admin-doctor-performance table {
+    min-width: 570px;
+  }
+
+  .admin-upcoming-list article {
+    grid-template-columns: 1fr;
+  }
+
+  .admin-status-label {
+    grid-column: 1;
+    grid-row: auto;
+    justify-self: start;
+  }
+
+  .admin-patient-search > div {
+    grid-template-columns: 20px minmax(0, 1fr);
+    padding: var(--space-2) var(--space-3);
+  }
+
+  .admin-patient-search button {
+    grid-column: 1 / -1;
+    width: 100%;
+    border-radius: var(--radius-control);
+  }
+
+  .admin-patient-detail {
+    padding: var(--space-4);
+  }
+
+  .admin-patient-recent li {
+    align-items: flex-start;
+    flex-direction: column;
+    justify-content: center;
+    gap: 4px;
+    padding: var(--space-2) 0;
+  }
+}

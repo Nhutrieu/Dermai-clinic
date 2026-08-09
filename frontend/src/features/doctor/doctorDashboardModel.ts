@@ -55,6 +55,13 @@ export function getDoctorStatus(status: string, startAt?: string, now = new Date
   }
 }
 
+export function isStaleConsultation(appointment: Pick<Appointment, "status" | "endAt">, now = new Date()): boolean {
+  const endAt = new Date(appointment.endAt).getTime();
+  return appointment.status === "IN_PROGRESS"
+    && Number.isFinite(endAt)
+    && now.getTime() >= endAt + 60 * 60_000;
+}
+
 export function getTodayAppointments(appointments: Appointment[], now = new Date()): Appointment[] {
   return appointments
     .filter(item => isClinicToday(item, now))
@@ -78,31 +85,29 @@ export function getActiveConsultations(appointments: Appointment[]): Appointment
 
 export function buildDoctorTodaySummary(
   appointments: Appointment[],
-  records: MedicalRecord[],
+  _records: MedicalRecord[],
   now = new Date(),
 ): DoctorTodaySummary {
   const today = getTodayAppointments(appointments, now);
-  const recordAppointments = new Set(records.map(item => item.appointmentId));
   const overdue = today.filter(item => item.status === "CONFIRMED" && new Date(item.startAt).getTime() < now.getTime()).length;
-  const incomplete = today.filter(item => item.status === "IN_PROGRESS" && !recordAppointments.has(item.id)).length;
+  const stale = appointments.filter(item => isStaleConsultation(item, now)).length;
   return {
     total: today.length,
     waiting: today.filter(item => ["CONFIRMED", "CHECKED_IN"].includes(item.status)).length,
     inProgress: today.filter(item => item.status === "IN_PROGRESS").length,
     completed: today.filter(item => ["COMPLETED", "FOLLOW_UP_REQUIRED"].includes(item.status)).length,
     notStarted: today.filter(item => item.status === "CONFIRMED" && new Date(item.startAt).getTime() >= now.getTime()).length,
-    needsAttention: overdue + incomplete,
+    needsAttention: overdue + stale,
   };
 }
 
-export function getIncompleteClinicalTasks(
+export function getStaleConsultationTasks(
   appointments: Appointment[],
-  records: MedicalRecord[],
+  now = new Date(),
 ): { appointment: Appointment; label: string }[] {
-  const recordAppointments = new Set(records.map(item => item.appointmentId));
-  return getActiveConsultations(appointments).map(appointment => ({
+  return getActiveConsultations(appointments).filter(appointment => isStaleConsultation(appointment, now)).map(appointment => ({
     appointment,
-    label: recordAppointments.has(appointment.id) ? "Hoàn tất ca khám" : "Hoàn tất hồ sơ khám",
+    label: "Hoàn tất lượt khám",
   }));
 }
 

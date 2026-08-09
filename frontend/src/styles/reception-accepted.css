@@ -365,6 +365,12 @@
   color: var(--color-danger-strong);
 }
 
+.accepted-status-badge.is-needs-completion {
+  border-color: var(--color-warning-border);
+  background: var(--color-warning-surface);
+  color: var(--color-warning);
+}
+
 .accepted-row-actions {
   display: flex;
   align-items: center;

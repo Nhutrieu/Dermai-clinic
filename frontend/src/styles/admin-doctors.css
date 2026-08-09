@@ -1,0 +1,555 @@
+.admin-doctors-page {
+  width: min(100%, var(--admin-doctors-content-width));
+  margin: 0 auto 88px;
+  padding: var(--space-5);
+  overflow: hidden;
+  border: 1px solid var(--admin-doctors-border);
+  border-radius: var(--radius-panel);
+  background: var(--admin-doctors-surface);
+  box-shadow: var(--shadow-sm);
+}
+
+.admin-doctors-heading {
+  display: flex;
+  gap: var(--space-5);
+  align-items: flex-start;
+  justify-content: space-between;
+  margin: 0;
+  padding-bottom: var(--space-5);
+  border-bottom: 1px solid var(--admin-doctors-border);
+}
+
+.admin-doctors-heading h2,
+.admin-doctors-heading p,
+.admin-doctor-detail h3,
+.admin-doctor-detail p,
+.admin-doctor-detail h4 {
+  margin: 0;
+}
+
+.admin-doctors-heading h2 {
+  color: var(--color-ink);
+  font-family: Newsreader, serif;
+  font-size: clamp(25px, 2vw, 30px);
+  font-weight: 600;
+  line-height: 1.2;
+}
+
+.admin-doctors-heading p {
+  max-width: 680px;
+  margin-top: var(--space-2);
+  color: var(--color-text-secondary);
+  font-size: 15px;
+  line-height: 1.6;
+}
+
+.admin-doctors-summary {
+  display: flex;
+  flex: 0 0 auto;
+  gap: var(--space-2);
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+
+.admin-doctors-summary > span {
+  display: inline-flex;
+  min-height: 36px;
+  gap: 5px;
+  align-items: center;
+  padding: 7px 10px;
+  color: var(--color-primary);
+  border: 1px solid var(--admin-doctors-border);
+  border-radius: var(--radius-control);
+  background: var(--admin-doctors-surface-muted);
+  font-size: 14px;
+}
+
+.admin-doctors-toolbar {
+  display: grid;
+  grid-template-columns: 150px minmax(280px, 680px);
+  gap: var(--space-4);
+  align-items: center;
+  padding: var(--space-4);
+  border-bottom: 1px solid var(--admin-doctors-border);
+  background: var(--admin-doctors-surface-muted);
+}
+
+.admin-doctors-toolbar > label {
+  color: var(--color-ink);
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.admin-doctors-toolbar > div {
+  position: relative;
+}
+
+.admin-doctors-toolbar svg {
+  position: absolute;
+  top: 50%;
+  left: 12px;
+  width: 18px;
+  height: 18px;
+  color: var(--color-muted);
+  pointer-events: none;
+  transform: translateY(-50%);
+}
+
+.admin-doctors-toolbar input {
+  width: 100%;
+  min-height: var(--control-min-height);
+  padding: 10px 12px 10px 40px;
+  color: var(--color-ink);
+  border: 1px solid var(--color-border-strong);
+  border-radius: var(--radius-control);
+  background: var(--color-surface);
+  font-size: 15px;
+}
+
+.admin-doctors-toolbar input::placeholder {
+  color: var(--color-placeholder);
+}
+
+.admin-doctors-layout {
+  display: grid;
+  grid-template-columns: minmax(340px, var(--admin-doctors-list-width)) minmax(0, 1fr);
+  min-height: 570px;
+  border: 1px solid var(--admin-doctors-border);
+  border-top: 0;
+}
+
+.admin-doctors-list {
+  display: block;
+  max-height: 780px;
+  margin: 0;
+  padding: 0 var(--space-2) var(--space-2);
+  overflow-y: auto;
+  border-right: 1px solid var(--admin-doctors-border);
+  background: var(--admin-doctors-surface-muted);
+}
+
+.admin-doctors-list > header {
+  position: sticky;
+  z-index: 1;
+  top: 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  min-height: 54px;
+  margin: 0;
+  padding: 10px var(--space-3);
+  border-bottom: 1px solid var(--admin-doctors-border);
+  background: var(--admin-doctors-surface-muted);
+}
+
+.admin-doctors-list > header strong,
+.admin-doctors-list > header span {
+  font-size: 14px;
+}
+
+.admin-doctors-list > header span {
+  display: grid;
+  min-width: 28px;
+  min-height: 28px;
+  place-items: center;
+  color: var(--color-primary);
+  border: 1px solid var(--admin-doctors-border);
+  border-radius: var(--radius-control);
+  background: var(--color-surface);
+  font-weight: 700;
+}
+
+.admin-doctors-list > button {
+  display: grid;
+  grid-template-columns: 54px minmax(0, 1fr);
+  gap: var(--space-3);
+  align-items: center;
+  width: 100%;
+  min-height: 104px;
+  padding: 13px 12px;
+  color: var(--color-ink);
+  text-align: left;
+  border: 0;
+  border-bottom: 1px solid var(--admin-doctors-border);
+  border-radius: 0;
+  background: transparent;
+}
+
+.admin-doctors-list > button:hover {
+  background: var(--color-surface);
+}
+
+.admin-doctors-list > button.is-selected {
+  background: var(--color-surface);
+  box-shadow: inset 3px 0 0 var(--color-primary);
+}
+
+.admin-doctors-list > button > img,
+.admin-doctor-avatar {
+  display: grid;
+  width: 54px;
+  height: 54px;
+  place-items: center;
+  object-fit: cover;
+  object-position: center top;
+  border: 1px solid var(--admin-doctors-border);
+  border-radius: var(--radius-control);
+  background: var(--color-success-surface);
+  color: var(--color-primary-strong);
+  font-size: 17px;
+  font-weight: 800;
+}
+
+.admin-doctor-list-identity {
+  display: grid;
+  min-width: 0;
+  gap: 3px;
+}
+
+.admin-doctor-list-identity strong,
+.admin-doctor-list-identity small,
+.admin-doctor-list-identity em {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.admin-doctor-list-identity strong {
+  font-size: 16px;
+}
+
+.admin-doctor-list-identity small,
+.admin-doctor-list-identity em,
+.admin-doctor-list-fee small {
+  color: var(--color-text-secondary);
+  font-size: 14px;
+  font-style: normal;
+  font-weight: 500;
+}
+
+.admin-doctor-list-fee {
+  display: flex;
+  grid-column: 2;
+  gap: var(--space-2);
+  align-items: baseline;
+  justify-content: space-between;
+  min-width: 0;
+}
+
+.admin-doctor-list-fee strong {
+  color: var(--color-primary);
+  font-size: 14px;
+  white-space: nowrap;
+}
+
+.admin-doctor-detail {
+  min-width: 0;
+  padding: var(--space-5);
+  background: var(--color-surface);
+}
+
+.admin-doctor-detail > header {
+  position: relative;
+  display: flex;
+  gap: var(--space-4);
+  align-items: flex-start;
+  justify-content: space-between;
+  margin: 0;
+  padding-bottom: var(--space-5);
+  border-bottom: 1px solid var(--admin-doctors-border);
+}
+
+.admin-doctor-detail-identity {
+  display: flex;
+  min-width: 0;
+  gap: var(--space-4);
+  align-items: center;
+}
+
+.admin-doctor-detail-identity > img,
+.admin-doctor-detail-identity > .admin-doctor-avatar {
+  flex: 0 0 auto;
+  width: 74px;
+  height: 74px;
+  object-fit: cover;
+  object-position: center top;
+  border: 1px solid var(--admin-doctors-border);
+  border-radius: var(--radius-control);
+  background: var(--color-success-surface);
+}
+
+.admin-doctor-detail-identity small {
+  color: var(--color-text-secondary);
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.admin-doctor-detail h3 {
+  margin-top: 2px;
+  color: var(--color-ink);
+  font-family: Newsreader, serif;
+  font-size: clamp(24px, 2vw, 29px);
+  font-weight: 600;
+  line-height: 1.2;
+}
+
+.admin-doctor-detail-identity p {
+  margin-top: var(--space-1);
+  color: var(--color-text-secondary);
+  font-size: 15px;
+}
+
+.admin-doctor-detail > header > button {
+  display: grid;
+  flex: 0 0 auto;
+  width: 44px;
+  height: 44px;
+  place-items: center;
+  padding: 0;
+  color: var(--color-text-secondary);
+  border: 1px solid var(--admin-doctors-border);
+  border-radius: 50%;
+  background: var(--color-surface);
+}
+
+.admin-doctor-detail > header > button:hover {
+  color: var(--color-primary);
+  border-color: var(--color-primary);
+  background: var(--color-success-surface);
+}
+
+.admin-doctor-detail > header > button svg {
+  width: 20px;
+  height: 20px;
+}
+
+.admin-doctor-detail dl {
+  display: grid;
+  grid-template-columns: 1.25fr 0.75fr 1fr;
+  margin: 0;
+  padding: var(--space-4) 0;
+  border-bottom: 1px solid var(--admin-doctors-border);
+}
+
+.admin-doctor-detail dl > div {
+  min-width: 0;
+  padding: 3px var(--space-4);
+}
+
+.admin-doctor-detail dl > div:first-child {
+  padding-left: 0;
+}
+
+.admin-doctor-detail dl > div + div {
+  border-left: 1px solid var(--admin-doctors-border);
+}
+
+.admin-doctor-detail dt {
+  color: var(--color-text-secondary);
+  font-size: 14px;
+}
+
+.admin-doctor-detail dd {
+  margin: var(--space-1) 0 0;
+  color: var(--color-ink);
+  font-size: 15px;
+  font-weight: 700;
+  overflow-wrap: anywhere;
+}
+
+.admin-doctor-bio-section {
+  padding: var(--space-5) 0;
+  border-bottom: 1px solid var(--admin-doctors-border);
+}
+
+.admin-doctor-bio-section h4 {
+  display: flex;
+  gap: var(--space-2);
+  align-items: center;
+  color: var(--color-ink);
+  font-size: 16px;
+}
+
+.admin-doctor-bio-section h4 svg {
+  width: 18px;
+  height: 18px;
+  color: var(--color-primary);
+}
+
+.admin-doctor-bio-section p {
+  max-width: 78ch;
+  margin-top: var(--space-3);
+  color: var(--color-text-secondary);
+  font-size: 15px;
+  line-height: 1.7;
+  white-space: pre-wrap;
+}
+
+.admin-doctor-detail .admin-doctor-fee {
+  margin-top: 0;
+  padding-top: var(--space-5);
+  border-top: 0;
+}
+
+.admin-doctor-detail .admin-doctor-fee form {
+  max-width: 720px;
+}
+
+.admin-doctor-detail-empty,
+.admin-doctors-list-empty {
+  display: grid;
+  min-height: 260px;
+  gap: var(--space-2);
+  place-content: center;
+  justify-items: center;
+  padding: var(--space-5);
+  color: var(--color-text-secondary);
+  text-align: center;
+  font-size: 14px;
+}
+
+.admin-doctor-detail-empty {
+  min-height: 570px;
+  border: 1px dashed var(--color-border-strong);
+  border-top: 0;
+  background: var(--color-surface);
+}
+
+.admin-doctor-detail-empty svg,
+.admin-doctors-list-empty svg {
+  width: 28px;
+  height: 28px;
+  color: var(--color-primary);
+}
+
+.admin-doctor-detail-empty strong,
+.admin-doctors-list-empty strong {
+  color: var(--color-ink);
+  font-size: 16px;
+}
+
+.admin-doctor-detail-empty p,
+.admin-doctors-list-empty p {
+  max-width: 310px;
+  margin: 0;
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+@media (max-width: 1050px) {
+  .admin-doctors-layout {
+    grid-template-columns: minmax(310px, 350px) minmax(0, 1fr);
+  }
+
+  .admin-doctor-detail dl {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .admin-doctor-detail dl > div:last-child {
+    grid-column: 1 / -1;
+    margin-top: var(--space-3);
+    padding: var(--space-3) 0 0;
+    border-top: 1px solid var(--admin-doctors-border);
+    border-left: 0;
+  }
+}
+
+@media (max-width: 860px) {
+  .admin-doctors-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .admin-doctors-list {
+    max-height: 430px;
+    border-right: 0;
+    border-bottom: 1px solid var(--admin-doctors-border);
+  }
+
+  .admin-doctor-detail-empty {
+    min-height: 300px;
+    border-left: 0;
+  }
+}
+
+@media (max-width: 680px) {
+  .admin-doctors-page {
+    margin-bottom: 96px;
+    padding: var(--space-4);
+  }
+
+  .admin-doctors-heading,
+  .admin-doctor-detail > header {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .admin-doctors-summary {
+    justify-content: flex-start;
+  }
+
+  .admin-doctors-toolbar {
+    grid-template-columns: 1fr;
+    gap: var(--space-2);
+    padding: var(--space-3);
+  }
+
+  .admin-doctor-detail {
+    padding: var(--space-4);
+  }
+
+  .admin-doctor-detail > header > button {
+    position: absolute;
+    top: 0;
+    right: 0;
+  }
+
+  .admin-doctor-detail-identity {
+    padding-right: 48px;
+  }
+
+  .admin-doctor-detail dl {
+    grid-template-columns: 1fr;
+  }
+
+  .admin-doctor-detail dl > div,
+  .admin-doctor-detail dl > div:first-child,
+  .admin-doctor-detail dl > div:last-child {
+    grid-column: auto;
+    margin: 0;
+    padding: var(--space-3) 0;
+    border-left: 0;
+  }
+
+  .admin-doctor-detail dl > div + div,
+  .admin-doctor-detail dl > div:last-child {
+    border-top: 1px solid var(--admin-doctors-border);
+  }
+}
+
+@media (max-width: 440px) {
+  .admin-doctors-list > button {
+    grid-template-columns: 48px minmax(0, 1fr);
+  }
+
+  .admin-doctors-list > button > img,
+  .admin-doctor-avatar {
+    width: 48px;
+    height: 48px;
+  }
+
+  .admin-doctor-list-fee {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 2px;
+  }
+
+  .admin-doctor-detail-identity {
+    align-items: flex-start;
+  }
+
+  .admin-doctor-detail-identity > img,
+  .admin-doctor-detail-identity > .admin-doctor-avatar {
+    width: 60px;
+    height: 60px;
+  }
+}

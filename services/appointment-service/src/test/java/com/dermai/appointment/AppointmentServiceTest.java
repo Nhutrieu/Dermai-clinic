@@ -1,6 +1,7 @@
 package com.dermai.appointment;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -139,5 +140,50 @@ class AppointmentServiceTest {
     assertThat(warning.getValue().title).contains("Cảnh báo");
     assertThat(warning.getValue().body).contains("liên hệ lễ tân").contains("0352 790 904");
     verify(updates).afterCommit();
+  }
+
+  @Test
+  void staffCanCompleteAnInProgressVisitAfterTheGracePeriod() {
+    var appointments = mock(AppointmentRepository.class);
+    var updates = mock(SlotUpdateBroadcaster.class);
+    var notifications = mock(AppointmentNotificationRepository.class);
+    var service = new AppointmentService(appointments, mock(OutboxRepository.class), updates, notifications, mock(BookingPolicy.class));
+    var appointmentId = UUID.randomUUID();
+    var appointment = Appointment.pending(
+        UUID.randomUUID(), UUID.randomUUID(), UUID.randomUUID(), UUID.randomUUID(),
+        Instant.now().minusSeconds(7_200), Instant.now().minusSeconds(5_400), "Khám da", null, new BigDecimal("150000")
+    );
+    appointment.id = appointmentId;
+    appointment.status = AppointmentStatus.IN_PROGRESS;
+    when(appointments.findLocked(appointmentId)).thenReturn(Optional.of(appointment));
+
+    var completed = service.completeStaleConsultation(appointmentId);
+
+    assertThat(completed.status).isEqualTo(AppointmentStatus.COMPLETED);
+    verify(updates).afterCommit();
+  }
+
+  @Test
+  void staffCannotCompleteAVisitThatMayStillBeRunning() {
+    var appointments = mock(AppointmentRepository.class);
+    var service = new AppointmentService(
+        appointments,
+        mock(OutboxRepository.class),
+        mock(SlotUpdateBroadcaster.class),
+        mock(AppointmentNotificationRepository.class),
+        mock(BookingPolicy.class)
+    );
+    var appointmentId = UUID.randomUUID();
+    var appointment = Appointment.pending(
+        UUID.randomUUID(), UUID.randomUUID(), UUID.randomUUID(), UUID.randomUUID(),
+        Instant.now().minusSeconds(1_800), Instant.now().minusSeconds(600), "Khám da", null, new BigDecimal("150000")
+    );
+    appointment.id = appointmentId;
+    appointment.status = AppointmentStatus.IN_PROGRESS;
+    when(appointments.findLocked(appointmentId)).thenReturn(Optional.of(appointment));
+
+    assertThatThrownBy(() -> service.completeStaleConsultation(appointmentId))
+        .isInstanceOf(IllegalStateException.class)
+        .hasMessage("STALE_COMPLETION_TOO_EARLY");
   }
 }
