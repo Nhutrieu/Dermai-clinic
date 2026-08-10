@@ -1,5 +1,6 @@
 import { FormEvent, useEffect, useMemo, useState } from "react";
 import { History, KeyRound, LockKeyhole, Search, Unlock, UserRound } from "lucide-react";
+import AuthenticatedAvatar from "../../components/AuthenticatedAvatar";
 import { request } from "../../core/api";
 import type { AppointmentActionLog, StaffAccount, StaffAccountEvent } from "../../core/types";
 
@@ -13,6 +14,7 @@ const accountEventLabels: Record<string, string> = {
   UNLOCKED: "Tài khoản được mở khóa",
   PASSWORD_RESET: "Mật khẩu được đặt lại",
   PROFILE_UPDATED: "Tên nhân viên được cập nhật",
+  AVATAR_UPDATED: "Ảnh đại diện được cập nhật",
 };
 
 const appointmentActionLabels: Record<string, string> = {
@@ -219,7 +221,7 @@ export default function AdminReceptionistAccounts({ token, revision }: Props) {
           onClick={() => { setSelectedId(account.identityId); setMessage(""); setError(""); }}
           aria-current={selectedId === account.identityId ? "true" : undefined}
         >
-          <span className="admin-staff-avatar" aria-hidden="true">{accountName(account).slice(0, 1).toUpperCase()}</span>
+          <AuthenticatedAvatar token={token} identityId={account.identityId} hasAvatar={account.hasAvatar} className="admin-staff-avatar" fallback={accountName(account).slice(0, 1).toUpperCase()} />
           <span className="admin-staff-identity"><b>{accountName(account)}</b><small>{account.email}</small></span>
           <span className={`admin-staff-status ${account.status === "LOCKED" ? "is-locked" : ""}`}>{account.status === "LOCKED" ? "Đã khóa" : "Có thể đăng nhập"}</span>
         </button>)}
@@ -228,7 +230,7 @@ export default function AdminReceptionistAccounts({ token, revision }: Props) {
       {selected && <article className="admin-staff-detail" aria-busy={detailLoading}>
         <header>
           <div className="admin-staff-detail-identity">
-            <span className="admin-staff-avatar" aria-hidden="true">{accountName(selected).slice(0, 1).toUpperCase()}</span>
+            <AuthenticatedAvatar token={token} identityId={selected.identityId} hasAvatar={selected.hasAvatar} className="admin-staff-avatar" fallback={accountName(selected).slice(0, 1).toUpperCase()} />
             <div><small>Thông tin nhân viên</small><h3>{accountName(selected)}</h3><p>{selected.email}</p></div>
           </div>
           <span className={`admin-staff-status ${selected.status === "LOCKED" ? "is-locked" : ""}`}>{selected.status === "LOCKED" ? "Đã khóa" : "Có thể đăng nhập"}</span>

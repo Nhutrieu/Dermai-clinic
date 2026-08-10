@@ -1,0 +1,337 @@
+.sidebar-account-trigger {
+  width: 100%;
+  border: 0;
+  background: transparent;
+  text-align: left;
+  cursor: pointer;
+}
+
+.sidebar-account-trigger:hover {
+  background: rgb(255 255 255 / 0.04);
+}
+
+.sidebar-account-trigger:focus-visible {
+  border-radius: var(--radius-control);
+  box-shadow: inset var(--focus-ring);
+}
+
+.sidebar-avatar {
+  overflow: hidden;
+  object-fit: cover;
+  object-position: center;
+}
+
+.receptionist-account-dialog {
+  width: min(720px, 100%);
+  padding: 28px;
+}
+
+.receptionist-account-intro {
+  max-width: 580px;
+}
+
+.receptionist-account-identity {
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
+  margin-top: var(--space-5);
+  padding: var(--space-4);
+  background: var(--color-surface-subtle);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-control);
+}
+
+.receptionist-avatar-picker {
+  position: relative;
+  display: grid;
+  flex: 0 0 96px;
+  width: 96px;
+  height: 96px;
+  overflow: hidden;
+  border: 1px solid var(--color-border-strong);
+  border-radius: 50%;
+  cursor: pointer;
+  place-items: center;
+}
+
+.receptionist-avatar-picker > img,
+.receptionist-avatar-picker > span {
+  width: 100%;
+  height: 100%;
+  display: grid;
+  color: var(--color-primary);
+  background: var(--color-success-surface);
+  object-fit: cover;
+  place-items: center;
+  font-size: 26px;
+  font-weight: 800;
+}
+
+.receptionist-avatar-picker > b {
+  position: absolute;
+  right: 5px;
+  bottom: 5px;
+  display: grid;
+  width: 34px;
+  height: 34px;
+  color: var(--color-surface);
+  background: var(--color-primary);
+  border: 3px solid var(--color-surface);
+  border-radius: 50%;
+  place-items: center;
+  font-size: 0;
+}
+
+.receptionist-avatar-picker > b svg {
+  width: 15px;
+  height: 15px;
+}
+
+.receptionist-avatar-picker > input {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  opacity: 0;
+}
+
+.receptionist-account-identity > div {
+  display: grid;
+  gap: 4px;
+}
+
+.receptionist-account-identity strong {
+  font-size: 18px;
+}
+
+.receptionist-account-identity span,
+.receptionist-account-identity small {
+  color: var(--color-text-secondary);
+}
+
+.receptionist-account-identity span {
+  font-size: 14px;
+}
+
+.receptionist-account-identity small {
+  font-size: 12px;
+}
+
+.receptionist-account-form {
+  display: grid;
+  gap: 8px;
+  margin-top: var(--space-5);
+}
+
+.receptionist-account-form > label {
+  color: var(--color-text-secondary);
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.receptionist-account-name-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: var(--space-2);
+}
+
+.receptionist-account-name-row > span {
+  position: relative;
+  display: block;
+}
+
+.receptionist-account-name-row svg {
+  position: absolute;
+  top: 50%;
+  left: 13px;
+  width: 18px;
+  height: 18px;
+  color: var(--color-muted);
+  transform: translateY(-50%);
+  pointer-events: none;
+}
+
+.receptionist-account-name-row input,
+.receptionist-account-name-row button {
+  min-height: var(--control-min-height);
+  border-radius: var(--radius-control);
+  font-size: 14px;
+}
+
+.receptionist-account-name-row input {
+  width: 100%;
+  padding: 0 13px 0 42px;
+  color: var(--color-ink);
+  background: var(--color-surface);
+  border: 1px solid var(--color-border-strong);
+}
+
+.receptionist-account-name-row button {
+  padding: 0 16px;
+  color: var(--color-surface);
+  background: var(--color-primary);
+  border: 1px solid var(--color-primary);
+  font-weight: 800;
+}
+
+.receptionist-account-name-row button:disabled {
+  color: var(--color-disabled);
+  background: var(--color-disabled-surface);
+  border-color: var(--color-border);
+}
+
+.receptionist-account-details {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  margin: var(--space-5) 0 0;
+  border-top: 1px solid var(--color-border);
+  border-left: 1px solid var(--color-border);
+}
+
+.receptionist-account-details > div {
+  min-width: 0;
+  padding: 14px;
+  border-right: 1px solid var(--color-border);
+  border-bottom: 1px solid var(--color-border);
+}
+
+.receptionist-account-details dt {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  color: var(--color-muted);
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.receptionist-account-details dt svg {
+  width: 15px;
+  height: 15px;
+}
+
+.receptionist-account-details dd {
+  margin: 7px 0 0;
+  color: var(--color-ink);
+  font-size: 14px;
+  font-weight: 700;
+  overflow-wrap: anywhere;
+}
+
+.receptionist-account-details dd span {
+  display: inline-flex;
+  min-height: 28px;
+  align-items: center;
+  padding: 3px 9px;
+  color: var(--color-success);
+  background: var(--color-success-surface);
+  border: 1px solid var(--color-success-border);
+  border-radius: 999px;
+  font-size: 12px;
+}
+
+.receptionist-account-details dd span[data-status="LOCKED"] {
+  color: var(--color-danger);
+  background: var(--color-danger-surface);
+  border-color: var(--color-danger-border);
+}
+
+.receptionist-account-details dd span[data-status="PENDING"] {
+  color: var(--color-warning);
+  background: var(--color-warning-surface);
+  border-color: var(--color-warning-border);
+}
+
+.receptionist-account-details dd span[data-status="DISABLED"] {
+  color: var(--color-disabled);
+  background: var(--color-disabled-surface);
+  border-color: var(--color-border);
+}
+
+.patient-account-details > div:last-child {
+  grid-column: 1 / -1;
+}
+
+.booking-dialog-copy .receptionist-account-message {
+  margin-top: var(--space-3);
+  padding: 10px 12px;
+  border-radius: var(--radius-control);
+  font-size: 13px;
+}
+
+.receptionist-account-message.is-error {
+  color: var(--color-danger-strong);
+  background: var(--color-danger-surface);
+  border: 1px solid var(--color-danger-border);
+}
+
+.receptionist-account-message.is-success {
+  color: var(--color-success);
+  background: var(--color-success-surface);
+  border: 1px solid var(--color-success-border);
+}
+
+@media (max-width: 780px) {
+  :is(.role-receptionist, .role-patient) .app-sidebar .sidebar-account-trigger {
+    position: fixed;
+    z-index: 95;
+    top: 12px;
+    left: 12px;
+    display: grid;
+    width: 38px;
+    height: 38px;
+    margin: 0;
+    padding: 2px;
+    border: 1px solid var(--color-border);
+    border-radius: 12px;
+    background: var(--color-surface);
+    box-shadow: var(--shadow-sm);
+    place-items: center;
+  }
+
+  :is(.role-receptionist, .role-patient) .sidebar-account-trigger .sidebar-avatar {
+    width: 30px;
+    height: 30px;
+    flex-basis: 30px;
+    border-radius: 9px;
+  }
+
+  :is(.role-receptionist, .role-patient) .sidebar-account-trigger > div {
+    display: none;
+  }
+}
+
+@media (max-width: 560px) {
+  .receptionist-account-backdrop {
+    align-items: end;
+    padding: 0;
+  }
+
+  .receptionist-account-dialog {
+    width: 100%;
+    max-height: calc(100dvh - 16px);
+    padding: 22px 16px calc(18px + env(safe-area-inset-bottom));
+    border-radius: var(--radius-panel) var(--radius-panel) 0 0;
+  }
+
+  .receptionist-account-identity {
+    align-items: flex-start;
+  }
+
+  .receptionist-avatar-picker {
+    flex-basis: 76px;
+    width: 76px;
+    height: 76px;
+  }
+
+  .receptionist-account-name-row,
+  .receptionist-account-details {
+    grid-template-columns: 1fr;
+  }
+
+  .patient-account-details > div:last-child {
+    grid-column: auto;
+  }
+
+  .receptionist-account-name-row button {
+    width: 100%;
+  }
+}

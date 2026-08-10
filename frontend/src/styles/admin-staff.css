@@ -377,6 +377,13 @@
   background: var(--color-success-surface);
   font-size: 15px;
   font-weight: 800;
+  overflow: hidden;
+}
+
+.admin-staff-avatar > img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
 }
 
 .admin-staff-identity {

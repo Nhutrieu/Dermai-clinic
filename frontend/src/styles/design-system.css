@@ -98,6 +98,12 @@
   --doctor-dashboard-surface-muted: #f4f7f5;
   --doctor-dashboard-border: #d9dfdb;
   --doctor-dashboard-accent: #477d6f;
+  /* Signed medical records stay readable and compact for day-to-day clinical lookup. */
+  --doctor-record-content-width: 1240px;
+  --doctor-record-surface: #fffefb;
+  --doctor-record-surface-muted: #f4f7f5;
+  --doctor-record-border: #d9dfdb;
+  --doctor-record-accent: #477d6f;
   /* Accepted appointments use a compact operational list rather than stacked dashboard cards. */
   --reception-accepted-content-width: 1240px;
   --reception-accepted-time-width: 150px;

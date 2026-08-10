@@ -64,6 +64,17 @@ public class AuthService {
   var staff=receptionist(id);staff.displayName=displayName.trim();
   staffEvents.save(new StaffAccountEvent(id,actorIdentityId,"PROFILE_UPDATED"));return staff;
  }
+ public Identity updateOwnReceptionistProfile(UUID id,String displayName){
+  var staff=receptionist(id);staff.displayName=displayName.trim();
+  staffEvents.save(new StaffAccountEvent(id,id,"PROFILE_UPDATED"));return staff;
+ }
+ public Identity updateOwnAvatar(UUID id,byte[] data,String mime){
+  var account=users.findById(id).orElseThrow(()->new StaffManagementException("ACCOUNT_NOT_FOUND"));
+  if(account.role!=Identity.Role.RECEPTIONIST&&account.role!=Identity.Role.PATIENT)throw new StaffManagementException("AVATAR_NOT_SUPPORTED");
+  account.avatarData=data;account.avatarMime=mime;
+  if(account.role==Identity.Role.RECEPTIONIST)staffEvents.save(new StaffAccountEvent(id,id,"AVATAR_UPDATED"));
+  return account;
+ }
  @Transactional(readOnly=true) public Optional<Identity> findIdentity(UUID id){return users.findById(id);}
  public Tokens login(String email,String password){
   var user=users.findByEmailIgnoreCase(email).orElseThrow(()->new IllegalArgumentException("BAD_CREDENTIALS"));

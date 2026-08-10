@@ -12,6 +12,7 @@ import "../styles/patient-ai-intake.css";
 import "../styles/patient-ai-result.css";
 import "../styles/patient-dashboard.css";
 import "../styles/patient-medical-records.css";
+import "../styles/reception-account.css";
 
 export default function PatientRoute({ children }: { children: ReactNode }) {
   // Route scope keeps booking-specific responsive rules away from other workspaces.

@@ -1,0 +1,3 @@
+ALTER TABLE identities
+    ADD COLUMN IF NOT EXISTS avatar_data BYTEA,
+    ADD COLUMN IF NOT EXISTS avatar_mime VARCHAR(50);

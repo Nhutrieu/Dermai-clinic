@@ -1,4 +1,5 @@
 package com.dermai.auth.domain;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import java.time.Instant;
 import java.util.UUID;
@@ -7,6 +8,8 @@ public class Identity {
  @Id public UUID id;
  @Column(nullable=false,unique=true) public String email;
  @Column(name="display_name",length=150) public String displayName;
+ @JsonIgnore @Column(name="avatar_data") public byte[] avatarData;
+ @JsonIgnore @Column(name="avatar_mime",length=50) public String avatarMime;
  @Column(name="password_hash") public String passwordHash;
  @Column(name="google_subject",unique=true,length=255) public String googleSubject;
  @Column(name="email_verified_at") public Instant emailVerifiedAt;

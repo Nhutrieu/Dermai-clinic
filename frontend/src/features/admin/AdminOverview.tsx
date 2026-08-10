@@ -1,6 +1,7 @@
 import { CalendarDays, Search, X } from "lucide-react";
 import type { Appointment, Doctor, Patient } from "../../core/types";
 import { State } from "../../components/Ui";
+import AuthenticatedAvatar from "../../components/AuthenticatedAvatar";
 import { AdminAnalytics } from "./AdminAnalytics";
 import AdminStaleConsultations from "./AdminStaleConsultations";
 
@@ -100,14 +101,14 @@ export default function AdminOverview(props: Props) {
                         onClick={() => props.onSelectPatient(patient.id)}
                         aria-current={props.selectedPatientId === patient.id ? "true" : undefined}
                     >
-                        <span className="admin-patient-avatar" aria-hidden="true">{patient.fullName.slice(0, 1).toUpperCase()}</span>
+                        <AuthenticatedAvatar token={props.token} identityId={patient.identityId} className="admin-patient-avatar" fallback={patient.fullName.slice(0, 1).toUpperCase()} />
                         <span><strong>{patient.fullName}</strong><small>{patient.phone || "Chưa có số điện thoại"}</small></span>
                     </button>)}
                 </nav>
 
                 {selectedPatient ? <article className="admin-directory-detail admin-patient-detail">
                     <header>
-                        <span className="admin-patient-avatar" aria-hidden="true">{selectedPatient.fullName.slice(0, 1).toUpperCase()}</span>
+                        <AuthenticatedAvatar token={props.token} identityId={selectedPatient.identityId} className="admin-patient-avatar" fallback={selectedPatient.fullName.slice(0, 1).toUpperCase()} />
                         <div><small>Hồ sơ bệnh nhân</small><h3>{selectedPatient.fullName}</h3></div>
                         <button type="button" aria-label="Đóng hồ sơ bệnh nhân" onClick={props.onClearPatient}><X aria-hidden="true" /></button>
                     </header>

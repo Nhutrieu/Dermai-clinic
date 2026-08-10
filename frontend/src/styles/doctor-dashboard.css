@@ -262,7 +262,13 @@
   position: sticky;
   top: var(--space-5);
   display: grid;
+  align-self: start;
+  height: max-content;
+  min-height: 0;
   gap: var(--space-4);
+  padding: 0;
+  color: inherit;
+  background: transparent;
 }
 
 .doctor-focus-panel {

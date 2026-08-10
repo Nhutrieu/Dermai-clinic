@@ -3,6 +3,9 @@ import jakarta.validation.Valid;
 import jakarta.validation.constraints.*;
 import org.springframework.http.*;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
+import org.springframework.web.server.ResponseStatusException;
+import java.io.IOException;
 import java.time.Instant;
 import java.util.*;
 import org.springframework.beans.factory.annotation.Value;
@@ -20,7 +23,7 @@ public class AuthController {
  record BlockStaff(boolean blocked){}
  record StaffPassword(@NotBlank @Size(min=10,max=100) String newPassword){}
  record StaffName(@NotBlank @Size(max=150) String displayName){}
- record StaffView(UUID identityId,String displayName,String email,com.dermai.auth.domain.Identity.Role role,com.dermai.auth.domain.Identity.Status status,Instant createdAt){}
+ record StaffView(UUID identityId,String displayName,String email,com.dermai.auth.domain.Identity.Role role,com.dermai.auth.domain.Identity.Status status,Instant createdAt,boolean hasAvatar){}
  record StaffDirectoryView(UUID identityId,String displayName,com.dermai.auth.domain.Identity.Status status){}
  record GoogleCredential(@NotBlank @Size(max=6000) String credential){}
  @PostMapping("/register") ResponseEntity<?> register(@Valid @RequestBody Credentials x){
@@ -52,6 +55,30 @@ public class AuthController {
  @GetMapping("/staff/directory") ResponseEntity<?> staffDirectory(@RequestHeader("X-User-Role") String caller){
   if(!Set.of("PATIENT","RECEPTIONIST","ADMIN").contains(caller))return ResponseEntity.status(403).body(Map.of("code","FORBIDDEN"));
   return ResponseEntity.ok(service.listStaff(com.dermai.auth.domain.Identity.Role.RECEPTIONIST).stream().map(x->new StaffDirectoryView(x.id,x.displayName,x.status)).toList());
+ }
+ @GetMapping("/me") ResponseEntity<?> me(@RequestHeader("X-User-Id") UUID actor,@RequestHeader("X-User-Role") String caller){
+  if(!Set.of("PATIENT","RECEPTIONIST").contains(caller))return ResponseEntity.status(403).body(Map.of("code","FORBIDDEN"));
+  var staff=service.findIdentity(actor).orElseThrow(()->new ResponseStatusException(HttpStatus.NOT_FOUND));return ResponseEntity.ok(view(staff));
+ }
+ @PatchMapping("/me/profile") ResponseEntity<?> updateMyProfile(@RequestHeader("X-User-Id") UUID actor,@RequestHeader("X-User-Role") String caller,@Valid @RequestBody StaffName x){
+  if(!"RECEPTIONIST".equals(caller))return ResponseEntity.status(403).body(Map.of("code","FORBIDDEN"));
+  return ResponseEntity.ok(view(service.updateOwnReceptionistProfile(actor,x.displayName())));
+ }
+ @PostMapping(value="/me/avatar",consumes=MediaType.MULTIPART_FORM_DATA_VALUE) ResponseEntity<?> uploadMyAvatar(@RequestHeader("X-User-Id") UUID actor,@RequestHeader("X-User-Role") String caller,@RequestPart("image") MultipartFile image) throws IOException{
+  if(!Set.of("PATIENT","RECEPTIONIST").contains(caller))return ResponseEntity.status(403).body(Map.of("code","FORBIDDEN"));
+  if(image.isEmpty()||image.getSize()>2*1024*1024)throw new ResponseStatusException(HttpStatus.PAYLOAD_TOO_LARGE,"Ảnh đại diện tối đa 2 MB");
+  var mime=image.getContentType();if(!Set.of("image/jpeg","image/png","image/webp").contains(mime))throw new ResponseStatusException(HttpStatus.UNSUPPORTED_MEDIA_TYPE,"Chỉ nhận JPG, PNG hoặc WebP");
+  return ResponseEntity.ok(view(service.updateOwnAvatar(actor,image.getBytes(),mime)));
+ }
+ @GetMapping("/me/avatar") ResponseEntity<byte[]> myAvatar(@RequestHeader("X-User-Id") UUID actor,@RequestHeader("X-User-Role") String caller){
+  if(!Set.of("PATIENT","RECEPTIONIST").contains(caller))throw new ResponseStatusException(HttpStatus.FORBIDDEN);
+  return avatarResponse(service.findIdentity(actor).orElseThrow(()->new ResponseStatusException(HttpStatus.NOT_FOUND)));
+ }
+ @GetMapping("/accounts/{id}/avatar") ResponseEntity<byte[]> accountAvatar(@RequestHeader("X-User-Role") String caller,@PathVariable UUID id){
+  if(!"ADMIN".equals(caller))throw new ResponseStatusException(HttpStatus.FORBIDDEN);
+  var account=service.findIdentity(id).orElseThrow(()->new ResponseStatusException(HttpStatus.NOT_FOUND));
+  if(!Set.of(com.dermai.auth.domain.Identity.Role.PATIENT,com.dermai.auth.domain.Identity.Role.RECEPTIONIST).contains(account.role))throw new ResponseStatusException(HttpStatus.NOT_FOUND);
+  return avatarResponse(account);
  }
  @PatchMapping("/staff/{id}/account") ResponseEntity<?> updateStaffAccount(@RequestHeader("X-User-Id") UUID actor,@RequestHeader("X-User-Role") String caller,@PathVariable UUID id,@Valid @RequestBody BlockStaff x){
   if(!"ADMIN".equals(caller))return ResponseEntity.status(403).body(Map.of("code","FORBIDDEN"));
@@ -85,5 +112,9 @@ public class AuthController {
   if(serviceToken.isBlank()||!java.security.MessageDigest.isEqual(serviceToken.getBytes(java.nio.charset.StandardCharsets.UTF_8),token.getBytes(java.nio.charset.StandardCharsets.UTF_8)))return ResponseEntity.status(403).build();
   return service.findIdentity(id).<ResponseEntity<?>>map(x->ResponseEntity.ok(Map.of("identityId",x.id,"email",x.email,"role",x.role))).orElseGet(()->ResponseEntity.notFound().build());
  }
- private StaffView view(com.dermai.auth.domain.Identity x){return new StaffView(x.id,x.displayName,x.email,x.role,x.status,x.createdAt);}
+ private StaffView view(com.dermai.auth.domain.Identity x){return new StaffView(x.id,x.displayName,x.email,x.role,x.status,x.createdAt,x.avatarData!=null);}
+ private ResponseEntity<byte[]> avatarResponse(com.dermai.auth.domain.Identity account){
+  if(account.avatarData==null||account.avatarMime==null)throw new ResponseStatusException(HttpStatus.NOT_FOUND);
+  return ResponseEntity.ok().contentType(MediaType.parseMediaType(account.avatarMime)).cacheControl(CacheControl.noStore()).body(account.avatarData);
+ }
 }

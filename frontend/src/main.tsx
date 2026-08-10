@@ -1,10 +1,10 @@
-import { FormEvent, lazy, Suspense, useEffect, useState } from "react";
+import { FormEvent, lazy, Suspense, useEffect, useRef, useState } from "react";
 import { createRoot } from "react-dom/client";
 import { createPortal } from "react-dom";
 import { Activity, ArrowRight, BrainCircuit, CalendarDays, LayoutDashboard, LogOut, ShieldCheck, Sparkles, Stethoscope, UserRound, X } from "lucide-react";
-import { ApiError, configureAccessTokenRecovery, request } from "./core/api";
+import { ApiError, configureAccessTokenRecovery, request, requestBlob } from "./core/api";
 import { subscribeRealtime } from "./core/realtime";
-import type { Appointment, Doctor, LeavePeriod, MedicalRecord, Patient, Prescription, Tokens, WorkSchedule } from "./core/types";
+import type { AccountProfile, Appointment, Doctor, LeavePeriod, MedicalRecord, Patient, Prescription, Tokens, WorkSchedule } from "./core/types";
 import { RecordList } from "./components/Records";
 import { State } from "./components/Ui";
 import "./styles/design-system.css";
@@ -37,6 +37,8 @@ const ReceptionHotlineBooking = lazy(() => import("./features/reception/HotlineB
 const PatientNotifications = lazy(() => import("./features/patient/PatientNotifications"));
 const PatientAiScreen = lazy(() => import("./features/patient/PatientAiScreen"));
 const SupportChat = lazy(() => import("./features/support/SupportChat"));
+const ReceptionistAccountDialog = lazy(() => import("./features/reception/ReceptionistAccountDialog"));
+const PatientAccountDialog = lazy(() => import("./features/patient/PatientAccountDialog"));
 
 function App() {
     const [session, setSession] = useState<Tokens | null>(() => { try { return JSON.parse(sessionStorage.getItem("dermai-session") || "null") } catch { return null } });
@@ -281,6 +283,49 @@ function Dashboard({ session, logout }: { session: Tokens; logout: () => void })
         records: { loading: true, error: "" },
         prescriptions: { loading: true, error: "" },
     });
+    const [accountProfile, setAccountProfile] = useState<AccountProfile | null>(null);
+    const [accountAvatarSrc, setAccountAvatarSrc] = useState("");
+    const [accountDialogOpen, setAccountDialogOpen] = useState(false);
+    const accountAvatarObjectUrl = useRef<string | null>(null);
+
+    function replaceAccountAvatar(next: string) {
+        if (accountAvatarObjectUrl.current) URL.revokeObjectURL(accountAvatarObjectUrl.current);
+        accountAvatarObjectUrl.current = next || null;
+        setAccountAvatarSrc(next);
+    }
+
+    async function loadAccountAvatar() {
+        const blob = await requestBlob("/auth/me/avatar", session.accessToken);
+        replaceAccountAvatar(URL.createObjectURL(blob));
+    }
+
+    useEffect(() => {
+        if (!new Set(["PATIENT", "RECEPTIONIST"]).has(session.role)) return;
+        let active = true;
+
+        request<AccountProfile>("/auth/me", session.accessToken)
+            .then(async profile => {
+                if (!active) return;
+                setAccountProfile(profile);
+                if (!profile.hasAvatar) return;
+                const blob = await requestBlob("/auth/me/avatar", session.accessToken);
+                const source = URL.createObjectURL(blob);
+                if (!active) {
+                    URL.revokeObjectURL(source);
+                    return;
+                }
+                replaceAccountAvatar(source);
+            })
+            .catch(() => {
+                // Account details stay secondary; operational receptionist screens remain usable.
+            });
+
+        return () => {
+            active = false;
+            if (accountAvatarObjectUrl.current) URL.revokeObjectURL(accountAvatarObjectUrl.current);
+            accountAvatarObjectUrl.current = null;
+        };
+    }, [session.accessToken, session.role]);
     async function loadDoctor() {
         const d = await request<Doctor>("/doctors/me", session.accessToken); const schedule = await request<{ workSchedules: WorkSchedule[]; leavePeriods: LeavePeriod[] }>("/doctors/me/schedule", session.accessToken);
         // Include recent history so a forgotten IN_PROGRESS visit remains visible to the doctor.
@@ -415,7 +460,12 @@ function Dashboard({ session, logout }: { session: Tokens; logout: () => void })
                 <button aria-current={tab === "records" ? "page" : undefined} className={tab === "records" ? "active" : ""} onClick={() => setTab("records")}><Stethoscope /><span>{labels[2]}</span></button>
                 {session.role === "PATIENT" && <button aria-current={tab === "ai" ? "page" : undefined} className={tab === "ai" ? "active" : ""} onClick={() => setTab("ai")}><BrainCircuit /><span>Kiểm tra da AI</span></button>}
             </nav>
-            <div className="sidebar-footer"><span className="sidebar-avatar">{roleName.slice(0, 1)}</span><div><b>{roleName}</b><small>Phiên làm việc an toàn</small></div></div>
+            {(session.role === "PATIENT" || session.role === "RECEPTIONIST") ? (
+                <button type="button" className="sidebar-footer sidebar-account-trigger" disabled={!accountProfile} onClick={() => setAccountDialogOpen(true)} aria-label="Mở tài khoản của tôi">
+                    {accountAvatarSrc ? <img className="sidebar-avatar" src={accountAvatarSrc} alt="" /> : <span className="sidebar-avatar">{(session.role === "PATIENT" ? patient?.fullName || roleName : accountProfile?.displayName || roleName).slice(0, 1).toLocaleUpperCase("vi")}</span>}
+                    <div><b>{session.role === "PATIENT" ? patient?.fullName || roleName : accountProfile?.displayName || roleName}</b><small>Tài khoản của tôi</small></div>
+                </button>
+            ) : <div className="sidebar-footer"><span className="sidebar-avatar">{roleName.slice(0, 1)}</span><div><b>{roleName}</b><small>Phiên làm việc an toàn</small></div></div>}
             <button className="logout" onClick={logout}><LogOut /><span>Đăng xuất</span></button>
         </aside>
         <main className="app-main">
@@ -432,6 +482,31 @@ function Dashboard({ session, logout }: { session: Tokens; logout: () => void })
             {!loading && !error && session.role === "DOCTOR" && doctor && tab === "appointments" && <DoctorView token={session.accessToken} doctor={doctor} appointments={appointments} patients={patients} work={work} leave={leave} transition={transition} requireFollowUp={requireFollowUp} />}
             {!loading && !error && session.role === "DOCTOR" && tab === "records" && <RecordList records={records} patients={patients} />}
         </main>
+        {session.role === "RECEPTIONIST" && accountDialogOpen && accountProfile && (
+            <ReceptionistAccountDialog
+                token={session.accessToken}
+                profile={accountProfile}
+                avatarSrc={accountAvatarSrc}
+                onChanged={(profile, avatarChanged) => {
+                    setAccountProfile(profile);
+                    if (avatarChanged) void loadAccountAvatar().catch(() => undefined);
+                }}
+                onClose={() => setAccountDialogOpen(false)}
+            />
+        )}
+        {session.role === "PATIENT" && accountDialogOpen && accountProfile && patient && (
+            <PatientAccountDialog
+                token={session.accessToken}
+                account={accountProfile}
+                patient={patient}
+                avatarSrc={accountAvatarSrc}
+                onChanged={(profile, avatarChanged) => {
+                    setAccountProfile(profile);
+                    if (avatarChanged) void loadAccountAvatar().catch(() => undefined);
+                }}
+                onClose={() => setAccountDialogOpen(false)}
+            />
+        )}
     </div>;
 }
 createRoot(document.getElementById("root")!).render(<App />);

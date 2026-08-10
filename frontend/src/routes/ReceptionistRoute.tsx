@@ -11,6 +11,7 @@ import "../styles/reception-hotline-redesign.css";
 import "../styles/reception-patient-lookup.css";
 import "../styles/reception-requests.css";
 import "../styles/reception-accepted.css";
+import "../styles/reception-account.css";
 
 export default function ReceptionistRoute({ children }: { children: ReactNode }) {
   return children;

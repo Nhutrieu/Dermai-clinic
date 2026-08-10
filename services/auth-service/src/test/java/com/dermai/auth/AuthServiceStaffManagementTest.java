@@ -76,4 +76,29 @@ class AuthServiceStaffManagementTest {
     verify(events).save(argThat(event -> event.staffIdentityId.equals(staff.id)
         && event.actorIdentityId.equals(actor) && event.actionType.equals("PROFILE_UPDATED")));
   }
+
+  @Test
+  void receptionistCanUpdateOwnAvatarAndKeepsAnAuditEvent() {
+    var staff = Identity.staff("reception@dermai.vn", "hash", Identity.Role.RECEPTIONIST, "Nguyễn Thu");
+    when(identities.findById(staff.id)).thenReturn(Optional.of(staff));
+
+    service.updateOwnAvatar(staff.id, new byte[] {1, 2, 3}, "image/png");
+
+    assertThat(staff.avatarMime).isEqualTo("image/png");
+    assertThat(staff.avatarData).containsExactly(1, 2, 3);
+    verify(events).save(argThat(event -> event.staffIdentityId.equals(staff.id)
+        && event.actorIdentityId.equals(staff.id) && event.actionType.equals("AVATAR_UPDATED")));
+  }
+
+  @Test
+  void patientCanStoreAPrivateAccountAvatarWithoutCreatingAStaffEvent() {
+    var patient = new Identity("patient@example.com", "hash");
+    when(identities.findById(patient.id)).thenReturn(Optional.of(patient));
+
+    service.updateOwnAvatar(patient.id, new byte[] {4, 5, 6}, "image/webp");
+
+    assertThat(patient.avatarMime).isEqualTo("image/webp");
+    assertThat(patient.avatarData).containsExactly(4, 5, 6);
+    verifyNoInteractions(events);
+  }
 }

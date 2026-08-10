@@ -140,8 +140,6 @@ export default function HomePage({ openAuth, chat }: HomePageProps) {
   }, []);
 
   const closeMenu = () => setMenuOpen(false);
-  const featuredDoctor = doctors[0];
-  const supportingDoctors = doctors.slice(1, 4);
   const featuredReview = reviews[0];
   // Keep the homepage concise; the dialog carries the complete approved review list.
   const supportingReviews = reviews.slice(1, 2);
@@ -316,29 +314,22 @@ export default function HomePage({ openAuth, chat }: HomePageProps) {
               <div className="clinic-home-data-state">Đội ngũ bác sĩ đang được cập nhật.</div>
             )}
 
-            {featuredDoctor && (
-              <div className="clinic-home-doctor-layout">
-                <article className="clinic-home-doctor-featured">
-                  <div className="clinic-home-doctor-photo"><DoctorPhoto doctor={featuredDoctor} /></div>
-                  <div className="clinic-home-doctor-content">
-                    <DoctorDetails doctor={featuredDoctor} />
-                    <button type="button" className="clinic-home-text-button" onClick={openAuth}>Đặt lịch khám <ArrowRight aria-hidden="true" /></button>
-                  </div>
-                </article>
-
-                {supportingDoctors.length > 0 && (
-                  <div className="clinic-home-doctor-list">
-                    {supportingDoctors.map((doctor) => (
-                      <article key={doctor.id}>
-                        <div className="clinic-home-doctor-photo"><DoctorPhoto doctor={doctor} /></div>
-                        <div className="clinic-home-doctor-content">
-                          <DoctorDetails doctor={doctor} />
-                          <button type="button" className="clinic-home-text-button" onClick={openAuth}>Đặt lịch khám <ArrowRight aria-hidden="true" /></button>
-                        </div>
-                      </article>
-                    ))}
-                  </div>
-                )}
+            {doctors.length > 0 && (
+              <div
+                className="clinic-home-doctor-rail"
+                role="region"
+                aria-label="Danh sách bác sĩ, cuộn ngang để xem thêm"
+                tabIndex={doctors.length > 1 ? 0 : undefined}
+              >
+                {doctors.map((doctor) => (
+                  <article className="clinic-home-doctor-card" key={doctor.id}>
+                    <div className="clinic-home-doctor-photo"><DoctorPhoto doctor={doctor} /></div>
+                    <div className="clinic-home-doctor-content">
+                      <DoctorDetails doctor={doctor} />
+                      <button type="button" className="clinic-home-text-button" onClick={openAuth}>Đặt lịch khám <ArrowRight aria-hidden="true" /></button>
+                    </div>
+                  </article>
+                ))}
               </div>
             )}
           </div>
