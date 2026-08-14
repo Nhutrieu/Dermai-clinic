@@ -828,6 +828,43 @@ nav button.active{background:#d9f278;color:#143d34;font-weight:700}
   color: var(--color-danger);
 }
 
+.patient-appointment-actions .appointment-delete-action {
+  display: grid;
+  width: var(--control-min-height);
+  min-width: var(--control-min-height);
+  padding: 0;
+  place-items: center;
+  border-color: var(--color-danger-border);
+  color: var(--color-danger);
+}
+
+.patient-appointment-actions .appointment-delete-action:hover {
+  border-color: var(--color-danger);
+  background: var(--color-danger-surface);
+}
+
+.appointment-delete-action svg {
+  width: 18px;
+  height: 18px;
+}
+
+.booking-dialog-actions .appointment-delete-confirm {
+  border-color: var(--color-danger);
+  background: var(--color-danger);
+  color: var(--color-surface);
+}
+
+.booking-dialog-actions .appointment-delete-confirm:hover:not(:disabled) {
+  border-color: var(--color-danger-strong, var(--color-danger));
+  background: var(--color-danger-strong, var(--color-danger));
+}
+
+.booking-dialog-copy .appointment-delete-error {
+  margin-top: var(--space-3);
+  color: var(--color-danger);
+  font-weight: 700;
+}
+
 .patient-appointment-actions .appointment-support-action {
   display: inline-flex;
   align-items: center;

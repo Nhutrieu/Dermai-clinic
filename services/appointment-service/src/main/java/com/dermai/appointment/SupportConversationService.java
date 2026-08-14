@@ -14,7 +14,10 @@ class SupportConversationService {
  @Transactional(readOnly=true)
  List<SupportConversation> list(UUID identity,String role){
   if("PATIENT".equals(role))return conversations.findById(identity).map(List::of).orElseGet(List::of);
-  requireViewer(role);return conversations.findAllByOrderByUpdatedAtDesc();
+  requireViewer(role);
+  return "RECEPTIONIST".equals(role)
+   ? conversations.findByChannelStatusNotOrderByUpdatedAtDesc("AI_ACTIVE")
+   : conversations.findAllByOrderByUpdatedAtDesc();
  }
 
  // The atomic upsert guarantees that two receptionists cannot claim the same conversation.
@@ -33,7 +36,51 @@ class SupportConversationService {
  }
 
  @Transactional
+ SupportConversation resolve(UUID patientIdentityId,UUID receptionistIdentityId){
+  if(conversations.resolve(patientIdentityId,receptionistIdentityId)==0)
+   throw new ResponseStatusException(HttpStatus.CONFLICT,"Chỉ lễ tân đang phụ trách mới có thể hoàn tất yêu cầu hỗ trợ.");
+  return conversations.findById(patientIdentityId).orElseThrow();
+ }
+
+ @Transactional
  void touch(UUID patientIdentityId){conversations.touch(patientIdentityId);}
+
+ @Transactional(readOnly=true)
+ int failureCount(UUID patientIdentityId){return conversations.findById(patientIdentityId).map(item->item.aiFailureCount).orElse(0);}
+
+ @Transactional(readOnly=true)
+ String lastIntent(UUID patientIdentityId){return conversations.findById(patientIdentityId).map(item->item.lastIntent).orElse(null);}
+
+ @Transactional(readOnly=true)
+ boolean aiActiveOrNew(UUID patientIdentityId){return conversations.findById(patientIdentityId).map(item->"AI_ACTIVE".equals(item.channelStatus)).orElse(true);}
+
+ @Transactional(readOnly=true)
+ boolean visibleToReceptionist(UUID patientIdentityId){return conversations.findById(patientIdentityId).map(item->!"AI_ACTIVE".equals(item.channelStatus)).orElse(false);}
+
+ @Transactional
+ SupportConversation recordAiTurn(UUID patientIdentityId,String intent,double confidence,int failureCount,boolean escalate,String summary,String reason){
+  var item=conversations.findById(patientIdentityId).orElseGet(()->new SupportConversation(patientIdentityId));
+  item.lastIntent=intent;item.lastIntentConfidence=confidence;item.aiFailureCount=failureCount;item.aiSummary=summary;item.updatedAt=java.time.Instant.now();
+  boolean alreadyHuman=!"AI_ACTIVE".equals(item.channelStatus);
+  if(escalate&&!alreadyHuman){item.channelStatus="WAITING_RECEPTIONIST";item.escalatedAt=java.time.Instant.now();item.escalationReason=reason;}
+  if(escalate&&!alreadyHuman){item.resolvedAt=null;item.resolvedByIdentityId=null;}
+  return conversations.save(item);
+ }
+
+ @Transactional
+ SupportConversation manualEscalate(UUID patientIdentityId){
+  var item=conversations.findById(patientIdentityId).orElseGet(()->new SupportConversation(patientIdentityId));
+  if("AI_ACTIVE".equals(item.channelStatus)){
+   item.channelStatus="WAITING_RECEPTIONIST";item.escalatedAt=java.time.Instant.now();
+   item.resolvedAt=null;item.resolvedByIdentityId=null;
+   item.escalationReason="PATIENT_DIRECT_MESSAGE";item.lastIntent="HUMAN_SUPPORT";
+   item.aiSummary="Bệnh nhân mở kênh hỗ trợ trực tiếp và đang chờ lễ tân tiếp nhận.";
+  }
+  // A reply inside an existing human handoff only refreshes its timestamp; it
+  // must not overwrite the AI intent, summary or original escalation reason.
+  item.updatedAt=java.time.Instant.now();
+  return conversations.save(item);
+ }
 
  @Transactional(readOnly=true)
  boolean assignedTo(UUID patientIdentityId,UUID receptionistIdentityId){

@@ -1,20 +1,71 @@
 @startuml
-node "Client" { artifact Browser }
-node "Docker Host / Kubernetes" {
-  node "Frontend" { component Nginx }
-  node "Java Runtime" { component Gateway\ncomponent Clinic\ncomponent Auth\ncomponent Notification\ncomponent Analytics }
-  node "Python Runtime" { component "AI API"\nartifact "best_model.pth"\nartifact "FAISS index" }
-  database PostgreSQL
-  queue RabbitMQ
-  component Redis
-}
-Browser --> Nginx
-Nginx --> Gateway
-Gateway --> Clinic
-Gateway --> Auth
-Gateway --> "AI API"
-Clinic --> PostgreSQL
-Clinic --> RabbitMQ
-Gateway --> Redis
-@enduml
+title DermAI Clinic - Production Deployment Diagram
+skinparam shadowing false
 
+cloud "Internet" as Internet
+node "Client devices" {
+  artifact "Browser / Mobile Browser" as Browser
+}
+node "VPS / Docker Host" {
+  node "Public edge" {
+    component "TLS Reverse Proxy\n80 / 443" as TLS
+    component "Frontend Nginx\nReact static assets" as Frontend
+  }
+  node "Private Docker Network" {
+    component "API Gateway" as Gateway
+    component "Auth Service" as Auth
+    component "Patient Service" as PatientService
+    component "Doctor Service" as DoctorService
+    component "Appointment Service" as Appointment
+    component "Medical Record Service" as Record
+    component "Prescription Service" as Prescription
+    component "Notification Service" as Notification
+    component "FastAPI AI Service" as AI
+    database "PostgreSQL\n7 schemas" as PostgreSQL
+    queue "RabbitMQ" as RabbitMQ
+    component "Redis" as Redis
+    artifact "best_model.pth" as Model
+    artifact "RAG index" as Rag
+  }
+  folder "Persistent volumes" {
+    artifact "postgres_data" as PgVolume
+    artifact "encrypted backups" as Backup
+  }
+}
+cloud "Gmail SMTP" as SMTP
+cloud "Gemini API" as Gemini
+
+Internet --> Browser
+Browser --> TLS : HTTPS / WSS
+TLS --> Frontend
+Frontend --> Gateway : /api + WebSocket
+Gateway --> Auth
+Gateway --> PatientService
+Gateway --> DoctorService
+Gateway --> Appointment
+Gateway --> Record
+Gateway --> Prescription
+Gateway --> AI
+Gateway --> Redis
+Appointment --> RabbitMQ
+RabbitMQ --> Notification
+Notification --> SMTP
+Auth --> PostgreSQL
+PatientService --> PostgreSQL
+DoctorService --> PostgreSQL
+Appointment --> PostgreSQL
+Record --> PostgreSQL
+Prescription --> PostgreSQL
+Notification --> PostgreSQL
+AI --> Model
+AI --> Rag
+AI --> Gemini
+PostgreSQL --> PgVolume
+PgVolume --> Backup
+note right of PostgreSQL
+  Không public 5432
+end note
+note right of RabbitMQ
+  Không public 15672
+end note
+@enduml

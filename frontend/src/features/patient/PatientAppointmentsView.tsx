@@ -421,6 +421,13 @@ export default function PatientAppointmentsView({
         changed(latest);
     }
 
+    async function hide(id: string) {
+        await request("/appointments/" + id + "/hide", token, { method: "PATCH" });
+        const latest = await request<Appointment[]>("/appointments/mine", token);
+        setItems(latest);
+        changed(latest);
+    }
+
     return (
         <>
             {timeConflict && (
@@ -720,6 +727,7 @@ export default function PatientAppointmentsView({
                     token={token}
                     appointments={items}
                     cancel={cancel}
+                    hide={hide}
                     patientName={patient.fullName}
                 />
             </div>

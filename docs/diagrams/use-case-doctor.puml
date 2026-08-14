@@ -1,0 +1,74 @@
+@startuml
+title DermAI Clinic - Use Case chi tiết: Bác sĩ
+left to right direction
+skinparam packageStyle rectangle
+skinparam shadowing false
+skinparam ArrowColor #315A50
+skinparam ActorBorderColor #172B3B
+skinparam ActorFontColor #172B3B
+skinparam UsecaseBackgroundColor #172B3B
+skinparam UsecaseBorderColor #172B3B
+skinparam UsecaseFontColor #FFFFFF
+skinparam RectangleBorderColor #78978E
+
+actor "Bác sĩ" as Doctor
+actor "Bệnh nhân" as Patient
+actor "Lễ tân" as Receptionist
+
+rectangle "DermAI Clinic - Cổng bác sĩ" {
+  package "Hồ sơ nghề nghiệp" {
+    usecase "Xem hồ sơ công khai" as ViewProfile
+    usecase "Cập nhật ảnh đại diện" as Avatar
+    usecase "Cập nhật họ tên, chuyên môn,\nkinh nghiệm và chứng chỉ" as ProfessionalInfo
+    usecase "Cập nhật mô tả bác sĩ" as Description
+  }
+
+  package "Lịch làm việc" {
+    usecase "Cấu hình giờ làm hằng tuần" as WeeklySchedule
+    usecase "Cấu hình độ dài slot" as SlotLength
+    usecase "Khai báo nghỉ phép" as Leave
+    usecase "Kiểm tra lịch đã đặt\ntrước khi đổi ca" as ScheduleConflict
+  }
+
+  package "Lượt khám" {
+    usecase "Xem lịch hôm nay và sắp tới" as ViewAppointments
+    usecase "Lọc / tìm bệnh nhân" as FilterAppointments
+    usecase "Xem lý do khám" as ViewReason
+    usecase "Xem AI được bệnh nhân chia sẻ" as ViewSharedAI
+    usecase "Bắt đầu lượt khám" as StartVisit
+    usecase "Hoàn tất lượt khám" as CompleteVisit
+    usecase "Nhận cảnh báo cần hoàn tất" as CompletionWarning
+  }
+
+  package "Nội dung chuyên môn tùy chọn" {
+    usecase "Ghi hồ sơ y khoa" as Record
+    usecase "Lập và ký đơn thuốc" as Prescription
+    usecase "Yêu cầu tái khám" as FollowUp
+  }
+}
+
+Doctor --> ViewProfile
+Doctor --> WeeklySchedule
+Doctor --> Leave
+Doctor --> ViewAppointments
+Doctor --> StartVisit
+Doctor --> CompleteVisit
+Avatar .> ViewProfile : <<extend>>
+ProfessionalInfo .> ViewProfile : <<extend>>
+Description .> ViewProfile : <<extend>>
+WeeklySchedule .> SlotLength : <<include>>
+WeeklySchedule .> ScheduleConflict : <<include>>
+Leave .> ScheduleConflict : <<include>>
+FilterAppointments .> ViewAppointments : <<extend>>
+ViewReason .> ViewAppointments : <<include>>
+ViewSharedAI .> ViewAppointments : <<extend>>
+StartVisit .> ViewAppointments : <<extend>>
+CompleteVisit .> StartVisit : <<extend>>
+CompletionWarning .> CompleteVisit : <<extend>>
+Record .> StartVisit : <<extend>>
+Prescription .> Record : <<extend>>
+FollowUp .> CompleteVisit : <<extend>>
+Patient --> ViewProfile
+Patient --> ViewSharedAI
+Receptionist --> StartVisit : check-in trước
+@enduml

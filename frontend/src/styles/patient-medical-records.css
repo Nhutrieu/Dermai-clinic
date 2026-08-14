@@ -229,6 +229,51 @@
   gap: var(--space-2);
 }
 
+.patient-medical-list-actions {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.patient-medical-delete {
+  display: grid;
+  width: var(--control-min-height);
+  min-width: var(--control-min-height);
+  height: var(--control-min-height);
+  place-items: center;
+  padding: 0;
+  border: 1px solid var(--color-danger-border);
+  border-radius: var(--radius-control);
+  background: var(--color-surface);
+  color: var(--color-danger);
+}
+
+.patient-medical-delete:hover {
+  border-color: var(--color-danger);
+  background: var(--color-danger-surface);
+}
+
+.patient-medical-delete svg {
+  width: 18px;
+  height: 18px;
+}
+
+.booking-dialog-actions .patient-medical-delete-confirm {
+  border-color: var(--color-danger);
+  background: var(--color-danger);
+  color: var(--color-surface);
+}
+
+.booking-dialog-actions .patient-medical-delete-confirm:hover:not(:disabled) {
+  border-color: var(--color-danger-strong);
+  background: var(--color-danger-strong);
+}
+
+.booking-dialog-copy .patient-medical-delete-error {
+  color: var(--color-danger);
+  font-weight: 700;
+}
+
 .patient-medical-list time {
   color: var(--color-ink);
   font-size: 15px;

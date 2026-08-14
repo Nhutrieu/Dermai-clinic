@@ -1,9 +1,10 @@
 import { FormEvent, useEffect, useRef, useState } from "react";
-import { CalendarCheck, Headphones, ShieldCheck, UserCheck, UserMinus } from "lucide-react";
+import { CalendarCheck, CircleCheck, Headphones, MessageCircle, ShieldCheck, UserCheck, UserMinus } from "lucide-react";
 import { request } from "../../core/api";
 import { enableChimeNotifications, subscribeRealtime, playChimeNotification } from "../../core/realtime";
 import type { Appointment, AvailabilitySlot, Doctor, Patient, StaffDirectoryEntry, SupportConversation, SupportMessage, Tokens } from "../../core/types";
 import { newIncomingSupportMessages } from "./supportMessageModel";
+import SupportAssistant, { type AssistantTurnResponse } from "./SupportAssistant";
 
 function tokenSubject(token: string) {
     try {
@@ -34,9 +35,12 @@ export default function SupportChat({ session }: { session: Tokens }) {
     const [bookingReason, setBookingReason] = useState("");
     const [bookingBusy, setBookingBusy] = useState(false);
     const [notice, setNotice] = useState("");
+    const [handoffNotice, setHandoffNotice] = useState(false);
+    const [patientChannel, setPatientChannel] = useState<"assistant" | "receptionist">("assistant");
 
     const knownMessageIdsRef = useRef<Set<string>>(new Set());
     const messagesInitializedRef = useRef(false);
+    const messageListRef = useRef<HTMLDivElement>(null);
     const receptionist = session.role === "RECEPTIONIST";
     const admin = session.role === "ADMIN";
     const staffViewer = receptionist || admin;
@@ -46,6 +50,7 @@ export default function SupportChat({ session }: { session: Tokens }) {
     const activeConversation = conversationStates.find(item => item.patientIdentityId === conversation);
     const assignedToMe = receptionist && !!currentIdentityId && activeConversation?.assignedReceptionistIdentityId === currentIdentityId;
     const unread = admin ? [] : messages.filter(item => !item.readAt && (receptionist ? item.senderRole === "PATIENT" : item.senderRole !== "PATIENT"));
+    const showAssistant = !staffViewer && patientChannel === "assistant";
 
     const staffName = (identityId?: string | null) => {
         if (!identityId) return "Chưa có người phụ trách";
@@ -91,6 +96,12 @@ export default function SupportChat({ session }: { session: Tokens }) {
                     const me = await request<Patient>("/patients/me", session.accessToken);
                     setPatients({ [me.identityId]: me });
                 }
+            }
+            if (!staffViewer) {
+                const patientState = states[0];
+                const handedToReception = !!patientState?.channelStatus && patientState.channelStatus !== "AI_ACTIVE";
+                setPatientChannel(handedToReception ? "receptionist" : "assistant");
+                setHandoffNotice(handedToReception);
             }
             setError("");
         } catch (reason) {
@@ -142,6 +153,19 @@ export default function SupportChat({ session }: { session: Tokens }) {
     useEffect(() => { if (receptionist && !assignedToMe) setBookingOpen(false); }, [receptionist, assignedToMe]);
     useEffect(() => { if (!bookingOpen || !bookingDoctorId || !bookingDate) return; void loadBookingSlots(); }, [bookingOpen, bookingDoctorId, bookingDate]);
 
+    useEffect(() => {
+        if (!open || showAssistant || bookingOpen) return;
+        // Scroll only the transcript viewport after React has painted the new
+        // message; this keeps the page position and the composer unchanged.
+        const frame = window.requestAnimationFrame(() => {
+            const list = messageListRef.current;
+            if (!list) return;
+            const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+            list.scrollTo({ top: list.scrollHeight, behavior: reducedMotion ? "auto" : "smooth" });
+        });
+        return () => window.cancelAnimationFrame(frame);
+    }, [open, conversation, visible.length, showAssistant, bookingOpen]);
+
     async function claimConversation() {
         if (!conversation || assignmentBusy) return;
         setAssignmentBusy(true);
@@ -174,6 +198,23 @@ export default function SupportChat({ session }: { session: Tokens }) {
         }
     }
 
+    async function resolveConversation() {
+        if (!conversation || !assignedToMe || assignmentBusy) return;
+        if (!window.confirm("Đánh dấu yêu cầu này đã được hỗ trợ xong? Yêu cầu tiếp theo của bệnh nhân sẽ quay lại Trợ lý DermAI trước.")) return;
+        setAssignmentBusy(true);
+        setError("");
+        try {
+            await request(`/appointments/support/conversations/${conversation}/resolve`, session.accessToken, { method: "POST" });
+            setNotice("Đã hoàn tất hỗ trợ. Yêu cầu mới của bệnh nhân sẽ được Trợ lý DermAI tiếp nhận trước.");
+            await load();
+        } catch (reason) {
+            setError((reason as Error).message);
+            await load();
+        } finally {
+            setAssignmentBusy(false);
+        }
+    }
+
     async function send(event: FormEvent) {
         event.preventDefault();
         if (!text.trim() || (receptionist && (!conversation || !assignedToMe)) || admin) return;
@@ -186,6 +227,15 @@ export default function SupportChat({ session }: { session: Tokens }) {
             await load();
         } catch (reason) {
             setError((reason as Error).message);
+        }
+    }
+
+    async function assistantUpdated(result: AssistantTurnResponse) {
+        await load();
+        if (result.escalated) {
+            setPatientChannel("receptionist");
+            setHandoffNotice(true);
+            setNotice("");
         }
     }
 
@@ -271,18 +321,31 @@ export default function SupportChat({ session }: { session: Tokens }) {
     const patientLabel = (id: string) => patients[id]?.fullName || `Bệnh nhân · ${id.slice(0, 8)}`;
     const messageSender = (message: SupportMessage) => message.senderRole === "PATIENT"
         ? patientLabel(message.patientIdentityId)
+        : message.senderRole === "AI" ? "Trợ lý DermAI"
+        : message.senderRole === "SYSTEM" ? "Hệ thống"
         : message.senderRole === "ADMIN" ? "Quản trị viên" : staffName(message.senderIdentityId);
+
+    const messageBody = (message: SupportMessage) => {
+        if (staffViewer || !message.body.startsWith("[Yêu cầu chuyển từ Trợ lý AI]")) return message.body;
+        const contentMarker = "\nNội dung: ";
+        const noteMarker = "\nGhi chú: ";
+        const start = message.body.indexOf(contentMarker);
+        if (start < 0) return message.body;
+        const contentStart = start + contentMarker.length;
+        const end = message.body.indexOf(noteMarker, contentStart);
+        return message.body.slice(contentStart, end < 0 ? undefined : end).trim();
+    };
 
     return <div className={`support-chat ${staffViewer ? "receptionist-support-chat" : ""}`}>
         <button className="support-launch" aria-expanded={open} aria-controls="reception-support-panel" onClick={() => setOpen(!open)}>
-            {open ? "Đóng" : admin ? "Giám sát hỗ trợ" : receptionist ? "Hộp thư hỗ trợ" : "Chat với lễ tân"}
+            {open ? "Đóng" : admin ? "Giám sát hỗ trợ" : receptionist ? "Hộp thư hỗ trợ" : "Hỗ trợ"}
             {unread.length > 0 && <span className="support-badge">{unread.length > 99 ? "99+" : unread.length}</span>}
         </button>
-        {open && <section id="reception-support-panel" className="support-panel" aria-label={staffViewer ? "Hộp thư hỗ trợ bệnh nhân" : "Chat hỗ trợ với lễ tân"}>
+        {open && <section id="reception-support-panel" className="support-panel" aria-label={staffViewer ? "Hộp thư hỗ trợ bệnh nhân" : "Hỗ trợ DermAI Clinic"}>
             <header>
                 <div>
-                    <b>{admin ? "Giám sát hỗ trợ" : receptionist ? "Hỗ trợ bệnh nhân" : "Lễ tân DermAI"}</b>
-                    <small>{admin ? "Chế độ chỉ xem" : receptionist ? "Hộp thư chung của đội ngũ lễ tân" : activeConversation?.assignedReceptionistIdentityId ? `Đang hỗ trợ: ${staffName(activeConversation.assignedReceptionistIdentityId)}` : "Đang chờ lễ tân tiếp nhận"}</small>
+                    <b>{admin ? "Giám sát hỗ trợ" : receptionist ? "Hỗ trợ bệnh nhân" : showAssistant ? "Trợ lý DermAI" : "Lễ tân DermAI"}</b>
+                    <small>{admin ? "Chế độ chỉ xem" : receptionist ? "Hộp thư chung của đội ngũ lễ tân" : showAssistant ? "Hỗ trợ thông tin trước khi kết nối nhân viên" : activeConversation?.assignedReceptionistIdentityId ? `Đang hỗ trợ: ${staffName(activeConversation.assignedReceptionistIdentityId)}` : "Đã chuyển yêu cầu · đang chờ lễ tân tiếp nhận"}</small>
                 </div>
                 {receptionist && conversation && assignedToMe && <button className="support-book-for" onClick={() => bookingOpen ? setBookingOpen(false) : openBooking()}>{bookingOpen ? "Quay lại chat" : "Đặt lịch hộ"}</button>}
             </header>
@@ -300,11 +363,19 @@ export default function SupportChat({ session }: { session: Tokens }) {
             </div>}
 
             {staffViewer && conversation && <div className={`support-assignment ${assignedToMe ? "is-mine" : activeConversation?.assignedReceptionistIdentityId ? "is-assigned" : "is-unassigned"}`}>
-                <div>{activeConversation?.assignedReceptionistIdentityId ? <UserCheck aria-hidden="true" /> : <Headphones aria-hidden="true" />}<span><b>{activeConversation?.assignedReceptionistIdentityId ? staffName(activeConversation.assignedReceptionistIdentityId) : "Chưa có lễ tân tiếp nhận"}</b><small>{admin ? "Admin đang xem và không thể gửi tin." : assignedToMe ? "Bạn có thể trả lời và đặt lịch hộ bệnh nhân." : activeConversation?.assignedReceptionistIdentityId ? "Bạn vẫn có thể xem nội dung cuộc trò chuyện." : "Nhận xử lý trước khi trả lời bệnh nhân."}</small></span></div>
+                <div>{activeConversation?.assignedReceptionistIdentityId ? <UserCheck aria-hidden="true" /> : <Headphones aria-hidden="true" />}<span><b>{activeConversation?.assignedReceptionistIdentityId ? staffName(activeConversation.assignedReceptionistIdentityId) : "Chưa có lễ tân tiếp nhận"}</b><small>{admin ? "Admin đang xem và không thể gửi tin." : assignedToMe ? "Bạn đang phụ trách cuộc trò chuyện này." : activeConversation?.assignedReceptionistIdentityId ? "Bạn vẫn có thể xem nội dung cuộc trò chuyện." : "Nhận xử lý trước khi trả lời bệnh nhân."}</small></span></div>
                 {receptionist && !activeConversation?.assignedReceptionistIdentityId && <button type="button" disabled={assignmentBusy} onClick={claimConversation}><UserCheck aria-hidden="true" />{assignmentBusy ? "Đang nhận…" : "Nhận xử lý"}</button>}
-                {receptionist && assignedToMe && <button type="button" className="support-release" disabled={assignmentBusy} onClick={releaseConversation}><UserMinus aria-hidden="true" />Nhả cuộc trò chuyện</button>}
+                {receptionist && assignedToMe && <div className="support-assignment-actions">
+                    <button type="button" className="support-resolve" aria-label="Hoàn tất hỗ trợ cuộc trò chuyện" title="Hoàn tất hỗ trợ" disabled={assignmentBusy} onClick={resolveConversation}><CircleCheck aria-hidden="true" />Hoàn tất</button>
+                    <button type="button" className="support-release" aria-label="Nhả cuộc trò chuyện" title="Nhả cuộc trò chuyện" disabled={assignmentBusy} onClick={releaseConversation}><UserMinus aria-hidden="true" />Nhả</button>
+                </div>}
             </div>}
 
+            {showAssistant ? <SupportAssistant token={session.accessToken} messages={messages} onUpdated={assistantUpdated} /> : <>
+            {handoffNotice && !staffViewer && <div className="support-handoff-confirmation" role="status" aria-live="polite">
+                <MessageCircle aria-hidden="true" />
+                <span><b>Đã chuyển yêu cầu của bạn đến lễ tân.</b><small>Lễ tân sẽ tiếp tục hỗ trợ trong cuộc trò chuyện này.</small></span>
+            </div>}
             {notice && <p className="support-notice" aria-live="polite">{notice}</p>}
             {bookingOpen && receptionist && assignedToMe ? <form className="support-booking" onSubmit={submitProposal}>
                 <div className="support-booking-title"><div><small>ĐẶT LỊCH HỘ</small><b>{patientLabel(conversation)}</b></div><CalendarCheck /></div>
@@ -315,8 +386,19 @@ export default function SupportChat({ session }: { session: Tokens }) {
                 {bookingSlot && <p className="support-proposal-summary"><b>{new Date(bookingSlot.startAt).toLocaleString("vi-VN")}</b><span>BS. {bookingSlot.doctorName} · bệnh nhân có 10 phút xác nhận</span></p>}
                 <button className="support-proposal-submit" disabled={bookingBusy || !bookingSlot || !bookingReason.trim()}>{bookingBusy ? "Đang gửi…" : "Gửi bệnh nhân xác nhận"}</button>
             </form> : <>
-                <div className="support-messages">{visible.length === 0 ? <p>{staffViewer ? "Cuộc trò chuyện chưa có tin nhắn." : "Chưa có tin nhắn. Hãy gửi nội dung bạn cần hỗ trợ."}</p> : visible.map(message => <article className={message.senderIdentityId === currentIdentityId ? "mine" : "theirs"} key={message.id}><b>{messageSender(message)}</b><p>{message.body}</p><small>{new Date(message.sentAt).toLocaleString("vi-VN")}</small></article>)}</div>
-                {admin ? <div className="support-monitor-note"><ShieldCheck aria-hidden="true" /><span><b>Chế độ giám sát</b><small>Admin có thể xem người phụ trách và nội dung nhưng không gửi tin thay lễ tân.</small></span></div> : receptionist && !assignedToMe ? <div className="support-reply-locked"><Headphones aria-hidden="true" /><span>{activeConversation?.assignedReceptionistIdentityId ? `Cuộc trò chuyện đang do ${staffName(activeConversation.assignedReceptionistIdentityId)} phụ trách.` : "Nhận xử lý để trả lời bệnh nhân."}</span></div> : <form onSubmit={send}><textarea aria-label="Nội dung tin nhắn hỗ trợ" maxLength={2000} value={text} onChange={event => setText(event.target.value)} placeholder="Nhập nội dung hỗ trợ về lịch khám…" /><button aria-label="Gửi tin nhắn" disabled={!text.trim()}>Gửi</button></form>}
+                <div ref={messageListRef} className="support-messages" role="log" aria-live="polite" aria-label="Nội dung trao đổi hỗ trợ">{visible.length === 0 ? <p>{staffViewer ? "Cuộc trò chuyện chưa có tin nhắn." : "Lễ tân chưa gửi tin nhắn mới. Bạn có thể bổ sung nội dung bên dưới."}</p> : visible.map(message => {
+                    const mine=staffViewer ? message.senderIdentityId === currentIdentityId && message.senderRole === "RECEPTIONIST" : message.senderRole === "PATIENT";
+                    return <article className={message.senderRole === "SYSTEM" ? "system" : mine ? "mine" : "theirs"} key={message.id}><b>{messageSender(message)}</b><p>{messageBody(message)}</p><small>{new Date(message.sentAt).toLocaleString("vi-VN")}</small></article>;
+                })}</div>
+                {admin ? <div className="support-monitor-note"><ShieldCheck aria-hidden="true" /><span><b>Chế độ giám sát</b><small>Admin có thể xem người phụ trách và nội dung nhưng không gửi tin thay lễ tân.</small></span></div> : receptionist && !assignedToMe ? <div className="support-reply-locked"><Headphones aria-hidden="true" /><span>{activeConversation?.assignedReceptionistIdentityId ? `Cuộc trò chuyện đang do ${staffName(activeConversation.assignedReceptionistIdentityId)} phụ trách.` : "Nhận xử lý để trả lời bệnh nhân."}</span></div> : <form onSubmit={send}><textarea aria-label="Nội dung tin nhắn hỗ trợ" aria-keyshortcuts="Enter" title="Enter để gửi, Shift + Enter để xuống dòng" maxLength={2000} value={text} onChange={event => setText(event.target.value)} onKeyDown={event => {
+                    // Enter submits like a messaging app; preserve Shift+Enter
+                    // for multiline content and never interrupt an active IME.
+                    if (event.key === "Enter" && !event.shiftKey && !event.nativeEvent.isComposing) {
+                        event.preventDefault();
+                        event.currentTarget.form?.requestSubmit();
+                    }
+                }} placeholder="Nhập nội dung hỗ trợ về lịch khám…" /><button aria-label="Gửi tin nhắn" disabled={!text.trim()}>Gửi</button></form>}
+            </>}
             </>}
             {error && <small className="support-error" role="alert">{error}</small>}
         </section>}

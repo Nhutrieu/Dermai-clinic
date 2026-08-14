@@ -1,0 +1,230 @@
+.support-ai-shell {
+  flex: 1 1 auto;
+  display: flex;
+  min-height: 0;
+  flex-direction: column;
+  background: var(--color-surface);
+}
+
+.support-messages article.system {
+  align-self: center;
+  max-width: 92%;
+  border: 1px solid var(--color-border);
+  color: var(--color-text-secondary);
+  background: var(--color-surface-subtle);
+  text-align: center;
+}
+
+.support-ai-handoff {
+  display: inline-flex;
+  min-height: 40px;
+  gap: 7px;
+  align-items: center;
+  justify-content: center;
+  padding: 8px 11px;
+  border: 1px solid var(--color-primary);
+  border-radius: var(--radius-control);
+  color: var(--color-primary);
+  background: var(--color-surface);
+  font: inherit;
+  font-size: 12px;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.support-ai-handoff svg {
+  width: 17px;
+  height: 17px;
+}
+
+.support-ai-handoff:hover {
+  background: var(--color-success-surface);
+}
+
+.support-ai-messages {
+  font-size: 14px;
+}
+
+.support-ai-messages article {
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+.support-ai-messages article > b {
+  font-size: 12px;
+}
+
+.support-ai-messages article > small {
+  display: block;
+  margin-top: 7px;
+  font-size: 11px;
+}
+
+.support-ai-handoff {
+  width: 100%;
+  min-height: 44px;
+  margin-top: 10px;
+  color: var(--color-surface);
+  background: var(--color-primary);
+}
+
+.support-ai-handoff:hover {
+  color: var(--color-surface);
+  background: var(--color-primary-strong);
+}
+
+.support-ai-handoff:disabled {
+  opacity: .58;
+  cursor: wait;
+}
+
+.support-ai-human-prompt {
+  display: block;
+  margin-top: 10px;
+  color: var(--color-text-secondary);
+  font-size: 13px;
+  line-height: 1.45;
+}
+
+.support-panel > header .support-return-ai {
+  min-height: 40px;
+  margin-left: auto;
+  padding: 8px 12px;
+  border: 1px solid rgb(255 255 255 / 45%);
+  border-radius: var(--radius-control);
+  color: var(--color-surface);
+  background: transparent;
+  font: inherit;
+  font-size: 13px;
+  font-weight: 750;
+  cursor: pointer;
+}
+
+.support-panel > header .support-return-ai:hover,
+.support-panel > header .support-return-ai:focus-visible {
+  color: var(--color-primary);
+  background: var(--color-surface);
+}
+
+.support-panel > header .support-return-ai:focus-visible {
+  outline: none;
+  box-shadow: var(--focus-ring);
+}
+
+.support-handoff-confirmation {
+  flex: 0 0 auto;
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+  padding: 12px 14px;
+  border-bottom: 1px solid var(--color-border);
+  color: var(--color-primary);
+  background: var(--color-success-surface);
+}
+
+.support-handoff-confirmation > svg {
+  flex: 0 0 auto;
+  width: 20px;
+  height: 20px;
+  margin-top: 1px;
+}
+
+.support-handoff-confirmation b,
+.support-handoff-confirmation small {
+  display: block;
+}
+
+.support-handoff-confirmation b {
+  color: var(--color-ink);
+  font-size: 14px;
+}
+
+.support-handoff-confirmation small {
+  margin-top: 3px;
+  color: var(--color-text-secondary);
+  font-size: 13px;
+  line-height: 1.4;
+}
+
+.support-ai-typing {
+  display: inline-flex;
+  gap: 8px;
+  align-items: center;
+  color: var(--color-text-secondary);
+}
+
+.support-ai-typing svg {
+  width: 18px;
+  height: 18px;
+  color: var(--color-primary);
+}
+
+.support-panel > .support-ai-shell > form.support-ai-form {
+  flex: 0 0 auto;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 48px;
+  gap: 8px;
+  align-items: stretch;
+  padding: 10px;
+  border-top: 1px solid var(--color-border);
+  background: var(--color-surface);
+}
+
+.support-ai-form textarea {
+  width: 100%;
+  min-height: 52px;
+  max-height: 110px;
+  resize: vertical;
+  padding: 12px;
+  border: 1px solid var(--color-border-strong);
+  border-radius: var(--radius-control);
+  font: inherit;
+  font-size: 14px;
+  line-height: 1.4;
+}
+
+.support-ai-form textarea:focus-visible {
+  border-color: var(--color-primary);
+  outline: none;
+  outline-offset: 1px;
+  box-shadow: var(--focus-ring);
+}
+
+.support-ai-form .sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+.support-panel .support-ai-form button {
+  min-width: 48px;
+  min-height: 48px;
+  border: 0;
+  border-radius: var(--radius-control);
+  color: var(--color-surface);
+  background: var(--color-primary);
+  cursor: pointer;
+}
+
+.support-panel .support-ai-form button:disabled {
+  color: var(--color-text-secondary);
+  background: var(--color-disabled-surface);
+  cursor: not-allowed;
+}
+
+.support-panel .support-ai-form button svg {
+  width: 20px;
+  height: 20px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .support-ai-shell * {
+    scroll-behavior: auto;
+    transition: none;
+  }
+}

@@ -1,0 +1,58 @@
+@startuml
+left to right direction
+skinparam shadowing false
+skinparam backgroundColor #FFFFFF
+skinparam ArrowColor #42515C
+skinparam ActorBorderColor #172B3B
+skinparam ActorFontColor #172B3B
+skinparam UsecaseBackgroundColor #172B3B
+skinparam UsecaseBorderColor #172B3B
+skinparam UsecaseFontColor #FFFFFF
+
+actor "Receptionist" as Receptionist
+
+usecase "UC07\nProcess Online\nBooking Request" as UC07
+usecase "UC07.1\nView Realtime\nRequest Queue" as UC071
+usecase "UC07.2\nValidate Patient,\nDoctor and Slot" as UC072
+usecase "UC07.3\nConfirm, Propose\nor Reject" as UC073
+usecase "UC07.4\nHandle Concurrent\nReceptionist Action" as UC074
+
+usecase "UC08\nBook Appointment\nBy Hotline" as UC08
+usecase "UC08.1\nFind or Create\nHotline Patient" as UC081
+usecase "UC08.2\nValidate Required\nPhone" as UC082
+usecase "UC08.3\nSelect Hotline\nSlot" as UC083
+usecase "UC08.4\nRead Back and\nSend Confirmation" as UC084
+
+usecase "UC09\nCoordinate Appointments\nand Queue" as UC09
+usecase "UC09.1\nView Accepted\nAppointments" as UC091
+usecase "UC09.2\nReschedule or Cancel\nBy Request" as UC092
+usecase "UC09.3\nSend Appointment\nReminder" as UC093
+usecase "UC09.4\nCheck-In and\nManage Queue" as UC094
+usecase "UC09.5\nRecord No-Show or\nCorrect Status" as UC095
+
+usecase "UC10\nManage Support\nConversation" as UC10
+usecase "UC10.1\nView Unread\nConversation" as UC101
+usecase "UC10.2\nClaim\nConversation" as UC102
+usecase "UC10.3\nReply Realtime\nand Mark Read" as UC103
+
+Receptionist -left-> UC07
+Receptionist -left-> UC08
+Receptionist -right-> UC09
+Receptionist -right-> UC10
+UC07 .left.> UC071 : <<include>>
+UC07 .left.> UC072 : <<include>>
+UC07 .left.> UC073 : <<include>>
+UC074 .right.> UC07 : <<extend>>
+UC08 .left.> UC081 : <<include>>
+UC08 .left.> UC082 : <<include>>
+UC08 .left.> UC083 : <<include>>
+UC08 .left.> UC084 : <<include>>
+UC09 .right.> UC091 : <<include>>
+UC092 .left.> UC09 : <<extend>>
+UC093 .left.> UC09 : <<extend>>
+UC094 .left.> UC09 : <<extend>>
+UC095 .left.> UC09 : <<extend>>
+UC10 .right.> UC101 : <<include>>
+UC10 .right.> UC102 : <<include>>
+UC10 .right.> UC103 : <<include>>
+@enduml

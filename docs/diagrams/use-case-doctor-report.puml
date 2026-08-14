@@ -1,0 +1,40 @@
+@startuml
+left to right direction
+skinparam shadowing false
+skinparam backgroundColor #FFFFFF
+skinparam ArrowColor #42515C
+skinparam ActorBorderColor #172B3B
+skinparam ActorFontColor #172B3B
+skinparam UsecaseBackgroundColor #172B3B
+skinparam UsecaseBorderColor #172B3B
+skinparam UsecaseFontColor #FFFFFF
+
+actor "Doctor" as Doctor
+
+usecase "UC11\nManage Doctor Profile\nand Schedule" as UC11
+usecase "UC11.1\nUpdate Public\nDoctor Profile" as UC111
+usecase "UC11.2\nConfigure Weekly\nWorking Hours" as UC112
+usecase "UC11.3\nConfigure Slot\nDuration" as UC113
+usecase "UC11.4\nDeclare Leave\nPeriod" as UC114
+usecase "UC11.5\nValidate Schedule\nConflict" as UC115
+
+usecase "UC12\nConduct Doctor\nVisit" as UC12
+usecase "UC12.1\nView Assigned\nAppointments" as UC121
+usecase "UC12.2\nView Shared AI\nAssessment" as UC122
+usecase "UC12.3\nStart Checked-In\nVisit" as UC123
+usecase "UC12.4\nComplete Visit" as UC124
+usecase "UC12.5\nOptional Clinical\nDocumentation" as UC125
+
+Doctor -left-> UC11
+Doctor -right-> UC12
+UC11 .left.> UC111 : <<include>>
+UC11 .left.> UC112 : <<include>>
+UC11 .left.> UC113 : <<include>>
+UC114 .right.> UC11 : <<extend>>
+UC11 .left.> UC115 : <<include>>
+UC12 .right.> UC121 : <<include>>
+UC122 .left.> UC12 : <<extend>>
+UC12 .right.> UC123 : <<include>>
+UC12 .right.> UC124 : <<include>>
+UC125 .left.> UC12 : <<extend>>
+@enduml

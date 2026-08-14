@@ -1,0 +1,90 @@
+@startuml
+title DermAI Clinic - Use Case chi tiết: Bệnh nhân
+left to right direction
+skinparam packageStyle rectangle
+skinparam shadowing false
+skinparam ArrowColor #315A50
+skinparam ActorBorderColor #172B3B
+skinparam ActorFontColor #172B3B
+skinparam UsecaseBackgroundColor #172B3B
+skinparam UsecaseBorderColor #172B3B
+skinparam UsecaseFontColor #FFFFFF
+skinparam RectangleBorderColor #78978E
+
+actor "Bệnh nhân" as Patient
+actor "Lễ tân" as Receptionist
+actor "Google OAuth" as Google
+actor "Dịch vụ AI" as AI
+
+rectangle "DermAI Clinic - Cổng bệnh nhân" {
+  package "Tài khoản và hồ sơ" {
+    usecase "Đăng ký tài khoản" as Register
+    usecase "Xác minh email OTP" as VerifyEmail
+    usecase "Đăng nhập" as Login
+    usecase "Đăng nhập Google" as GoogleLogin
+    usecase "Làm mới phiên đăng nhập" as RefreshSession
+    usecase "Cập nhật hồ sơ cá nhân" as Profile
+  }
+
+  package "Tìm bác sĩ và đặt lịch" {
+    usecase "Xem danh sách bác sĩ" as BrowseDoctors
+    usecase "Xem mô tả, chuyên môn,\nlịch trống và giá khám" as DoctorDetail
+    usecase "Đặt lịch khám" as Book
+    usecase "Chọn bác sĩ và ngày" as SelectDoctorDate
+    usecase "Giữ / nhả slot 5 phút" as HoldSlot
+    usecase "Nhập lý do và\nxem lại thông tin" as ReviewBooking
+    usecase "Xác nhận lịch" as ConfirmBooking
+    usecase "Kiểm tra giới hạn và\nxung đột lịch" as ValidateConflict
+    usecase "Đính kèm kết quả AI" as AttachAI
+  }
+
+  package "Quản lý lịch hẹn" {
+    usecase "Xem lịch đã đặt" as ViewAppointments
+    usecase "Đổi lịch trong\nthời gian cho phép" as Reschedule
+    usecase "Hủy lịch trong\nthời gian cho phép" as Cancel
+    usecase "Liên hệ hỗ trợ" as ContactSupport
+    usecase "Xem thông báo lịch" as Notifications
+    usecase "Đánh giá sau khi hoàn tất" as ReviewClinic
+  }
+
+  package "Hỗ trợ phân tích da" {
+    usecase "Tải ảnh da" as UploadImage
+    usecase "Kiểm tra ảnh hợp lệ" as ValidateImage
+    usecase "Nhận Top-3 và Grad-CAM" as Predict
+    usecase "Xem lịch sử phân tích" as AIHistory
+    usecase "Chia sẻ cho bác sĩ" as ShareDoctor
+  }
+}
+
+Patient --> Register
+Patient --> Login
+Patient --> Profile
+Patient --> BrowseDoctors
+Patient --> Book
+Patient --> ViewAppointments
+Patient --> Notifications
+Patient --> ContactSupport
+Patient --> UploadImage
+Patient --> AIHistory
+
+Register .> VerifyEmail : <<include>>
+GoogleLogin .> Login : <<extend>>
+Google --> GoogleLogin
+RefreshSession .> Login : <<extend>>
+BrowseDoctors .> DoctorDetail : <<include>>
+Book .> SelectDoctorDate : <<include>>
+Book .> HoldSlot : <<include>>
+Book .> ReviewBooking : <<include>>
+Book .> ConfirmBooking : <<include>>
+ConfirmBooking .> ValidateConflict : <<include>>
+AttachAI .> Book : <<extend>>
+Reschedule .> ViewAppointments : <<extend>>
+Cancel .> ViewAppointments : <<extend>>
+ContactSupport .> ViewAppointments : <<extend>>
+ReviewClinic .> ViewAppointments : <<extend>>
+UploadImage .> ValidateImage : <<include>>
+UploadImage .> Predict : <<include>>
+ShareDoctor .> AIHistory : <<extend>>
+AI --> Predict
+Receptionist --> ContactSupport
+@enduml

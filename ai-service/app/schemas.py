@@ -38,3 +38,20 @@ class ChatResponse(BaseModel):
     citations: list[Citation]
     refused: bool = False
     disclaimer: str
+
+
+class SupportChatRequest(BaseModel):
+    question: str = Field(min_length=1, max_length=1000)
+
+
+class SupportChatResponse(BaseModel):
+    answer: str
+    category: str
+    requires_handoff: bool
+    handoff_summary: str
+    intent_confidence: float = Field(ge=0, le=1)
+    needs_clarification: bool = False
+    doctor_name: str | None = None
+    requested_date: str | None = None
+    requested_time: str | None = None
+    automated: bool = True

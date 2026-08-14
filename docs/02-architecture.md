@@ -40,13 +40,13 @@ Dev tools       -> Adminer
 |---|---|---|
 | Gateway | Không lưu nghiệp vụ | Route, xác thực JWT, CORS và security header |
 | Auth Service | `auth` | Identity, email, password hash, role, trạng thái, refresh token, OTP |
-| Patient Service | `patient` | Hồ sơ Patient, điện thoại chuẩn hóa, liên kết tài khoản hotline và metadata lần kiểm tra da AI |
-| Doctor Service | `doctor` | Hồ sơ Doctor, avatar lưu DB, mô tả, lịch làm và nghỉ phép |
-| Appointment Service | `appointment` | Lịch, hold/proposal, Scheduling Engine, closures, notification trong web, reminder, support chat, review và outbox |
+| Patient Service | `patient` | Hồ sơ Patient, hotline relink, metadata và ảnh gốc AI assessment có kiểm soát truy cập |
+| Doctor Service | `doctor` | Hồ sơ Doctor, avatar, mô tả, `consultation_fee`, lịch làm và nghỉ phép |
+| Appointment Service | `appointment` | Lịch, giá snapshot, hold/proposal, Scheduling Engine, closures, notification, reminder, support chat/claim, review, audit và outbox |
 | Medical Record Service | `medical_record` | Hồ sơ khám đã ký và chẩn đoán cuối |
 | Prescription Service | `prescription` | Đơn thuốc và mục thuốc đã ký |
 | Notification Service | `notification` | Trạng thái giao email, số lần thử và idempotency theo event ID |
-| AI Service | File/checkpoint/index | Inference ảnh, Grad-CAM, RAG trích xuất và Gemini public chat |
+| AI Service | File/checkpoint/index | Inference ảnh, Grad-CAM, RAG, Gemini public chat và phân loại hỗ trợ |
 
 Môi trường hiện tại dùng **một PostgreSQL instance và schema-per-service**, không
 phải database/user vật lý riêng cho từng service. Service không truy cập
@@ -66,9 +66,11 @@ thành phần runtime chính thức.
 4. Mỗi controller tiếp tục kiểm tra role và quyền sở hữu bản ghi.
 5. Service-to-service dùng `X-Service-Token` cho endpoint nội bộ nhạy cảm.
 
-Frontend hiện lưu session trong `sessionStorage`; tự động refresh khi access
-token hết hạn là hạng mục cần hoàn thiện. Khi triển khai công khai phải thay JWT
-secret, database password và service token mặc định.
+Frontend lưu session trong `sessionStorage`, tự refresh đúng một lần khi request
+trả 401 và rotate refresh token. Nếu refresh thất bại, session bị xóa và người
+dùng quay về đăng nhập. Khi triển khai công khai phải thay JWT secret, database
+password và service token mặc định; `sessionStorage` giảm lưu phiên lâu dài
+nhưng không thay thế kiểm soát XSS.
 
 ## 5. Scheduling Engine
 
@@ -107,6 +109,10 @@ timezone và `reasons` như “Đúng chuyên môn”, “Thời gian sớm”, 
 4. `Idempotency-Key` ngăn tạo đôi khi client retry.
 5. Sau commit, WebSocket phát event để client tải lại availability.
 
+Booking Policy còn khóa theo Patient để chặn race của giới hạn ba lịch và cùng
+Doctor/ngày. Giá được lấy từ Doctor Service lúc đặt rồi lưu vào
+`consultation_fee_snapshot`, vì vậy lịch cũ không đổi khi Admin cập nhật giá.
+
 ## 6. Realtime và thông báo
 
 WebSocket phát các event nhẹ khi slot, lịch, chat và thông báo thay đổi. Nó không
@@ -131,11 +137,12 @@ Model code hỗ trợ EfficientNet-B0, ResNet50 và ConvNeXt Tiny. Output gồm 
 chính, confidence, Top-3, Grad-CAM data URL, model version, `uncertain` và
 disclaimer. Kết quả không được ghi tự động vào final diagnosis.
 
-Chỉ role `PATIENT` được gọi `/ai/predict`. Patient Service lưu metadata kết quả
-và lựa chọn chia sẻ của đúng bệnh nhân; ảnh gốc và Grad-CAM chỉ tồn tại trong
-phiên giao diện, không được lưu vào database/object storage. Khi bệnh nhân đặt
-lịch từ kết quả AI, frontend đính kèm một tóm tắt vào lý do khám; bác sĩ vẫn ghi
-kết luận độc lập. Không ghi ảnh hoặc PII vào log.
+Chỉ role `PATIENT` được gọi `/ai/predict`. Sau inference thành công, Patient
+Service lưu metadata và ảnh gốc trong `ai_assessments`; Grad-CAM không được lưu.
+Patient sở hữu đọc/xóa ảnh, còn Doctor chỉ đọc qua appointment đã được Patient
+chia sẻ và phải là Doctor phụ trách. Endpoint ảnh dùng `Cache-Control: no-store`.
+Frontend vẫn đính kèm tóm tắt vào lý do khám; bác sĩ ghi kết luận độc lập. Không
+ghi ảnh hoặc PII vào log và không gửi ảnh sang Gemini.
 
 ### 7.2. Gemini và RAG
 
@@ -150,10 +157,30 @@ kết luận độc lập. Không ghi ảnh hoặc PII vào log.
   không đủ điểm, trả không đủ bằng chứng.
 - Cả hai luồng phải từ chối kê đơn/liều thuốc và không nhận PII/ảnh bệnh nhân.
 
+### 7.3. Trợ lý hỗ trợ và chuyển lễ tân
+
+`/ai/support-chat` chỉ dành cho Patient. Category và cờ `requires_handoff` được
+xác định bằng policy nội bộ để AI không tự đổi/hủy/xác nhận lịch. Với FAQ an
+toàn, Gemini chỉ nhận category và câu trả lời mẫu đã duyệt để biên tập giọng văn;
+tin nhắn gốc không được gửi ra ngoài.
+
+Frontend gọi `/api/v1/appointments/support/assistant`; Appointment Service là
+orchestrator và nguồn lưu transcript. Service lưu tin Patient, gọi AI để phân
+loại, dùng Scheduling Engine/Doctor Service cho tra cứu availability đọc-only,
+lưu tin AI rồi cập nhật conversation. Trạng thái gồm `AI_ACTIVE`,
+`WAITING_RECEPTIONIST` và `ASSIGNED`. Policy tự chuyển khi `requires_handoff`,
+confidence dưới ngưỡng, Patient không hài lòng hoặc thất bại hai lượt. Khi chuyển,
+service lưu thêm tin `SYSTEM`, AI summary và phát `CHAT_CHANGED`; lễ tân thấy toàn
+bộ transcript trong cùng conversation và phải claim trước khi trả lời. Các
+conversation `AI_ACTIVE` không xuất hiện trong hộp thư lễ tân.
+Sau khi lễ tân chọn hoàn tất, conversation trở về `AI_ACTIVE`, assignee và ngữ
+cảnh escalation hiện hành được xóa, nhưng transcript và metadata người hoàn tất
+được giữ để đối soát. Một tin `SYSTEM` báo thay đổi này cho Patient qua realtime.
+
 ## 8. Triển khai hiện tại
 
-- Docker Compose chạy PostgreSQL, RabbitMQ, Redis, tám Spring service, AI,
-  Gateway, Frontend/Nginx và Adminer. Email được gửi qua Gmail SMTP.
+- Docker Compose chạy PostgreSQL, RabbitMQ, Redis, tám tiến trình Spring (gồm
+  Gateway), AI, Frontend/Nginx và Adminer. Email được gửi qua Gmail SMTP.
 - PostgreSQL dùng named volume. RabbitMQ/Redis cần volume riêng nếu dữ liệu hàng
   đợi/cache phải tồn tại qua container recreation.
 - Các cổng 5432, 8000, 8080, 8081 và 15672 chỉ nên mở local; production
@@ -175,9 +202,9 @@ kết luận độc lập. Không ghi ảnh hoặc PII vào log.
 
 ## 10. Hạng mục production còn thiếu
 
-1. Refresh access token tự động và logout gọi endpoint thu hồi refresh token.
-2. Rate limit cho login, forgot-password và Gemini public chat.
-3. Secret mạnh, TLS, giới hạn CORS/WebSocket origin và security header cho web.
-4. Xác minh routing RabbitMQ/email và thêm metric theo dõi dead-letter.
-5. Volume/backup, restore drill, metrics, tracing, log tập trung và alert.
+1. Rate limit cho login, forgot-password, upload và Gemini public chat.
+2. Secret mạnh, TLS, giới hạn CORS/WebSocket origin và CSP cho web.
+3. Xác minh routing RabbitMQ/email và thêm metric theo dõi dead-letter.
+4. Volume/backup, restore drill, metrics, tracing, log tập trung và alert.
+5. Chính sách retention/xóa ảnh AI và đánh giá dung lượng PostgreSQL BLOB.
 6. Browser E2E, accessibility test, load test và kiểm thử AI trên checkpoint thật.

@@ -1,24 +1,49 @@
 @startuml
+title DermAI Clinic - Safe Booking Sequence Diagram
+skinparam shadowing false
+autonumber
 actor Patient
-participant Gateway
-participant "Clinic Service" as Clinic
+participant "React UI" as UI
+participant "API Gateway" as Gateway
+participant "Doctor Service" as DoctorService
+participant "Appointment Service" as Appointment
 database PostgreSQL as DB
-queue RabbitMQ as MQ
-participant Notification
-Patient -> Gateway: POST /recommendations
-Gateway -> Clinic: authenticated request
-Clinic -> DB: work schedules + leave + bookings
-Clinic --> Patient: ranked slots + reasons
-Patient -> Gateway: POST /appointments + Idempotency-Key
-Gateway -> Clinic: booking command
-Clinic -> DB: BEGIN + lock/check + INSERT
-alt conflict
-  DB --> Clinic: exclusion violation
-  Clinic --> Patient: 409 SLOT_CONFLICT
-else reserved
-  Clinic -> MQ: AppointmentCreated (outbox)
-  Clinic --> Patient: 201 PENDING
-  MQ -> Notification: email confirmation request
+participant "Slot WebSocket" as WS
+actor Receptionist
+participant "Notification Service" as Notification
+
+Patient -> UI : Chọn bác sĩ và ngày
+UI -> Gateway : GET /appointments/availability
+Gateway -> Appointment : authenticated request
+Appointment -> DoctorService : lịch tuần + nghỉ phép + giá
+Appointment -> DB : lịch hoạt động + closure
+Appointment --> UI : AVAILABLE / BOOKED / HELD / ON_LEAVE
+Patient -> UI : Chọn slot
+UI -> Gateway : POST /appointments/holds
+Gateway -> Appointment : patient + doctor + interval
+Appointment -> DB : lock patient + INSERT HELD\n(exclusion constraints)
+alt Slot bị người khác giữ/đặt
+  DB --> Appointment : constraint violation
+  Appointment --> UI : 409 SLOT_CONFLICT
+else Giữ thành công
+  Appointment -> WS : SLOTS_CHANGED
+  Appointment --> UI : holdId + expiresAt (5 phút)
+end
+Patient -> UI : Nhập lý do và xác nhận
+UI -> Gateway : POST /holds/{id}/confirm\nIdempotency-Key
+Gateway -> Appointment : confirm hold
+Appointment -> DB : lock + validate expiry\nHELD -> ASSIGNED
+Appointment -> WS : booking request + slot update
+Appointment --> UI : Lịch chờ lễ tân xác nhận
+WS --> Receptionist : Yêu cầu mới realtime
+Receptionist -> Gateway : POST /appointments/{id}/confirm
+Gateway -> Appointment : confirm
+Appointment -> DB : row lock + ASSIGNED -> CONFIRMED\n+ audit log + notification
+alt Đã được lễ tân khác xử lý
+  Appointment --> Receptionist : 409 INVALID_TRANSITION
+else Thành công
+  Appointment -> WS : SLOTS_CHANGED / notification
+  Appointment --> UI : CONFIRMED
+  Appointment -> Notification : outbox -> RabbitMQ
 end
 @enduml
-

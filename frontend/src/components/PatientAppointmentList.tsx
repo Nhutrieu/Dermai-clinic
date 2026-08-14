@@ -1,5 +1,5 @@
 import { FormEvent, useEffect, useState } from "react";
-import { CalendarDays, MessageCircle, Search, X } from "lucide-react";
+import { CalendarDays, MessageCircle, Search, Trash2, X } from "lucide-react";
 import { request } from "../core/api";
 import { formatVnd } from "../core/currency";
 import {
@@ -8,6 +8,7 @@ import {
     patientAppointmentSelfServiceClosesAt,
 } from "../core/appointmentPolicy";
 import type { Appointment, ClinicReview, Recommendation, RecommendationResult } from "../core/types";
+import AccessibleDialog from "./AccessibleDialog";
 
 type AppointmentListProps = {
     appointments: Appointment[];
@@ -15,8 +16,15 @@ type AppointmentListProps = {
     cancel?: (id: string, reason: string) => Promise<void>;
     reschedule?: (id: string, value: string) => Promise<void>;
     bookFollowUp?: (id: string, slot: Recommendation) => Promise<void>;
+    hide?: (id: string) => Promise<void>;
     patientName?: string;
 };
+
+const PATIENT_HIDEABLE_STATUSES = new Set(["CANCELLED", "COMPLETED", "NO_SHOW"]);
+
+export function canHideAppointmentFromHistory(status: string) {
+    return PATIENT_HIDEABLE_STATUSES.has(status);
+}
 
 function formatAppointmentTime(iso: string) {
     if (!iso) return "";
@@ -302,12 +310,90 @@ function AppointmentReviewControl({
     );
 }
 
+export function DeleteAppointmentControl({
+    appointment,
+    submit,
+}: {
+    appointment: Appointment;
+    submit: () => Promise<void>;
+}) {
+    const [open, setOpen] = useState(false);
+    const [busy, setBusy] = useState(false);
+    const [error, setError] = useState("");
+    const titleId = "delete-appointment-title-" + appointment.id;
+    const appointmentTime = formatAppointmentTime(appointment.startAt);
+
+    async function confirmDelete() {
+        setBusy(true);
+        setError("");
+        try {
+            await submit();
+            setOpen(false);
+        } catch (cause) {
+            setError((cause as Error).message);
+        } finally {
+            setBusy(false);
+        }
+    }
+
+    return (
+        <>
+            <button
+                type="button"
+                className="appointment-delete-action"
+                title="Xóa khỏi danh sách"
+                aria-label={"Xóa lịch " + appointmentTime + " khỏi danh sách"}
+                aria-haspopup="dialog"
+                aria-expanded={open}
+                onClick={() => { setError(""); setOpen(true); }}
+            >
+                <Trash2 aria-hidden="true" />
+            </button>
+            {open && (
+                <AccessibleDialog
+                    role="alertdialog"
+                    tone="danger"
+                    title="Bạn có chắc muốn xóa lịch này?"
+                    titleId={titleId}
+                    icon={<Trash2 />}
+                    closeDisabled={busy}
+                    closeOnBackdrop={!busy}
+                    onClose={() => { if (!busy) setOpen(false); }}
+                    footer={(
+                        <>
+                            <button
+                                type="button"
+                                data-dialog-initial-focus
+                                disabled={busy}
+                                onClick={() => setOpen(false)}
+                            >
+                                Giữ lại
+                            </button>
+                            <button
+                                type="button"
+                                className="appointment-delete-confirm"
+                                disabled={busy}
+                                onClick={() => void confirmDelete()}
+                            >
+                                {busy ? "Đang xóa..." : "Xóa khỏi danh sách"}
+                            </button>
+                        </>
+                    )}
+                >
+                    {error && <p className="appointment-delete-error" role="alert">{error}</p>}
+                </AccessibleDialog>
+            )}
+        </>
+    );
+}
+
 export default function PatientAppointmentList({
     appointments,
     token,
     cancel,
     reschedule,
     bookFollowUp,
+    hide,
     patientName = "Bệnh nhân"
 }: AppointmentListProps) {
     const [searchKw, setSearchKw] = useState("");
@@ -379,6 +465,7 @@ export default function PatientAppointmentList({
                             <option value="CHECKED_IN">Đã đến phòng khám</option>
                             <option value="COMPLETED">Đã hoàn thành</option>
                             <option value="CANCELLED">Đã hủy</option>
+                            <option value="NO_SHOW">Không đến khám</option>
                             <option value="FOLLOW_UP_REQUIRED">Cần tái khám</option>
                         </select>
                     </label>
@@ -458,6 +545,9 @@ export default function PatientAppointmentList({
                                     )}
                                     {item.status === "COMPLETED" && token && patientName && (
                                         <AppointmentReviewControl token={token} appointmentId={item.id} patientName={patientName} />
+                                    )}
+                                    {token && hide && canHideAppointmentFromHistory(item.status) && (
+                                        <DeleteAppointmentControl appointment={item} submit={() => hide(item.id)} />
                                     )}
                                 </div>
                             </article>

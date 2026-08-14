@@ -35,13 +35,21 @@
   Prescription, Notification, Gateway và AI.
 - RBAC bốn vai trò, hồ sơ, avatar, mô tả bác sĩ, lịch làm và nghỉ phép.
 - Booking window 60 ngày, nghỉ trưa, closure, hold 5 phút, proposal 10 phút,
-  chống trùng tại database, idempotency và booking concurrency test.
+  tối đa ba lịch active/Patient, chống trùng tại database, idempotency và booking
+  concurrency test.
+- Giá khám cố định theo Doctor và `consultation_fee_snapshot` trên từng lịch;
+  thanh toán trực tiếp tại phòng khám, chưa có hóa đơn/thanh toán online.
 - Realtime slot/chat/notification với reconnect.
-- Hotline/đặt hộ, liên kết hồ sơ theo điện thoại, reminder, no-show, tự hủy lịch
-  quá ngày, follow-up, review và dashboard frontend.
+- Hotline/đặt hộ, liên kết hồ sơ theo điện thoại, reminder, check-in, no-show,
+  follow-up, review, audit thao tác nhân sự và dashboard frontend.
+- Chat hỗ trợ có cơ chế lễ tân nhận/trả cuộc trò chuyện nguyên tử; Admin chỉ
+  giám sát, không trực tiếp trả lời.
 - Backend AI có upload validation, Top-3 và Grad-CAM; giao diện Patient có lịch
-  sử metadata, chia sẻ có lựa chọn và chuyển kết quả sang đặt lịch; Gemini public chat.
+  sử metadata và ảnh gốc, chia sẻ có lựa chọn với Doctor phụ trách, xóa lịch sử
+  và chuyển kết quả sang đặt lịch; Gemini public chat.
 - Docker resource limit, healthcheck, Nginx gzip/cache và frontend lazy loading.
+- Frontend tự refresh access token một lần khi gặp 401 và logout thu hồi refresh
+  token.
 
 ### Chưa hoàn tất hoặc phải xác minh
 
@@ -49,12 +57,17 @@
   và UI Patient; còn thiếu đánh giá chuyên môn, calibration và kiểm thử browser E2E.
 - RAG đã có index và citation trên frontend; còn thiếu bộ đánh giá retrieval bởi
   chuyên gia, citation validator và kiểm thử prompt injection mở rộng.
-- Tự refresh access token sau 15 phút.
 - Routing/email RabbitMQ end-to-end, rate limit, production secret/TLS/origin.
 - Browser E2E, accessibility audit, load/security test và restore drill.
 - Monitoring, tracing, alert và volume bền vững cho RabbitMQ/Redis.
+- Chính sách retention/xóa tự động và quota dung lượng cho ảnh AI lưu trong
+  PostgreSQL.
 
 ## 4. Chiến lược kiểm thử
+
+Tại thời điểm cập nhật tài liệu, repository có 18 file test frontend, 17 file
+test Java và 3 file test Python. Đây là số file kiểm thử, không phải số test case
+đã pass; kết quả phải lấy từ lần chạy CI/local gần nhất.
 
 | Lớp kiểm thử | Nội dung | Trạng thái |
 |---|---|---|
@@ -62,7 +75,7 @@
 | Integration | Flyway, repository, REST giữa service, outbox/RabbitMQ, hotline relink | Có migration/runtime test; cần tự động hóa thêm |
 | Concurrency | Hai người giữ/đặt cùng slot, hủy trong lúc đặt | Đã có booking race script; bổ sung hold race |
 | Realtime | Reconnect, nhiều tab, slot/chat/notification event | Có Vitest cho reconnect; cần browser test |
-| E2E | Đăng ký → đặt → xác nhận → khám → đơn → review | Chưa có Playwright/Cypress |
+| E2E | Đăng ký → giữ slot → đặt → xác nhận → check-in → hoàn tất → review | Chưa có Playwright/Cypress |
 | AI data | File hỏng, duplicate hash, leakage, class count | Đã có validator/report; còn thiếu nguồn, giấy phép và near-duplicate |
 | AI model | Metric, confusion matrix, latency, deterministic inference | Đã có checkpoint/metric/confusion matrix; còn thiếu latency/calibration/nhiều seed |
 | RAG | Refusal/no-evidence, retrieval, citation, injection | Đã có index PDF, citation UI và policy test; chưa có expert evaluation |
@@ -79,13 +92,16 @@ thái hiện tại.
 2. Chọn Doctor/ngày/slot, giữ chỗ và xác nhận lịch.
 3. Mở tab Patient khác để chứng minh slot biến mất realtime và không đặt trùng.
 4. Lễ tân tìm Patient, xem chat, đặt hộ/đề nghị lịch và gửi nhắc.
-5. Doctor xem lịch, bắt đầu khám, ghi hồ sơ, ký đơn và yêu cầu tái khám.
-6. Patient xem hồ sơ/đơn, đặt tái khám và đánh giá; Admin duyệt review.
-7. Patient upload một ảnh hợp lệ vào AI, xem Top-3/Grad-CAM/disclaimer, chọn chia
+5. Patient hỏi trợ lý về giá, sau đó yêu cầu đổi lịch; chuyển yêu cầu sang lễ tân
+   và chứng minh hộp thư cập nhật realtime.
+6. Doctor xem lịch, bắt đầu và hoàn tất lượt khám; minh họa hồ sơ/đơn thuốc như
+   chức năng bổ trợ, không bắt buộc để hoàn tất.
+7. Patient xem lịch sử, đặt tái khám và đánh giá; Admin duyệt review.
+8. Patient upload một ảnh hợp lệ vào AI, xem Top-3/Grad-CAM/disclaimer, chọn chia
    sẻ rồi chuyển sang đặt lịch; thử ảnh lỗi và xóa một mục lịch sử.
-8. Chứng minh model thiếu trả 503 và chatbot từ chối kê đơn.
+9. Chứng minh model thiếu trả 503 và chatbot từ chối kê đơn.
 
-Kịch bản số 7 dùng checkpoint và UI thật; không dùng response giả hoặc metric
+Kịch bản số 8 dùng checkpoint và UI thật; không dùng response giả hoặc metric
 không tái lập được.
 
 ## 6. Checklist trước khi chạy demo
@@ -108,7 +124,6 @@ không tái lập được.
 - TLS, reverse proxy, CORS/origin cụ thể; đóng cổng Postgres, AI, Adminer,
   RabbitMQ Management khỏi Internet; chỉ cho phép kết nối SMTP đi ra qua TLS.
 - Rate limit login, forgot-password, public chat và upload.
-- Access token auto refresh; logout thu hồi refresh token.
 - Backup tự động, restore drill, retention và consent ảnh.
 - RabbitMQ persistent volume, publisher confirm/return hoặc cơ chế xác minh giao
   event; theo dõi dead-letter.

@@ -76,9 +76,10 @@ services:
       DB_PASSWORD: ${POSTGRES_PASSWORD:-change-me}
       RABBITMQ_HOST: rabbitmq
       DOCTOR_URL: http://doctor-service:8084
+      AI_URL: http://ai-service:8000
       SERVICE_TOKEN: ${SERVICE_TOKEN:-}
     healthcheck: {test: ["CMD", "curl", "-fsS", "http://localhost:8085/actuator/health"], interval: 20s, timeout: 5s, retries: 10, start_period: 50s}
-    depends_on: {postgres: {condition: service_healthy}, rabbitmq: {condition: service_healthy}}
+    depends_on: {postgres: {condition: service_healthy}, rabbitmq: {condition: service_healthy}, ai-service: {condition: service_healthy}}
   medical-record-service:
     build: {context: ., dockerfile: services/Dockerfile, args: {SERVICE: medical-record-service}}
     restart: unless-stopped

@@ -9,10 +9,12 @@ import {
     Pill,
     Search,
     Stethoscope,
+    Trash2,
     X,
 } from "lucide-react";
 import { request } from "../../core/api";
 import type { Appointment, Doctor, MedicalRecord, Patient, Prescription } from "../../core/types";
+import AccessibleDialog from "../../components/AccessibleDialog";
 import { PrescriptionPdfModal } from "../../components/PrescriptionPdfModal";
 
 type ResourceState = {
@@ -32,6 +34,7 @@ type PatientMedicalRecordsProps = {
         prescriptions: ResourceState;
     };
     openAppointments: () => void;
+    recordHidden: (id: string) => void;
 };
 
 export type PatientRecordEntry = {
@@ -97,6 +100,69 @@ function formatTime(value: string) {
         minute: "2-digit",
         hour12: false,
     });
+}
+
+export function DeleteMedicalRecordControl({
+    token,
+    record,
+    date,
+    onHidden,
+}: {
+    token: string;
+    record: MedicalRecord;
+    date: string;
+    onHidden: (id: string) => void;
+}) {
+    const [open, setOpen] = useState(false);
+    const [busy, setBusy] = useState(false);
+    const [error, setError] = useState("");
+    const titleId = "delete-medical-record-title-" + record.id;
+
+    async function confirmDelete() {
+        setBusy(true);
+        setError("");
+        try {
+            await request("/medical-records/" + record.id + "/hide", token, { method: "PATCH" });
+            onHidden(record.id);
+            setOpen(false);
+        } catch (cause) {
+            setError((cause as Error).message);
+        } finally {
+            setBusy(false);
+        }
+    }
+
+    return <>
+        <button
+            type="button"
+            className="patient-medical-delete"
+            title="Xóa khỏi danh sách"
+            aria-label={"Xóa kết quả khám ngày " + formatDate(date) + " khỏi danh sách"}
+            aria-haspopup="dialog"
+            aria-expanded={open}
+            onClick={() => { setError(""); setOpen(true); }}
+        >
+            <Trash2 aria-hidden="true" />
+        </button>
+        {open && <AccessibleDialog
+            role="alertdialog"
+            tone="danger"
+            title="Bạn có chắc muốn xóa kết quả này?"
+            titleId={titleId}
+            icon={<Trash2 />}
+            closeDisabled={busy}
+            closeOnBackdrop={!busy}
+            onClose={() => { if (!busy) setOpen(false); }}
+            footer={<>
+                <button type="button" data-dialog-initial-focus disabled={busy} onClick={() => setOpen(false)}>Giữ lại</button>
+                <button type="button" className="patient-medical-delete-confirm" disabled={busy} onClick={() => void confirmDelete()}>
+                    {busy ? "Đang xóa..." : "Xóa khỏi danh sách"}
+                </button>
+            </>}
+        >
+            {error && <p className="patient-medical-delete-error" role="alert">{error}</p>}
+        </AccessibleDialog>}
+    </>;
 }
 
 function doctorSpecialty(value?: string) {
@@ -200,6 +266,7 @@ export default function PatientMedicalRecords({
     prescriptions,
     resourceState,
     openAppointments,
+    recordHidden,
 }: PatientMedicalRecordsProps) {
     const [doctors, setDoctors] = useState<Doctor[]>([]);
     const [doctorError, setDoctorError] = useState("");
@@ -344,7 +411,10 @@ export default function PatientMedicalRecords({
                             <article>
                                 <div className="patient-medical-list-date">
                                     <time dateTime={date}>{formatDate(date, { day: "2-digit", month: "short", year: "numeric" })}</time>
-                                    <RecordStatus complete={complete} />
+                                    <div className="patient-medical-list-actions">
+                                        <RecordStatus complete={complete} />
+                                        <DeleteMedicalRecordControl token={token} record={entry.record} date={date} onHidden={recordHidden} />
+                                    </div>
                                 </div>
                                 <h4>BS. {doctor?.fullName || appointment?.doctorName || "Bác sĩ phụ trách"}</h4>
                                 {doctor?.specialtyCode && <p className="patient-medical-specialty">{doctorSpecialty(doctor.specialtyCode)}</p>}

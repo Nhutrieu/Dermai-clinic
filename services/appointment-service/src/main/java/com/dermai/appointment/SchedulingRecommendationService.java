@@ -7,6 +7,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestClient;
 
 import java.math.BigDecimal;
+import java.text.Normalizer;
 import java.time.*;
 import java.util.*;
 
@@ -101,6 +102,32 @@ public class SchedulingRecommendationService {
   return new Availability(items,CLINIC_ZONE.getId());
  }
 
+ public AvailabilityLookup lookupAvailability(String doctorName,LocalDate date,UUID viewerIdentity,String authorization,String role){
+  String needle=foldName(doctorName);
+  var all=loadDoctors(authorization,role);
+  var exact=all.stream().filter(item->foldName(item.fullName()).equals(needle)).toList();
+  var matches=exact.isEmpty()?all.stream().filter(item->doctorNameMatches(doctorName,item.fullName())).toList():exact;
+  if(matches.isEmpty())return new AvailabilityLookup("NOT_FOUND",null,date,List.of(),all.stream().map(DoctorData::fullName).toList());
+  if(matches.size()>1)return new AvailabilityLookup("AMBIGUOUS",null,date,List.of(),matches.stream().map(DoctorData::fullName).toList());
+  var doctor=matches.get(0);
+  var available=availability(doctor.id(),date,30,viewerIdentity,authorization,role).items().stream().filter(item->"AVAILABLE".equals(item.status())).toList();
+  return new AvailabilityLookup(available.isEmpty()?"NO_SLOTS":"FOUND",doctor.fullName(),date,available,List.of());
+ }
+
+ static boolean doctorNameMatches(String requestedName,String actualName){
+  String requested=foldName(requestedName),actual=foldName(actualName);
+  if(requested.isBlank()||actual.isBlank())return false;
+  // Besides normal partial-name matching, tolerate trailing conversational
+  // words from a patient clarification (for example "Bình á").
+  return actual.equals(requested)||actual.contains(requested)||(" "+requested+" ").contains(" "+actual+" ");
+ }
+
+ private static String foldName(String value){
+  if(value==null)return "";
+  return Normalizer.normalize(value,Normalizer.Form.NFD).replaceAll("\\p{M}","").toLowerCase(Locale.ROOT)
+   .replaceFirst("^(bs\\.?|bac si)\\s+","").trim();
+ }
+
  public BigDecimal assertAvailable(UUID doctorId,Instant start,Instant end,UUID excludedAppointmentId,String authorization,String role){
   if(doctorId==null)return null;
   if(start==null||end==null||!start.isBefore(end)||start.isBefore(Instant.now()))throw new IllegalArgumentException("INVALID_INTERVAL");
@@ -133,6 +160,7 @@ public class SchedulingRecommendationService {
  public record Result(List<Item> items,String algorithmVersion,String timezone){}
  public record Item(UUID doctorId,UUID doctorIdentityId,String doctorName,String specialtyCode,Instant startAt,Instant endAt,double score,List<String> reasons){}
  public record Availability(List<AvailabilityItem> items,String timezone){}
+ public record AvailabilityLookup(String status,String doctorName,LocalDate date,List<AvailabilityItem> items,List<String> candidates){}
  public record AvailabilityItem(UUID doctorId,UUID doctorIdentityId,String doctorName,String specialtyCode,Instant startAt,Instant endAt,String status,UUID holdId,Instant holdExpiresAt){}
  record DoctorData(UUID id,UUID identityId,String fullName,String specialtyCode,int experienceYears,BigDecimal consultationFee,List<ScheduleData> workSchedules,List<LeaveData> leavePeriods){}
  record ScheduleData(UUID id,UUID doctorId,short weekday,LocalTime startTime,LocalTime endTime,int slotMinutes){}

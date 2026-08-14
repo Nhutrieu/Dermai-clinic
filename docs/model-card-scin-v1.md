@@ -119,6 +119,12 @@ API nhận JPEG/PNG/WebP tối đa 10 MB và trả Top-1, Top-3, confidence, Gra
 `model_version`, `uncertain`, disclaimer và tham khảo RAG. Confidence là softmax trong tám
 nhãn, không phải xác suất lâm sàng.
 
+Sau inference, frontend lưu metadata và ảnh gốc trong Patient Service. Patient có
+quyền đọc/xóa; Doctor chỉ đọc khi Patient đã bật chia sẻ và Doctor phụ trách đúng
+appointment. Endpoint ảnh dùng `Cache-Control: no-store`. Grad-CAM chỉ có trong
+response hiện tại và không được lưu. Ảnh không được gửi sang Gemini, tự chép vào
+chẩn đoán cuối hoặc ghi vào log.
+
 Không được dùng để tự chẩn đoán, kê đơn, loại trừ ung thư/lupus, trì hoãn khám/cấp cứu hoặc
 tái nhận dạng người đóng góp. Grad-CAM không chứng minh quan hệ nhân quả. Model còn rủi ro
 bias theo màu da, tuổi, giới, camera, ánh sáng, nền ảnh và nguồn thu thập.
@@ -140,4 +146,6 @@ Baseline rollback nằm tại
 - Bổ sung external test cân bằng, nhất là Tinea, Lupus, Candida, Warts và SkinCancer.
 - Đánh giá calibration/ECE, nhiều seed, khoảng tin cậy và near-duplicate.
 - Đánh giá ảnh ngoài phân phối và cơ chế từ chối thay vì buộc chọn một trong tám lớp.
+- Xác định retention, xóa tự động và quota dung lượng cho ảnh assessment lưu ở
+  PostgreSQL trước khi triển khai công khai.
 - Không đưa checkpoint, ảnh y khoa, metadata SCIN hoặc PII lên GitHub.

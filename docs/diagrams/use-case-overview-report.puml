@@ -1,0 +1,47 @@
+@startuml
+left to right direction
+skinparam shadowing false
+skinparam backgroundColor #FFFFFF
+skinparam ArrowColor #42515C
+skinparam ActorBorderColor #172B3B
+skinparam ActorFontColor #172B3B
+skinparam UsecaseBackgroundColor #172B3B
+skinparam UsecaseBorderColor #172B3B
+skinparam UsecaseFontColor #FFFFFF
+
+actor "Patient" as Patient
+actor "Receptionist" as Receptionist
+actor "Doctor" as Doctor
+actor "Administrator" as Admin
+
+usecase "UC01\nAuthenticate &\nManage Session" as UC01
+usecase "UC02\nManage Patient\nProfile" as UC02
+usecase "UC03\nBrowse Doctors" as UC03
+usecase "UC04\nBook Appointment" as UC04
+usecase "UC05\nManage Patient\nAppointments" as UC05
+usecase "UC06\nAnalyze Skin\nWith AI" as UC06
+usecase "UC07\nProcess Online\nBooking Request" as UC07
+usecase "UC08\nBook Appointment\nBy Hotline" as UC08
+usecase "UC09\nCoordinate Appointments\n& Queue" as UC09
+usecase "UC10\nManage Support\nConversation" as UC10
+usecase "UC11\nManage Doctor Profile\n& Schedule" as UC11
+usecase "UC12\nConduct Doctor\nVisit" as UC12
+usecase "UC13\nAdminister Accounts\n& Clinic" as UC13
+usecase "UC14\nMonitor Operations" as UC14
+
+Patient --> UC01
+Patient --> UC02
+Patient --> UC03
+Patient --> UC04
+Patient --> UC05
+Patient --> UC06
+Patient --> UC10
+Receptionist --> UC07
+Receptionist --> UC08
+Receptionist --> UC09
+Receptionist --> UC10
+Doctor --> UC11
+Doctor --> UC12
+Admin --> UC13
+Admin --> UC14
+@enduml

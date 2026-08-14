@@ -12,6 +12,8 @@ Hai luồng AI cần được phân biệt rõ:
    ảnh, trả Top-3/Grad-CAM rồi truy hồi nội dung đúng chương bệnh từ tài liệu cục bộ.
 2. **Chat kiến thức:** `/ai/public-chat` dùng Gemini; `/ai/chat` dùng RAG
    extractive local. Gemini public chat hiện không phải RAG và không có citation.
+3. **Trợ lý hỗ trợ:** `/ai/support-chat` phân loại ý định bằng policy nội bộ,
+   trả FAQ hoặc yêu cầu handoff sang lễ tân.
 
 ## 2. Trạng thái triển khai hiện tại
 
@@ -22,7 +24,8 @@ Hai luồng AI cần được phân biệt rõ:
 | Top-3, confidence, uncertain, Grad-CAM | Đã có trong response `/predict` |
 | Dataset cục bộ | Có trong `SkinDisease/`; không đưa lên Git |
 | Checkpoint `best_model.pth` | Đã huấn luyện cục bộ, AI health `modelReady=true` |
-| Metric test độc lập | Accuracy 76,60%; Macro F1 75,27%; Top-3 95,21% |
+| Metric test gốc cố định (564 ảnh) | Accuracy 78,90%; Macro F1 78,31%; Weighted F1 78,58%; Top-3 93,62% |
+| SCIN external test (240 ảnh) | Accuracy 67,92%; Macro F1 41,57%; Weighted F1 65,94%; Top-3 92,92% |
 | UI tải ảnh và xem kết quả | Đã tích hợp cho Patient; có Top-3, Grad-CAM, lịch sử và chuyển sang đặt lịch |
 | Gemini public chat | Đã nối trang chủ |
 | RAG local có citation | Đã index 625 đoạn/330 trang, tự chạy sau prediction và hiển thị trên UI Patient |
@@ -59,10 +62,12 @@ Script `ai-service/scripts/validate_dataset.py` hiện:
 - phát hiện file trùng, xung đột nhãn và nhóm trùng xuyên train/test;
 - xuất báo cáo JSON và hỗ trợ chế độ `--strict`.
 
-Lần kiểm tra ngày 28/07/2026 trên tám lớp ghi nhận 5.747 ảnh, 0 ảnh hỏng, 189
-nhóm trùng, 38 nhóm trùng xuyên split và 9 nhóm xung đột nhãn. Pipeline train
-tự loại các nhóm không an toàn, khử trùng và tạo 4.224 train, 746 validation,
-564 test mà không sao chép hoặc xóa dataset gốc.
+Dataset gốc được kiểm tra ngày 28/07/2026 có 5.747 ảnh, 0 ảnh hỏng, 189 nhóm
+trùng, 38 nhóm trùng xuyên split và 9 nhóm xung đột nhãn. Bản model hiện hành
+bổ sung SCIN 1.0.0 theo case-level split: 1.217 ảnh hợp lệ, trong đó 977 ảnh dùng
+cho train pool và 240 ảnh giữ riêng làm external test. Sau làm sạch, các split
+hiện hành là 5.053 train, 894 validation, 564 test gốc cố định và 240 SCIN
+external test; pipeline không xóa dataset nguồn.
 
 Trước khi công bố kết quả cần bổ sung:
 
@@ -88,16 +93,23 @@ Pipeline hiện dùng pretrained ImageNet, resize 256, random resized crop 224,
 horizontal flip, rotation, color jitter, normalize ImageNet, AdamW và Cross
 Entropy. Checkpoint tốt nhất được chọn theo validation macro F1.
 
-### 5.1. Lần huấn luyện baseline hiện tại
+### 5.1. Model đang chạy sau khi bổ sung SCIN
 
-EfficientNet-B0 được fine-tune 20 epoch, batch size 32, seed 42, class-weighted
-Cross Entropy, cosine scheduler và AMP trên RTX 4050 Laptop. Validation có
-transform riêng và split phân tầng theo nhóm SHA-256. Checkpoint epoch 17 được
-chọn theo validation Macro F1 78,58%.
+EfficientNet-B0 được fine-tune toàn bộ trong 20 epoch, batch size 32, seed 42,
+class-weighted Cross Entropy, cosine scheduler và AMP trên RTX 4050 Laptop.
+Checkpoint epoch 18 được chọn theo validation Macro F1 77,40%; validation
+Accuracy là 78,86%.
 
-Test độc lập 564 ảnh đạt Accuracy 76,60%, Macro F1 75,27%, Weighted F1 76,34%
-và Top-3 Accuracy 95,21%. Lupus có recall thấp nhất 44,12%, là giới hạn quan
-trọng phải hiển thị trong model card và error analysis.
+Trên test gốc cố định 564 ảnh, model đạt Accuracy 78,90%, Macro F1 78,31%,
+Weighted F1 78,58% và Top-3 Accuracy 93,62%. Trên SCIN external test 240 ảnh,
+model đạt lần lượt 67,92%, 41,57%, 65,94% và 92,92%. Lupus vẫn có recall thấp
+trên test gốc; Tinea external recall chỉ 12,90%. Kết quả external chịu mất cân
+bằng lớp rất mạnh và chưa đại diện bệnh nhân Việt Nam.
+
+Baseline trước SCIN đạt Accuracy 76,60%, Macro F1 75,27%, Weighted F1 76,34%
+và Top-3 95,21%. Các số baseline được giữ trong
+[`model-card.md`](model-card.md); báo cáo model hiện hành nằm tại
+[`model-card-scin-v1.md`](model-card-scin-v1.md).
 
 ## 6. Đánh giá và release gate
 
@@ -126,8 +138,8 @@ subgroup/error analysis và xác minh chuyên môn trước khi phát hành lâm
 4. Softmax, lấy tối đa ba lớp có score cao nhất.
 5. Nếu Top-1 thấp hơn 0,55, đặt `uncertain=true`.
 6. Tạo Grad-CAM tại convolution layer cuối và trả PNG base64 data URL.
-7. Frontend lưu metadata kết quả qua Patient Service; ảnh gốc và Grad-CAM không
-   được lưu lâu dài.
+7. Frontend lưu metadata và ảnh gốc qua Patient Service; Grad-CAM chỉ hiển thị
+   trong response hiện tại và không được lưu lâu dài.
 
 Grad-CAM chỉ cho biết vùng ảnh ảnh hưởng đến output. Nó không chứng minh mô hình
 lập luận đúng và không phải bằng chứng y khoa. Mọi màn hình phải hiển thị
@@ -168,15 +180,40 @@ với `has_evidence=false`.
 4. Kiểm thử retrieval hit@k, MRR, citation correctness và relevance.
 5. Red-team kê thuốc, prompt injection, thiếu nguồn và nội dung ngoài da liễu.
 
-## 10. Nguyên tắc riêng tư và an toàn
+## 10. Trợ lý hỗ trợ Patient
+
+Trợ lý này là tầng đầu của luồng hỗ trợ Patient. Nó xử lý hướng dẫn đặt lịch,
+cách đổi/hủy, tìm bác sĩ, giá khám, hotline, giờ làm, cách dùng AI và cách hiểu
+Top-3/Grad-CAM ở mức tham khảo. Câu hỏi da liễu chung được tra cứu bằng RAG local;
+thiếu bằng chứng thì fail-closed và đề nghị kết nối lễ tân. Yêu cầu thực hiện
+đổi/hủy/đặt hộ, trạng thái lịch cá nhân, tài khoản, phản ánh, dấu hiệu nguy hiểm,
+chẩn đoán cá nhân và kê đơn luôn trả `requires_handoff=true`.
+
+Category/handoff là quyết định deterministic trong `support_assistant.py`.
+Gemini không nhận câu hỏi gốc; nó chỉ có thể biên tập một câu mẫu đã duyệt từ
+category không nhạy cảm. Nếu Gemini lỗi hoặc chưa cấu hình, câu mẫu local vẫn
+được trả. Appointment Service lưu nội dung gốc, transcript AI/System, intent và
+summary bàn giao trong support chat nội bộ. Service tự chuyển người thật khi
+policy bắt buộc, confidence thấp, Patient không hài lòng hoặc hai lượt liên tiếp
+không giải quyết được; frontend không hiển thị nút bỏ qua AI. Lễ tân thấy toàn bộ
+lịch sử và bản tóm tắt trong cùng conversation, sau đó claim để phản hồi realtime.
+
+Với `DOCTOR_AVAILABILITY`, AI chỉ trích xuất tên bác sĩ/ngày; Appointment Service
+đối chiếu Doctor Service và Scheduling Engine trước khi trả khung giờ thật. AI
+không tự sinh slot và không thực hiện đặt, đổi, hủy hoặc xác nhận lịch.
+
+## 11. Nguyên tắc riêng tư và an toàn
 
 - Không gửi ảnh/PII bệnh nhân tới Gemini hoặc provider ngoài nếu chưa có consent
   và thiết kế bảo vệ dữ liệu phù hợp.
-- Không lưu ảnh chẩn đoán vào database/object storage khi chưa có retention và
-  access control.
+- Ảnh gốc hiện được lưu dạng BLOB trong Patient Service. Patient có quyền
+  đọc/xóa; Doctor chỉ đọc khi Patient đã chia sẻ với đúng appointment mà Doctor
+  phụ trách. Endpoint ảnh trả `Cache-Control: no-store`.
+- Cần bổ sung chính sách retention, xóa tự động và giám sát dung lượng trước khi
+  triển khai công khai.
 - Không cho nút tự sao chép output AI thành final diagnosis.
-- Bệnh nhân phải chủ động chọn chia sẻ; chỉ tóm tắt kết quả được đưa vào lý do
-  khám khi đặt lịch, không đưa ảnh gốc sang hồ sơ bác sĩ.
+- Bệnh nhân phải chủ động chọn chia sẻ. Ảnh không được chép sang hồ sơ y khoa;
+  Doctor chỉ xem qua endpoint chia sẻ có kiểm tra quyền của appointment.
 - Bác sĩ không chạy model trong dashboard và luôn ghi kết luận độc lập.
 - Ảnh/dấu hiệu nguy hiểm phải được điều hướng khám trực tiếp; kết quả AI âm tính
   không được dùng để trì hoãn chăm sóc.

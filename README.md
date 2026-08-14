@@ -13,12 +13,15 @@ gian thực và mô hình Computer Vision hỗ trợ bệnh nhân tham khảo �
 
 ### Bệnh nhân
 
-- Đăng ký bằng email OTP, đăng nhập mật khẩu hoặc Google OAuth.
+- Đăng ký bằng email OTP, đăng nhập mật khẩu hoặc Google OAuth; access token
+  được tự refresh bằng refresh token xoay vòng.
 - Xem hồ sơ, mô tả, chuyên môn, kinh nghiệm, lịch trống và giá khám của bác sĩ.
 - Chọn bác sĩ, ngày, khung giờ, nhập lý do và xác nhận đặt lịch.
-- Xem lịch sắp tới/lịch sử, nhận thông báo và liên hệ lễ tân realtime.
-- Phân tích ảnh da bằng AI, xem Top-3, confidence và Grad-CAM.
-- Chủ động chia sẻ kết quả AI cho bác sĩ phụ trách và đánh giá sau buổi khám.
+- Xem lịch sắp tới/lịch sử và nhận thông báo. Trợ lý hỗ trợ tự động trả lời thủ
+  tục đơn giản; yêu cầu cần thao tác được chuyển sang lễ tân realtime.
+- Phân tích ảnh da bằng AI, xem Top-3, confidence, Grad-CAM và hướng dẫn RAG.
+- Lưu lịch sử assessment/ảnh, chủ động chia sẻ riêng cho bác sĩ phụ trách, xóa
+  kết quả của mình và đánh giá sau buổi khám.
 
 ### Lễ tân
 
@@ -27,6 +30,7 @@ gian thực và mô hình Computer Vision hỗ trợ bệnh nhân tham khảo �
 - Tra cứu bệnh nhân và đặt lịch qua hotline; số điện thoại là bắt buộc.
 - Gửi nhắc lịch, check-in, điều phối hàng đợi và ghi nhận no-show.
 - Nhận phụ trách cuộc trò chuyện để tránh nhiều lễ tân trả lời cùng lúc.
+- Nhận yêu cầu đã được trợ lý phân loại kèm nội dung gốc của bệnh nhân.
 
 ### Bác sĩ
 
@@ -74,6 +78,23 @@ confusion matrix và giới hạn sử dụng trong [Model Card hiện tại](do
 RAG truy xuất nội dung từ tài liệu da liễu để giải thích kiến thức liên quan.
 Chatbot không kê đơn và không tạo phác đồ điều trị cá nhân.
 
+Trợ lý hỗ trợ trong khu vực Patient là tầng đầu của một luồng hội thoại thống
+nhất. AI hướng dẫn quy trình đặt/đổi/hủy lịch, tìm bác sĩ, giá, giờ làm, cách dùng
+và cách đọc kết quả AI; câu hỏi da liễu chung chỉ được trả lời khi RAG local có
+nguồn phù hợp. Yêu cầu thao tác lịch, tài khoản, khiếu nại, câu hỏi cá nhân hoặc
+nội dung AI không hiểu được tự động chuyển sang lễ tân; Patient không phải mở
+một chat mới hay kể lại từ đầu. Gemini chỉ được phép biên tập câu mẫu từ tên nhóm
+yêu cầu và không nhận nội dung gốc của bệnh nhân. Appointment Service lưu toàn bộ
+transcript `PATIENT / AI / SYSTEM`, intent, độ tin cậy, số lần thất bại và bản tóm
+tắt bàn giao. Lễ tân nhận realtime, xem toàn bộ ngữ cảnh rồi claim conversation
+trước khi trả lời trong chính cuộc trò chuyện đó. Khi xử lý xong, lễ tân chọn
+`Hoàn tất hỗ trợ`; lịch sử vẫn được giữ nhưng yêu cầu tiếp theo quay lại tầng AI.
+
+Patient Service lưu metadata và ảnh gốc của assessment trong PostgreSQL để
+Patient xem lại hoặc chia sẻ; Grad-CAM không được lưu. Doctor chỉ đọc ảnh khi
+Patient chia sẻ với đúng lịch mà Doctor phụ trách. Ảnh dùng
+`Cache-Control: no-store` và bị xóa khi Patient xóa assessment.
+
 ## Kiến trúc hệ thống
 
 ```text
@@ -100,7 +121,7 @@ PostgreSQL 16 · Redis 7 · RabbitMQ 3.13 · Docker Compose
 | Dữ liệu | PostgreSQL 16 với 7 schema và 23 bảng nghiệp vụ |
 | Realtime | WebSocket; dữ liệu được tải lại từ nguồn thật sau sự kiện |
 | Messaging | RabbitMQ và outbox event cho thông báo bất đồng bộ |
-| AI | FastAPI, PyTorch, EfficientNet-B0, Grad-CAM và Gemini RAG |
+| AI | FastAPI, PyTorch, EfficientNet-B0, Grad-CAM, TF-IDF RAG và Gemini public chat |
 | Hạ tầng | Docker Compose, healthcheck và giới hạn RAM từng container |
 
 ## Chạy bằng Docker

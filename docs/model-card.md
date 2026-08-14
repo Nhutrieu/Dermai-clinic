@@ -181,7 +181,9 @@ người bệnh mắc bệnh.
 - Không có thao tác tự chép AI sang final diagnosis hoặc đơn thuốc.
 - Kiểm tra dữ liệu, group split, error analysis và đánh giá theo subgroup.
 - Lưu model version/checksum và hỗ trợ rollback.
-- Chỉ chia sẻ tóm tắt khi bệnh nhân chủ động chọn; không lưu ảnh gốc.
+- Patient Service lưu metadata và ảnh gốc của lần kiểm tra để Patient xem lại.
+  Chỉ Doctor phụ trách appointment được xem khi Patient chủ động chia sẻ;
+  Grad-CAM không được lưu lâu dài.
 - Theo dõi phân phối input, latency, lỗi và drift sau triển khai thử nghiệm.
 - Điều hướng đi khám khi ảnh/dấu hiệu nguy hiểm hoặc ngoài phạm vi.
 
@@ -193,6 +195,7 @@ người bệnh mắc bệnh.
 - [x] Checkpoint checksum, config, seed và class map được lưu.
 - [x] UI Patient hiển thị Top-3, uncertain, Grad-CAM và disclaimer.
 - [ ] Bác sĩ xác nhận wording lớp và cảnh báo.
-- [x] Upload chỉ dành cho Patient; không lưu ảnh gốc; metadata có chia sẻ và xóa.
+- [x] Upload chỉ dành cho Patient; ảnh/metadata có kiểm tra quyền, chia sẻ và xóa.
+- [ ] Có chính sách retention/xóa tự động và quota dung lượng ảnh AI.
 - [ ] Test ảnh hỏng, ảnh lớn, ảnh ngoài phân phối và model unavailable.
 - [ ] Không có API key, PII hoặc ảnh bệnh nhân thật trong Git/demo.

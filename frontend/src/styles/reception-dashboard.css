@@ -1326,7 +1326,7 @@
   }
 
   .receptionist-support-chat .support-panel {
-    height: min(520px, calc(100dvh - 180px));
+    height: min(620px, calc(100dvh - 180px));
   }
 
   .hotline-launch {

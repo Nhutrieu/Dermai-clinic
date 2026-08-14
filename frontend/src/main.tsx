@@ -17,6 +17,7 @@ import "./styles/record-filters.css";
 import "./styles/hotline.css";
 import "./styles/chat.css";
 import "./styles/support-assignment.css";
+import "./styles/support-ai.css";
 import "./styles/admin-analytics.css";
 import GoogleSignIn, { type GoogleLoginResult } from "./features/auth/GoogleSignIn";
 import HomePage from "./features/public/HomePage";
@@ -476,7 +477,7 @@ function Dashboard({ session, logout }: { session: Tokens; logout: () => void })
             {!loading && !error && session.role === "RECEPTIONIST" && <ReceptionWorkspace token={session.accessToken} tab={tab} onNavigate={setTab} />}
             {!loading && !error && session.role === "PATIENT" && patient && tab === "profile" && <PatientDashboard token={session.accessToken} patient={patient} appointments={appointments} records={records} prescriptions={prescriptions} resourceState={patientResourceState} savedPatient={setPatient} changedAppointments={setAppointments} openAppointments={() => setTab("appointments")} openAi={() => setTab("ai")} openRecords={() => setTab("records")} />}
             {!loading && !error && session.role === "PATIENT" && patient && tab === "appointments" && <PatientAppointments token={session.accessToken} patient={patient} appointments={appointments} changed={setAppointments} />}
-            {!loading && !error && session.role === "PATIENT" && patient && tab === "records" && <PatientMedicalRecords token={session.accessToken} patient={patient} appointments={appointments} records={records} prescriptions={prescriptions} resourceState={patientResourceState} openAppointments={() => setTab("appointments")} />}
+            {!loading && !error && session.role === "PATIENT" && patient && tab === "records" && <PatientMedicalRecords token={session.accessToken} patient={patient} appointments={appointments} records={records} prescriptions={prescriptions} resourceState={patientResourceState} openAppointments={() => setTab("appointments")} recordHidden={id => setRecords(current => current.filter(record => record.id !== id))} />}
             {!loading && !error && session.role === "PATIENT" && patient && tab === "ai" && <PatientAiScreen token={session.accessToken} patient={patient} openBooking={() => setTab("appointments")} />}
             {!loading && !error && session.role === "DOCTOR" && doctor && tab === "profile" && <DoctorProfile token={session.accessToken} doctor={doctor} work={work} leave={leave} saved={setDoctor} />}
             {!loading && !error && session.role === "DOCTOR" && doctor && tab === "appointments" && <DoctorView token={session.accessToken} doctor={doctor} appointments={appointments} patients={patients} work={work} leave={leave} transition={transition} requireFollowUp={requireFollowUp} />}

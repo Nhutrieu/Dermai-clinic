@@ -1,58 +1,105 @@
 @startuml
+title DermAI Clinic - Domain Class Diagram
+skinparam shadowing false
+hide empty members
+
+class Identity {
+  +UUID id
+  +String email
+  +Role role
+  +boolean active
+}
 class Patient {
- +UUID id
- +MedicalHistory history
- +List<Allergy> allergies
+  +UUID id
+  +UUID identityId
+  +String fullName
+  +String phone
 }
 class Doctor {
- +UUID id
- +Specialty specialty
- +isAvailable(Interval): boolean
+  +UUID id
+  +UUID identityId
+  +String specialty
+  +int experienceYears
+  +Money consultationFee
+}
+class WorkSchedule {
+  +int weekday
+  +LocalTime startTime
+  +LocalTime endTime
+  +int slotMinutes
+}
+class LeavePeriod {
+  +Instant startAt
+  +Instant endAt
+  +String reason
 }
 class Appointment {
- +UUID id
- +Interval interval
- +AppointmentStatus status
- +transitionTo(next)
- +cancel(reason)
+  +UUID id
+  +Instant startAt
+  +Instant endAt
+  +AppointmentStatus status
+  +Money consultationFeeSnapshot
+  +Instant holdExpiresAt
+  +transitionTo(next)
 }
 enum AppointmentStatus {
- PENDING
- ASSIGNED
- CONFIRMED
- IN_PROGRESS
- COMPLETED
- FOLLOW_UP_REQUIRED
- CANCELLED
+  HELD
+  PROPOSED
+  PENDING
+  ASSIGNED
+  CONFIRMED
+  CHECKED_IN
+  IN_PROGRESS
+  COMPLETED
+  FOLLOW_UP_REQUIRED
+  NO_SHOW
+  CANCELLED
+}
+class BookingPolicy {
+  +validateNewBooking(patient, doctor, start)
+  +validateSameDoctorDay()
+  +MAX_UPCOMING = 3
 }
 class SchedulingEngine {
- +recommend(criteria): List<Recommendation>
+  +availability(doctor, date, duration)
+  +recommend(criteria)
+  +assertAvailable(interval)
 }
-class Recommendation {
- +double score
- +List<String> reasons
+class ClinicClosure {
+  +LocalDate date
+  +String reason
 }
-class MedicalRecord {
- +String finalDiagnosis
- +String clinicalNotes
- +Severity severity
- +sign(doctor)
+class AiAssessment {
+  +String modelVersion
+  +List top3
+  +double confidence
+  +String gradCam
+  +boolean sharedWithDoctor
 }
-class Prescription {
- +List<PrescriptionItem> items
- +sign(doctor)
+class MedicalRecord
+class Prescription
+class SupportConversation {
+  +UUID patientIdentityId
+  +UUID assignedReceptionistId
 }
-class AiPrediction {
- +List<RankedPrediction> top3
- +String modelVersion
- +URI gradCam
-}
-Patient "1" -- "*" Appointment
-Doctor "0..1" -- "*" Appointment
-Appointment --> AppointmentStatus
-SchedulingEngine ..> Recommendation
-Appointment "1" -- "0..1" MedicalRecord
-MedicalRecord "1" -- "0..*" Prescription
-MedicalRecord "1" -- "0..*" AiPrediction : references
-@enduml
+class SupportMessage
 
+Identity "1" -- "0..1" Patient
+Identity "1" -- "0..1" Doctor
+Doctor "1" -- "*" WorkSchedule
+Doctor "1" -- "*" LeavePeriod
+Patient "1" -- "*" Appointment
+Doctor "1" -- "*" Appointment
+Appointment --> AppointmentStatus
+Appointment "0..1" --> "0..1" Appointment : parent/follow-up
+BookingPolicy ..> Appointment
+SchedulingEngine ..> WorkSchedule
+SchedulingEngine ..> LeavePeriod
+SchedulingEngine ..> ClinicClosure
+Patient "1" -- "*" AiAssessment
+AiAssessment "0..1" --> "0..1" Appointment : shared for
+Appointment "1" -- "0..1" MedicalRecord
+MedicalRecord "1" -- "*" Prescription
+Patient "1" -- "*" SupportConversation
+SupportConversation "1" -- "*" SupportMessage
+@enduml

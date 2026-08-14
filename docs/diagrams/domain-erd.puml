@@ -1,22 +1,211 @@
 @startuml
-entity users { *id : uuid <<PK>>\n--\n*email : citext <<UQ>>\npassword_hash : text\nrole : varchar\nstatus : varchar }
-entity patients { *id : uuid <<PK>>\nuser_id : uuid <<FK>>\nfull_name : varchar\ndob : date }
-entity doctors { *id : uuid <<PK>>\nuser_id : uuid <<FK>>\nspecialty_id : uuid <<FK>> }
-entity work_schedules { *id : uuid <<PK>>\ndoctor_id : uuid <<FK>>\nweekday : smallint\nstart_time : time\nend_time : time }
-entity leave_periods { *id : uuid <<PK>>\ndoctor_id : uuid <<FK>>\nstart_at : timestamptz\nend_at : timestamptz }
-entity appointments { *id : uuid <<PK>>\npatient_id : uuid <<FK>>\ndoctor_id : uuid <<FK>>\nstart_at : timestamptz\nend_at : timestamptz\nstatus : varchar\nparent_id : uuid <<FK>> }
-entity medical_records { *id : uuid <<PK>>\nappointment_id : uuid <<FK,UQ>>\nfinal_diagnosis : text\nseverity : varchar\nclinical_notes : text }
-entity prescriptions { *id : uuid <<PK>>\nrecord_id : uuid <<FK>>\ndoctor_id : uuid <<FK>>\nsigned_at : timestamptz }
-entity prescription_items { *id : uuid <<PK>>\nprescription_id : uuid <<FK>>\ndrug_name : varchar\ndosage : varchar\ninstructions : text }
-users ||--o| patients
-users ||--o| doctors
+title DermAI Clinic - ERD (23 Business Tables / 7 Schemas)
+skinparam shadowing false
+skinparam linetype ortho
+hide circle
+
+package "auth schema" {
+  entity identities {
+    *id : uuid <<PK>>
+    --
+    email : varchar <<UQ>>
+    password_hash : text
+    role : varchar
+    active : boolean
+  }
+  entity refresh_tokens {
+    *id : uuid <<PK>>
+    identity_id : uuid
+    token_hash : text
+    expires_at : timestamptz
+  }
+  entity password_otps {
+    *id : uuid <<PK>>
+    identity_id : uuid
+    otp_hash : text
+    expires_at : timestamptz
+  }
+  entity email_verification_otps {
+    *id : uuid <<PK>>
+    identity_id : uuid
+    otp_hash : text
+    expires_at : timestamptz
+  }
+  entity staff_account_events {
+    *id : uuid <<PK>>
+    actor_identity_id : uuid
+    target_identity_id : uuid
+    action : varchar
+    created_at : timestamptz
+  }
+}
+package "patient schema" {
+  entity patients {
+    *id : uuid <<PK>>
+    --
+    identity_id : uuid <<UQ>>
+    full_name : varchar
+    phone : varchar
+    dob : date
+    avatar : text
+  }
+  entity ai_assessments {
+    *id : uuid <<PK>>
+    patient_id : uuid
+    appointment_id : uuid
+    model_version : varchar
+    top3 : jsonb
+    confidence : numeric
+    shared_with_doctor : boolean
+  }
+}
+package "doctor schema" {
+  entity doctors {
+    *id : uuid <<PK>>
+    --
+    identity_id : uuid <<UQ>>
+    full_name : varchar
+    specialty : varchar
+    license_number : varchar
+    consultation_fee : numeric
+  }
+  entity work_schedules {
+    *id : uuid <<PK>>
+    doctor_id : uuid
+    weekday : smallint
+    start_time : time
+    end_time : time
+    slot_minutes : int
+  }
+  entity leave_periods {
+    *id : uuid <<PK>>
+    doctor_id : uuid
+    start_at : timestamptz
+    end_at : timestamptz
+    reason : varchar
+  }
+}
+package "appointment schema" {
+  entity appointments {
+    *id : uuid <<PK>>
+    --
+    patient_id : uuid
+    patient_identity_id : uuid
+    doctor_id : uuid
+    doctor_identity_id : uuid
+    parent_id : uuid
+    start_at : timestamptz
+    end_at : timestamptz
+    status : varchar
+    consultation_fee_snapshot : numeric
+    version : bigint
+  }
+  entity appointment_notifications {
+    *id : uuid <<PK>>
+    appointment_id : uuid
+    patient_identity_id : uuid
+    notification_type : varchar
+    read_at : timestamptz
+  }
+  entity appointment_action_logs {
+    *id : uuid <<PK>>
+    appointment_id : uuid
+    actor_identity_id : uuid
+    action : varchar
+    created_at : timestamptz
+  }
+  entity clinic_reviews {
+    *id : uuid <<PK>>
+    appointment_id : uuid <<UQ>>
+    patient_identity_id : uuid
+    rating : int
+    comment : text
+    status : varchar
+  }
+  entity clinic_closures {
+    *id : uuid <<PK>>
+    closure_date : date <<UQ>>
+    reason : varchar
+  }
+  entity reminder_actions {
+    *id : uuid <<PK>>
+    appointment_id : uuid
+    receptionist_identity_id : uuid
+    action_type : varchar
+  }
+  entity outbox_events {
+    *id : uuid <<PK>>
+    aggregate_id : uuid
+    event_type : varchar
+    payload : jsonb
+    published_at : timestamptz
+  }
+  entity support_conversations {
+    *id : uuid <<PK>>
+    patient_identity_id : uuid
+    assigned_receptionist_id : uuid
+    created_at : timestamptz
+  }
+  entity support_messages {
+    *id : uuid <<PK>>
+    conversation_id : uuid
+    sender_identity_id : uuid
+    body : text
+    read_at : timestamptz
+  }
+}
+package "medical_record schema" {
+  entity medical_records {
+    *id : uuid <<PK>>
+    appointment_id : uuid <<UQ>>
+    patient_id : uuid
+    doctor_id : uuid
+    final_diagnosis : text
+    clinical_notes : text
+  }
+}
+package "prescription schema" {
+  entity prescriptions {
+    *id : uuid <<PK>>
+    medical_record_id : uuid
+    doctor_id : uuid
+    signed_at : timestamptz
+  }
+  entity prescription_items {
+    *id : uuid <<PK>>
+    prescription_id : uuid
+    drug_name : varchar
+    dosage : varchar
+    instructions : text
+  }
+}
+package "notification schema" {
+  entity deliveries {
+    *id : uuid <<PK>>
+    event_id : uuid <<UQ>>
+    recipient : varchar
+    channel : varchar
+    status : varchar
+    sent_at : timestamptz
+  }
+}
+
+identities ||--o{ refresh_tokens
+identities ||--o{ password_otps
+identities ||--o{ email_verification_otps
+patients ||--o{ ai_assessments
 doctors ||--o{ work_schedules
 doctors ||--o{ leave_periods
-patients ||--o{ appointments
-doctors ||--o{ appointments
-appointments ||--o| medical_records
-medical_records ||--o{ prescriptions
+patients ||..o{ appointments : logical
+doctors ||..o{ appointments : logical
+appointments ||--o{ appointment_notifications
+appointments ||--o{ appointment_action_logs
+appointments ||--o| clinic_reviews
+appointments ||--o{ reminder_actions
+appointments ||..o{ outbox_events : aggregate
+appointments |o--o{ appointments : parent
+support_conversations ||--o{ support_messages
+appointments ||..o| medical_records : logical
+medical_records ||..o{ prescriptions : logical
 prescriptions ||--|{ prescription_items
-appointments |o--o{ appointments : follow-up
 @enduml
-

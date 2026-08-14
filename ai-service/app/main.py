@@ -7,8 +7,9 @@ from PIL import Image, UnidentifiedImageError
 
 from .config import settings
 from .model import DISCLAIMER, load_bundle, predict
-from .rag import RagStore
-from .schemas import ChatRequest, ChatResponse, PredictionResponse
+from .rag import NO_EVIDENCE, RagStore
+from .schemas import ChatRequest, ChatResponse, PredictionResponse, SupportChatRequest, SupportChatResponse
+from .support_assistant import SupportDecision, classify_support_request, polish_safe_answer, rag_disease_key
 
 state: dict = {}
 
@@ -127,3 +128,51 @@ async def public_chat(request: ChatRequest):
     if isinstance(last_error, httpx.HTTPStatusError):
         raise HTTPException(502, f"Gemini error {last_error.response.status_code}: {last_error.response.text[:200]}")
     raise HTTPException(503, "Không thể kết nối Gemini.")
+
+
+@app.post("/support-chat", response_model=SupportChatResponse)
+async def support_chat(
+    request: SupportChatRequest,
+    x_user_role: str | None = Header(default=None, alias="X-User-Role"),
+):
+    if x_user_role != "PATIENT":
+        raise HTTPException(403, "Chỉ bệnh nhân được sử dụng trợ lý hỗ trợ.")
+
+    decision = classify_support_request(request.question)
+    if decision.category == "DERMATOLOGY_GENERAL":
+        rag = state.get("rag")
+        disease_key = rag_disease_key(request.question)
+        guidance = rag.guidance(disease_key) if rag and rag.ready and disease_key else None
+        if guidance and guidance.has_evidence:
+            rag_answer, refused = guidance.answer, False
+        else:
+            rag_answer, _citations, refused = rag.answer(request.question) if rag and rag.ready else (NO_EVIDENCE, [], False)
+        if refused or rag_answer == NO_EVIDENCE:
+            decision = SupportDecision(
+                category="DERMATOLOGY_GENERAL",
+                answer="Tài liệu hiện có chưa đủ để tôi trả lời câu hỏi này an toàn. Tôi có thể kết nối bạn với lễ tân để được hỗ trợ đặt lịch cùng bác sĩ da liễu.",
+                requires_handoff=True,
+                handoff_summary="Câu hỏi da liễu chung chưa có đủ dữ liệu RAG để trả lời; cần hỗ trợ đặt khám.",
+            )
+            answer = decision.answer
+        else:
+            answer = f"{rag_answer}\n\nThông tin trên chỉ mang tính tham khảo chung, không thay thế chẩn đoán hoặc chỉ định của bác sĩ."
+    elif decision.category == "DERMATOLOGY_VISIT_GUIDE":
+        # Preserve the reviewed care-seeking and emergency wording verbatim;
+        # generative polishing must not weaken a safety instruction.
+        answer = decision.answer
+    else:
+        answer = await polish_safe_answer(
+            decision, settings.gemini_api_key, settings.gemini_model
+        )
+    return SupportChatResponse(
+        answer=answer,
+        category=decision.category,
+        requires_handoff=decision.requires_handoff,
+        handoff_summary=decision.handoff_summary,
+        intent_confidence=decision.intent_confidence,
+        needs_clarification=decision.needs_clarification,
+        doctor_name=decision.doctor_name,
+        requested_date=decision.requested_date,
+        requested_time=decision.requested_time,
+    )

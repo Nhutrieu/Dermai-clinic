@@ -186,4 +186,26 @@ class AppointmentServiceTest {
         .isInstanceOf(IllegalStateException.class)
         .hasMessage("STALE_COMPLETION_TOO_EARLY");
   }
+
+  @Test
+  void followUpRequirementMakesAPreviouslyHiddenVisitVisibleAgain() {
+    var appointments = mock(AppointmentRepository.class);
+    var service = new AppointmentService(
+        appointments,
+        mock(OutboxRepository.class),
+        mock(SlotUpdateBroadcaster.class),
+        mock(AppointmentNotificationRepository.class),
+        mock(BookingPolicy.class)
+    );
+    var appointment = new Appointment();
+    appointment.id = UUID.randomUUID();
+    appointment.status = AppointmentStatus.COMPLETED;
+    appointment.patientHidden = true;
+    when(appointments.findLocked(appointment.id)).thenReturn(Optional.of(appointment));
+
+    var updated = service.requireFollowUp(appointment.id, "Tái khám theo dõi", Instant.now().plusSeconds(86_400));
+
+    assertThat(updated.status).isEqualTo(AppointmentStatus.FOLLOW_UP_REQUIRED);
+    assertThat(updated.patientHidden).isFalse();
+  }
 }
