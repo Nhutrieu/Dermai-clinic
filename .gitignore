@@ -1,6 +1,7 @@
 .env
 .env.*
 !.env.example
+!.env.production.example
 *.backup
 *.dump
 *.bak
@@ -25,3 +26,6 @@ services/ai-service/rag/index/
 backups/
 SkinDisease/
 .ai-skills/
+# Runtime test logs may contain session or environment details; keep only the
+# reviewed summary in docs/test-results.json.
+test-results/

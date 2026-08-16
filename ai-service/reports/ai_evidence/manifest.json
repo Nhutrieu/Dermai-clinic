@@ -1,0 +1,96 @@
+{
+  "schema_version": 1,
+  "generated_at_utc": "2026-08-14T10:15:53.794735+00:00",
+  "checkpoint": {
+    "path": "ai-service/models/best_model.pth",
+    "sha256": "914f83a85c4dbff06424e0a48f1121950f10e3c0ce8d5a9f68369b38106cc3df",
+    "expected_sha256": "914f83a85c4dbff06424e0a48f1121950f10e3c0ce8d5a9f68369b38106cc3df",
+    "expected_sha256_match": true,
+    "size_bytes": 16370790,
+    "model_version": "efficientnet_b0-20260728T185742Z",
+    "architecture": "efficientnet_b0",
+    "classes": [
+      "Acne",
+      "Candidiasis",
+      "Eczema",
+      "Lupus",
+      "Psoriasis",
+      "SkinCancer",
+      "Tinea",
+      "Warts"
+    ]
+  },
+  "evaluation": {
+    "device": {
+      "type": "cuda",
+      "name": "NVIDIA GeForce RTX 4050 Laptop GPU",
+      "total_memory_bytes": 6438780928,
+      "compute_capability": "8.9",
+      "cuda_runtime": "12.1",
+      "cudnn": 90100
+    },
+    "seed": 42,
+    "batch_size": 32,
+    "workers": 0,
+    "uncertain_threshold": 0.55,
+    "calibration_bins": 15,
+    "fixed_test": {
+      "data_root": "SkinDisease",
+      "split": "test",
+      "raw_images": 569,
+      "evaluated_images": 564,
+      "class_counts": {
+        "Acne": 65,
+        "Candidiasis": 27,
+        "Eczema": 111,
+        "Lupus": 34,
+        "Psoriasis": 88,
+        "SkinCancer": 77,
+        "Tinea": 98,
+        "Warts": 64
+      },
+      "excluded_label_conflict_files": 5,
+      "excluded_reference_duplicates": 0,
+      "excluded_within_split_duplicates": 0,
+      "fixed_test_preserved": true
+    },
+    "scin_external_test": {
+      "data_root": "SkinDisease/scin-v1",
+      "split": "external_test",
+      "raw_images": 240,
+      "evaluated_images": 240,
+      "class_counts": {
+        "Acne": 19,
+        "Candidiasis": 1,
+        "Eczema": 156,
+        "Lupus": 4,
+        "Psoriasis": 22,
+        "SkinCancer": 0,
+        "Tinea": 31,
+        "Warts": 7
+      },
+      "excluded_label_conflict_files": 0,
+      "excluded_reference_duplicates": 0,
+      "excluded_within_split_duplicates": 0,
+      "fixed_test_preserved": false
+    }
+  },
+  "artifacts": [
+    "fixed_test_predictions.json",
+    "scin_external_test_predictions.json",
+    "fixed_test_calibration.json",
+    "scin_external_test_calibration.json",
+    "fixed_test_errors.json",
+    "scin_external_test_errors.json",
+    "latency.json",
+    "ood_synthetic_probes.json",
+    "gradcam_samples.json",
+    "summary.md"
+  ],
+  "unavailable_evidence": [
+    "Clinically representative labeled OOD benchmark and AUROC/AUPR/FPR95",
+    "Dermatologist review of individual errors and Grad-CAM localization",
+    "Subgroup evaluation by skin tone, age, sex and Vietnamese population",
+    "End-to-end production latency including HTTP, upload, decode, RAG and frontend"
+  ]
+}

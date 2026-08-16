@@ -1,0 +1,202 @@
+{
+  "sample_count": 564,
+  "class_count": 8,
+  "binning": {
+    "method": "equal_width_top1_confidence",
+    "bins": 15,
+    "interval": "[lower, upper), except final bin includes 1.0"
+  },
+  "accuracy": 0.7890070921985816,
+  "mean_confidence": 0.8920401930809021,
+  "expected_calibration_error": 0.10612589057455675,
+  "maximum_calibration_error": 0.3069520592689514,
+  "negative_log_likelihood": 0.8384566903114319,
+  "multiclass_brier_score": 0.32219870288501,
+  "per_class_one_vs_rest_brier": {
+    "Acne": 0.024427793962159335,
+    "Candidiasis": 0.01283996037200269,
+    "Eczema": 0.06482414333621955,
+    "Lupus": 0.027914538103253925,
+    "Psoriasis": 0.0694115171664545,
+    "SkinCancer": 0.03588995377705058,
+    "Tinea": 0.056353805434442385,
+    "Warts": 0.030536990733427083
+  },
+  "uncertainty_policy": {
+    "accept_when_top1_confidence_at_least": 0.55,
+    "accepted": 529,
+    "rejected": 35,
+    "coverage": 0.9379432624113475,
+    "accepted_accuracy": 0.8147448015122873,
+    "rejected_accuracy": 0.4,
+    "accepted_errors": 98,
+    "rejected_errors": 21
+  },
+  "reliability": [
+    {
+      "index": 0,
+      "lower": 0.0,
+      "upper": 0.06666666666666667,
+      "right_edge_inclusive": false,
+      "count": 0,
+      "fraction": 0.0,
+      "accuracy": null,
+      "mean_confidence": null,
+      "absolute_gap": null
+    },
+    {
+      "index": 1,
+      "lower": 0.06666666666666667,
+      "upper": 0.13333333333333333,
+      "right_edge_inclusive": false,
+      "count": 0,
+      "fraction": 0.0,
+      "accuracy": null,
+      "mean_confidence": null,
+      "absolute_gap": null
+    },
+    {
+      "index": 2,
+      "lower": 0.13333333333333333,
+      "upper": 0.2,
+      "right_edge_inclusive": false,
+      "count": 0,
+      "fraction": 0.0,
+      "accuracy": null,
+      "mean_confidence": null,
+      "absolute_gap": null
+    },
+    {
+      "index": 3,
+      "lower": 0.2,
+      "upper": 0.26666666666666666,
+      "right_edge_inclusive": false,
+      "count": 0,
+      "fraction": 0.0,
+      "accuracy": null,
+      "mean_confidence": null,
+      "absolute_gap": null
+    },
+    {
+      "index": 4,
+      "lower": 0.26666666666666666,
+      "upper": 0.3333333333333333,
+      "right_edge_inclusive": false,
+      "count": 2,
+      "fraction": 0.0035460992907801418,
+      "accuracy": 0.0,
+      "mean_confidence": 0.3069520592689514,
+      "absolute_gap": 0.3069520592689514
+    },
+    {
+      "index": 5,
+      "lower": 0.3333333333333333,
+      "upper": 0.4,
+      "right_edge_inclusive": false,
+      "count": 4,
+      "fraction": 0.0070921985815602835,
+      "accuracy": 0.5,
+      "mean_confidence": 0.3759191036224365,
+      "absolute_gap": 0.12408089637756348
+    },
+    {
+      "index": 6,
+      "lower": 0.4,
+      "upper": 0.4666666666666667,
+      "right_edge_inclusive": false,
+      "count": 6,
+      "fraction": 0.010638297872340425,
+      "accuracy": 0.5,
+      "mean_confidence": 0.43735966086387634,
+      "absolute_gap": 0.06264033913612366
+    },
+    {
+      "index": 7,
+      "lower": 0.4666666666666667,
+      "upper": 0.5333333333333333,
+      "right_edge_inclusive": false,
+      "count": 20,
+      "fraction": 0.03546099290780142,
+      "accuracy": 0.45,
+      "mean_confidence": 0.502104640007019,
+      "absolute_gap": 0.05210464000701903
+    },
+    {
+      "index": 8,
+      "lower": 0.5333333333333333,
+      "upper": 0.6,
+      "right_edge_inclusive": false,
+      "count": 19,
+      "fraction": 0.03368794326241135,
+      "accuracy": 0.42105263157894735,
+      "mean_confidence": 0.5666880011558533,
+      "absolute_gap": 0.14563536957690593
+    },
+    {
+      "index": 9,
+      "lower": 0.6,
+      "upper": 0.6666666666666666,
+      "right_edge_inclusive": false,
+      "count": 23,
+      "fraction": 0.040780141843971635,
+      "accuracy": 0.391304347826087,
+      "mean_confidence": 0.6376885771751404,
+      "absolute_gap": 0.2463842293490534
+    },
+    {
+      "index": 10,
+      "lower": 0.6666666666666666,
+      "upper": 0.7333333333333333,
+      "right_edge_inclusive": false,
+      "count": 22,
+      "fraction": 0.03900709219858156,
+      "accuracy": 0.6363636363636364,
+      "mean_confidence": 0.7049879431724548,
+      "absolute_gap": 0.06862430680881848
+    },
+    {
+      "index": 11,
+      "lower": 0.7333333333333333,
+      "upper": 0.8,
+      "right_edge_inclusive": false,
+      "count": 31,
+      "fraction": 0.0549645390070922,
+      "accuracy": 0.5483870967741935,
+      "mean_confidence": 0.766958475112915,
+      "absolute_gap": 0.21857137833872153
+    },
+    {
+      "index": 12,
+      "lower": 0.8,
+      "upper": 0.8666666666666667,
+      "right_edge_inclusive": false,
+      "count": 36,
+      "fraction": 0.06382978723404255,
+      "accuracy": 0.6388888888888888,
+      "mean_confidence": 0.8343392014503479,
+      "absolute_gap": 0.19545031256145906
+    },
+    {
+      "index": 13,
+      "lower": 0.8666666666666667,
+      "upper": 0.9333333333333333,
+      "right_edge_inclusive": false,
+      "count": 36,
+      "fraction": 0.06382978723404255,
+      "accuracy": 0.8333333333333334,
+      "mean_confidence": 0.9037707448005676,
+      "absolute_gap": 0.07043741146723426
+    },
+    {
+      "index": 14,
+      "lower": 0.9333333333333333,
+      "upper": 1.0,
+      "right_edge_inclusive": true,
+      "count": 365,
+      "fraction": 0.6471631205673759,
+      "accuracy": 0.9041095890410958,
+      "mean_confidence": 0.9891384243965149,
+      "absolute_gap": 0.08502883535541905
+    }
+  ]
+}

@@ -91,6 +91,21 @@ class MedicalRecordControllerTest {
     assertThat(controller.get(record.id, UUID.randomUUID(), "ADMIN")).isSameAs(record);
   }
 
+  @Test
+  void doctorPatientLookupReturnsOnlyRecordsThatDoctorActuallySigned() {
+    var repository = mock(MedicalRecordRepository.class);
+    var patientId = UUID.randomUUID();
+    var doctorIdentity = UUID.randomUUID();
+    var owned = record(UUID.randomUUID());
+    when(repository.findByPatientIdAndDoctorIdOrderBySignedAtDesc(patientId, doctorIdentity))
+        .thenReturn(List.of(owned));
+    var controller = new MedicalRecordController(repository, "http://appointment-service", mock(JdbcTemplate.class));
+
+    assertThat(controller.patient(patientId, doctorIdentity, "DOCTOR")).containsExactly(owned);
+
+    verify(repository, never()).findByPatientIdOrderBySignedAtDesc(patientId);
+  }
+
   private MedicalRecord record(UUID patientIdentity) {
     var record = new MedicalRecord();
     record.id = UUID.randomUUID();

@@ -53,9 +53,13 @@ def load_bundle(path: Path) -> ModelBundle | None:
     return ModelBundle(model, target, checkpoint.get("version", path.stem), classes, device)
 
 
-PREPROCESS = transforms.Compose([
+SPATIAL_PREPROCESS = transforms.Compose([
     transforms.Resize(256),
     transforms.CenterCrop(224),
+])
+
+PREPROCESS = transforms.Compose([
+    SPATIAL_PREPROCESS,
     transforms.ToTensor(),
     transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225]),
 ])
@@ -64,15 +68,29 @@ PREPROCESS = transforms.Compose([
 class GradCam:
     def __init__(self, model: nn.Module, layer: nn.Module):
         self.model, self.activations, self.gradients = model, None, None
-        layer.register_forward_hook(lambda _m, _i, out: setattr(self, "activations", out))
-        layer.register_full_backward_hook(
+        self._forward_handle = layer.register_forward_hook(
+            lambda _m, _i, out: setattr(self, "activations", out)
+        )
+        self._backward_handle = layer.register_full_backward_hook(
             lambda _m, _gi, go: setattr(self, "gradients", go[0])
         )
+
+    def close(self) -> None:
+        self._forward_handle.remove()
+        self._backward_handle.remove()
+
+    def __enter__(self) -> "GradCam":
+        return self
+
+    def __exit__(self, _exc_type, _exc_value, _traceback) -> None:
+        self.close()
 
     def create(self, tensor: torch.Tensor, class_idx: int) -> np.ndarray:
         self.model.zero_grad(set_to_none=True)
         logits = self.model(tensor)
         logits[0, class_idx].backward()
+        if self.activations is None or self.gradients is None:
+            raise RuntimeError("Grad-CAM hooks did not capture activations and gradients.")
         weights = self.gradients.mean(dim=(2, 3), keepdim=True)
         cam = torch.relu((weights * self.activations).sum(dim=1))[0]
         cam -= cam.min()
@@ -80,9 +98,17 @@ class GradCam:
         return cam.detach().cpu().numpy()
 
 
-def predict(bundle: ModelBundle, image: Image.Image, confidence_threshold: float = 0.55) -> dict:
+def preprocess_image(image: Image.Image) -> tuple[torch.Tensor, np.ndarray]:
+    """Return model input and an RGB base image with identical spatial transforms."""
     rgb = image.convert("RGB")
-    tensor = PREPROCESS(rgb).unsqueeze(0).to(bundle.device)
+    spatially_aligned = SPATIAL_PREPROCESS(rgb)
+    tensor = PREPROCESS(rgb)
+    return tensor, np.asarray(spatially_aligned)
+
+
+def predict(bundle: ModelBundle, image: Image.Image, confidence_threshold: float = 0.55) -> dict:
+    tensor, base = preprocess_image(image)
+    tensor = tensor.unsqueeze(0).to(bundle.device)
     with torch.no_grad():
         probabilities = torch.softmax(bundle.model(tensor), dim=1)[0]
     values, indices = probabilities.topk(min(3, len(bundle.classes)))
@@ -91,8 +117,8 @@ def predict(bundle: ModelBundle, image: Image.Image, confidence_threshold: float
         for v, i in zip(values.cpu(), indices.cpu())
     ]
     best_idx = int(indices[0])
-    heat = GradCam(bundle.model, bundle.target_layer).create(tensor, best_idx)
-    base = np.array(rgb.resize((224, 224)))
+    with GradCam(bundle.model, bundle.target_layer) as gradcam:
+        heat = gradcam.create(tensor, best_idx)
     heat = cv2.resize(heat, (224, 224))
     colored = cv2.applyColorMap(np.uint8(255 * heat), cv2.COLORMAP_JET)
     colored = cv2.cvtColor(colored, cv2.COLOR_BGR2RGB)

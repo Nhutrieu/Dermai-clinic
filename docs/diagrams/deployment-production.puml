@@ -1,0 +1,84 @@
+@startuml
+!pragma layout smetana
+title DermAI Clinic - Production single-host (overlay đã cấu hình)
+skinparam shadowing false
+
+cloud "Internet" as Internet
+node "Thiết bị người dùng" {
+  artifact "Browser / Mobile Browser" as Browser
+}
+node "Production Docker Host / Cloud" {
+  node "Public edge" {
+    component "TLS Reverse Proxy\n80 / 443" as TLS
+    component "Frontend Nginx\n127.0.0.1:3000" as Frontend
+  }
+  node "Private application network" {
+    component "API Gateway" as Gateway
+    component "Auth Service" as Auth
+    component "Patient Service" as PatientService
+    component "Doctor Service" as DoctorService
+    component "Appointment Service" as Appointment
+    component "Medical Record Service" as Record
+    component "Prescription Service" as Prescription
+    component "Notification Service" as Notification
+    component "FastAPI AI Service" as AI
+    database "PostgreSQL\nkhông public 5432" as PostgreSQL
+    queue "RabbitMQ\nkhông public 15672" as RabbitMQ
+    component "Redis" as Redis
+    artifact "Versioned model + RAG index" as ModelAssets
+  }
+  folder "Persistent encrypted storage" {
+    artifact "PostgreSQL backup + restore drill" as PgBackup
+    artifact "RabbitMQ / Redis volumes" as QueueVolumes
+  }
+  component "Metrics / logs / alerts" as Observability
+}
+cloud "Secret manager" as Secrets
+cloud "Gmail SMTP" as SMTP
+cloud "Gemini API" as Gemini
+
+Internet --> Browser
+Browser --> TLS : HTTPS / WSS
+TLS --> Frontend : trusted upstream
+Frontend --> Gateway : /api + /ai + WebSocket
+Gateway --> Auth
+Gateway --> PatientService
+Gateway --> DoctorService
+Gateway --> Appointment
+Gateway --> Record
+Gateway --> Prescription
+Gateway --> AI
+Gateway --> Redis
+Appointment --> RabbitMQ
+RabbitMQ --> Notification
+Notification --> SMTP : STARTTLS
+Auth --> PostgreSQL
+PatientService --> PostgreSQL
+DoctorService --> PostgreSQL
+Appointment --> PostgreSQL
+Record --> PostgreSQL
+Prescription --> PostgreSQL
+Notification --> PostgreSQL
+AI --> ModelAssets
+AI --> Gemini
+PostgreSQL --> PgBackup
+RabbitMQ --> QueueVolumes
+Redis --> QueueVolumes
+Secrets --> Gateway
+Secrets --> Auth
+Secrets --> Notification
+Secrets --> AI
+Gateway --> Observability
+Appointment --> Observability
+AI --> Observability
+
+note right of TLS
+  Chỉ 80/443 được công khai.
+  Frontend upstream chỉ bind loopback.
+  Áp dụng CSP, CORS/origin cụ thể và rate limit.
+end note
+note bottom of PgBackup
+  Overlay container đã có; chưa được gọi là production-ready
+  cho đến khi TLS, backup/restore và monitoring được kiểm chứng.
+end note
+@enduml

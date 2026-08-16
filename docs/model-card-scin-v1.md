@@ -8,7 +8,7 @@
 | Kiến trúc | EfficientNet-B0, fine-tune toàn bộ từ trọng số ImageNet |
 | Model đang chạy | `efficientnet_b0-20260728T185742Z` |
 | Checkpoint | `ai-service/models/best_model.pth` |
-| SHA-256 | `914f83a85c4dbff06424e0a48f1121950f10e3c0ce8d5a9f68369b86ea48796` |
+| SHA-256 | `914f83a85c4dbff06424e0a48f1121950f10e3c0ce8d5a9f68369b38106cc3df` |
 | Số lớp | 8 |
 | Ngưỡng `uncertain` | Top-1 confidence dưới 0,55 |
 
@@ -113,11 +113,52 @@ Baseline bị domain shift mạnh và dữ liệu bổ sung giúp đáng kể. T
 chỉ 12,90%; Lupus, Candida và Warts có quá ít ca. Cần external test cân bằng, được bác sĩ xác
 nhận và đại diện bệnh nhân Việt Nam trước mọi tuyên bố rộng hơn.
 
+## Calibration, error analysis, OOD và Grad-CAM
+
+Bộ bằng chứng được chạy lại ngày 14/08/2026 từ đúng checkpoint ở trên. ECE dùng 15 bin
+độ rộng bằng nhau theo Top-1 confidence; Brier là trung bình tổng bình phương sai số đa lớp.
+Đây là score softmax thô, không fit temperature scaling hay phương pháp calibration nào trên
+tập test.
+
+| Tập đánh giá | Ảnh | Accuracy | ECE | Brier | NLL | Lỗi confidence ≥ 0,90 |
+|---|---:|---:|---:|---:|---:|---:|
+| Test cố định | 564 | 78,90% | 0,1061 | 0,3222 | 0,8385 | 38 |
+| SCIN external | 240 | 67,92% | 0,1902 | 0,4822 | 1,2197 | 22 |
+
+Model đang quá tự tin: mean confidence là 89,20% trên test cố định và 86,93% trên SCIN,
+cao hơn accuracy tương ứng. Ngưỡng `0,55` vẫn chấp nhận 98/119 lỗi test cố định và 62/77
+lỗi SCIN, nên không được xem là bộ phát hiện dự đoán sai hay cơ chế từ chối OOD đáng tin cậy.
+Ba cặp nhầm nhiều nhất là Tinea→Eczema (13), Lupus→Psoriasis (8),
+Psoriasis→Eczema (8) trên test cố định; và Tinea→Eczema (19), Eczema→Acne (10),
+Psoriasis→Eczema (10) trên SCIN. Danh sách từng lỗi chỉ dùng SHA-256 ảnh làm định danh,
+không công bố tên file hoặc case id.
+
+Sáu probe tổng hợp phi lâm sàng (ảnh đen/trắng/xám, gradient, checkerboard và noise seed 42)
+đều **không bị từ chối** ở ngưỡng `0,55`; confidence cao nhất đạt 99,997%. Đây là một sanity
+check thất bại, cho thấy score hiện tại có thể quá tự tin trên input vô nghĩa. Sáu probe không
+thay thế benchmark OOD lâm sàng; chưa có tập OOD có nhãn phù hợp nên AUROC/AUPR/FPR95
+được ghi là unavailable, không tự tạo số liệu.
+
+Metadata Grad-CAM đã được tạo cho 16 mẫu đúng/sai chọn xác định theo từng lớp, gồm vị trí
+peak, centroid và coverage của heatmap. Ảnh/overlay y khoa không được đưa vào artifact theo
+dõi phiên bản; đánh giá vùng chú ý bởi bác sĩ vẫn đang chờ thực hiện.
+
 ## Runtime và giới hạn
 
 API nhận JPEG/PNG/WebP tối đa 10 MB và trả Top-1, Top-3, confidence, Grad-CAM,
 `model_version`, `uncertain`, disclaimer và tham khảo RAG. Confidence là softmax trong tám
 nhãn, không phải xác suất lâm sàng.
+
+Latency batch 1 trên máy chạy báo cáo (PyTorch 2.5.1, PyTorch dùng 8 CPU thread và
+NVIDIA GeForce RTX 4050 Laptop GPU):
+
+| Thiết bị | Forward p50 / p95 | `app.predict` + Grad-CAM p50 / p95 |
+|---|---:|---:|
+| CPU | 10,98 / 14,04 ms | 92,09 / 98,90 ms |
+| CUDA | 6,72 / 13,79 ms | 56,87 / 61,51 ms |
+
+Phép đo đầy đủ bắt đầu từ PIL image đã decode; không bao gồm HTTP, upload, decode, RAG và
+frontend. Vì vậy không được diễn giải các số này thành latency end-to-end production.
 
 Sau inference, frontend lưu metadata và ảnh gốc trong Patient Service. Patient có
 quyền đọc/xóa; Doctor chỉ đọc khi Patient đã bật chia sẻ và Doctor phụ trách đúng
@@ -134,7 +175,11 @@ bias theo màu da, tuổi, giới, camera, ánh sáng, nền ảnh và nguồn t
 ```powershell
 python ai-service\scripts\prepare_scin.py --metadata ai-service\data-sources\scin --output SkinDisease\scin-v1 --minimum-weight 0.5 --external-ratio 0.2 --seed 42
 python ai-service\training\train.py --data SkinDisease --extra-data SkinDisease\scin-v1 --model efficientnet_b0 --epochs 20 --batch-size 32 --seed 42 --output ai-service\candidates\scin_v1
+python ai-service\training\evaluate_evidence.py --checkpoint ai-service\models\best_model.pth --expected-sha256 914f83a85c4dbff06424e0a48f1121950f10e3c0ce8d5a9f68369b38106cc3df --data SkinDisease --external-data SkinDisease\scin-v1 --output ai-service\reports\ai_evidence --latency-devices cpu cuda
 ```
+
+Report machine-readable và tóm tắt nằm tại
+[`ai-service/reports/ai_evidence/`](../ai-service/reports/ai_evidence/summary.md).
 
 Baseline rollback nằm tại
 `ai-service/models/archive/efficientnet_b0-20260728T110848Z/best_model.pth`, SHA-256
@@ -142,10 +187,10 @@ Baseline rollback nằm tại
 
 ## Việc còn thiếu
 
-- Bác sĩ/giảng viên xác nhận class map và error analysis.
+- Bác sĩ/giảng viên xác nhận class map, từng lỗi và vùng Grad-CAM.
 - Bổ sung external test cân bằng, nhất là Tinea, Lupus, Candida, Warts và SkinCancer.
-- Đánh giá calibration/ECE, nhiều seed, khoảng tin cậy và near-duplicate.
-- Đánh giá ảnh ngoài phân phối và cơ chế từ chối thay vì buộc chọn một trong tám lớp.
+- Bổ sung nhiều seed, khoảng tin cậy và kiểm tra near-duplicate.
+- Bổ sung tập OOD lâm sàng có nhãn và thiết kế cơ chế từ chối thay vì buộc chọn một trong tám lớp.
 - Xác định retention, xóa tự động và quota dung lượng cho ảnh assessment lưu ở
   PostgreSQL trước khi triển khai công khai.
 - Không đưa checkpoint, ảnh y khoa, metadata SCIN hoặc PII lên GitHub.

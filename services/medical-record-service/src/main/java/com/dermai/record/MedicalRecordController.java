@@ -1,7 +1,7 @@
 package com.dermai.record;
 import jakarta.validation.Valid;import jakarta.validation.constraints.*;import org.springframework.beans.factory.annotation.Value;import org.springframework.data.jpa.repository.*;import org.springframework.http.*;import org.springframework.jdbc.core.JdbcTemplate;import org.springframework.web.bind.annotation.*;import org.springframework.web.client.RestClient;import org.springframework.web.server.ResponseStatusException;import java.time.*;import java.util.*;
 interface MedicalRecordRepository extends JpaRepository<MedicalRecord,UUID>{
- Optional<MedicalRecord> findByAppointmentId(UUID id);List<MedicalRecord> findByPatientIdOrderBySignedAtDesc(UUID id);List<MedicalRecord> findByPatientIdentityIdOrderBySignedAtDesc(UUID id);List<MedicalRecord> findByDoctorIdOrderBySignedAtDesc(UUID id);
+ Optional<MedicalRecord> findByAppointmentId(UUID id);List<MedicalRecord> findByPatientIdOrderBySignedAtDesc(UUID id);List<MedicalRecord> findByPatientIdAndDoctorIdOrderBySignedAtDesc(UUID patientId,UUID doctorId);List<MedicalRecord> findByPatientIdentityIdOrderBySignedAtDesc(UUID id);List<MedicalRecord> findByDoctorIdOrderBySignedAtDesc(UUID id);
  @Query(value="SELECT r.* FROM medical_records r WHERE r.patient_identity_id=?1 AND NOT EXISTS (SELECT 1 FROM patient_record_visibility v WHERE v.record_id=r.id AND v.patient_identity_id=?1) ORDER BY r.signed_at DESC",nativeQuery=true) List<MedicalRecord> findVisibleByPatientIdentityIdOrderBySignedAtDesc(UUID id);
  @Query(value="SELECT EXISTS (SELECT 1 FROM patient_record_visibility v WHERE v.record_id=?1 AND v.patient_identity_id=?2)",nativeQuery=true) boolean isHiddenForPatient(UUID recordId,UUID patientIdentityId);
 }
@@ -25,7 +25,11 @@ public class MedicalRecordController{
   jdbc.update("INSERT INTO patient_record_visibility(record_id,patient_identity_id,hidden_at) VALUES (?,?,CURRENT_TIMESTAMP) ON CONFLICT (record_id) DO NOTHING",x.id,user);return ResponseEntity.noContent().build();
  }
  @GetMapping("/doctor/mine") List<MedicalRecord> doctorMine(@RequestHeader("X-User-Id") UUID user,@RequestHeader("X-User-Role") String role){require(role,"DOCTOR");return repo.findByDoctorIdOrderBySignedAtDesc(user);}
- @GetMapping("/patient/{id}") List<MedicalRecord> patient(@PathVariable UUID id,@RequestHeader("X-User-Role") String role){requireAny(role,"DOCTOR","ADMIN");return repo.findByPatientIdOrderBySignedAtDesc(id);}
+ @GetMapping("/patient/{id}") List<MedicalRecord> patient(@PathVariable UUID id,@RequestHeader("X-User-Id") UUID user,@RequestHeader("X-User-Role") String role){
+  requireAny(role,"DOCTOR","ADMIN");
+  // A doctor-scoped query prevents an arbitrary patient UUID from exposing another doctor's notes.
+  return "ADMIN".equals(role)?repo.findByPatientIdOrderBySignedAtDesc(id):repo.findByPatientIdAndDoctorIdOrderBySignedAtDesc(id,user);
+ }
  private void require(String got,String want){if(!want.equals(got))throw new ResponseStatusException(HttpStatus.FORBIDDEN);}private void requireAny(String got,String...r){if(Arrays.stream(r).noneMatch(got::equals))throw new ResponseStatusException(HttpStatus.FORBIDDEN);}
  record AppointmentOwnership(UUID patientId,UUID patientIdentityId,UUID doctorIdentityId,String status){}
 }

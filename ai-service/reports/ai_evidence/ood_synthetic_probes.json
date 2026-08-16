@@ -1,0 +1,154 @@
+{
+  "status": "limited_synthetic_sanity_probe",
+  "probe_count": 6,
+  "seed": 42,
+  "uncertain_threshold": 0.55,
+  "synthetic_probe_rejection_count": 0,
+  "synthetic_probe_rejection_rate": 0.0,
+  "synthetic_probe_msp": {
+    "mean": 0.8574124077955881,
+    "min": 0.5875999331474304,
+    "max": 0.999972939491272
+  },
+  "fixed_test_msp_context": {
+    "mean": 0.8920401930809021,
+    "min": 0.29620108008384705,
+    "max": 1.0
+  },
+  "probes": [
+    {
+      "probe": "uniform_black",
+      "png_sha256": "3b93f26267630963185ee67d8020972faee108a7bca80db725817e4680c9955c",
+      "predicted_label": "Acne",
+      "maximum_softmax_probability": 0.8973348140716553,
+      "rejected_at_0_55": false,
+      "top3": [
+        {
+          "label": "Acne",
+          "probability": 0.8973348140716553
+        },
+        {
+          "label": "Lupus",
+          "probability": 0.03641397878527641
+        },
+        {
+          "label": "Eczema",
+          "probability": 0.016329210251569748
+        }
+      ]
+    },
+    {
+      "probe": "uniform_white",
+      "png_sha256": "13c0915d226521fb56bba264c92a227dbdebcf9a4add3a4957fd9c810582dbe8",
+      "predicted_label": "Acne",
+      "maximum_softmax_probability": 0.9112353920936584,
+      "rejected_at_0_55": false,
+      "top3": [
+        {
+          "label": "Acne",
+          "probability": 0.9112353920936584
+        },
+        {
+          "label": "Lupus",
+          "probability": 0.037521038204431534
+        },
+        {
+          "label": "Eczema",
+          "probability": 0.02442563697695732
+        }
+      ]
+    },
+    {
+      "probe": "uniform_gray",
+      "png_sha256": "e1bb8c97b62c68ef5a27c47195d5794aae3e5613ae95cf1868fea460b3f831aa",
+      "predicted_label": "Acne",
+      "maximum_softmax_probability": 0.9237179756164551,
+      "rejected_at_0_55": false,
+      "top3": [
+        {
+          "label": "Acne",
+          "probability": 0.9237179756164551
+        },
+        {
+          "label": "Lupus",
+          "probability": 0.020192008465528488
+        },
+        {
+          "label": "Eczema",
+          "probability": 0.015344545245170593
+        }
+      ]
+    },
+    {
+      "probe": "synthetic_gradient",
+      "png_sha256": "6fe8de7c33025a8f07ab41d095bf7c89f7b29e1f97ed849fae3a29b337543252",
+      "predicted_label": "Acne",
+      "maximum_softmax_probability": 0.5875999331474304,
+      "rejected_at_0_55": false,
+      "top3": [
+        {
+          "label": "Acne",
+          "probability": 0.5875999331474304
+        },
+        {
+          "label": "Eczema",
+          "probability": 0.15135028958320618
+        },
+        {
+          "label": "Lupus",
+          "probability": 0.12070911377668381
+        }
+      ]
+    },
+    {
+      "probe": "checkerboard",
+      "png_sha256": "31de5b2d49a832a389234813fd75a7fd8b8e83ff5000baf9f7d02979afea405d",
+      "predicted_label": "Eczema",
+      "maximum_softmax_probability": 0.8246133923530579,
+      "rejected_at_0_55": false,
+      "top3": [
+        {
+          "label": "Eczema",
+          "probability": 0.8246133923530579
+        },
+        {
+          "label": "Tinea",
+          "probability": 0.06611216068267822
+        },
+        {
+          "label": "Lupus",
+          "probability": 0.03744756430387497
+        }
+      ]
+    },
+    {
+      "probe": "seeded_rgb_noise",
+      "png_sha256": "3cfde901b335c337f83d80207309b1a0f773070af25fcb5623f2605cd7db68a1",
+      "predicted_label": "Warts",
+      "maximum_softmax_probability": 0.999972939491272,
+      "rejected_at_0_55": false,
+      "top3": [
+        {
+          "label": "Warts",
+          "probability": 0.999972939491272
+        },
+        {
+          "label": "Eczema",
+          "probability": 2.7111804229207337e-05
+        },
+        {
+          "label": "Psoriasis",
+          "probability": 9.116743725031307e-16
+        }
+      ]
+    }
+  ],
+  "true_ood_benchmark": {
+    "status": "unavailable",
+    "reason": "No labeled, clinically representative out-of-scope image dataset is present locally.",
+    "auroc": null,
+    "aupr": null,
+    "fpr_at_95_tpr": null
+  },
+  "interpretation_limit": "Do not generalize the synthetic rejection rate to real non-dermatology or unseen-disease images."
+}

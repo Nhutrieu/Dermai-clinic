@@ -18,7 +18,7 @@ component "Medical Record Service" as Record
 component "Prescription Service" as Prescription
 component "Notification Service\nEmail consumer" as Notification
 component "FastAPI AI Service\nEfficientNet-B0 + Grad-CAM + RAG" as AI
-database "PostgreSQL 16\n7 schemas / 23 business tables" as PostgreSQL
+database "PostgreSQL 16\n7 schemas / 24 business tables" as PostgreSQL
 queue "RabbitMQ" as RabbitMQ
 component "Redis" as Redis
 artifact "best_model.pth" as Model

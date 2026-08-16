@@ -1,5 +1,6 @@
 @startuml
-title DermAI Clinic - ERD (23 Business Tables / 7 Schemas)
+!pragma layout smetana
+title DermAI Clinic - ERD hiện hành (24 bảng nghiệp vụ / 7 schema)
 skinparam shadowing false
 skinparam linetype ortho
 hide circle
@@ -141,16 +142,27 @@ package "appointment schema" {
     published_at : timestamptz
   }
   entity support_conversations {
-    *id : uuid <<PK>>
-    patient_identity_id : uuid
-    assigned_receptionist_id : uuid
-    created_at : timestamptz
+    *patient_identity_id : uuid <<PK>>
+    assigned_receptionist_identity_id : uuid
+    assigned_at : timestamptz
+    channel_status : varchar
+    ai_failure_count : int
+    last_intent : varchar
+    last_intent_confidence : double
+    ai_summary : varchar
+    escalation_reason : varchar
+    escalated_at : timestamptz
+    resolved_at : timestamptz
+    resolved_by_identity_id : uuid
+    updated_at : timestamptz
   }
   entity support_messages {
     *id : uuid <<PK>>
-    conversation_id : uuid
+    patient_identity_id : uuid
     sender_identity_id : uuid
+    sender_role : varchar
     body : text
+    sent_at : timestamptz
     read_at : timestamptz
   }
 }
@@ -163,30 +175,42 @@ package "medical_record schema" {
     final_diagnosis : text
     clinical_notes : text
   }
+  entity patient_record_visibility {
+    *record_id : uuid <<PK, FK>>
+    patient_identity_id : uuid
+    hidden_at : timestamptz
+  }
 }
 package "prescription schema" {
   entity prescriptions {
     *id : uuid <<PK>>
-    medical_record_id : uuid
+    record_id : uuid
+    patient_id : uuid
+    patient_identity_id : uuid
     doctor_id : uuid
+    instructions : varchar
     signed_at : timestamptz
   }
   entity prescription_items {
-    *id : uuid <<PK>>
-    prescription_id : uuid
+    *prescription_id : uuid <<FK>>
     drug_name : varchar
     dosage : varchar
-    instructions : text
+    frequency : varchar
+    duration : varchar
+    item_instructions : varchar
   }
 }
 package "notification schema" {
   entity deliveries {
     *id : uuid <<PK>>
     event_id : uuid <<UQ>>
+    event_type : varchar
     recipient : varchar
-    channel : varchar
-    status : varchar
+    subject : varchar
+    created_at : timestamptz
     sent_at : timestamptz
+    last_error : varchar
+    attempts : int
   }
 }
 
@@ -204,8 +228,9 @@ appointments ||--o| clinic_reviews
 appointments ||--o{ reminder_actions
 appointments ||..o{ outbox_events : aggregate
 appointments |o--o{ appointments : parent
-support_conversations ||--o{ support_messages
+support_conversations ||..o{ support_messages : patient_identity_id
 appointments ||..o| medical_records : logical
+medical_records ||--o| patient_record_visibility : hidden for patient only
 medical_records ||..o{ prescriptions : logical
 prescriptions ||--|{ prescription_items
 @enduml

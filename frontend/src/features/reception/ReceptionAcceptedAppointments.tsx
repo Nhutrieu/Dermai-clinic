@@ -1,4 +1,4 @@
-import { useId, useMemo, useState } from "react";
+import { useEffect, useId, useMemo, useState } from "react";
 import {
   Bell,
   CalendarDays,
@@ -56,6 +56,8 @@ type Props = {
 };
 
 type StatusMeta = { label: string; className: string };
+
+const ACCEPTED_PAGE_SIZE = 5;
 
 const ACCEPTED_STATUSES = new Set([
   "CONFIRMED",
@@ -159,6 +161,7 @@ export default function ReceptionAcceptedAppointments(props: Props) {
   const [dateFilter, setDateFilter] = useState("ALL");
   const [doctorFilter, setDoctorFilter] = useState("ALL");
   const [expandedId, setExpandedId] = useState("");
+  const [visibleCount, setVisibleCount] = useState(ACCEPTED_PAGE_SIZE);
 
   const patientFor = (appointment: Appointment) => props.patients.find(patient => patient.id === appointment.patientId);
   const doctorFor = (appointment: Appointment) => props.doctors.find(doctor => doctor.id === appointment.doctorId);
@@ -191,6 +194,15 @@ export default function ReceptionAcceptedAppointments(props: Props) {
       if (dateFilter === "TODAY" && clinicDateKey(appointment.startAt) !== today) return false;
       if (dateFilter === "UPCOMING" && new Date(appointment.startAt).getTime() < now) return false;
       return true;
+    }).sort((left, right) => {
+      const leftTime = new Date(left.startAt).getTime();
+      const rightTime = new Date(right.startAt).getTime();
+      const leftIsUpcoming = leftTime >= now;
+      const rightIsUpcoming = rightTime >= now;
+
+      // Reception sees the nearest upcoming visits first, then the latest past visits.
+      if (leftIsUpcoming !== rightIsUpcoming) return leftIsUpcoming ? -1 : 1;
+      return leftIsUpcoming ? leftTime - rightTime : rightTime - leftTime;
     });
   }, [accepted, dateFilter, doctorFilter, search, statusFilter, props.patients, props.doctors]);
 
@@ -198,6 +210,15 @@ export default function ReceptionAcceptedAppointments(props: Props) {
     || statusFilter !== "ALL"
     || dateFilter !== "ALL"
     || doctorFilter !== "ALL";
+
+  // Keep long operational history compact; a new filter always starts at the first page.
+  useEffect(() => {
+    setVisibleCount(ACCEPTED_PAGE_SIZE);
+    setExpandedId("");
+  }, [search, statusFilter, dateFilter, doctorFilter, accepted.length]);
+
+  const visibleAppointments = filtered.slice(0, visibleCount);
+  const remainingAppointments = Math.max(0, filtered.length - visibleAppointments.length);
 
   function clearFilters() {
     setSearch("");
@@ -390,7 +411,7 @@ export default function ReceptionAcceptedAppointments(props: Props) {
               </label>
             )}
             <div className="accepted-toolbar-summary">
-              <span aria-live="polite">Hiển thị <strong>{filtered.length}</strong> trong {accepted.length} lịch</span>
+              <span aria-live="polite">Hiển thị <strong>{visibleAppointments.length}</strong> trong {filtered.length} lịch phù hợp</span>
               {filtersActive && <button type="button" onClick={clearFilters}>Xóa bộ lọc</button>}
             </div>
           </div>
@@ -418,8 +439,9 @@ export default function ReceptionAcceptedAppointments(props: Props) {
             <button type="button" onClick={clearFilters}>Xóa bộ lọc</button>
           </div>
         ) : (
+          <>
           <ol className="accepted-appointment-list">
-            {filtered.map(appointment => {
+            {visibleAppointments.map(appointment => {
               const patient = patientFor(appointment);
               const needsCompletion = isStaleInProgressAppointment(appointment);
               const status = needsCompletion
@@ -536,6 +558,23 @@ export default function ReceptionAcceptedAppointments(props: Props) {
               );
             })}
           </ol>
+          {filtered.length > ACCEPTED_PAGE_SIZE && (
+            <footer className="accepted-list-pagination">
+              <span aria-live="polite">Đang hiển thị {visibleAppointments.length} trên {filtered.length} lịch</span>
+              <button
+                type="button"
+                onClick={() => setVisibleCount(current => remainingAppointments > 0
+                  ? Math.min(current + ACCEPTED_PAGE_SIZE, filtered.length)
+                  : ACCEPTED_PAGE_SIZE)}
+              >
+                {remainingAppointments > 0
+                  ? `Xem thêm ${Math.min(ACCEPTED_PAGE_SIZE, remainingAppointments)} lịch`
+                  : "Thu gọn danh sách"}
+                <ChevronDown className={remainingAppointments > 0 ? "" : "is-up"} aria-hidden="true" />
+              </button>
+            </footer>
+          )}
+          </>
         )}
       </section>
     </div>

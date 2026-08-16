@@ -53,34 +53,39 @@
 
 ### Chưa hoàn tất hoặc phải xác minh
 
-- Đã có checkpoint EfficientNet-B0 cục bộ, dataset report, metric test độc lập
-  và UI Patient; còn thiếu đánh giá chuyên môn, calibration và kiểm thử browser E2E.
+- Đã có checkpoint EfficientNet-B0 cục bộ, dataset report, metric test độc lập,
+  calibration, phân tích lỗi, OOD sanity check và latency CPU/GPU. OOD sanity
+  check hiện thất bại 0/6 ảnh bị từ chối; còn thiếu đánh giá chuyên môn, tập OOD
+  lâm sàng có nhãn và nhiều seed. Browser E2E đã chạy trên runtime thật với kết
+  quả gần nhất 5/5 Pass, 0 Fail, 0 Skip trong 38,798 giây. Lượt chạy dùng stack
+  PostgreSQL E2E cô lập; stack và volume đã được tự động xóa sau khi hoàn tất.
 - RAG đã có index và citation trên frontend; còn thiếu bộ đánh giá retrieval bởi
   chuyên gia, citation validator và kiểm thử prompt injection mở rộng.
 - Routing/email RabbitMQ end-to-end, rate limit, production secret/TLS/origin.
-- Browser E2E, accessibility audit, load/security test và restore drill.
+- Browser E2E release hiện đã xanh; vẫn cần bổ sung hotline, WebSocket reconnect,
+  các nhánh âm, accessibility audit, load/security test và restore drill.
 - Monitoring, tracing, alert và volume bền vững cho RabbitMQ/Redis.
 - Chính sách retention/xóa tự động và quota dung lượng cho ảnh AI lưu trong
   PostgreSQL.
 
 ## 4. Chiến lược kiểm thử
 
-Tại thời điểm cập nhật tài liệu, repository có 18 file test frontend, 17 file
-test Java và 3 file test Python. Đây là số file kiểm thử, không phải số test case
-đã pass; kết quả phải lấy từ lần chạy CI/local gần nhất.
+Tại thời điểm cập nhật tài liệu, repository có 21 file Vitest frontend, 23 file
+JUnit Java, 5 file Pytest và 3 Playwright spec. Đây là số file kiểm thử, không
+phải số test case đã pass; kết quả phải lấy từ lần chạy CI/local gần nhất.
 
 | Lớp kiểm thử | Nội dung | Trạng thái |
 |---|---|---|
 | Unit | Phone normalization, appointment state, scheduling score, auth, AI policy | Có một phần; tiếp tục mở rộng |
 | Integration | Flyway, repository, REST giữa service, outbox/RabbitMQ, hotline relink | Có migration/runtime test; cần tự động hóa thêm |
-| Concurrency | Hai người giữ/đặt cùng slot, hủy trong lúc đặt | Đã có booking race script; bổ sung hold race |
-| Realtime | Reconnect, nhiều tab, slot/chat/notification event | Có Vitest cho reconnect; cần browser test |
-| E2E | Đăng ký → giữ slot → đặt → xác nhận → check-in → hoàn tất → review | Chưa có Playwright/Cypress |
+| Concurrency | Hai người giữ/đặt cùng slot, hủy trong lúc đặt | Playwright hold race live đã PASS: đúng một người thắng, người còn lại nhận 409 và UI cập nhật; nhánh hủy trong lúc đặt vẫn cần test riêng |
+| Realtime | Reconnect, nhiều tab, slot/chat/notification event | Có Vitest reconnect và một phần browser state update; reconnect browser thật vẫn còn thiếu |
+| E2E | Giữ slot/đặt, cạnh tranh, lifecycle, AI share và chat handoff | Lần live gần nhất 5/5 Pass, 0 Fail, 0 Skip; 38,798 giây; 9 PNG và 5 video; chạy trên database cô lập đã được xóa sau test |
 | AI data | File hỏng, duplicate hash, leakage, class count | Đã có validator/report; còn thiếu nguồn, giấy phép và near-duplicate |
-| AI model | Metric, confusion matrix, latency, deterministic inference | Đã có checkpoint/metric/confusion matrix; còn thiếu latency/calibration/nhiều seed |
+| AI model | Metric, confusion matrix, latency, deterministic inference | Đã có checkpoint/metric/confusion matrix/calibration/error analysis/latency; còn thiếu nhiều seed, OOD lâm sàng và duyệt chuyên môn |
 | RAG | Refusal/no-evidence, retrieval, citation, injection | Đã có index PDF, citation UI và policy test; chưa có expert evaluation |
-| Security | Authorization matrix, secret scan, upload fuzz, rate limit | Có role check; cần audit tự động |
-| Performance | Booking race, availability, dashboard, inference | Booking race có; các phần khác chưa đo |
+| Security | Authorization matrix, stored XSS, secret scan, upload fuzz, rate limit | Đã có targeted test cho ownership/quan hệ điều trị, service token và Admin XSS; còn thiếu full matrix, scan/fuzz và rate limit |
+| Performance | Booking race, availability, dashboard, inference | Race E2E đã PASS và đã đo latency model CPU/CUDA; API booking/dashboard chưa benchmark |
 
 Không ghi “đã có Testcontainers/OpenAPI contract/k6/OWASP scan” nếu pipeline chưa
 thực sự chạy các công cụ đó. Đây là các mục tiêu nên bổ sung, không phải trạng

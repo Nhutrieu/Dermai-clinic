@@ -1,6 +1,6 @@
 # Thiết kế API — DermAI Clinic
 
-> Cập nhật theo mã nguồn runtime ngày 11/08/2026. Base path nghiệp vụ là
+> Cập nhật theo mã nguồn runtime ngày 14/08/2026. Base path nghiệp vụ là
 > `/api/v1`; AI đi qua Gateway với base path `/ai`.
 
 ## 1. Quy ước chung
@@ -66,8 +66,8 @@ session bị xóa và người dùng quay về màn hình đăng nhập.
 | POST | `/api/v1/patients/me` | Patient | Tạo hồ sơ hoặc nhận lại hồ sơ hotline cùng số điện thoại |
 | GET | `/api/v1/patients/me` | Patient | Hồ sơ của tôi |
 | PATCH | `/api/v1/patients/me` | Patient | Cập nhật hồ sơ |
-| GET | `/api/v1/patients?query=&page=&size=` | Doctor/Receptionist/Admin | Tìm theo tên hoặc số điện thoại |
-| GET | `/api/v1/patients/{patientId}` | Doctor/Receptionist/Admin | Xem hồ sơ theo patient ID |
+| GET | `/api/v1/patients?query=&page=&size=` | Receptionist/Admin | Tìm theo tên hoặc số điện thoại; Doctor không được liệt kê toàn bộ bệnh nhân |
+| GET | `/api/v1/patients/{patientId}` | Doctor có quan hệ điều trị/Receptionist/Admin | Xem hồ sơ theo patient ID |
 | GET | `/api/v1/patients/identity/{identityId}` | Receptionist/Admin | Tìm hồ sơ theo identity |
 | POST | `/api/v1/patients/hotline` | Receptionist/Admin | Tạo hoặc lấy hồ sơ khách theo số điện thoại |
 
@@ -105,12 +105,14 @@ gạch và được chuẩn hóa về `0...`. Số không hợp lệ trả HTTP 
 | GET | `/api/v1/doctors/scheduling-data` | Authenticated theo role | Dữ liệu bác sĩ phục vụ Scheduling Engine |
 | POST | `/api/v1/doctors` | Admin | Tạo hồ sơ cho identity Doctor |
 | PATCH | `/api/v1/doctors/{doctorId}/consultation-fee` | Admin | Cập nhật giá khám cơ bản |
-| PUT | `/api/v1/doctors/{doctorId}/schedule` | Doctor sở hữu/Admin | Thay toàn bộ lịch làm định kỳ |
-| POST | `/api/v1/doctors/{doctorId}/leave` | Doctor sở hữu/Admin | Thêm nghỉ phép |
+| PUT | `/api/v1/doctors/{doctorId}/schedule` | Doctor sở hữu/Admin | Thay lịch định kỳ; từ chối nếu làm mất lịch đã xác nhận/đang tiếp nhận |
+| POST | `/api/v1/doctors/{doctorId}/leave` | Doctor sở hữu/Admin | Thêm nghỉ phép; từ chối nếu chồng lịch đã xác nhận/đang tiếp nhận |
 | DELETE | `/api/v1/doctors/{doctorId}/leave/{leaveId}` | Doctor sở hữu/Admin | Xóa nghỉ phép |
 
 Doctor không tự sửa giá khám. Appointment Service chụp giá hiện tại thành
 `consultation_fee_snapshot` khi lịch được tạo hoặc phân công.
+Thay đổi ca/nghỉ xung đột trả HTTP 409 với
+`code=CONFIRMED_APPOINTMENT_CONFLICT` và thời gian lịch cần bảo vệ trong `detail`.
 
 ## 5. Appointment API
 
@@ -121,7 +123,8 @@ Doctor không tự sửa giá khám. Appointment Service chụp giá hiện tạ
 | GET | `/api/v1/appointments/mine` | Patient | Lịch của tôi, không gồm hold và lịch đã ẩn |
 | GET | `/api/v1/appointments/{id}` | Chủ lịch/Doctor phụ trách/Receptionist/Admin | Chi tiết lịch |
 | GET | `/api/v1/appointments/doctor/mine?from=&to=` | Doctor | Lịch đã tiếp nhận của bác sĩ |
-| GET | `/api/v1/appointments/doctor/{doctorId}?from=&to=` | Doctor/Receptionist/Admin | Lịch theo bác sĩ |
+| GET | `/api/v1/appointments/doctor/{doctorId}?from=&to=` | Doctor sở hữu/Receptionist/Admin | Doctor chỉ nhận lịch có đúng identity của mình |
+| GET | `/api/v1/appointments/patient-access/{patientId}` | Doctor | Kiểm tra quan hệ điều trị; trả 204 hoặc 403 |
 | GET | `/api/v1/appointments/queue?from=&to=&status=` | Receptionist/Admin | Hàng đợi điều phối |
 | GET | `/api/v1/appointments/availability?doctorId=&date=&durationMinutes=` | Authenticated | Slot và trạng thái khả dụng |
 | POST | `/api/v1/appointments/recommendations` | Patient/Receptionist/Doctor/Admin | Đề xuất slot có điểm và lý do |
@@ -146,6 +149,11 @@ Doctor không tự sửa giá khám. Appointment Service chụp giá hiện tạ
 | POST | `/api/v1/appointments/{id}/reschedule` | Patient sở hữu/Receptionist/Admin | Hủy lịch cũ và tạo lịch mới |
 | POST | `/api/v1/appointments/{id}/require-follow-up` | Doctor phụ trách | Yêu cầu tái khám |
 | POST | `/api/v1/appointments/{id}/follow-up` | Patient sở hữu/Receptionist/Admin | Tạo lịch tái khám |
+
+Các request tạo/giữ/đề nghị/phân công lịch không tin cặp UUID do frontend gửi.
+Appointment Service đối chiếu `patientId` với `patientIdentityId` và `doctorId`
+với `doctorIdentityId` tại service nguồn trước khi ghi dữ liệu. Cặp sai trả 409;
+dịch vụ xác minh không sẵn sàng trả 503 và không tạo lịch.
 
 Patient chỉ tự đổi/hủy lịch ở trạng thái `PENDING` hoặc `ASSIGNED`, trong 30 phút
 từ lúc đặt và trước khi lễ tân xác nhận. Sau đó phải liên hệ hỗ trợ. Patient có
@@ -191,6 +199,10 @@ conversation `AI_ACTIVE` vẫn thuộc tầng AI. Khi bàn giao, endpoint trả 
 sử `PATIENT / AI / SYSTEM` và conversation chứa `aiSummary`, `lastIntent`,
 `lastIntentConfidence`, `escalationReason`.
 
+`lastIntentConfidence` là tên trường tương thích contract hiện tại. Giá trị thực
+chất là điểm khớp quy tắc định tuyến được gán deterministic, không phải confidence
+được huấn luyện hay xác suất model hiểu đúng.
+
 ### 6.2. Đánh giá phòng khám
 
 | Method | Endpoint | Quyền | Mô tả |
@@ -210,16 +222,27 @@ sử `PATIENT / AI / SYSTEM` và conversation chứa `aiSummary`, `lastIntent`,
 | GET | `/api/v1/medical-records/appointment/{appointmentId}` | Doctor phụ trách/Admin | Hồ sơ theo lịch |
 | GET | `/api/v1/medical-records/mine` | Patient | Hồ sơ của tôi |
 | GET | `/api/v1/medical-records/doctor/mine` | Doctor | Hồ sơ do tôi ký |
-| GET | `/api/v1/medical-records/patient/{patientId}` | Doctor/Admin | Hồ sơ theo bệnh nhân |
+| PATCH | `/api/v1/medical-records/{id}/hide` | Patient sở hữu | Ẩn kết quả khỏi danh sách cá nhân, không xóa bản ghi đã ký |
+| GET | `/api/v1/medical-records/patient/{patientId}` | Doctor/Admin | Doctor chỉ nhận hồ sơ do mình ký; Admin xem toàn phòng khám |
 | POST | `/api/v1/prescriptions` | Doctor | Tạo và ký đơn gắn record |
 | GET | `/api/v1/prescriptions/mine` | Patient | Đơn của tôi |
-| GET | `/api/v1/prescriptions/patient/{patientId}` | Doctor/Admin | Đơn theo bệnh nhân |
+| GET | `/api/v1/prescriptions/patient/{patientId}` | Doctor/Admin | Doctor chỉ nhận đơn do mình ký; Admin xem toàn phòng khám |
 
 Việc tạo hồ sơ và kê đơn là chức năng bổ trợ, không phải điều kiện bắt buộc để
 Doctor hoàn tất một lượt khám. Hệ thống hiện không có thanh toán, hóa đơn hoặc
 chi phí phát sinh.
 
-## 8. AI API
+## 8. API nội bộ giữa service
+
+| Method | Endpoint | Xác thực | Mô tả |
+|---|---|---|---|
+| GET | `/api/v1/appointments/internal/doctors/{doctorId}/confirmed-upcoming` | `X-Service-Token` | Trả tối thiểu `id`, `startAt`, `endAt` của lịch tương lai cần bảo vệ khi sửa ca/nghỉ |
+
+Endpoint nội bộ không được expose trực tiếp trên production ingress. Token rỗng
+hoặc sai trả 403; Doctor Service fail-closed và không ghi lịch làm/nghỉ khi chưa
+xác minh được xung đột.
+
+## 9. AI API
 
 | Method | Endpoint | Quyền | Mô tả |
 |---|---|---|---|

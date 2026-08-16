@@ -124,9 +124,14 @@ Không chọn model chỉ theo accuracy. Báo cáo tối thiểu gồm:
 - latency CPU và GPU trên phần cứng được ghi rõ;
 - error analysis và đánh giá subgroup khi metadata cho phép.
 
-Artifact hiện có gồm history, dataset summary, classification report, metric và
-confusion matrix JSON/PNG. Vẫn cần calibration, nhiều seed, near-duplicate,
-subgroup/error analysis và xác minh chuyên môn trước khi phát hành lâm sàng.
+Artifact hiện có gồm history, dataset summary, classification report, metric,
+confusion matrix, calibration 15 bin, phân tích lỗi và phép đo latency CPU/GPU.
+Bộ bằng chứng tái lập nằm tại
+[`ai-service/reports/ai_evidence/`](../ai-service/reports/ai_evidence/summary.md).
+Kết quả OOD tổng hợp hiện không đạt: cả 6/6 ảnh phi lâm sàng đều không bị từ
+chối ở ngưỡng 0,55. Vì vậy score softmax và cờ `uncertain` không được xem là cơ
+chế phát hiện OOD đáng tin cậy. Vẫn cần nhiều seed, near-duplicate, subgroup,
+tập OOD lâm sàng có nhãn và xác minh chuyên môn trước khi phát hành lâm sàng.
 
 ## 7. Inference và Grad-CAM
 
@@ -194,9 +199,13 @@ Gemini không nhận câu hỏi gốc; nó chỉ có thể biên tập một câ
 category không nhạy cảm. Nếu Gemini lỗi hoặc chưa cấu hình, câu mẫu local vẫn
 được trả. Appointment Service lưu nội dung gốc, transcript AI/System, intent và
 summary bàn giao trong support chat nội bộ. Service tự chuyển người thật khi
-policy bắt buộc, confidence thấp, Patient không hài lòng hoặc hai lượt liên tiếp
+policy bắt buộc, điểm khớp quy tắc định tuyến thấp, Patient không hài lòng hoặc hai lượt liên tiếp
 không giải quyết được; frontend không hiển thị nút bỏ qua AI. Lễ tân thấy toàn bộ
 lịch sử và bản tóm tắt trong cùng conversation, sau đó claim để phản hồi realtime.
+
+Trường `intentConfidence`/`lastIntentConfidence` là tên contract cũ nhưng giá trị
+được gán theo luật nhận diện câu chữ; đây không phải confidence được model học từ
+dữ liệu và không được trình bày như xác suất AI hiểu đúng câu hỏi.
 
 Với `DOCTOR_AVAILABILITY`, AI chỉ trích xuất tên bác sĩ/ngày; Appointment Service
 đối chiếu Doctor Service và Scheduling Engine trước khi trả khung giờ thật. AI

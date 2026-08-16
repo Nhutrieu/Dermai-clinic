@@ -242,7 +242,7 @@
             ["Dữ liệu", "PostgreSQL 16; Redis 7 cho các nhu cầu cache/rate limit khi tích hợp."],
             ["Messaging và realtime", "RabbitMQ, transactional outbox và WebSocket."],
             ["Triển khai", "Docker, Docker Compose và Nginx."],
-            ["Kiểm thử", "JUnit, Mockito, Vitest, kiểm thử cạnh tranh đặt lịch và kiểm thử end-to-end dự kiến bằng Playwright." ]
+            ["Kiểm thử", "JUnit, Mockito, Vitest và Playwright cho đặt lịch, cạnh tranh cùng slot, lifecycle, AI share và chat; lần E2E live gần nhất đạt 5/5 Pass, 0 Fail, 0 Skip trên stack PostgreSQL cô lập đã được tự động xóa sau test." ]
           ]
         }
       ]

@@ -67,7 +67,7 @@ hoặc Docker Compose.
   dùng TailwindCSS**.
 - Backend: Java 21, Spring Boot 3.4, Spring Data JPA, Flyway.
 - Gateway: Spring Cloud Gateway.
-- Dữ liệu: PostgreSQL 16, 7 schema và 23 bảng runtime.
+- Dữ liệu: PostgreSQL 16, 7 schema và 24 bảng runtime.
 - Messaging: RabbitMQ với outbox; Redis có trong hạ tầng nhưng chưa dùng cho
   cache/rate limit.
 - AI: Python, FastAPI, PyTorch, Torchvision, Pillow và OpenCV.
@@ -168,10 +168,15 @@ appointment phụ trách. Response ảnh dùng `Cache-Control: no-store`.
 ### Còn phải xác minh trước báo cáo
 
 1. Chạy lại toàn bộ unit/integration/frontend/Python test trên commit báo cáo.
-2. Chạy booking race bằng hai token Patient thật và lưu output/database evidence.
-3. Chạy browser E2E cho booking, hotline, chat, check-in và AI share.
+2. Đã chạy booking race bằng hai token Patient khác nhau trong browser context
+   tách biệt. Lần Playwright live gần nhất đạt 5/5 Pass, 0 Fail, 0 Skip; database
+   nằm trong stack/volume E2E cô lập và đã được tự động xóa sau lượt chạy.
+3. Giữ artifact browser cho booking, chat, check-in và AI share; lần chạy hiện có
+   9 ảnh PNG và 5 video. Vẫn cần bổ sung hotline, reconnect và các nhánh âm chưa
+   thuộc năm scenario release hiện tại.
 4. Kiểm tra accessibility ở 390, 768, 1024 và 1440 px.
-5. Đo P50/P95 API booking và latency AI trên đúng máy demo.
+5. Đo P50/P95 API booking trên đúng máy demo. Latency AI CPU/CUDA đã được đo và
+   ghi rõ chỉ bao gồm model/predict + Grad-CAM, không phải HTTP end-to-end.
 6. Xác minh RabbitMQ → Notification → Gmail end-to-end và dead-letter.
 7. Thử backup/restore PostgreSQL, kiểm tra dung lượng ổ đĩa.
 8. Rate limit login, forgot-password, public chat và upload trước public hosting.

@@ -1,0 +1,125 @@
+name: dermai-clinic-production
+
+# Production overlay for docker-compose.yml.
+# Run both files together; this file deliberately removes every host port from
+# infrastructure and APIs, then publishes only the frontend reverse proxy.
+services:
+  postgres:
+    ports: !reset []
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:?POSTGRES_DB is required}
+      POSTGRES_USER: ${POSTGRES_USER:?POSTGRES_USER is required}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?POSTGRES_PASSWORD is required}
+    networks: [database]
+
+  rabbitmq:
+    ports: !reset []
+    environment:
+      RABBITMQ_DEFAULT_USER: ${RABBITMQ_USER:?RABBITMQ_USER is required}
+      RABBITMQ_DEFAULT_PASS: ${RABBITMQ_PASSWORD:?RABBITMQ_PASSWORD is required}
+    volumes:
+      - rabbitmq_data:/var/lib/rabbitmq
+    networks: [messaging]
+
+  redis:
+    volumes:
+      - redis_data:/data
+    networks: [cache]
+
+  auth-service:
+    environment:
+      DB_PASSWORD: ${POSTGRES_PASSWORD:?POSTGRES_PASSWORD is required}
+      JWT_SECRET: ${JWT_SECRET:?JWT_SECRET is required}
+      SERVICE_TOKEN: ${SERVICE_TOKEN:?SERVICE_TOKEN is required}
+      CORS_ORIGIN: ${PUBLIC_ORIGIN:?PUBLIC_ORIGIN is required}
+    networks: [application, database]
+
+  patient-service:
+    environment:
+      DB_PASSWORD: ${POSTGRES_PASSWORD:?POSTGRES_PASSWORD is required}
+      SERVICE_TOKEN: ${SERVICE_TOKEN:?SERVICE_TOKEN is required}
+    networks: [application, database]
+
+  doctor-service:
+    environment:
+      DB_PASSWORD: ${POSTGRES_PASSWORD:?POSTGRES_PASSWORD is required}
+      SERVICE_TOKEN: ${SERVICE_TOKEN:?SERVICE_TOKEN is required}
+    networks: [application, database]
+
+  appointment-service:
+    environment:
+      DB_PASSWORD: ${POSTGRES_PASSWORD:?POSTGRES_PASSWORD is required}
+      SERVICE_TOKEN: ${SERVICE_TOKEN:?SERVICE_TOKEN is required}
+      SPRING_RABBITMQ_USERNAME: ${RABBITMQ_USER:?RABBITMQ_USER is required}
+      SPRING_RABBITMQ_PASSWORD: ${RABBITMQ_PASSWORD:?RABBITMQ_PASSWORD is required}
+    networks: [application, database, messaging]
+
+  medical-record-service:
+    environment:
+      DB_PASSWORD: ${POSTGRES_PASSWORD:?POSTGRES_PASSWORD is required}
+    networks: [application, database]
+
+  prescription-service:
+    environment:
+      DB_PASSWORD: ${POSTGRES_PASSWORD:?POSTGRES_PASSWORD is required}
+    networks: [application, database]
+
+  notification-service:
+    environment:
+      DB_PASSWORD: ${POSTGRES_PASSWORD:?POSTGRES_PASSWORD is required}
+      SERVICE_TOKEN: ${SERVICE_TOKEN:?SERVICE_TOKEN is required}
+      SPRING_RABBITMQ_USERNAME: ${RABBITMQ_USER:?RABBITMQ_USER is required}
+      SPRING_RABBITMQ_PASSWORD: ${RABBITMQ_PASSWORD:?RABBITMQ_PASSWORD is required}
+    networks: [application, database, messaging]
+
+  ai-service:
+    ports: !reset []
+    # Production runs application code baked into the image. Only versioned
+    # model/RAG assets remain read-only bind mounts on the deployment host.
+    volumes: !override
+      - type: bind
+        source: ${AI_MODEL_DIR:-./ai-service/models}
+        target: /models
+        read_only: true
+      - type: bind
+        source: ${AI_RAG_INDEX_DIR:-./ai-service/rag-data}
+        target: /rag-index
+        read_only: true
+    networks: [application]
+
+  gateway:
+    ports: !reset []
+    environment:
+      JWT_SECRET: ${JWT_SECRET:?JWT_SECRET is required}
+      CORS_ORIGIN: ${PUBLIC_ORIGIN:?PUBLIC_ORIGIN is required}
+    networks: [proxy, application, cache]
+
+  frontend:
+    ports: !override
+      - target: 80
+        published: ${PUBLIC_HTTP_PORT:-3000}
+        host_ip: ${PUBLIC_BIND_ADDRESS:-127.0.0.1}
+        protocol: tcp
+    networks: [proxy]
+
+  # Adminer is deliberately absent from the default production startup. It can
+  # only be started explicitly with --profile maintenance and still has no host
+  # port; prefer postgres exec, or add a temporary loopback-only port override.
+  adminer:
+    profiles: [maintenance]
+    ports: !reset []
+    networks: [database]
+
+networks:
+  proxy: {}
+  application: {}
+  database:
+    internal: true
+  messaging:
+    internal: true
+  cache:
+    internal: true
+
+volumes:
+  rabbitmq_data: {}
+  redis_data: {}

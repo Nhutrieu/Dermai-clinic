@@ -1,6 +1,6 @@
 {
   "promoted_model": "efficientnet_b0-20260728T185742Z",
-  "promoted_checkpoint_sha256": "914f83a85c4dbff06424e0a48f1121950f10e3c0ce8d5a9f68369b86ea48796",
+  "promoted_checkpoint_sha256": "914f83a85c4dbff06424e0a48f1121950f10e3c0ce8d5a9f68369b38106cc3df",
   "baseline_model": "efficientnet_b0-20260728T110848Z",
   "baseline_checkpoint_sha256": "66493a9d23b781c88257a579196a6ab0999226eca751f0276291ce2ac14a4a2c",
   "fixed_test": {

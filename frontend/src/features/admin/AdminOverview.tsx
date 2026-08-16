@@ -1,3 +1,4 @@
+import type { ReactNode } from "react";
 import { CalendarDays, Search, X } from "lucide-react";
 import type { Appointment, Doctor, Patient } from "../../core/types";
 import { State } from "../../components/Ui";
@@ -20,6 +21,7 @@ type Props = {
     onSelectPatient: (id: string) => void;
     onClearPatient: () => void;
     refreshAppointments: () => Promise<void>;
+    footer?: ReactNode;
 };
 
 const statusLabels: Record<string, string> = {
@@ -126,5 +128,6 @@ export default function AdminOverview(props: Props) {
                 </article> : <div className="admin-patient-detail-empty"><strong>Chọn một bệnh nhân</strong><p>Thông tin liên hệ và lịch sử đặt lịch sẽ xuất hiện tại đây.</p></div>}
             </div>
         </section>
+        {props.footer}
     </div>;
 }

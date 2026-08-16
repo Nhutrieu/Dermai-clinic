@@ -169,7 +169,8 @@ orchestrator và nguồn lưu transcript. Service lưu tin Patient, gọi AI đ�
 loại, dùng Scheduling Engine/Doctor Service cho tra cứu availability đọc-only,
 lưu tin AI rồi cập nhật conversation. Trạng thái gồm `AI_ACTIVE`,
 `WAITING_RECEPTIONIST` và `ASSIGNED`. Policy tự chuyển khi `requires_handoff`,
-confidence dưới ngưỡng, Patient không hài lòng hoặc thất bại hai lượt. Khi chuyển,
+điểm khớp định tuyến theo luật dưới ngưỡng, Patient không hài lòng hoặc thất bại
+hai lượt. Điểm này không phải confidence được học từ mô hình. Khi chuyển,
 service lưu thêm tin `SYSTEM`, AI summary và phát `CHAT_CHANGED`; lễ tân thấy toàn
 bộ transcript trong cùng conversation và phải claim trước khi trả lời. Các
 conversation `AI_ACTIVE` không xuất hiện trong hộp thư lễ tân.
@@ -179,12 +180,27 @@ cảnh escalation hiện hành được xóa, nhưng transcript và metadata ng�
 
 ## 8. Triển khai hiện tại
 
+Hai sơ đồ được tách rõ để không trình bày nhầm thiết kế mục tiêu là hệ thống đã
+vận hành:
+
+- [`deployment.puml`](diagrams/deployment.puml) / [`deployment.png`](diagrams/deployment.png):
+  Docker Compose local hiện hành.
+- [`deployment-production.puml`](diagrams/deployment-production.puml) /
+  [`deployment-production.png`](diagrams/deployment-production.png): kiến trúc
+  production mục tiêu. Phần container single-host đã có overlay chạy được; TLS,
+  backup ngoài máy và observability vẫn phụ thuộc hạ tầng triển khai thực tế.
+- [`domain-erd.puml`](diagrams/domain-erd.puml) / [`domain-erd.png`](diagrams/domain-erd.png):
+  ERD hiện hành gồm 24 bảng, có `medical_record.patient_record_visibility`.
+
 - Docker Compose chạy PostgreSQL, RabbitMQ, Redis, tám tiến trình Spring (gồm
   Gateway), AI, Frontend/Nginx và Adminer. Email được gửi qua Gmail SMTP.
 - PostgreSQL dùng named volume. RabbitMQ/Redis cần volume riêng nếu dữ liệu hàng
   đợi/cache phải tồn tại qua container recreation.
 - Các cổng 5432, 8000, 8080, 8081 và 15672 chỉ nên mở local; production
   chỉ công khai reverse proxy/TLS.
+- `docker-compose.production.yml` ghép với file Compose local để bỏ toàn bộ cổng
+  hạ tầng/API, tắt Adminer mặc định và chỉ publish frontend reverse proxy. Cách
+  chạy và hợp đồng biến môi trường nằm tại [`production-deployment.md`](production-deployment.md).
 - Redis hiện có trong hạ tầng nhưng chưa được ứng dụng dùng cho cache/rate limit.
 - Healthcheck chứng minh process phản hồi endpoint, không thay thế synthetic
   test cho booking, email và inference model.
@@ -207,4 +223,8 @@ cảnh escalation hiện hành được xóa, nhưng transcript và metadata ng�
 3. Xác minh routing RabbitMQ/email và thêm metric theo dõi dead-letter.
 4. Volume/backup, restore drill, metrics, tracing, log tập trung và alert.
 5. Chính sách retention/xóa ảnh AI và đánh giá dung lượng PostgreSQL BLOB.
-6. Browser E2E, accessibility test, load test và kiểm thử AI trên checkpoint thật.
+6. Browser E2E release gần nhất đã đạt 5/5 Pass, 0 Fail, 0 Skip trên stack
+   PostgreSQL cô lập và stack/volume đã được tự động xóa sau lượt chạy. Vẫn cần
+   bổ sung accessibility, load test, hotline, reconnect và các nhánh âm ngoài năm
+   scenario hiện tại. Checkpoint thật đã có checksum, calibration, error analysis,
+   latency và OOD sanity evidence.

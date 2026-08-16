@@ -3,8 +3,10 @@ package com.dermai.appointment;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestClient;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.math.BigDecimal;
 import java.text.Normalizer;
@@ -146,6 +148,17 @@ public class SchedulingRecommendationService {
   boolean conflict=appointments.findActiveOverlapping(start,end).stream().anyMatch(x->doctorId.equals(x.doctorId)&&!x.id.equals(excludedAppointmentId));
   if(conflict)throw new SlotUnavailableException("DOCTOR_SLOT_CONFLICT");
   return doctor.consultationFee();
+ }
+
+ public void requireDoctorIdentity(UUID doctorId,UUID doctorIdentityId,String authorization,String role){
+  if(doctorId==null){
+   if(doctorIdentityId!=null)throw new ResponseStatusException(HttpStatus.CONFLICT,"Mã bác sĩ và tài khoản bác sĩ không khớp.");
+   return;
+  }
+  var doctor=loadDoctors(authorization,role).stream().filter(x->doctorId.equals(x.id())).findFirst()
+   .orElseThrow(()->new ResponseStatusException(HttpStatus.CONFLICT,"Không tìm thấy bác sĩ đang hoạt động."));
+  if(doctorIdentityId==null||!doctorIdentityId.equals(doctor.identityId()))
+   throw new ResponseStatusException(HttpStatus.CONFLICT,"Mã bác sĩ và tài khoản bác sĩ không khớp.");
  }
  private boolean overlapsLunch(ZonedDateTime start,ZonedDateTime end){return start.toLocalTime().isBefore(LUNCH_END)&&end.toLocalTime().isAfter(LUNCH_START);}
 

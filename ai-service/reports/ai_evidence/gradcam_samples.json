@@ -1,0 +1,538 @@
+{
+  "status": "generated_metadata_pending_clinical_review",
+  "selection_policy": "highest-confidence correct and error for each true class when available",
+  "sample_count": 16,
+  "overlay_images_saved": false,
+  "overlay_images_saved_reason": "Medical source/derived images remain local and are not added to tracked evidence artifacts.",
+  "samples": [
+    {
+      "sample_id": "sha256:e2cf9bf6d2d1f8417d96b23d006980063e14ac9bd7967b92f36e2476149ac54c",
+      "selection_reason": "highest_confidence_correct_for_true_class",
+      "true_label": "Acne",
+      "predicted_label": "Acne",
+      "correct": true,
+      "confidence": 0.9999804496765137,
+      "gradcam_target": "Acne",
+      "original_size_pixels": [
+        720,
+        468
+      ],
+      "heatmap": {
+        "native_shape": [
+          7,
+          7
+        ],
+        "minimum": 0.0,
+        "maximum": 1.0,
+        "mean": 0.36849769949913025,
+        "standard_deviation": 0.22688423097133636,
+        "fraction_at_least_0_50": 0.24489795918367346,
+        "peak": {
+          "x_normalized": 0.6666666666666666,
+          "y_normalized": 0.8333333333333334
+        },
+        "activation_weighted_centroid": {
+          "x_normalized": 0.5051136066806395,
+          "y_normalized": 0.5279915935891618
+        }
+      },
+      "clinical_review": null
+    },
+    {
+      "sample_id": "sha256:f2e77a5da496e2f86f03ce926ec3fe34e89790b2615648c51b5270ec317742d0",
+      "selection_reason": "highest_confidence_error_for_true_class",
+      "true_label": "Acne",
+      "predicted_label": "Tinea",
+      "correct": false,
+      "confidence": 0.9856837391853333,
+      "gradcam_target": "Tinea",
+      "original_size_pixels": [
+        720,
+        511
+      ],
+      "heatmap": {
+        "native_shape": [
+          7,
+          7
+        ],
+        "minimum": 0.0,
+        "maximum": 1.0,
+        "mean": 0.2560064494609833,
+        "standard_deviation": 0.27581357955932617,
+        "fraction_at_least_0_50": 0.1836734693877551,
+        "peak": {
+          "x_normalized": 0.6666666666666666,
+          "y_normalized": 0.5
+        },
+        "activation_weighted_centroid": {
+          "x_normalized": 0.5557292151705904,
+          "y_normalized": 0.45043419293207676
+        }
+      },
+      "clinical_review": null
+    },
+    {
+      "sample_id": "sha256:ea42d60cf898a08dd62d9e0b8d7e02fdd32f6aa34fc9911a70e5fff0cc82d39d",
+      "selection_reason": "highest_confidence_correct_for_true_class",
+      "true_label": "Candidiasis",
+      "predicted_label": "Candidiasis",
+      "correct": true,
+      "confidence": 0.9999690055847168,
+      "gradcam_target": "Candidiasis",
+      "original_size_pixels": [
+        720,
+        472
+      ],
+      "heatmap": {
+        "native_shape": [
+          7,
+          7
+        ],
+        "minimum": 0.0,
+        "maximum": 1.0,
+        "mean": 0.40622785687446594,
+        "standard_deviation": 0.2935270369052887,
+        "fraction_at_least_0_50": 0.3673469387755102,
+        "peak": {
+          "x_normalized": 0.6666666666666666,
+          "y_normalized": 0.6666666666666666
+        },
+        "activation_weighted_centroid": {
+          "x_normalized": 0.44323377864347674,
+          "y_normalized": 0.5604820865875176
+        }
+      },
+      "clinical_review": null
+    },
+    {
+      "sample_id": "sha256:9a2c31a543ac6c70fec11985c94cf23c43a1178b36787adac51165d4ab302788",
+      "selection_reason": "highest_confidence_error_for_true_class",
+      "true_label": "Candidiasis",
+      "predicted_label": "Psoriasis",
+      "correct": false,
+      "confidence": 0.9906168580055237,
+      "gradcam_target": "Psoriasis",
+      "original_size_pixels": [
+        720,
+        472
+      ],
+      "heatmap": {
+        "native_shape": [
+          7,
+          7
+        ],
+        "minimum": 0.0,
+        "maximum": 1.0,
+        "mean": 0.26703426241874695,
+        "standard_deviation": 0.2813417613506317,
+        "fraction_at_least_0_50": 0.24489795918367346,
+        "peak": {
+          "x_normalized": 0.8333333333333334,
+          "y_normalized": 0.5
+        },
+        "activation_weighted_centroid": {
+          "x_normalized": 0.616372283294157,
+          "y_normalized": 0.4914198764581783
+        }
+      },
+      "clinical_review": null
+    },
+    {
+      "sample_id": "sha256:7445e9d36827a0a9db71b93d20dd1517c0ef3ad42c347e7ff07f3eec0f534291",
+      "selection_reason": "highest_confidence_correct_for_true_class",
+      "true_label": "Eczema",
+      "predicted_label": "Eczema",
+      "correct": true,
+      "confidence": 0.9999972581863403,
+      "gradcam_target": "Eczema",
+      "original_size_pixels": [
+        720,
+        480
+      ],
+      "heatmap": {
+        "native_shape": [
+          7,
+          7
+        ],
+        "minimum": 0.0,
+        "maximum": 1.0,
+        "mean": 0.2503768801689148,
+        "standard_deviation": 0.2615310847759247,
+        "fraction_at_least_0_50": 0.14285714285714285,
+        "peak": {
+          "x_normalized": 0.6666666666666666,
+          "y_normalized": 0.6666666666666666
+        },
+        "activation_weighted_centroid": {
+          "x_normalized": 0.4515529805977618,
+          "y_normalized": 0.5630674268145769
+        }
+      },
+      "clinical_review": null
+    },
+    {
+      "sample_id": "sha256:f6c989d920322a6644d951df6fb82433e6cbfca8921ea8ddb2c62521d928bb3c",
+      "selection_reason": "highest_confidence_error_for_true_class",
+      "true_label": "Eczema",
+      "predicted_label": "Psoriasis",
+      "correct": false,
+      "confidence": 0.9999756813049316,
+      "gradcam_target": "Psoriasis",
+      "original_size_pixels": [
+        477,
+        720
+      ],
+      "heatmap": {
+        "native_shape": [
+          7,
+          7
+        ],
+        "minimum": 0.0,
+        "maximum": 1.0,
+        "mean": 0.3525216281414032,
+        "standard_deviation": 0.32179468870162964,
+        "fraction_at_least_0_50": 0.32653061224489793,
+        "peak": {
+          "x_normalized": 0.3333333333333333,
+          "y_normalized": 0.5
+        },
+        "activation_weighted_centroid": {
+          "x_normalized": 0.5836057664019724,
+          "y_normalized": 0.5182323617339745
+        }
+      },
+      "clinical_review": null
+    },
+    {
+      "sample_id": "sha256:c0394bf92883298007187e8e2f68c7caf861a4fd5fa81bcb92b9ba0ecb57aa2d",
+      "selection_reason": "highest_confidence_correct_for_true_class",
+      "true_label": "Lupus",
+      "predicted_label": "Lupus",
+      "correct": true,
+      "confidence": 1.0,
+      "gradcam_target": "Lupus",
+      "original_size_pixels": [
+        476,
+        720
+      ],
+      "heatmap": {
+        "native_shape": [
+          7,
+          7
+        ],
+        "minimum": 0.0,
+        "maximum": 1.0,
+        "mean": 0.4337841868400574,
+        "standard_deviation": 0.30303749442100525,
+        "fraction_at_least_0_50": 0.40816326530612246,
+        "peak": {
+          "x_normalized": 0.3333333333333333,
+          "y_normalized": 0.3333333333333333
+        },
+        "activation_weighted_centroid": {
+          "x_normalized": 0.49203123361202955,
+          "y_normalized": 0.4578960864603662
+        }
+      },
+      "clinical_review": null
+    },
+    {
+      "sample_id": "sha256:cfc5b832ff87590fee9c54ffe2fd22e8b424c84197f2ee0a57602a66e409c5f3",
+      "selection_reason": "highest_confidence_error_for_true_class",
+      "true_label": "Lupus",
+      "predicted_label": "Psoriasis",
+      "correct": false,
+      "confidence": 0.9980875849723816,
+      "gradcam_target": "Psoriasis",
+      "original_size_pixels": [
+        294,
+        222
+      ],
+      "heatmap": {
+        "native_shape": [
+          7,
+          7
+        ],
+        "minimum": 0.0,
+        "maximum": 1.0,
+        "mean": 0.31387871503829956,
+        "standard_deviation": 0.24935176968574524,
+        "fraction_at_least_0_50": 0.20408163265306123,
+        "peak": {
+          "x_normalized": 0.16666666666666666,
+          "y_normalized": 0.3333333333333333
+        },
+        "activation_weighted_centroid": {
+          "x_normalized": 0.3893021584981368,
+          "y_normalized": 0.4839878511497759
+        }
+      },
+      "clinical_review": null
+    },
+    {
+      "sample_id": "sha256:a637d46f1e31910b593d5fde0d4b1270061220d18a3e0e89e16d2ddd74baf003",
+      "selection_reason": "highest_confidence_correct_for_true_class",
+      "true_label": "Psoriasis",
+      "predicted_label": "Psoriasis",
+      "correct": true,
+      "confidence": 0.9999947547912598,
+      "gradcam_target": "Psoriasis",
+      "original_size_pixels": [
+        720,
+        480
+      ],
+      "heatmap": {
+        "native_shape": [
+          7,
+          7
+        ],
+        "minimum": 0.0,
+        "maximum": 1.0,
+        "mean": 0.33486565947532654,
+        "standard_deviation": 0.28284987807273865,
+        "fraction_at_least_0_50": 0.20408163265306123,
+        "peak": {
+          "x_normalized": 0.16666666666666666,
+          "y_normalized": 0.5
+        },
+        "activation_weighted_centroid": {
+          "x_normalized": 0.4228316035593332,
+          "y_normalized": 0.47850972817118986
+        }
+      },
+      "clinical_review": null
+    },
+    {
+      "sample_id": "sha256:8de667d93415ec0b52b874e4304fd538e749ae6dcde0bc02efe27704124daaaa",
+      "selection_reason": "highest_confidence_error_for_true_class",
+      "true_label": "Psoriasis",
+      "predicted_label": "SkinCancer",
+      "correct": false,
+      "confidence": 0.9993665814399719,
+      "gradcam_target": "SkinCancer",
+      "original_size_pixels": [
+        720,
+        472
+      ],
+      "heatmap": {
+        "native_shape": [
+          7,
+          7
+        ],
+        "minimum": 0.0,
+        "maximum": 1.0,
+        "mean": 0.35808804631233215,
+        "standard_deviation": 0.31586354970932007,
+        "fraction_at_least_0_50": 0.3469387755102041,
+        "peak": {
+          "x_normalized": 0.6666666666666666,
+          "y_normalized": 0.6666666666666666
+        },
+        "activation_weighted_centroid": {
+          "x_normalized": 0.5561436188302337,
+          "y_normalized": 0.574200853332503
+        }
+      },
+      "clinical_review": null
+    },
+    {
+      "sample_id": "sha256:3a00b8780ad58b665b07f8272fb5d8b43cc38912638d9284b83f787d866c9ad2",
+      "selection_reason": "highest_confidence_correct_for_true_class",
+      "true_label": "SkinCancer",
+      "predicted_label": "SkinCancer",
+      "correct": true,
+      "confidence": 0.999995231628418,
+      "gradcam_target": "SkinCancer",
+      "original_size_pixels": [
+        720,
+        474
+      ],
+      "heatmap": {
+        "native_shape": [
+          7,
+          7
+        ],
+        "minimum": 0.0,
+        "maximum": 1.0,
+        "mean": 0.2184225171804428,
+        "standard_deviation": 0.2452826201915741,
+        "fraction_at_least_0_50": 0.12244897959183673,
+        "peak": {
+          "x_normalized": 0.6666666666666666,
+          "y_normalized": 0.3333333333333333
+        },
+        "activation_weighted_centroid": {
+          "x_normalized": 0.5497459370790395,
+          "y_normalized": 0.5071561902789568
+        }
+      },
+      "clinical_review": null
+    },
+    {
+      "sample_id": "sha256:f8e662f832544832802d06414dc75c917736aceb899f843582eb71236d3d695d",
+      "selection_reason": "highest_confidence_error_for_true_class",
+      "true_label": "SkinCancer",
+      "predicted_label": "Psoriasis",
+      "correct": false,
+      "confidence": 0.9735690951347351,
+      "gradcam_target": "Psoriasis",
+      "original_size_pixels": [
+        720,
+        478
+      ],
+      "heatmap": {
+        "native_shape": [
+          7,
+          7
+        ],
+        "minimum": 0.0,
+        "maximum": 1.0,
+        "mean": 0.2968027591705322,
+        "standard_deviation": 0.2791791558265686,
+        "fraction_at_least_0_50": 0.24489795918367346,
+        "peak": {
+          "x_normalized": 0.3333333333333333,
+          "y_normalized": 0.6666666666666666
+        },
+        "activation_weighted_centroid": {
+          "x_normalized": 0.474041702351665,
+          "y_normalized": 0.5432845712261395
+        }
+      },
+      "clinical_review": null
+    },
+    {
+      "sample_id": "sha256:6e3efb2cd488d9e0da49962d5e108f32160bd12717501ddef79e511e90ebcb54",
+      "selection_reason": "highest_confidence_correct_for_true_class",
+      "true_label": "Tinea",
+      "predicted_label": "Tinea",
+      "correct": true,
+      "confidence": 0.9999935626983643,
+      "gradcam_target": "Tinea",
+      "original_size_pixels": [
+        720,
+        477
+      ],
+      "heatmap": {
+        "native_shape": [
+          7,
+          7
+        ],
+        "minimum": 0.0,
+        "maximum": 1.0,
+        "mean": 0.3371908962726593,
+        "standard_deviation": 0.319123238325119,
+        "fraction_at_least_0_50": 0.32653061224489793,
+        "peak": {
+          "x_normalized": 0.3333333333333333,
+          "y_normalized": 0.5
+        },
+        "activation_weighted_centroid": {
+          "x_normalized": 0.5297764563417534,
+          "y_normalized": 0.4626868745140373
+        }
+      },
+      "clinical_review": null
+    },
+    {
+      "sample_id": "sha256:643c50e87bf6f8434c8dc823884e395453cfc34ed5da4d7f59c09d23662ba130",
+      "selection_reason": "highest_confidence_error_for_true_class",
+      "true_label": "Tinea",
+      "predicted_label": "Eczema",
+      "correct": false,
+      "confidence": 0.9986287355422974,
+      "gradcam_target": "Eczema",
+      "original_size_pixels": [
+        480,
+        720
+      ],
+      "heatmap": {
+        "native_shape": [
+          7,
+          7
+        ],
+        "minimum": 0.0,
+        "maximum": 1.0,
+        "mean": 0.3119601011276245,
+        "standard_deviation": 0.2656172811985016,
+        "fraction_at_least_0_50": 0.2653061224489796,
+        "peak": {
+          "x_normalized": 0.3333333333333333,
+          "y_normalized": 0.8333333333333334
+        },
+        "activation_weighted_centroid": {
+          "x_normalized": 0.5178329965078232,
+          "y_normalized": 0.5827749987899219
+        }
+      },
+      "clinical_review": null
+    },
+    {
+      "sample_id": "sha256:f0306f9408cb1a31ae1ea60c3bd289e1c600252c7b9aa11fb6889f2e1e18ce98",
+      "selection_reason": "highest_confidence_correct_for_true_class",
+      "true_label": "Warts",
+      "predicted_label": "Warts",
+      "correct": true,
+      "confidence": 0.9999959468841553,
+      "gradcam_target": "Warts",
+      "original_size_pixels": [
+        484,
+        720
+      ],
+      "heatmap": {
+        "native_shape": [
+          7,
+          7
+        ],
+        "minimum": 0.0,
+        "maximum": 1.0,
+        "mean": 0.4288249611854553,
+        "standard_deviation": 0.2535896897315979,
+        "fraction_at_least_0_50": 0.3469387755102041,
+        "peak": {
+          "x_normalized": 0.3333333333333333,
+          "y_normalized": 0.6666666666666666
+        },
+        "activation_weighted_centroid": {
+          "x_normalized": 0.5163532060319799,
+          "y_normalized": 0.5285733571630438
+        }
+      },
+      "clinical_review": null
+    },
+    {
+      "sample_id": "sha256:d264e8f4f42af14e0a94295519a7fb2a80758ccce6d3d07a491fa99195af9a0d",
+      "selection_reason": "highest_confidence_error_for_true_class",
+      "true_label": "Warts",
+      "predicted_label": "Acne",
+      "correct": false,
+      "confidence": 0.9933390021324158,
+      "gradcam_target": "Acne",
+      "original_size_pixels": [
+        470,
+        720
+      ],
+      "heatmap": {
+        "native_shape": [
+          7,
+          7
+        ],
+        "minimum": 0.0,
+        "maximum": 1.0,
+        "mean": 0.2901936173439026,
+        "standard_deviation": 0.2474335879087448,
+        "fraction_at_least_0_50": 0.20408163265306123,
+        "peak": {
+          "x_normalized": 0.3333333333333333,
+          "y_normalized": 0.8333333333333334
+        },
+        "activation_weighted_centroid": {
+          "x_normalized": 0.550145319413765,
+          "y_normalized": 0.5331885995334974
+        }
+      },
+      "clinical_review": null
+    }
+  ],
+  "interpretation_limit": "Grad-CAM localization is descriptive and does not establish causality or clinical validity."
+}

@@ -184,6 +184,13 @@
   height: 15px;
 }
 
+.medical-record-row-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 10px;
+}
+
 .medical-record-browser .medical-record-severity {
   display: inline-flex;
   align-items: center;
@@ -212,7 +219,87 @@
   border-color: var(--color-danger-border);
 }
 
-.medical-record-browser > .medical-record-row > .medical-record-summary {
+.medical-record-detail-toggle,
+.record-pagination button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  min-height: 44px;
+  padding: 0 13px;
+  color: var(--color-primary);
+  background: var(--color-surface);
+  border: 1px solid var(--color-border-strong);
+  border-radius: var(--radius-control);
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: color 160ms ease, background-color 160ms ease, border-color 160ms ease;
+}
+
+.medical-record-detail-toggle svg,
+.record-pagination button svg {
+  width: 17px;
+  height: 17px;
+}
+
+.medical-record-detail-toggle:hover,
+.record-pagination button:hover {
+  color: var(--color-ink);
+  background: var(--color-success-surface);
+  border-color: var(--color-success-border);
+}
+
+.medical-record-detail-toggle:focus-visible,
+.record-pagination button:focus-visible {
+  outline: none;
+  box-shadow: var(--focus-ring);
+}
+
+.medical-record-preview {
+  display: flex;
+  align-items: center;
+  gap: var(--space-5);
+  min-height: 74px;
+  padding: 14px 18px;
+}
+
+.medical-record-preview > div {
+  display: grid;
+  flex: 1 1 40%;
+  gap: 5px;
+  min-width: 0;
+}
+
+.medical-record-preview span {
+  color: var(--color-muted);
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.medical-record-preview strong {
+  color: var(--color-ink);
+  font-size: 15px;
+  line-height: 1.45;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.medical-record-preview p {
+  flex: 1 1 60%;
+  margin: 0;
+  color: var(--color-muted);
+  font-size: 13px;
+  line-height: 1.5;
+  text-align: right;
+}
+
+.medical-record-details[hidden] {
+  display: none;
+}
+
+.medical-record-browser > .medical-record-row > .medical-record-details > .medical-record-summary {
   display: grid;
   grid-template-columns: minmax(190px, .8fr) minmax(220px, 1fr) minmax(220px, 1fr);
   gap: 0;
@@ -277,6 +364,21 @@
   color: var(--color-text-secondary);
 }
 
+.record-pagination {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  margin-top: var(--space-5);
+  padding-top: var(--space-4);
+  border-top: 1px solid var(--doctor-record-border);
+}
+
+.record-pagination > span {
+  color: var(--color-muted);
+  font-size: 13px;
+}
+
 .medical-record-browser + .records {
   margin-top: var(--space-5);
 }
@@ -290,7 +392,7 @@
     grid-column: 1 / -1;
   }
 
-  .medical-record-browser > .medical-record-row > .medical-record-summary {
+  .medical-record-browser > .medical-record-row > .medical-record-details > .medical-record-summary {
     grid-template-columns: 1fr 1fr;
     row-gap: var(--space-4);
   }
@@ -335,17 +437,39 @@
     padding: 13px 14px;
   }
 
+  .medical-record-row-actions {
+    grid-column: 1 / -1;
+    justify-content: space-between;
+    padding-left: 52px;
+  }
+
   .medical-record-browser .medical-record-avatar {
     width: 40px;
     height: 40px;
   }
 
   .medical-record-browser .medical-record-severity {
-    grid-column: 2;
     width: max-content;
   }
 
-  .medical-record-browser > .medical-record-row > .medical-record-summary {
+  .medical-record-preview {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 7px;
+    padding: 14px;
+  }
+
+  .medical-record-preview > div,
+  .medical-record-preview p {
+    flex-basis: auto;
+    width: 100%;
+  }
+
+  .medical-record-preview p {
+    text-align: left;
+  }
+
+  .medical-record-browser > .medical-record-row > .medical-record-details > .medical-record-summary {
     grid-template-columns: 1fr;
     padding: 16px 14px;
   }
@@ -369,10 +493,21 @@
     flex-direction: column;
     padding-inline: 14px;
   }
+
+  .record-pagination {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .record-pagination button {
+    width: 100%;
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {
   .medical-record-browser > .medical-record-row,
+  .medical-record-detail-toggle,
+  .record-pagination button,
   .record-filters input,
   .record-filters select {
     transition: none;

@@ -85,7 +85,8 @@ nguồn phù hợp. Yêu cầu thao tác lịch, tài khoản, khiếu nại, c�
 nội dung AI không hiểu được tự động chuyển sang lễ tân; Patient không phải mở
 một chat mới hay kể lại từ đầu. Gemini chỉ được phép biên tập câu mẫu từ tên nhóm
 yêu cầu và không nhận nội dung gốc của bệnh nhân. Appointment Service lưu toàn bộ
-transcript `PATIENT / AI / SYSTEM`, intent, độ tin cậy, số lần thất bại và bản tóm
+transcript `PATIENT / AI / SYSTEM`, intent, điểm khớp quy tắc định tuyến, số lần
+thất bại và bản tóm
 tắt bàn giao. Lễ tân nhận realtime, xem toàn bộ ngữ cảnh rồi claim conversation
 trước khi trả lời trong chính cuộc trò chuyện đó. Khi xử lý xong, lễ tân chọn
 `Hoàn tất hỗ trợ`; lịch sử vẫn được giữ nhưng yêu cầu tiếp theo quay lại tầng AI.
@@ -118,7 +119,7 @@ PostgreSQL 16 · Redis 7 · RabbitMQ 3.13 · Docker Compose
 | Frontend | React, TypeScript, Vite, CSS Design System và Nginx |
 | Gateway | Spring Cloud Gateway, JWT, RBAC và định tuyến API |
 | Backend | Java 21, Spring Boot 3.4, Spring Data JPA và Flyway |
-| Dữ liệu | PostgreSQL 16 với 7 schema và 23 bảng nghiệp vụ |
+| Dữ liệu | PostgreSQL 16 với 7 schema và 24 bảng nghiệp vụ |
 | Realtime | WebSocket; dữ liệu được tải lại từ nguồn thật sau sự kiện |
 | Messaging | RabbitMQ và outbox event cho thông báo bất đồng bộ |
 | AI | FastAPI, PyTorch, EfficientNet-B0, Grad-CAM, TF-IDF RAG và Gemini public chat |
@@ -205,22 +206,25 @@ uvicorn app.main:app --reload
 ## Kiểm thử
 
 ```powershell
-# Frontend: TypeScript, production build và Vitest
-Set-Location frontend
-npm install
-npm run build
-npm test
+# Regression build/unit/integration. Nếu máy không có Maven, script tự dùng
+# container Maven Java 21. Browser E2E được ghi NOT_RUN và release gate chủ động
+# trả mã khác 0 ở chế độ này vì bằng chứng phát hành chưa đầy đủ.
+powershell -ExecutionPolicy Bypass -File tests/run-release-tests.ps1
 
-# Backend Java
-Set-Location ..
-mvn test
-
-# AI service
-python -m pytest ai-service/tests
+# Chỉ dùng khi Docker Compose, tài khoản E2E và ảnh test thật đã sẵn sàng.
+# Xem biến môi trường bắt buộc tại frontend/e2e/README.md.
+$env:E2E_VIDEO = "on"
+powershell -ExecutionPolicy Bypass -File tests/run-release-tests.ps1 -IncludeE2E
 ```
 
-Bộ kiểm thử thủ công gồm 72 test case, tập trung vào đặt lịch đồng thời, giữ
-slot, đổi/hủy, hotline, check-in/no-show, WebSocket reconnect, chat và AI.
+Bộ kiểm thử tài liệu gồm 81 test case, tập trung vào đặt lịch đồng thời, giữ
+slot, đổi/hủy, hotline, check-in/no-show, WebSocket reconnect, chat, phân quyền
+hồ sơ y tế, stored XSS và bằng chứng phát hành model AI. Lần chạy Playwright
+live gần nhất có **5/5 case Pass**, không có case Fail hoặc Skip, trong 38,798
+giây. Lượt chạy dùng PostgreSQL trong stack/volume E2E cô lập; stack và volume
+được tự động xóa sau khi hoàn tất nên không ghi dữ liệu vào database local chính.
+HTML report lưu 9 ảnh PNG và 5 video; log máy và artifact trình duyệt được giữ
+cục bộ, không commit.
 
 ## Tài liệu
 
@@ -229,6 +233,8 @@ slot, đổi/hủy, hotline, check-in/no-show, WebSocket reconnect, chat và AI.
 - [Đặc tả API](docs/03-api.md)
 - [AI và RAG](docs/04-ai-rag.md)
 - [Kế hoạch kiểm thử và triển khai](docs/05-delivery.md)
+- [Triển khai production bằng Docker Compose](docs/production-deployment.md)
+- [Quy ước và nguồn bằng chứng kiểm thử](docs/test-evidence.md)
 - [Xác minh email và Gmail SMTP](docs/06-email-verification.md)
 - [Model Card hiện tại](docs/model-card-scin-v1.md)
 - [UML, Use Case, ERD và Deployment Diagram](docs/diagrams)

@@ -64,6 +64,8 @@ services:
       DB_URL: jdbc:postgresql://postgres:5432/${POSTGRES_DB:-dermai}?currentSchema=doctor
       DB_USER: ${POSTGRES_USER:-dermai}
       DB_PASSWORD: ${POSTGRES_PASSWORD:-change-me}
+      APPOINTMENT_URL: http://appointment-service:8085
+      SERVICE_TOKEN: ${SERVICE_TOKEN:-}
     healthcheck: {test: ["CMD", "curl", "-fsS", "http://localhost:8084/actuator/health"], interval: 20s, timeout: 5s, retries: 10, start_period: 45s}
     depends_on: {postgres: {condition: service_healthy}}
   appointment-service:
@@ -76,6 +78,7 @@ services:
       DB_PASSWORD: ${POSTGRES_PASSWORD:-change-me}
       RABBITMQ_HOST: rabbitmq
       DOCTOR_URL: http://doctor-service:8084
+      PATIENT_URL: http://patient-service:8083
       AI_URL: http://ai-service:8000
       SERVICE_TOKEN: ${SERVICE_TOKEN:-}
     healthcheck: {test: ["CMD", "curl", "-fsS", "http://localhost:8085/actuator/health"], interval: 20s, timeout: 5s, retries: 10, start_period: 50s}

@@ -1,0 +1,87 @@
+{
+  "metadata": {
+    "commit": "2c48c349f9234278848ed2e00639fed66cf500c9 (base commit; workingTreeDirty=true)",
+    "baseCommit": "2c48c349f9234278848ed2e00639fed66cf500c9",
+    "workingTreeDirty": true,
+    "frontend": "Production build PASS; Vitest PASS; Playwright Chromium 5/5 PASS, 0 Fail, 0 Skip trong 38,798 giây; HTML report có 9 PNG và 5 video.",
+    "backend": "Java services PASS trong release regression; browser E2E gọi Gateway/API và UI thật trong Docker Compose cô lập.",
+    "database": "PostgreSQL 16 trong stack/volume E2E dùng riêng; stack và volume được tự động xóa sau lượt chạy; không dùng database local chính.",
+    "ai": "EfficientNet-B0 efficientnet_b0-20260728T185742Z; SHA-256 914f83a85c4dbff06424e0a48f1121950f10e3c0ce8d5a9f68369b38106cc3df; AI Pytest PASS; OOD synthetic sanity FAIL 0/6.",
+    "executedAt": "14/08/2026 18:48 ICT (UTC+07)",
+    "evidenceRevision": "Working-tree snapshot based on base commit 2c48c349f9234278848ed2e00639fed66cf500c9; không gán kết quả này cho riêng commit cha.",
+    "notes": "Manifest bảo thủ: chỉ ánh xạ PASS khi toàn bộ kỳ vọng của test case có bằng chứng trực tiếp. Năm scenario Playwright đều PASS nhưng không tự động biến các test case thủ công rộng hơn thành PASS; case vắng mặt giữ NOT_RUN."
+  },
+  "results": {
+    "AI-001": {
+      "status": "PASS",
+      "actual": "Ảnh thật được gửi tới /ai/predict và nhận HTTP 200; response có disease, confidence trong [0,1], đúng 3 dự đoán Top-3 với xác suất hợp lệ và Grad-CAM dạng data:image/png;base64. UI hiển thị đúng confidence từ response, đủ 3 dòng Top-3, ảnh Grad-CAM khả kiến và không xuất hiện HTTP 500.",
+      "evidence": "frontend/test-results/e2e-junit.xml (E2E-AI-001); frontend/test-results/e2e-results.json; frontend/playwright-report/index.html; frontend/e2e/ai-and-support.spec.ts"
+    },
+    "BOOK-009": {
+      "status": "PASS",
+      "actual": "Patient chọn slot thật; API trả HTTP 201 với trạng thái HELD, đúng patient/doctor/startAt và có holdExpiresAt. UI hiển thị thông báo slot được giữ riêng trong 5 phút trước khi xác nhận.",
+      "evidence": "frontend/test-results/e2e-junit.xml (E2E-BOOK-001); frontend/test-results/e2e-results.json; frontend/playwright-report/index.html; frontend/e2e/booking.spec.ts"
+    },
+    "BOOK-014": {
+      "status": "PASS",
+      "actual": "Patient xác nhận hold thật; API trả HTTP 200 với đúng patient, doctor, startAt, reason và trạng thái ASSIGNED; UI báo gửi yêu cầu thành công và lịch xuất hiện trong danh sách. Unit test xác nhận phí được chốt vào consultationFeeSnapshot tại thời điểm giữ slot.",
+      "evidence": "frontend/test-results/e2e-junit.xml (E2E-BOOK-001); frontend/test-results/e2e-results.json; frontend/playwright-report/index.html; services/appointment-service/src/test/java/com/dermai/appointment/AppointmentFeeSnapshotTest.java; test-results/release/summary.json"
+    },
+    "BOOK-016": {
+      "status": "PASS",
+      "actual": "Hai Patient khác identity và browser context cùng giữ một slot từ cùng snapshot AVAILABLE: đúng một request nhận 201, một request nhận 409; người thắng xác nhận thành ASSIGNED, người thua thấy lỗi và slot đổi thành Đã có người đặt; kiểm tra chéo API cho đúng một lịch hoạt động.",
+      "evidence": "frontend/test-results/e2e-junit.xml (E2E-BOOK-002); frontend/test-results/e2e-results.json; frontend/playwright-report/index.html; frontend/e2e/booking.spec.ts"
+    },
+    "CHAT-003": {
+      "status": "PASS",
+      "actual": "Khi Patient đóng panel chat, lễ tân gửi reply và Patient nhận sự kiện qua WebSocket mà không reload. Badge chưa đọc xuất hiện realtime với số đếm; khi Patient mở chat, tin nhắn hiện đúng và badge biến mất.",
+      "evidence": "frontend/test-results/e2e-junit.xml (E2E-CHAT-001); frontend/test-results/e2e-results.json; frontend/playwright-report/index.html; frontend/e2e/ai-and-support.spec.ts"
+    },
+    "AI-008": {
+      "status": "PASS",
+      "actual": "SHA-256 của checkpoint phát hành là 914f83a85c4dbff06424e0a48f1121950f10e3c0ce8d5a9f68369b38106cc3df và khớp expected_sha256 trong manifest cùng model comparison; expected_sha256_match=true.",
+      "evidence": "ai-service/reports/ai_evidence/manifest.json; ai-service/reports/model_comparison_scin_v1.json; ai-service/reports/ai_evidence/summary.md; tests/run-release-tests.ps1"
+    },
+    "AI-009": {
+      "status": "PASS",
+      "actual": "Đánh giá ghi rõ provenance và tái lập trên 564 ảnh fixed test cùng 240 ảnh SCIN external; có ECE/Brier/NLL, calibration bins và 196 lỗi theo SHA-256 thay vì tên file nhạy cảm. Số mẫu và số lỗi khớp manifest/artifact.",
+      "evidence": "ai-service/reports/ai_evidence/manifest.json; ai-service/reports/ai_evidence/fixed_test_calibration.json; ai-service/reports/ai_evidence/scin_external_test_calibration.json; ai-service/reports/ai_evidence/fixed_test_errors.json; ai-service/reports/ai_evidence/scin_external_test_errors.json; ai-service/reports/ai_evidence/summary.md; test-results/release/summary.json"
+    },
+    "AI-010": {
+      "status": "PASS",
+      "actual": "Báo cáo lưu mẫu thô và percentile. app.predict + Grad-CAM từ PIL đã decode đạt CPU p50/p95 92,09/98,90 ms và CUDA p50/p95 56,87/61,51 ms; phạm vi loại trừ HTTP upload, decode, RAG và frontend được ghi rõ.",
+      "evidence": "ai-service/reports/ai_evidence/latency.json; ai-service/reports/ai_evidence/summary.md; ai-service/reports/ai_evidence/manifest.json"
+    },
+    "AI-011": {
+      "status": "FAIL",
+      "actual": "Ngưỡng 0,55 không từ chối probe nào trong 6 ảnh phi lâm sàng tổng hợp (0/6, 0%). Model cho maximum softmax probability từ 0,5876 đến 0,99997, thể hiện quá tự tin; chưa có benchmark OOD lâm sàng có nhãn.",
+      "evidence": "ai-service/reports/ai_evidence/ood_synthetic_probes.json; ai-service/reports/ai_evidence/summary.md; ai-service/reports/ai_evidence/manifest.json",
+      "defect": "AI-OOD-001"
+    },
+    "SEC-001": {
+      "status": "PASS",
+      "actual": "Targeted Java tests xác nhận Doctor chỉ đọc Patient khi appointment-service chấp thuận quan hệ khám, không được dùng staff directory để liệt kê Patient và không thể liệt kê lịch của Doctor khác bằng profileId.",
+      "evidence": "services/patient-service/src/test/java/com/dermai/patient/PatientControllerTest.java; services/appointment-service/src/test/java/com/dermai/appointment/AppointmentControllerTest.java; test-results/release/summary.json"
+    },
+    "SEC-002": {
+      "status": "PASS",
+      "actual": "Medical-record và prescription controller dùng truy vấn có cả patientId và doctorId khi vai trò Doctor; targeted tests xác nhận không gọi truy vấn toàn Patient/phòng khám.",
+      "evidence": "services/medical-record-service/src/test/java/com/dermai/record/MedicalRecordControllerTest.java; services/prescription-service/src/test/java/com/dermai/prescription/PrescriptionControllerTest.java; test-results/release/summary.json"
+    },
+    "SEC-003": {
+      "status": "PASS",
+      "actual": "Targeted tests xác nhận Patient chỉ ẩn idempotent hồ sơ đã ký của chính mình; yêu cầu ẩn hồ sơ của người khác trả 403, hồ sơ đã ẩn trả 404 trực tiếp cho Patient nhưng vẫn đọc được bởi Admin để đối soát.",
+      "evidence": "services/medical-record-service/src/test/java/com/dermai/record/MedicalRecordControllerTest.java; test-results/release/summary.json"
+    },
+    "SEC-004": {
+      "status": "PASS",
+      "actual": "Vitest render payload img/onerror, script và svg/onload từ tên, bình luận và lỗi Admin; HTML chỉ chứa text đã escape, không chứa thẻ img/script/svg thực thi.",
+      "evidence": "frontend/src/features/admin/AdminClinicReviews.test.tsx; test-results/release/summary.json"
+    },
+    "SEC-005": {
+      "status": "PASS",
+      "actual": "Targeted Java tests xác nhận token thiếu/sai bị 403; token đúng chỉ nhận danh sách AppointmentSlot tối thiểu gồm id, startAt và endAt cho lịch đã xác nhận sắp tới.",
+      "evidence": "services/appointment-service/src/test/java/com/dermai/appointment/AppointmentScheduleQueryControllerTest.java; test-results/release/summary.json"
+    }
+  }
+}

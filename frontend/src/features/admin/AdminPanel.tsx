@@ -1,11 +1,12 @@
 import { FormEvent, useEffect, useState } from "react";
 import { Trash2 } from "lucide-react";
 import { request } from "../../core/api";
-import type { Appointment, ClinicClosure, ClinicReview, Doctor, Patient } from "../../core/types";
+import type { Appointment, ClinicClosure, Doctor, Patient } from "../../core/types";
 import AdminOverview from "./AdminOverview";
 import AdminDoctorsManagement from "./AdminDoctorsManagement";
 import AdminReceptionistAccounts from "./AdminReceptionistAccounts";
 import AdminStaffCreateForm, { type StaffRole } from "./AdminStaffCreateForm";
+import AdminClinicReviews from "./AdminClinicReviews";
 
 export default function AdminPanel({ token, tab }: { token: string; tab: string }) {
     const [doctors, setDoctors] = useState<Doctor[]>([]); const [patients, setPatients] = useState<Patient[]>([]); const [appointments, setAppointments] = useState<Appointment[]>([]); const [query, setQuery] = useState(""); const [patientTotal, setPatientTotal] = useState(0); const [selectedPatientId,setSelectedPatientId]=useState("");const [selectedDoctorId,setSelectedDoctorId]=useState("");const [email, setEmail] = useState(""); const [password, setPassword] = useState(""); const [role, setRole] = useState<StaffRole>("DOCTOR"); const [name, setName] = useState(""); const [specialty, setSpecialty] = useState(""); const [consultationFee, setConsultationFee] = useState("150000"); const [message, setMessage] = useState(""); const [staffRevision, setStaffRevision] = useState(0);
@@ -23,7 +24,6 @@ export default function AdminPanel({ token, tab }: { token: string; tab: string 
             .finally(() => setAdminDataLoading(false));
     }, []);
     useEffect(() => { const refresh = () => { void loadDoctors().catch(() => undefined) }; window.addEventListener("doctor-profiles-changed", refresh); return () => window.removeEventListener("doctor-profiles-changed", refresh) }, [token]);
-    useEffect(()=>{if(tab!=="profile")return;let disposed=false;let panel:HTMLElement|null=null;const timer=window.setTimeout(async()=>{const root=document.querySelector(".admin-overview");if(!root||disposed)return;panel=document.createElement("section");panel.className="panel admin-reviews";root.appendChild(panel);const load=async()=>{if(!panel)return;panel.innerHTML="<h2>Duyệt đánh giá phòng khám</h2>";try{const items=await request<ClinicReview[]>("/appointments/reviews",token);const pending=items.filter(x=>x.status==="PENDING");if(!pending.length){panel.insertAdjacentHTML("beforeend","<p>Không có đánh giá đang chờ duyệt.</p>");return}pending.forEach(review=>{const item=document.createElement("article");item.innerHTML=`<div><b>${review.rating}/5 sao · ${review.displayName}</b><p></p></div>`;item.querySelector("p")!.textContent=review.comment;const approve=document.createElement("button");approve.textContent="Duyệt";approve.onclick=async()=>{await request(`/appointments/reviews/${review.id}`,token,{method:"PATCH",body:JSON.stringify({status:"APPROVED"})});await load()};const hide=document.createElement("button");hide.textContent="Ẩn";hide.onclick=async()=>{await request(`/appointments/reviews/${review.id}`,token,{method:"PATCH",body:JSON.stringify({status:"HIDDEN"})});await load()};item.append(approve,hide);panel!.appendChild(item)})}catch(e){panel.insertAdjacentHTML("beforeend",`<p>${(e as Error).message}</p>`)}};await load()},0);return()=>{disposed=true;clearTimeout(timer);panel?.remove()}},[tab,token]);
     useEffect(()=>{
         if(!selectedPatientId)return;const patient=patients.find(x=>x.id===selectedPatientId);if(!patient)return;let disposed=false;let box:HTMLDivElement|null=null;
         const timer=window.setTimeout(async()=>{const detail=document.querySelector(".admin-directory-detail");if(!detail||disposed)return;detail.querySelectorAll(".patient-account-actions").forEach(x=>x.remove());box=document.createElement("div");box.className="patient-account-actions";box.textContent="Đang kiểm tra...";detail.appendChild(box);
@@ -67,6 +67,7 @@ export default function AdminPanel({ token, tab }: { token: string; tab: string 
             onSelectPatient={setSelectedPatientId}
             onClearPatient={() => setSelectedPatientId("")}
             refreshAppointments={loadAppointments}
+            footer={<AdminClinicReviews token={token} />}
         />;
     }
     if (tab === "appointments") {

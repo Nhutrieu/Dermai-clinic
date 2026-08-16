@@ -92,7 +92,25 @@ describe("ReceptionAcceptedAppointments", () => {
     expect(html).toContain("Gửi nhắc lại");
     expect(html).toContain("Tìm bệnh nhân, bác sĩ hoặc lý do");
     expect(html).toContain("Tất cả trạng thái");
-    expect(html).toContain("Hiển thị <strong>1</strong> trong 1 lịch");
+    expect(html).toContain("Hiển thị <strong>1</strong> trong 1 lịch phù hợp");
+  });
+
+  it("shows the five nearest accepted appointments first and offers to reveal the remainder", () => {
+    const appointments = Array.from({ length: 7 }, (_, index) => ({
+      ...appointment,
+      id: `appointment-${index + 1}`,
+      startAt: new Date(Date.UTC(2026, 7, 8 + index, 1)).toISOString(),
+      endAt: new Date(Date.UTC(2026, 7, 8 + index, 1, 30)).toISOString(),
+    })).reverse();
+    const html = render({ appointments });
+
+    expect((html.match(/class="accepted-appointment-item"/g) || []).length).toBe(5);
+    expect(html).toContain("Hiển thị <strong>5</strong> trong 7 lịch phù hợp");
+    expect(html).toContain("Đang hiển thị 5 trên 7 lịch");
+    expect(html).toContain("Xem thêm 2 lịch");
+    expect(html.indexOf("accepted-detail-appointment-2")).toBeLessThan(html.indexOf("accepted-detail-appointment-3"));
+    expect(html).not.toContain("accepted-detail-appointment-1");
+    expect(html).not.toContain("accepted-detail-appointment-7");
   });
 
   it("only exposes reschedule and cancel controls for confirmed appointments", () => {

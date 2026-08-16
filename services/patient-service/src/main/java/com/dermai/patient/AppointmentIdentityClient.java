@@ -41,5 +41,16 @@ class AppointmentIdentityClient {
   }
  }
 
+ void requireDoctorPatientAccess(UUID patientId,UUID doctorIdentity){
+  try{
+   client.get().uri("/api/v1/appointments/patient-access/{patientId}",patientId)
+    .header("X-User-Id",doctorIdentity.toString())
+    .header("X-User-Role","DOCTOR")
+    .retrieve().toBodilessEntity();
+  }catch(Exception error){
+   throw new ResponseStatusException(HttpStatus.FORBIDDEN,"Bác sĩ không phụ trách bệnh nhân này.",error);
+  }
+ }
+
  record AppointmentAccess(UUID id,UUID patientId,UUID patientIdentityId,UUID doctorIdentityId,String status){}
 }

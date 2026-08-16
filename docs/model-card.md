@@ -8,7 +8,7 @@
 | Thuộc tính | Giá trị hiện tại |
 |---|---|
 | Trạng thái model | **Thử nghiệm nội bộ, chưa dùng lâm sàng** |
-| Checkpoint cục bộ | `ai-service/models/best_model.pth` (16,4 MB) |
+| Checkpoint baseline cục bộ | `ai-service/models/archive/efficientnet_b0-20260728T110848Z/best_model.pth` (16,4 MB) |
 | Model version | `efficientnet_b0-20260728T110848Z` |
 | Dataset cục bộ | `SkinDisease/`, không đưa lên Git |
 | Test độc lập đã làm sạch | 564 ảnh |
@@ -125,7 +125,15 @@ epoch 17. Metric test chỉ được tính sau khi chọn checkpoint này.
 Lupus có recall thấp nhất (44,12%); không được dùng kết quả âm tính để loại trừ
 lupus. Confusion matrix và báo cáo chi tiết nằm trong `ai-service/models/`.
 
-### Đánh giá còn thiếu trước phát hành
+### Đánh giá còn thiếu của baseline lịch sử
+
+Bảng dưới ghi khoảng trống của checkpoint baseline ngày 28/07/2026, không phải
+trạng thái model đang chạy. Model promoted và bằng chứng hiện hành đã có checksum,
+calibration, error analysis, latency CPU/CUDA, Grad-CAM metadata và OOD sanity
+check tại [`model-card-scin-v1.md`](model-card-scin-v1.md) và
+[`ai_evidence/`](../ai-service/reports/ai_evidence/summary.md). OOD sanity hiện
+**không đạt** vì 0/6 probe bị từ chối; subgroup, OOD lâm sàng và đánh giá chuyên
+môn vẫn còn thiếu.
 
 | Nhóm | Artifact cần có |
 |---|---|

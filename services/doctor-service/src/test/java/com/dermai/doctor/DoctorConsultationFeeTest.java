@@ -25,7 +25,8 @@ class DoctorConsultationFeeTest {
         doctors,
         mock(ScheduleRepository.class),
         mock(LeaveRepository.class),
-        updates
+        updates,
+        mock(AppointmentScheduleClient.class)
     );
 
     var updated = controller.updateConsultationFee(
@@ -44,7 +45,8 @@ class DoctorConsultationFeeTest {
         mock(DoctorRepository.class),
         mock(ScheduleRepository.class),
         mock(LeaveRepository.class),
-        mock(DoctorProfileWebSocketHandler.class)
+        mock(DoctorProfileWebSocketHandler.class),
+        mock(AppointmentScheduleClient.class)
     );
 
     assertThatThrownBy(() -> controller.updateConsultationFee(

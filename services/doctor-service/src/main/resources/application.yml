@@ -10,3 +10,5 @@ spring:
     properties.hibernate.default_schema: doctor
   flyway: {schemas: doctor, create-schemas: true}
 management.endpoints.web.exposure.include: health,info
+services.appointment-url: ${APPOINTMENT_URL:http://appointment-service:8085}
+security.service-token: ${SERVICE_TOKEN:}

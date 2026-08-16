@@ -5,6 +5,8 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.Mockito.*;
 import java.util.*;
 import org.junit.jupiter.api.Test;
+import org.springframework.http.HttpStatus;
+import org.springframework.web.server.ResponseStatusException;
 
 class PatientControllerTest {
  @Test void normalizesCommonVietnamesePhoneFormats(){
@@ -35,5 +37,23 @@ class PatientControllerTest {
   when(repository.findByIdentityId(newIdentity)).thenReturn(Optional.empty());when(repository.findFirstByPhone("0352790904")).thenReturn(Optional.of(patient));
   var response=controller.create(newIdentity,"PATIENT",new PatientController.Body("Người khác",null,"0352790904",null,null));
   assertThat(response.getStatusCode().value()).isEqualTo(409);verifyNoInteractions(appointmentClient);
+ }
+
+ @Test void doctorCanReadOnlyAPatientBackedByAnAppointmentRelationship(){
+  var repository=mock(PatientRepository.class);var appointmentClient=mock(AppointmentIdentityClient.class);var controller=new PatientController(repository,appointmentClient);
+  var doctorIdentity=UUID.randomUUID();var patient=new Patient(UUID.randomUUID(),"Bệnh nhân được phân công");
+  when(repository.findById(patient.id)).thenReturn(Optional.of(patient));
+
+  assertThat(controller.byId(patient.id,doctorIdentity,"DOCTOR")).isSameAs(patient);
+
+  verify(appointmentClient).requireDoctorPatientAccess(patient.id,doctorIdentity);
+ }
+
+ @Test void doctorCannotUseTheStaffDirectoryToEnumerateUnrelatedPatients(){
+  var controller=new PatientController(mock(PatientRepository.class),mock(AppointmentIdentityClient.class));
+
+  assertThatThrownBy(()->controller.search("",0,20,"DOCTOR"))
+   .isInstanceOfSatisfying(ResponseStatusException.class,error->
+    assertThat(error.getStatusCode()).isEqualTo(HttpStatus.FORBIDDEN));
  }
 }

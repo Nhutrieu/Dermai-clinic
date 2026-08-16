@@ -10,6 +10,8 @@ public interface AppointmentRepository extends JpaRepository<Appointment,UUID>{
  @Query(value="select pg_advisory_xact_lock(73124, hashtext(cast(:identity as text)))",nativeQuery=true) List<Object> lockPatientBookings(@Param("identity") UUID identity);
  List<Appointment> findByDoctorIdAndStartAtBetweenOrderByStartAt(UUID doctor,Instant from,Instant to);
  List<Appointment> findByDoctorIdentityIdAndStartAtBetweenOrderByStartAt(UUID identity,Instant from,Instant to);
+ boolean existsByPatientIdAndDoctorIdentityIdAndStatusIn(UUID patientId,UUID doctorIdentityId,Collection<AppointmentStatus> statuses);
+ List<Appointment> findByDoctorIdAndStatusInAndEndAtAfterOrderByStartAt(UUID doctorId,Collection<AppointmentStatus> statuses,Instant from);
  List<Appointment> findByStatusInAndStartAtBetweenOrderByStartAt(Collection<AppointmentStatus> statuses,Instant from,Instant to);
  List<Appointment> findByStatusInAndEndAtBefore(Collection<AppointmentStatus> statuses,Instant cutoff);
  List<Appointment> findByStatusAndStartAtBefore(AppointmentStatus status,Instant cutoff);

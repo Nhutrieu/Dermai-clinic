@@ -1,0 +1,2934 @@
+{
+  "sample_count": 240,
+  "error_count": 77,
+  "error_rate": 0.32083333333333336,
+  "error_count_by_confidence": {
+    "at_least_0_55": 62,
+    "at_least_0_80": 32,
+    "at_least_0_90": 22
+  },
+  "by_true_label": {
+    "Acne": {
+      "total": 19,
+      "errors": 4,
+      "error_rate": 0.21052631578947367
+    },
+    "Candidiasis": {
+      "total": 1,
+      "errors": 0,
+      "error_rate": 0.0
+    },
+    "Eczema": {
+      "total": 156,
+      "errors": 25,
+      "error_rate": 0.16025641025641027
+    },
+    "Lupus": {
+      "total": 4,
+      "errors": 3,
+      "error_rate": 0.75
+    },
+    "Psoriasis": {
+      "total": 22,
+      "errors": 13,
+      "error_rate": 0.5909090909090909
+    },
+    "SkinCancer": {
+      "total": 0,
+      "errors": 0,
+      "error_rate": null
+    },
+    "Tinea": {
+      "total": 31,
+      "errors": 27,
+      "error_rate": 0.8709677419354839
+    },
+    "Warts": {
+      "total": 7,
+      "errors": 5,
+      "error_rate": 0.7142857142857143
+    }
+  },
+  "confusion_pairs": [
+    {
+      "true_label": "Tinea",
+      "predicted_label": "Eczema",
+      "count": 19
+    },
+    {
+      "true_label": "Eczema",
+      "predicted_label": "Acne",
+      "count": 10
+    },
+    {
+      "true_label": "Psoriasis",
+      "predicted_label": "Eczema",
+      "count": 10
+    },
+    {
+      "true_label": "Eczema",
+      "predicted_label": "Psoriasis",
+      "count": 9
+    },
+    {
+      "true_label": "Acne",
+      "predicted_label": "Psoriasis",
+      "count": 3
+    },
+    {
+      "true_label": "Tinea",
+      "predicted_label": "Candidiasis",
+      "count": 3
+    },
+    {
+      "true_label": "Tinea",
+      "predicted_label": "Psoriasis",
+      "count": 3
+    },
+    {
+      "true_label": "Warts",
+      "predicted_label": "Eczema",
+      "count": 3
+    },
+    {
+      "true_label": "Eczema",
+      "predicted_label": "Lupus",
+      "count": 2
+    },
+    {
+      "true_label": "Eczema",
+      "predicted_label": "Warts",
+      "count": 2
+    },
+    {
+      "true_label": "Lupus",
+      "predicted_label": "Psoriasis",
+      "count": 2
+    },
+    {
+      "true_label": "Tinea",
+      "predicted_label": "Acne",
+      "count": 2
+    },
+    {
+      "true_label": "Acne",
+      "predicted_label": "Eczema",
+      "count": 1
+    },
+    {
+      "true_label": "Eczema",
+      "predicted_label": "Candidiasis",
+      "count": 1
+    },
+    {
+      "true_label": "Eczema",
+      "predicted_label": "Tinea",
+      "count": 1
+    },
+    {
+      "true_label": "Lupus",
+      "predicted_label": "Acne",
+      "count": 1
+    },
+    {
+      "true_label": "Psoriasis",
+      "predicted_label": "Candidiasis",
+      "count": 1
+    },
+    {
+      "true_label": "Psoriasis",
+      "predicted_label": "Tinea",
+      "count": 1
+    },
+    {
+      "true_label": "Psoriasis",
+      "predicted_label": "Warts",
+      "count": 1
+    },
+    {
+      "true_label": "Warts",
+      "predicted_label": "Lupus",
+      "count": 1
+    },
+    {
+      "true_label": "Warts",
+      "predicted_label": "Psoriasis",
+      "count": 1
+    }
+  ],
+  "errors": [
+    {
+      "sample_id": "sha256:437828b108fbeab6c7d30e7a5a091487dffaef2f51c3dd02539d6e30b7dbccfe",
+      "true_label": "Tinea",
+      "predicted_label": "Eczema",
+      "correct": false,
+      "confidence": 0.999887228012085,
+      "margin_top1_top2": 0.9998376369476318,
+      "entropy_nats": 0.0012965364148840308,
+      "normalized_entropy": 0.000623502218695049,
+      "true_label_rank": 2,
+      "uncertain_at_0_55": false,
+      "probabilities": {
+        "Acne": 1.5107666513358708e-06,
+        "Candidiasis": 5.34736670942948e-07,
+        "Eczema": 0.999887228012085,
+        "Lupus": 1.4853748325549532e-05,
+        "Psoriasis": 2.2524500309373252e-05,
+        "SkinCancer": 1.6158371636265656e-06,
+        "Tinea": 4.958498175255954e-05,
+        "Warts": 2.206891804235056e-05
+      },
+      "top3": [
+        {
+          "label": "Eczema",
+          "probability": 0.999887228012085
+        },
+        {
+          "label": "Tinea",
+          "probability": 4.958498175255954e-05
+        },
+        {
+          "label": "Psoriasis",
+          "probability": 2.2524500309373252e-05
+        }
+      ]
+    },
+    {
+      "sample_id": "sha256:c80b90a9dd405f0193f089fd9845f6c00b1fd4c2efb47d728b9807163b9250d6",
+      "true_label": "Tinea",
+      "predicted_label": "Eczema",
+      "correct": false,
+      "confidence": 0.9975717663764954,
+      "margin_top1_top2": 0.9960861802101135,
+      "entropy_nats": 0.019565248861908913,
+      "normalized_entropy": 0.009408895835611475,
+      "true_label_rank": 4,
+      "uncertain_at_0_55": false,
+      "probabilities": {
+        "Acne": 0.001485561951994896,
+        "Candidiasis": 1.5881468016232247e-06,
+        "Eczema": 0.9975717663764954,
+        "Lupus": 0.0005625741323456168,
+        "Psoriasis": 9.448287164559588e-05,
+        "SkinCancer": 5.614369911199901e-07,
+        "Tinea": 0.00027555107953958213,
+        "Warts": 7.900300261098891e-06
+      },
+      "top3": [
+        {
+          "label": "Eczema",
+          "probability": 0.9975717663764954
+        },
+        {
+          "label": "Acne",
+          "probability": 0.001485561951994896
+        },
+        {
+          "label": "Lupus",
+          "probability": 0.0005625741323456168
+        }
+      ]
+    },
+    {
+      "sample_id": "sha256:921be687068f187326b8e42525872af3b046d5441c1193d1a7f35d8c868bb723",
+      "true_label": "Psoriasis",
+      "predicted_label": "Eczema",
+      "correct": false,
+      "confidence": 0.997215986251831,
+      "margin_top1_top2": 0.9959881901741028,
+      "entropy_nats": 0.022453300654888153,
+      "normalized_entropy": 0.010797755168798686,
+      "true_label_rank": 6,
+      "uncertain_at_0_55": false,
+      "probabilities": {
+        "Acne": 0.001164650428108871,
+        "Candidiasis": 0.0001562085235491395,
+        "Eczema": 0.997215986251831,
+        "Lupus": 3.280691089457832e-05,
+        "Psoriasis": 8.13945007394068e-05,
+        "SkinCancer": 1.8070320493279723e-06,
+        "Tinea": 0.0012277686037123203,
+        "Warts": 0.00011936488590436056
+      },
+      "top3": [
+        {
+          "label": "Eczema",
+          "probability": 0.997215986251831
+        },
+        {
+          "label": "Tinea",
+          "probability": 0.0012277686037123203
+        },
+        {
+          "label": "Acne",
+          "probability": 0.001164650428108871
+        }
+      ]
+    },
+    {
+      "sample_id": "sha256:7bada9b46feeef61e243ca16c255ec967aafb6983e9e019c3622a974b13659ee",
+      "true_label": "Eczema",
+      "predicted_label": "Psoriasis",
+      "correct": false,
+      "confidence": 0.994650661945343,
+      "margin_top1_top2": 0.9894360899925232,
+      "entropy_nats": 0.03404384106397629,
+      "normalized_entropy": 0.016371626891936882,
+      "true_label_rank": 2,
+      "uncertain_at_0_55": false,
+      "probabilities": {
+        "Acne": 2.4871610548871104e-06,
+        "Candidiasis": 1.9947065084124915e-06,
+        "Eczema": 0.00521455192938447,
+        "Lupus": 2.6673382308217697e-05,
+        "Psoriasis": 0.994650661945343,
+        "SkinCancer": 1.6107912870211294e-07,
+        "Tinea": 0.00010188003943767399,
+        "Warts": 1.6046209339037887e-06
+      },
+      "top3": [
+        {
+          "label": "Psoriasis",
+          "probability": 0.994650661945343
+        },
+        {
+          "label": "Eczema",
+          "probability": 0.00521455192938447
+        },
+        {
+          "label": "Tinea",
+          "probability": 0.00010188003943767399
+        }
+      ]
+    },
+    {
+      "sample_id": "sha256:431f3c6ce7617fcdb0fd0485cc783b36571e76c787b32f6109c21354e10d8629",
+      "true_label": "Tinea",
+      "predicted_label": "Eczema",
+      "correct": false,
+      "confidence": 0.9943838119506836,
+      "margin_top1_top2": 0.9908124804496765,
+      "entropy_nats": 0.04074811562895775,
+      "normalized_entropy": 0.01959570144782247,
+      "true_label_rank": 3,
+      "uncertain_at_0_55": false,
+      "probabilities": {
+        "Acne": 0.0001120698289014399,
+        "Candidiasis": 6.42088207314373e-06,
+        "Eczema": 0.9943838119506836,
+        "Lupus": 0.0003353712963871658,
+        "Psoriasis": 0.00040238891961053014,
+        "SkinCancer": 1.8121147149940953e-05,
+        "Tinea": 0.0011704318458214402,
+        "Warts": 0.0035713401157408953
+      },
+      "top3": [
+        {
+          "label": "Eczema",
+          "probability": 0.9943838119506836
+        },
+        {
+          "label": "Warts",
+          "probability": 0.0035713401157408953
+        },
+        {
+          "label": "Tinea",
+          "probability": 0.0011704318458214402
+        }
+      ]
+    },
+    {
+      "sample_id": "sha256:c91b95a23b9483a5abc1926d2e2696cb42fa527b883db91449e23ecf472a7fb1",
+      "true_label": "Tinea",
+      "predicted_label": "Eczema",
+      "correct": false,
+      "confidence": 0.991654634475708,
+      "margin_top1_top2": 0.9837873578071594,
+      "entropy_nats": 0.05082380771636963,
+      "normalized_entropy": 0.0244410851171669,
+      "true_label_rank": 2,
+      "uncertain_at_0_55": false,
+      "probabilities": {
+        "Acne": 0.00010513680172152817,
+        "Candidiasis": 2.008560113608837e-05,
+        "Eczema": 0.991654634475708,
+        "Lupus": 6.281011155806482e-05,
+        "Psoriasis": 0.00014016361092217267,
+        "SkinCancer": 1.3174118066672236e-05,
+        "Tinea": 0.007867247797548771,
+        "Warts": 0.0001367202348774299
+      },
+      "top3": [
+        {
+          "label": "Eczema",
+          "probability": 0.991654634475708
+        },
+        {
+          "label": "Tinea",
+          "probability": 0.007867247797548771
+        },
+        {
+          "label": "Psoriasis",
+          "probability": 0.00014016361092217267
+        }
+      ]
+    },
+    {
+      "sample_id": "sha256:4740c86f07152db64de139a4d63d6c1a590f632eadc291955bff6d56ed252f6a",
+      "true_label": "Psoriasis",
+      "predicted_label": "Eczema",
+      "correct": false,
+      "confidence": 0.9915481209754944,
+      "margin_top1_top2": 0.9870601892471313,
+      "entropy_nats": 0.057592540979385376,
+      "normalized_entropy": 0.027696157754384564,
+      "true_label_rank": 2,
+      "uncertain_at_0_55": false,
+      "probabilities": {
+        "Acne": 0.0029709741938859224,
+        "Candidiasis": 4.7941906814230606e-05,
+        "Eczema": 0.9915481209754944,
+        "Lupus": 9.446711919736117e-05,
+        "Psoriasis": 0.004487958271056414,
+        "SkinCancer": 5.150145443622023e-05,
+        "Tinea": 0.000786535267252475,
+        "Warts": 1.262794467038475e-05
+      },
+      "top3": [
+        {
+          "label": "Eczema",
+          "probability": 0.9915481209754944
+        },
+        {
+          "label": "Psoriasis",
+          "probability": 0.004487958271056414
+        },
+        {
+          "label": "Acne",
+          "probability": 0.0029709741938859224
+        }
+      ]
+    },
+    {
+      "sample_id": "sha256:4a381331bbcd91d193096fa5ee472fb2f644383e720ce7c65fe4d094a9c94cc5",
+      "true_label": "Psoriasis",
+      "predicted_label": "Eczema",
+      "correct": false,
+      "confidence": 0.9889432191848755,
+      "margin_top1_top2": 0.9837102293968201,
+      "entropy_nats": 0.07257293909788132,
+      "normalized_entropy": 0.03490020644641672,
+      "true_label_rank": 3,
+      "uncertain_at_0_55": false,
+      "probabilities": {
+        "Acne": 0.0014057144289836287,
+        "Candidiasis": 1.977218380488921e-05,
+        "Eczema": 0.9889432191848755,
+        "Lupus": 8.502171840518713e-05,
+        "Psoriasis": 0.0042498232796788216,
+        "SkinCancer": 9.27653400140116e-06,
+        "Tinea": 0.005233003292232752,
+        "Warts": 5.4135944083100185e-05
+      },
+      "top3": [
+        {
+          "label": "Eczema",
+          "probability": 0.9889432191848755
+        },
+        {
+          "label": "Tinea",
+          "probability": 0.005233003292232752
+        },
+        {
+          "label": "Psoriasis",
+          "probability": 0.0042498232796788216
+        }
+      ]
+    },
+    {
+      "sample_id": "sha256:6c1f7b38169e4d63c5e9f0f89de797412e710a4888c07fede0bb0ea8ff44233c",
+      "true_label": "Tinea",
+      "predicted_label": "Eczema",
+      "correct": false,
+      "confidence": 0.9848541021347046,
+      "margin_top1_top2": 0.9768881797790527,
+      "entropy_nats": 0.0891537070274353,
+      "normalized_entropy": 0.04287387033511615,
+      "true_label_rank": 2,
+      "uncertain_at_0_55": false,
+      "probabilities": {
+        "Acne": 2.2375884327630047e-06,
+        "Candidiasis": 4.7850394366832916e-06,
+        "Eczema": 0.9848541021347046,
+        "Lupus": 3.092501628998434e-06,
+        "Psoriasis": 0.007157514337450266,
+        "SkinCancer": 1.4794409253227059e-06,
+        "Tinea": 0.00796589907258749,
+        "Warts": 1.0960441613860894e-05
+      },
+      "top3": [
+        {
+          "label": "Eczema",
+          "probability": 0.9848541021347046
+        },
+        {
+          "label": "Tinea",
+          "probability": 0.00796589907258749
+        },
+        {
+          "label": "Psoriasis",
+          "probability": 0.007157514337450266
+        }
+      ]
+    },
+    {
+      "sample_id": "sha256:5e78cee6ba22fd2d959b7815b7638e160070ac8e9ed4bceeefa39afb184a5244",
+      "true_label": "Psoriasis",
+      "predicted_label": "Eczema",
+      "correct": false,
+      "confidence": 0.9794437885284424,
+      "margin_top1_top2": 0.9598889350891113,
+      "entropy_nats": 0.10502370446920395,
+      "normalized_entropy": 0.05050572587116954,
+      "true_label_rank": 4,
+      "uncertain_at_0_55": false,
+      "probabilities": {
+        "Acne": 1.4404546163859777e-05,
+        "Candidiasis": 1.949178295035381e-05,
+        "Eczema": 0.9794437885284424,
+        "Lupus": 0.0006941243191249669,
+        "Psoriasis": 0.00025282512069679797,
+        "SkinCancer": 1.5601748373228475e-06,
+        "Tinea": 0.019554877653717995,
+        "Warts": 1.8919094145530835e-05
+      },
+      "top3": [
+        {
+          "label": "Eczema",
+          "probability": 0.9794437885284424
+        },
+        {
+          "label": "Tinea",
+          "probability": 0.019554877653717995
+        },
+        {
+          "label": "Lupus",
+          "probability": 0.0006941243191249669
+        }
+      ]
+    },
+    {
+      "sample_id": "sha256:8191a65e4aca9e2cd62266142e8f977a50f1230d967ad3d3fa6437f9aaa2b0f2",
+      "true_label": "Eczema",
+      "predicted_label": "Psoriasis",
+      "correct": false,
+      "confidence": 0.977117657661438,
+      "margin_top1_top2": 0.9659100770950317,
+      "entropy_nats": 0.13715042173862457,
+      "normalized_entropy": 0.06595541109938119,
+      "true_label_rank": 3,
+      "uncertain_at_0_55": false,
+      "probabilities": {
+        "Acne": 0.011207581497728825,
+        "Candidiasis": 0.00029305688804015517,
+        "Eczema": 0.007492163684219122,
+        "Lupus": 0.0007883547805249691,
+        "Psoriasis": 0.977117657661438,
+        "SkinCancer": 2.912895979534369e-05,
+        "Tinea": 0.0025265237782150507,
+        "Warts": 0.000545455957762897
+      },
+      "top3": [
+        {
+          "label": "Psoriasis",
+          "probability": 0.977117657661438
+        },
+        {
+          "label": "Acne",
+          "probability": 0.011207581497728825
+        },
+        {
+          "label": "Eczema",
+          "probability": 0.007492163684219122
+        }
+      ]
+    },
+    {
+      "sample_id": "sha256:a4c726226b9d4a4eb7c90b4dbd1d403cd357c49fa130bf6343139297bb4196f0",
+      "true_label": "Tinea",
+      "predicted_label": "Eczema",
+      "correct": false,
+      "confidence": 0.9692127704620361,
+      "margin_top1_top2": 0.9455029368400574,
+      "entropy_nats": 0.15938277542591095,
+      "normalized_entropy": 0.0766469132366937,
+      "true_label_rank": 2,
+      "uncertain_at_0_55": false,
+      "probabilities": {
+        "Acne": 2.7939529900322668e-05,
+        "Candidiasis": 3.486777131911367e-05,
+        "Eczema": 0.9692127704620361,
+        "Lupus": 5.780824722023681e-05,
+        "Psoriasis": 0.004538077395409346,
+        "SkinCancer": 1.3656054761668202e-05,
+        "Tinea": 0.023709841072559357,
+        "Warts": 0.002405150095000863
+      },
+      "top3": [
+        {
+          "label": "Eczema",
+          "probability": 0.9692127704620361
+        },
+        {
+          "label": "Tinea",
+          "probability": 0.023709841072559357
+        },
+        {
+          "label": "Psoriasis",
+          "probability": 0.004538077395409346
+        }
+      ]
+    },
+    {
+      "sample_id": "sha256:5db4ce9149b6ce787ea701ffb80443f7f687b03bb58b5dc6513d035cf4c07fc1",
+      "true_label": "Tinea",
+      "predicted_label": "Eczema",
+      "correct": false,
+      "confidence": 0.9683670997619629,
+      "margin_top1_top2": 0.9451150298118591,
+      "entropy_nats": 0.17108049988746643,
+      "normalized_entropy": 0.08227232959348424,
+      "true_label_rank": 2,
+      "uncertain_at_0_55": false,
+      "probabilities": {
+        "Acne": 0.0023364145308732986,
+        "Candidiasis": 0.00026486648130230606,
+        "Eczema": 0.9683670997619629,
+        "Lupus": 0.0026757558807730675,
+        "Psoriasis": 0.0018574339337646961,
+        "SkinCancer": 7.740237924735993e-05,
+        "Tinea": 0.023252049461007118,
+        "Warts": 0.0011689764214679599
+      },
+      "top3": [
+        {
+          "label": "Eczema",
+          "probability": 0.9683670997619629
+        },
+        {
+          "label": "Tinea",
+          "probability": 0.023252049461007118
+        },
+        {
+          "label": "Lupus",
+          "probability": 0.0026757558807730675
+        }
+      ]
+    },
+    {
+      "sample_id": "sha256:9f57771d3c55e52b7023b63fc9c150713690f9751f57d662fdf7e2448e606d64",
+      "true_label": "Psoriasis",
+      "predicted_label": "Eczema",
+      "correct": false,
+      "confidence": 0.9673873782157898,
+      "margin_top1_top2": 0.942236602306366,
+      "entropy_nats": 0.16285111010074615,
+      "normalized_entropy": 0.07831482964853635,
+      "true_label_rank": 2,
+      "uncertain_at_0_55": false,
+      "probabilities": {
+        "Acne": 5.940606934018433e-05,
+        "Candidiasis": 1.3580524864664767e-05,
+        "Eczema": 0.9673873782157898,
+        "Lupus": 0.00012203954247524962,
+        "Psoriasis": 0.025150785222649574,
+        "SkinCancer": 4.590895332512446e-05,
+        "Tinea": 4.1615501686464995e-05,
+        "Warts": 0.007179255597293377
+      },
+      "top3": [
+        {
+          "label": "Eczema",
+          "probability": 0.9673873782157898
+        },
+        {
+          "label": "Psoriasis",
+          "probability": 0.025150785222649574
+        },
+        {
+          "label": "Warts",
+          "probability": 0.007179255597293377
+        }
+      ]
+    },
+    {
+      "sample_id": "sha256:ed714c5f42a4970c7f189053a6fd8d1fe8852d88c42f35d817a4abd5c9fad97e",
+      "true_label": "Tinea",
+      "predicted_label": "Eczema",
+      "correct": false,
+      "confidence": 0.9659317135810852,
+      "margin_top1_top2": 0.9485495090484619,
+      "entropy_nats": 0.18405863642692566,
+      "normalized_entropy": 0.08851349400197013,
+      "true_label_rank": 3,
+      "uncertain_at_0_55": false,
+      "probabilities": {
+        "Acne": 0.017382211983203888,
+        "Candidiasis": 4.195453584543429e-05,
+        "Eczema": 0.9659317135810852,
+        "Lupus": 1.4517611816700082e-05,
+        "Psoriasis": 0.0069070840254426,
+        "SkinCancer": 1.753110723257123e-06,
+        "Tinea": 0.009703412652015686,
+        "Warts": 1.7258842490264215e-05
+      },
+      "top3": [
+        {
+          "label": "Eczema",
+          "probability": 0.9659317135810852
+        },
+        {
+          "label": "Acne",
+          "probability": 0.017382211983203888
+        },
+        {
+          "label": "Tinea",
+          "probability": 0.009703412652015686
+        }
+      ]
+    },
+    {
+      "sample_id": "sha256:b5dc575d2db2a51906b21c7504288d456599b68e525b86c0331af65f5484df98",
+      "true_label": "Eczema",
+      "predicted_label": "Acne",
+      "correct": false,
+      "confidence": 0.9528404474258423,
+      "margin_top1_top2": 0.9281906485557556,
+      "entropy_nats": 0.2538691759109497,
+      "normalized_entropy": 0.12208526704043168,
+      "true_label_rank": 2,
+      "uncertain_at_0_55": false,
+      "probabilities": {
+        "Acne": 0.9528404474258423,
+        "Candidiasis": 0.00014584526070393622,
+        "Eczema": 0.02464977279305458,
+        "Lupus": 0.008061856031417847,
+        "Psoriasis": 0.0019574074540287256,
+        "SkinCancer": 0.00039533551898784935,
+        "Tinea": 0.005295751616358757,
+        "Warts": 0.006653585005551577
+      },
+      "top3": [
+        {
+          "label": "Acne",
+          "probability": 0.9528404474258423
+        },
+        {
+          "label": "Eczema",
+          "probability": 0.02464977279305458
+        },
+        {
+          "label": "Lupus",
+          "probability": 0.008061856031417847
+        }
+      ]
+    },
+    {
+      "sample_id": "sha256:cfb4ca5a03dcf25a021803104359c9aee2e390731f865fa98e7911c5a730bfa2",
+      "true_label": "Tinea",
+      "predicted_label": "Eczema",
+      "correct": false,
+      "confidence": 0.9379350543022156,
+      "margin_top1_top2": 0.8792088031768799,
+      "entropy_nats": 0.24788101017475128,
+      "normalized_entropy": 0.11920556803655347,
+      "true_label_rank": 4,
+      "uncertain_at_0_55": false,
+      "probabilities": {
+        "Acne": 0.05872625485062599,
+        "Candidiasis": 4.152319661443471e-07,
+        "Eczema": 0.9379350543022156,
+        "Lupus": 5.774744749942329e-06,
+        "Psoriasis": 0.0020807101391255856,
+        "SkinCancer": 7.347745736296929e-07,
+        "Tinea": 0.0012504869373515248,
+        "Warts": 6.206925604601565e-07
+      },
+      "top3": [
+        {
+          "label": "Eczema",
+          "probability": 0.9379350543022156
+        },
+        {
+          "label": "Acne",
+          "probability": 0.05872625485062599
+        },
+        {
+          "label": "Psoriasis",
+          "probability": 0.0020807101391255856
+        }
+      ]
+    },
+    {
+      "sample_id": "sha256:5916a3c51edb5e7f11eba72c793f6e61036b182e0fdb81870120ce07b8caaad1",
+      "true_label": "Tinea",
+      "predicted_label": "Candidiasis",
+      "correct": false,
+      "confidence": 0.9329866766929626,
+      "margin_top1_top2": 0.8898048400878906,
+      "entropy_nats": 0.30797863006591797,
+      "normalized_entropy": 0.1481064140986255,
+      "true_label_rank": 2,
+      "uncertain_at_0_55": false,
+      "probabilities": {
+        "Acne": 0.00126932084094733,
+        "Candidiasis": 0.9329866766929626,
+        "Eczema": 0.018121106550097466,
+        "Lupus": 9.314795897807926e-05,
+        "Psoriasis": 0.003651492530480027,
+        "SkinCancer": 0.0006958761368878186,
+        "Tinea": 0.04318181797862053,
+        "Warts": 6.475291911556269e-07
+      },
+      "top3": [
+        {
+          "label": "Candidiasis",
+          "probability": 0.9329866766929626
+        },
+        {
+          "label": "Tinea",
+          "probability": 0.04318181797862053
+        },
+        {
+          "label": "Eczema",
+          "probability": 0.018121106550097466
+        }
+      ]
+    },
+    {
+      "sample_id": "sha256:c285018811ea79d130d7e444c457e3b59fe74a4b1f659eee351c75b4437f5217",
+      "true_label": "Eczema",
+      "predicted_label": "Acne",
+      "correct": false,
+      "confidence": 0.9322212934494019,
+      "margin_top1_top2": 0.8669924139976501,
+      "entropy_nats": 0.2613353133201599,
+      "normalized_entropy": 0.1256757201787194,
+      "true_label_rank": 2,
+      "uncertain_at_0_55": false,
+      "probabilities": {
+        "Acne": 0.9322212934494019,
+        "Candidiasis": 1.8371532860328443e-05,
+        "Eczema": 0.06522887200117111,
+        "Lupus": 0.000658272358123213,
+        "Psoriasis": 0.0015587650705128908,
+        "SkinCancer": 2.3242626411956735e-05,
+        "Tinea": 0.0002465145371388644,
+        "Warts": 4.4691492803394794e-05
+      },
+      "top3": [
+        {
+          "label": "Acne",
+          "probability": 0.9322212934494019
+        },
+        {
+          "label": "Eczema",
+          "probability": 0.06522887200117111
+        },
+        {
+          "label": "Psoriasis",
+          "probability": 0.0015587650705128908
+        }
+      ]
+    },
+    {
+      "sample_id": "sha256:30c2e4613990ca38bebcd6f0b8b21071d6926160916d5a13eea1304cb02c8f0f",
+      "true_label": "Tinea",
+      "predicted_label": "Eczema",
+      "correct": false,
+      "confidence": 0.9246978163719177,
+      "margin_top1_top2": 0.8771284818649292,
+      "entropy_nats": 0.3430790305137634,
+      "normalized_entropy": 0.1649861386517333,
+      "true_label_rank": 3,
+      "uncertain_at_0_55": false,
+      "probabilities": {
+        "Acne": 0.007730004843324423,
+        "Candidiasis": 0.0016170530579984188,
+        "Eczema": 0.9246978163719177,
+        "Lupus": 0.04756933078169823,
+        "Psoriasis": 0.0010681897401809692,
+        "SkinCancer": 1.2064926522725727e-05,
+        "Tinea": 0.017281748354434967,
+        "Warts": 2.3763721401337534e-05
+      },
+      "top3": [
+        {
+          "label": "Eczema",
+          "probability": 0.9246978163719177
+        },
+        {
+          "label": "Lupus",
+          "probability": 0.04756933078169823
+        },
+        {
+          "label": "Tinea",
+          "probability": 0.017281748354434967
+        }
+      ]
+    },
+    {
+      "sample_id": "sha256:71a5a969d4a75414118a7931b05659b0c65217318da6e52cb58679a62a298786",
+      "true_label": "Eczema",
+      "predicted_label": "Psoriasis",
+      "correct": false,
+      "confidence": 0.902062714099884,
+      "margin_top1_top2": 0.8524755835533142,
+      "entropy_nats": 0.4325672388076782,
+      "normalized_entropy": 0.20802087009295647,
+      "true_label_rank": 3,
+      "uncertain_at_0_55": false,
+      "probabilities": {
+        "Acne": 0.007961150258779526,
+        "Candidiasis": 0.0006065202178433537,
+        "Eczema": 0.03460501506924629,
+        "Lupus": 0.003496812889352441,
+        "Psoriasis": 0.902062714099884,
+        "SkinCancer": 0.00027057944680564106,
+        "Tinea": 0.0014100329717621207,
+        "Warts": 0.04958712309598923
+      },
+      "top3": [
+        {
+          "label": "Psoriasis",
+          "probability": 0.902062714099884
+        },
+        {
+          "label": "Warts",
+          "probability": 0.04958712309598923
+        },
+        {
+          "label": "Eczema",
+          "probability": 0.03460501506924629
+        }
+      ]
+    },
+    {
+      "sample_id": "sha256:9b88485705f4bdbc64538abd3ac9e52dfc07de373f69d034a3add6c376554930",
+      "true_label": "Acne",
+      "predicted_label": "Psoriasis",
+      "correct": false,
+      "confidence": 0.9019414186477661,
+      "margin_top1_top2": 0.8207401037216187,
+      "entropy_nats": 0.3705671429634094,
+      "normalized_entropy": 0.17820512648990078,
+      "true_label_rank": 2,
+      "uncertain_at_0_55": false,
+      "probabilities": {
+        "Acne": 0.08120132982730865,
+        "Candidiasis": 0.00015936396084725857,
+        "Eczema": 0.01596899889409542,
+        "Lupus": 0.00015893412637524307,
+        "Psoriasis": 0.9019414186477661,
+        "SkinCancer": 3.604375524446368e-05,
+        "Tinea": 0.0003219295758754015,
+        "Warts": 0.00021193288557697088
+      },
+      "top3": [
+        {
+          "label": "Psoriasis",
+          "probability": 0.9019414186477661
+        },
+        {
+          "label": "Acne",
+          "probability": 0.08120132982730865
+        },
+        {
+          "label": "Eczema",
+          "probability": 0.01596899889409542
+        }
+      ]
+    },
+    {
+      "sample_id": "sha256:ec4ce5dc13c42211f670fc8868fd5757139743d5ef57b261f455ef6b62830a1c",
+      "true_label": "Tinea",
+      "predicted_label": "Eczema",
+      "correct": false,
+      "confidence": 0.8969123959541321,
+      "margin_top1_top2": 0.8315959572792053,
+      "entropy_nats": 0.44012200832366943,
+      "normalized_entropy": 0.21165394626488301,
+      "true_label_rank": 2,
+      "uncertain_at_0_55": false,
+      "probabilities": {
+        "Acne": 0.00021611967531498522,
+        "Candidiasis": 0.000258596264757216,
+        "Eczema": 0.8969123959541321,
+        "Lupus": 0.0013009282993152738,
+        "Psoriasis": 0.0042147887870669365,
+        "SkinCancer": 0.009131007827818394,
+        "Tinea": 0.06531644612550735,
+        "Warts": 0.022649753838777542
+      },
+      "top3": [
+        {
+          "label": "Eczema",
+          "probability": 0.8969123959541321
+        },
+        {
+          "label": "Tinea",
+          "probability": 0.06531644612550735
+        },
+        {
+          "label": "Warts",
+          "probability": 0.022649753838777542
+        }
+      ]
+    },
+    {
+      "sample_id": "sha256:80cbda1e5480730589b61f30068de8bfc5d4ec4318e55bed890ff769e977041f",
+      "true_label": "Tinea",
+      "predicted_label": "Eczema",
+      "correct": false,
+      "confidence": 0.8888028860092163,
+      "margin_top1_top2": 0.8152436017990112,
+      "entropy_nats": 0.4503977298736572,
+      "normalized_entropy": 0.2165955237721241,
+      "true_label_rank": 5,
+      "uncertain_at_0_55": false,
+      "probabilities": {
+        "Acne": 0.07355926185846329,
+        "Candidiasis": 0.0003861092554870993,
+        "Eczema": 0.8888028860092163,
+        "Lupus": 0.007259560748934746,
+        "Psoriasis": 0.02776326611638069,
+        "SkinCancer": 0.00010218843817710876,
+        "Tinea": 0.0014359483029693365,
+        "Warts": 0.0006906550843268633
+      },
+      "top3": [
+        {
+          "label": "Eczema",
+          "probability": 0.8888028860092163
+        },
+        {
+          "label": "Acne",
+          "probability": 0.07355926185846329
+        },
+        {
+          "label": "Psoriasis",
+          "probability": 0.02776326611638069
+        }
+      ]
+    },
+    {
+      "sample_id": "sha256:caf86b4b69ee3e6d9958fbc1f8c2004111a289becd53d40be064da798c8163f5",
+      "true_label": "Psoriasis",
+      "predicted_label": "Eczema",
+      "correct": false,
+      "confidence": 0.8861214518547058,
+      "margin_top1_top2": 0.8027608394622803,
+      "entropy_nats": 0.45748525857925415,
+      "normalized_entropy": 0.22000390461069838,
+      "true_label_rank": 2,
+      "uncertain_at_0_55": false,
+      "probabilities": {
+        "Acne": 0.010603543370962143,
+        "Candidiasis": 3.174695302732289e-05,
+        "Eczema": 0.8861214518547058,
+        "Lupus": 0.0027052469085901976,
+        "Psoriasis": 0.08336064219474792,
+        "SkinCancer": 0.00035377751919440925,
+        "Tinea": 0.00255599245429039,
+        "Warts": 0.014267470687627792
+      },
+      "top3": [
+        {
+          "label": "Eczema",
+          "probability": 0.8861214518547058
+        },
+        {
+          "label": "Psoriasis",
+          "probability": 0.08336064219474792
+        },
+        {
+          "label": "Warts",
+          "probability": 0.014267470687627792
+        }
+      ]
+    },
+    {
+      "sample_id": "sha256:4aecb0300dee3bd45f11695338734edc228ac1f2ff61dc78e9e19ecf9f9f7bec",
+      "true_label": "Eczema",
+      "predicted_label": "Lupus",
+      "correct": false,
+      "confidence": 0.8609684109687805,
+      "margin_top1_top2": 0.7367454767227173,
+      "entropy_nats": 0.4616049826145172,
+      "normalized_entropy": 0.22198507308920007,
+      "true_label_rank": 2,
+      "uncertain_at_0_55": false,
+      "probabilities": {
+        "Acne": 0.0011325825471431017,
+        "Candidiasis": 0.00030356645584106445,
+        "Eczema": 0.12422295659780502,
+        "Lupus": 0.8609684109687805,
+        "Psoriasis": 0.0019743589218705893,
+        "SkinCancer": 2.9629209166159853e-06,
+        "Tinea": 0.011371743865311146,
+        "Warts": 2.3413489543600008e-05
+      },
+      "top3": [
+        {
+          "label": "Lupus",
+          "probability": 0.8609684109687805
+        },
+        {
+          "label": "Eczema",
+          "probability": 0.12422295659780502
+        },
+        {
+          "label": "Tinea",
+          "probability": 0.011371743865311146
+        }
+      ]
+    },
+    {
+      "sample_id": "sha256:08fd169e0aa393941b31ed8cd8678f977ecdf9f3a1e96c9e10867b6a630324c5",
+      "true_label": "Psoriasis",
+      "predicted_label": "Eczema",
+      "correct": false,
+      "confidence": 0.8566542863845825,
+      "margin_top1_top2": 0.7508958578109741,
+      "entropy_nats": 0.5217775702476501,
+      "normalized_entropy": 0.25092197101445923,
+      "true_label_rank": 3,
+      "uncertain_at_0_55": false,
+      "probabilities": {
+        "Acne": 0.001340065966360271,
+        "Candidiasis": 0.00022338307462632656,
+        "Eczema": 0.8566542863845825,
+        "Lupus": 0.003449553856626153,
+        "Psoriasis": 0.030194271355867386,
+        "SkinCancer": 0.0005434592021629214,
+        "Tinea": 0.1057584136724472,
+        "Warts": 0.0018366134027019143
+      },
+      "top3": [
+        {
+          "label": "Eczema",
+          "probability": 0.8566542863845825
+        },
+        {
+          "label": "Tinea",
+          "probability": 0.1057584136724472
+        },
+        {
+          "label": "Psoriasis",
+          "probability": 0.030194271355867386
+        }
+      ]
+    },
+    {
+      "sample_id": "sha256:dc9098773b66a8858018fb9110961416ff4508ea128dec9f9c4d129963381c1b",
+      "true_label": "Eczema",
+      "predicted_label": "Psoriasis",
+      "correct": false,
+      "confidence": 0.8430913686752319,
+      "margin_top1_top2": 0.7041272521018982,
+      "entropy_nats": 0.5080124139785767,
+      "normalized_entropy": 0.24430233011897456,
+      "true_label_rank": 2,
+      "uncertain_at_0_55": false,
+      "probabilities": {
+        "Acne": 0.007423609495162964,
+        "Candidiasis": 0.0007847064989618957,
+        "Eczema": 0.13896411657333374,
+        "Lupus": 0.0003983618807978928,
+        "Psoriasis": 0.8430913686752319,
+        "SkinCancer": 9.884466999210417e-05,
+        "Tinea": 0.009140683338046074,
+        "Warts": 9.832756768446416e-05
+      },
+      "top3": [
+        {
+          "label": "Psoriasis",
+          "probability": 0.8430913686752319
+        },
+        {
+          "label": "Eczema",
+          "probability": 0.13896411657333374
+        },
+        {
+          "label": "Tinea",
+          "probability": 0.009140683338046074
+        }
+      ]
+    },
+    {
+      "sample_id": "sha256:f0b323b59d9076cddc488060e4ae9e37f2c09e51c5dbfdcdd4d87c3ce17d743e",
+      "true_label": "Eczema",
+      "predicted_label": "Lupus",
+      "correct": false,
+      "confidence": 0.8374406695365906,
+      "margin_top1_top2": 0.7502618432044983,
+      "entropy_nats": 0.6252599954605103,
+      "normalized_entropy": 0.30068649823904464,
+      "true_label_rank": 2,
+      "uncertain_at_0_55": false,
+      "probabilities": {
+        "Acne": 0.008476543240249157,
+        "Candidiasis": 0.0012794366339221597,
+        "Eczema": 0.08717884123325348,
+        "Lupus": 0.8374406695365906,
+        "Psoriasis": 0.05582166835665703,
+        "SkinCancer": 0.0006148784887045622,
+        "Tinea": 0.005065820179879665,
+        "Warts": 0.004122237674891949
+      },
+      "top3": [
+        {
+          "label": "Lupus",
+          "probability": 0.8374406695365906
+        },
+        {
+          "label": "Eczema",
+          "probability": 0.08717884123325348
+        },
+        {
+          "label": "Psoriasis",
+          "probability": 0.05582166835665703
+        }
+      ]
+    },
+    {
+      "sample_id": "sha256:9e0d77f9b0321652bd2542cde3a11d97f66cc62a29e4d559152f0312a2bf7ef5",
+      "true_label": "Eczema",
+      "predicted_label": "Acne",
+      "correct": false,
+      "confidence": 0.8185768723487854,
+      "margin_top1_top2": 0.705906867980957,
+      "entropy_nats": 0.6339466571807861,
+      "normalized_entropy": 0.304863899500952,
+      "true_label_rank": 4,
+      "uncertain_at_0_55": false,
+      "probabilities": {
+        "Acne": 0.8185768723487854,
+        "Candidiasis": 0.003482542932033539,
+        "Eczema": 0.004678307566791773,
+        "Lupus": 0.11266998201608658,
+        "Psoriasis": 0.05864764750003815,
+        "SkinCancer": 0.00015852265642024577,
+        "Tinea": 0.0017295845318585634,
+        "Warts": 5.649415834341198e-05
+      },
+      "top3": [
+        {
+          "label": "Acne",
+          "probability": 0.8185768723487854
+        },
+        {
+          "label": "Lupus",
+          "probability": 0.11266998201608658
+        },
+        {
+          "label": "Psoriasis",
+          "probability": 0.05864764750003815
+        }
+      ]
+    },
+    {
+      "sample_id": "sha256:82293f2012cabe1e0f02304766c24115a8161f3c039cff1b9acf29224d328dcf",
+      "true_label": "Psoriasis",
+      "predicted_label": "Warts",
+      "correct": false,
+      "confidence": 0.8054116368293762,
+      "margin_top1_top2": 0.6112812161445618,
+      "entropy_nats": 0.4964722692966461,
+      "normalized_entropy": 0.23875269361772047,
+      "true_label_rank": 2,
+      "uncertain_at_0_55": false,
+      "probabilities": {
+        "Acne": 7.496805210394086e-06,
+        "Candidiasis": 4.361115315987263e-06,
+        "Eczema": 0.00028905458748340607,
+        "Lupus": 6.523388947243802e-06,
+        "Psoriasis": 0.19413040578365326,
+        "SkinCancer": 1.8391754565527663e-05,
+        "Tinea": 0.000132125845993869,
+        "Warts": 0.8054116368293762
+      },
+      "top3": [
+        {
+          "label": "Warts",
+          "probability": 0.8054116368293762
+        },
+        {
+          "label": "Psoriasis",
+          "probability": 0.19413040578365326
+        },
+        {
+          "label": "Eczema",
+          "probability": 0.00028905458748340607
+        }
+      ]
+    },
+    {
+      "sample_id": "sha256:064bb31d6dcc0775979e03d2049adbb238d61b2ba0c8cb2cc548af01d4ee8533",
+      "true_label": "Eczema",
+      "predicted_label": "Psoriasis",
+      "correct": false,
+      "confidence": 0.8025410175323486,
+      "margin_top1_top2": 0.6969202160835266,
+      "entropy_nats": 0.6957244277000427,
+      "normalized_entropy": 0.3345727272227213,
+      "true_label_rank": 2,
+      "uncertain_at_0_55": false,
+      "probabilities": {
+        "Acne": 0.023648902773857117,
+        "Candidiasis": 0.0664147436618805,
+        "Eczema": 0.10562080144882202,
+        "Lupus": 0.0006947198417037725,
+        "Psoriasis": 0.8025410175323486,
+        "SkinCancer": 3.138069587294012e-05,
+        "Tinea": 0.0002170123771065846,
+        "Warts": 0.0008314382284879684
+      },
+      "top3": [
+        {
+          "label": "Psoriasis",
+          "probability": 0.8025410175323486
+        },
+        {
+          "label": "Eczema",
+          "probability": 0.10562080144882202
+        },
+        {
+          "label": "Candidiasis",
+          "probability": 0.0664147436618805
+        }
+      ]
+    },
+    {
+      "sample_id": "sha256:612bc87796e3d4910dad07dfb8c6cd33b66687f78f96711f64c8c30625e9b03d",
+      "true_label": "Tinea",
+      "predicted_label": "Eczema",
+      "correct": false,
+      "confidence": 0.7991517782211304,
+      "margin_top1_top2": 0.6152122616767883,
+      "entropy_nats": 0.5783343315124512,
+      "normalized_entropy": 0.2781200240162824,
+      "true_label_rank": 3,
+      "uncertain_at_0_55": false,
+      "probabilities": {
+        "Acne": 0.18393951654434204,
+        "Candidiasis": 0.006613824982196093,
+        "Eczema": 0.7991517782211304,
+        "Lupus": 0.0002122258738381788,
+        "Psoriasis": 0.0015970980748534203,
+        "SkinCancer": 8.146450454660226e-06,
+        "Tinea": 0.007971501909196377,
+        "Warts": 0.0005059259128756821
+      },
+      "top3": [
+        {
+          "label": "Eczema",
+          "probability": 0.7991517782211304
+        },
+        {
+          "label": "Acne",
+          "probability": 0.18393951654434204
+        },
+        {
+          "label": "Tinea",
+          "probability": 0.007971501909196377
+        }
+      ]
+    },
+    {
+      "sample_id": "sha256:5ebea6258e42eb4d2c03425bf9ee690e159c9ce8396fea91a10d8d760706c746",
+      "true_label": "Tinea",
+      "predicted_label": "Candidiasis",
+      "correct": false,
+      "confidence": 0.7960845232009888,
+      "margin_top1_top2": 0.5972251892089844,
+      "entropy_nats": 0.5353943109512329,
+      "normalized_entropy": 0.2574702391098358,
+      "true_label_rank": 3,
+      "uncertain_at_0_55": false,
+      "probabilities": {
+        "Acne": 0.00014257438306231052,
+        "Candidiasis": 0.7960845232009888,
+        "Eczema": 0.0019369275541976094,
+        "Lupus": 0.0008263806812465191,
+        "Psoriasis": 0.198859304189682,
+        "SkinCancer": 5.52527308173012e-06,
+        "Tinea": 0.0021084223408252,
+        "Warts": 3.635526809375733e-05
+      },
+      "top3": [
+        {
+          "label": "Candidiasis",
+          "probability": 0.7960845232009888
+        },
+        {
+          "label": "Psoriasis",
+          "probability": 0.198859304189682
+        },
+        {
+          "label": "Tinea",
+          "probability": 0.0021084223408252
+        }
+      ]
+    },
+    {
+      "sample_id": "sha256:8da17955852801f5837ac8fa8cb4e5687ee44d63ce1d1f6b5c04613bdfba31cf",
+      "true_label": "Tinea",
+      "predicted_label": "Acne",
+      "correct": false,
+      "confidence": 0.7940478920936584,
+      "margin_top1_top2": 0.5893357396125793,
+      "entropy_nats": 0.5174654126167297,
+      "normalized_entropy": 0.24884826153790576,
+      "true_label_rank": 4,
+      "uncertain_at_0_55": false,
+      "probabilities": {
+        "Acne": 0.7940478920936584,
+        "Candidiasis": 5.732264253310859e-05,
+        "Eczema": 0.2047121673822403,
+        "Lupus": 5.2887171477777883e-05,
+        "Psoriasis": 0.0006309954915195704,
+        "SkinCancer": 6.353802291414468e-06,
+        "Tinea": 0.00047072864254005253,
+        "Warts": 2.161110023735091e-05
+      },
+      "top3": [
+        {
+          "label": "Acne",
+          "probability": 0.7940478920936584
+        },
+        {
+          "label": "Eczema",
+          "probability": 0.2047121673822403
+        },
+        {
+          "label": "Psoriasis",
+          "probability": 0.0006309954915195704
+        }
+      ]
+    },
+    {
+      "sample_id": "sha256:c38f456da85956a8cde6093edeafb11f95b6b883542a2387074048b83ba50ff9",
+      "true_label": "Lupus",
+      "predicted_label": "Acne",
+      "correct": false,
+      "confidence": 0.7921374440193176,
+      "margin_top1_top2": 0.7008844017982483,
+      "entropy_nats": 0.8183580636978149,
+      "normalized_entropy": 0.39354704005611074,
+      "true_label_rank": 2,
+      "uncertain_at_0_55": false,
+      "probabilities": {
+        "Acne": 0.7921374440193176,
+        "Candidiasis": 0.007922730408608913,
+        "Eczema": 0.053975872695446014,
+        "Lupus": 0.09125302731990814,
+        "Psoriasis": 0.024471217766404152,
+        "SkinCancer": 0.001374447369016707,
+        "Tinea": 0.020667921751737595,
+        "Warts": 0.008197324350476265
+      },
+      "top3": [
+        {
+          "label": "Acne",
+          "probability": 0.7921374440193176
+        },
+        {
+          "label": "Lupus",
+          "probability": 0.09125302731990814
+        },
+        {
+          "label": "Eczema",
+          "probability": 0.053975872695446014
+        }
+      ]
+    },
+    {
+      "sample_id": "sha256:18460a22bb7640f07ccb87d5c478764b53129b9e92ba99487d78b406ba850ada",
+      "true_label": "Warts",
+      "predicted_label": "Psoriasis",
+      "correct": false,
+      "confidence": 0.7915583252906799,
+      "margin_top1_top2": 0.6527348756790161,
+      "entropy_nats": 0.715355634689331,
+      "normalized_entropy": 0.3440133422127583,
+      "true_label_rank": 3,
+      "uncertain_at_0_55": false,
+      "probabilities": {
+        "Acne": 0.005681050941348076,
+        "Candidiasis": 0.00019614641496445984,
+        "Eczema": 0.1388234794139862,
+        "Lupus": 0.0005398264620453119,
+        "Psoriasis": 0.7915583252906799,
+        "SkinCancer": 0.0008517522364854813,
+        "Tinea": 0.02519230917096138,
+        "Warts": 0.03715725988149643
+      },
+      "top3": [
+        {
+          "label": "Psoriasis",
+          "probability": 0.7915583252906799
+        },
+        {
+          "label": "Eczema",
+          "probability": 0.1388234794139862
+        },
+        {
+          "label": "Warts",
+          "probability": 0.03715725988149643
+        }
+      ]
+    },
+    {
+      "sample_id": "sha256:e36eb0df180fdd7765cecc67c6be5c72a2b0cb485a14a6349924cae4fcee59d9",
+      "true_label": "Eczema",
+      "predicted_label": "Acne",
+      "correct": false,
+      "confidence": 0.7816268801689148,
+      "margin_top1_top2": 0.6293982267379761,
+      "entropy_nats": 0.6759175658226013,
+      "normalized_entropy": 0.3250476400873355,
+      "true_label_rank": 5,
+      "uncertain_at_0_55": false,
+      "probabilities": {
+        "Acne": 0.7816268801689148,
+        "Candidiasis": 0.0006887548952363431,
+        "Eczema": 0.0007728399359621108,
+        "Lupus": 0.15222866833209991,
+        "Psoriasis": 0.0626736506819725,
+        "SkinCancer": 1.5816232917131856e-05,
+        "Tinea": 0.00198112684302032,
+        "Warts": 1.22863702927134e-05
+      },
+      "top3": [
+        {
+          "label": "Acne",
+          "probability": 0.7816268801689148
+        },
+        {
+          "label": "Lupus",
+          "probability": 0.15222866833209991
+        },
+        {
+          "label": "Psoriasis",
+          "probability": 0.0626736506819725
+        }
+      ]
+    },
+    {
+      "sample_id": "sha256:528ef2b11689876682c6dc28c4582c98309c523f1fdb30d727dae7287094c9f6",
+      "true_label": "Warts",
+      "predicted_label": "Eczema",
+      "correct": false,
+      "confidence": 0.7812997698783875,
+      "margin_top1_top2": 0.6882284879684448,
+      "entropy_nats": 0.8152956962585449,
+      "normalized_entropy": 0.3920743526167725,
+      "true_label_rank": 3,
+      "uncertain_at_0_55": false,
+      "probabilities": {
+        "Acne": 0.0021487975027412176,
+        "Candidiasis": 0.0003603344375733286,
+        "Eczema": 0.7812997698783875,
+        "Lupus": 0.006650988943874836,
+        "Psoriasis": 0.015040089376270771,
+        "SkinCancer": 0.025192370638251305,
+        "Tinea": 0.09307125955820084,
+        "Warts": 0.07623636722564697
+      },
+      "top3": [
+        {
+          "label": "Eczema",
+          "probability": 0.7812997698783875
+        },
+        {
+          "label": "Tinea",
+          "probability": 0.09307125955820084
+        },
+        {
+          "label": "Warts",
+          "probability": 0.07623636722564697
+        }
+      ]
+    },
+    {
+      "sample_id": "sha256:3d390f97752007367b142d01a74febb7a90ed9cf09431889109031e8a4db0960",
+      "true_label": "Tinea",
+      "predicted_label": "Eczema",
+      "correct": false,
+      "confidence": 0.7675690650939941,
+      "margin_top1_top2": 0.5730627775192261,
+      "entropy_nats": 0.6525722146034241,
+      "normalized_entropy": 0.31382089927676277,
+      "true_label_rank": 2,
+      "uncertain_at_0_55": false,
+      "probabilities": {
+        "Acne": 0.0004444825171958655,
+        "Candidiasis": 0.0005153275560587645,
+        "Eczema": 0.7675690650939941,
+        "Lupus": 6.616517202928662e-05,
+        "Psoriasis": 0.03670422360301018,
+        "SkinCancer": 0.0001092632592190057,
+        "Tinea": 0.19450630247592926,
+        "Warts": 8.518948015989736e-05
+      },
+      "top3": [
+        {
+          "label": "Eczema",
+          "probability": 0.7675690650939941
+        },
+        {
+          "label": "Tinea",
+          "probability": 0.19450630247592926
+        },
+        {
+          "label": "Psoriasis",
+          "probability": 0.03670422360301018
+        }
+      ]
+    },
+    {
+      "sample_id": "sha256:d1500e9da4bf8bb5decd47f8c2679d88e0097f482f7a7513463057fdb7c2129c",
+      "true_label": "Psoriasis",
+      "predicted_label": "Eczema",
+      "correct": false,
+      "confidence": 0.7642770409584045,
+      "margin_top1_top2": 0.6034463047981262,
+      "entropy_nats": 0.7355717420578003,
+      "normalized_entropy": 0.35373523482828145,
+      "true_label_rank": 3,
+      "uncertain_at_0_55": false,
+      "probabilities": {
+        "Acne": 0.006517969071865082,
+        "Candidiasis": 0.0018430337077006698,
+        "Eczema": 0.7642770409584045,
+        "Lupus": 0.16083072125911713,
+        "Psoriasis": 0.06441967934370041,
+        "SkinCancer": 0.0004459674237295985,
+        "Tinea": 0.0011315200245007873,
+        "Warts": 0.0005340861389413476
+      },
+      "top3": [
+        {
+          "label": "Eczema",
+          "probability": 0.7642770409584045
+        },
+        {
+          "label": "Lupus",
+          "probability": 0.16083072125911713
+        },
+        {
+          "label": "Psoriasis",
+          "probability": 0.06441967934370041
+        }
+      ]
+    },
+    {
+      "sample_id": "sha256:d1709bd51b098f8b913dc7be0ca7772c5a53ed8db635ff1c2c5d875cd508e6d8",
+      "true_label": "Tinea",
+      "predicted_label": "Psoriasis",
+      "correct": false,
+      "confidence": 0.7445216178894043,
+      "margin_top1_top2": 0.6117287278175354,
+      "entropy_nats": 0.8659231662750244,
+      "normalized_entropy": 0.4164210192586157,
+      "true_label_rank": 5,
+      "uncertain_at_0_55": false,
+      "probabilities": {
+        "Acne": 0.00036102504236623645,
+        "Candidiasis": 0.0007211723132058978,
+        "Eczema": 0.034272726625204086,
+        "Lupus": 0.07598066329956055,
+        "Psoriasis": 0.7445216178894043,
+        "SkinCancer": 0.005194468889385462,
+        "Tinea": 0.006155341863632202,
+        "Warts": 0.1327929049730301
+      },
+      "top3": [
+        {
+          "label": "Psoriasis",
+          "probability": 0.7445216178894043
+        },
+        {
+          "label": "Warts",
+          "probability": 0.1327929049730301
+        },
+        {
+          "label": "Lupus",
+          "probability": 0.07598066329956055
+        }
+      ]
+    },
+    {
+      "sample_id": "sha256:96706fb69b2b43d0b74a41591fc3e7ec4f05e39d824453eb0b6527e6282c97d7",
+      "true_label": "Acne",
+      "predicted_label": "Eczema",
+      "correct": false,
+      "confidence": 0.7362455725669861,
+      "margin_top1_top2": 0.5033068656921387,
+      "entropy_nats": 0.707607090473175,
+      "normalized_entropy": 0.34028708010783926,
+      "true_label_rank": 2,
+      "uncertain_at_0_55": false,
+      "probabilities": {
+        "Acne": 0.2329387217760086,
+        "Candidiasis": 0.00019282064749859273,
+        "Eczema": 0.7362455725669861,
+        "Lupus": 0.00281437742523849,
+        "Psoriasis": 0.019267620518803596,
+        "SkinCancer": 0.00515958433970809,
+        "Tinea": 0.001059280359186232,
+        "Warts": 0.002322101965546608
+      },
+      "top3": [
+        {
+          "label": "Eczema",
+          "probability": 0.7362455725669861
+        },
+        {
+          "label": "Acne",
+          "probability": 0.2329387217760086
+        },
+        {
+          "label": "Psoriasis",
+          "probability": 0.019267620518803596
+        }
+      ]
+    },
+    {
+      "sample_id": "sha256:dfcb11143cdb6b2603bcd8504b24f9f8a084fa3d1bd22e989c987a678a64b351",
+      "true_label": "Eczema",
+      "predicted_label": "Acne",
+      "correct": false,
+      "confidence": 0.7296991348266602,
+      "margin_top1_top2": 0.49103572964668274,
+      "entropy_nats": 0.7255905866622925,
+      "normalized_entropy": 0.348935313697801,
+      "true_label_rank": 2,
+      "uncertain_at_0_55": false,
+      "probabilities": {
+        "Acne": 0.7296991348266602,
+        "Candidiasis": 0.0011562529252842069,
+        "Eczema": 0.23866340517997742,
+        "Lupus": 0.003007142338901758,
+        "Psoriasis": 0.013864020816981792,
+        "SkinCancer": 0.0006021751323714852,
+        "Tinea": 0.008828715421259403,
+        "Warts": 0.004179158713668585
+      },
+      "top3": [
+        {
+          "label": "Acne",
+          "probability": 0.7296991348266602
+        },
+        {
+          "label": "Eczema",
+          "probability": 0.23866340517997742
+        },
+        {
+          "label": "Psoriasis",
+          "probability": 0.013864020816981792
+        }
+      ]
+    },
+    {
+      "sample_id": "sha256:dec007a76275cd366b390a0ec8e0fe0859e923ec4caa064c9544fab5a2b233f8",
+      "true_label": "Eczema",
+      "predicted_label": "Acne",
+      "correct": false,
+      "confidence": 0.7257853746414185,
+      "margin_top1_top2": 0.6077714562416077,
+      "entropy_nats": 0.8970426321029663,
+      "normalized_entropy": 0.43138631893364415,
+      "true_label_rank": 2,
+      "uncertain_at_0_55": false,
+      "probabilities": {
+        "Acne": 0.7257853746414185,
+        "Candidiasis": 0.0007140401867218316,
+        "Eczema": 0.11801393330097198,
+        "Lupus": 0.040988802909851074,
+        "Psoriasis": 0.10856392979621887,
+        "SkinCancer": 0.0010800950694829226,
+        "Tinea": 0.004245567135512829,
+        "Warts": 0.0006082498002797365
+      },
+      "top3": [
+        {
+          "label": "Acne",
+          "probability": 0.7257853746414185
+        },
+        {
+          "label": "Eczema",
+          "probability": 0.11801393330097198
+        },
+        {
+          "label": "Psoriasis",
+          "probability": 0.10856392979621887
+        }
+      ]
+    },
+    {
+      "sample_id": "sha256:638eac72ae124a6adb147536d138a9d4e50f286bde3a5975758ab9c4441d5b78",
+      "true_label": "Tinea",
+      "predicted_label": "Eczema",
+      "correct": false,
+      "confidence": 0.7195267677307129,
+      "margin_top1_top2": 0.49362367391586304,
+      "entropy_nats": 0.7854753732681274,
+      "normalized_entropy": 0.37773380858477834,
+      "true_label_rank": 4,
+      "uncertain_at_0_55": false,
+      "probabilities": {
+        "Acne": 0.006592410616576672,
+        "Candidiasis": 0.001065112417563796,
+        "Eczema": 0.7195267677307129,
+        "Lupus": 0.0004242864379193634,
+        "Psoriasis": 0.22590310871601105,
+        "SkinCancer": 7.220301631605253e-05,
+        "Tinea": 0.011235279962420464,
+        "Warts": 0.035180747509002686
+      },
+      "top3": [
+        {
+          "label": "Eczema",
+          "probability": 0.7195267677307129
+        },
+        {
+          "label": "Psoriasis",
+          "probability": 0.22590310871601105
+        },
+        {
+          "label": "Warts",
+          "probability": 0.035180747509002686
+        }
+      ]
+    },
+    {
+      "sample_id": "sha256:e838ba3ccca2372070ea3dcb6c8dce01b59cf00a3894ce18b628164120afa759",
+      "true_label": "Lupus",
+      "predicted_label": "Psoriasis",
+      "correct": false,
+      "confidence": 0.6950716972351074,
+      "margin_top1_top2": 0.5444839000701904,
+      "entropy_nats": 0.9766426086425781,
+      "normalized_entropy": 0.4696658160698361,
+      "true_label_rank": 3,
+      "uncertain_at_0_55": false,
+      "probabilities": {
+        "Acne": 0.00185354461427778,
+        "Candidiasis": 0.0028132996521890163,
+        "Eczema": 0.024527905508875847,
+        "Lupus": 0.10808491706848145,
+        "Psoriasis": 0.6950716972351074,
+        "SkinCancer": 0.01272998284548521,
+        "Tinea": 0.15058782696723938,
+        "Warts": 0.004330892115831375
+      },
+      "top3": [
+        {
+          "label": "Psoriasis",
+          "probability": 0.6950716972351074
+        },
+        {
+          "label": "Tinea",
+          "probability": 0.15058782696723938
+        },
+        {
+          "label": "Lupus",
+          "probability": 0.10808491706848145
+        }
+      ]
+    },
+    {
+      "sample_id": "sha256:30f72b1f3d6269c98926f1cd600b3889c55076ccbd3434f50a691d46179e890d",
+      "true_label": "Eczema",
+      "predicted_label": "Psoriasis",
+      "correct": false,
+      "confidence": 0.6888864636421204,
+      "margin_top1_top2": 0.44829583168029785,
+      "entropy_nats": 0.7933745384216309,
+      "normalized_entropy": 0.38153250404948574,
+      "true_label_rank": 2,
+      "uncertain_at_0_55": false,
+      "probabilities": {
+        "Acne": 0.06949234008789062,
+        "Candidiasis": 6.832165672676638e-05,
+        "Eczema": 0.2405906468629837,
+        "Lupus": 0.0002661897160578519,
+        "Psoriasis": 0.6888864636421204,
+        "SkinCancer": 0.00020029974984936416,
+        "Tinea": 0.00010313378879800439,
+        "Warts": 0.0003925689961761236
+      },
+      "top3": [
+        {
+          "label": "Psoriasis",
+          "probability": 0.6888864636421204
+        },
+        {
+          "label": "Eczema",
+          "probability": 0.2405906468629837
+        },
+        {
+          "label": "Acne",
+          "probability": 0.06949234008789062
+        }
+      ]
+    },
+    {
+      "sample_id": "sha256:5eebe9a6a52fae7aca162e18d2e8064ceb61bc5d5332e1138ce8cd35e9f0cd9a",
+      "true_label": "Tinea",
+      "predicted_label": "Acne",
+      "correct": false,
+      "confidence": 0.6810113787651062,
+      "margin_top1_top2": 0.4722644090652466,
+      "entropy_nats": 0.908899188041687,
+      "normalized_entropy": 0.43708811708524914,
+      "true_label_rank": 4,
+      "uncertain_at_0_55": false,
+      "probabilities": {
+        "Acne": 0.6810113787651062,
+        "Candidiasis": 0.00012593544670380652,
+        "Eczema": 0.06408180296421051,
+        "Lupus": 6.939697050256655e-05,
+        "Psoriasis": 0.20874695479869843,
+        "SkinCancer": 3.854546775983181e-06,
+        "Tinea": 0.04585139453411102,
+        "Warts": 0.00010926392860710621
+      },
+      "top3": [
+        {
+          "label": "Acne",
+          "probability": 0.6810113787651062
+        },
+        {
+          "label": "Psoriasis",
+          "probability": 0.20874695479869843
+        },
+        {
+          "label": "Eczema",
+          "probability": 0.06408180296421051
+        }
+      ]
+    },
+    {
+      "sample_id": "sha256:26ec361200c89b47ec4651612b7b512b264ba9f87d57b48422db74775ad54fb3",
+      "true_label": "Warts",
+      "predicted_label": "Eczema",
+      "correct": false,
+      "confidence": 0.6800110936164856,
+      "margin_top1_top2": 0.46195393800735474,
+      "entropy_nats": 0.8434292078018188,
+      "normalized_entropy": 0.40560371181219707,
+      "true_label_rank": 6,
+      "uncertain_at_0_55": false,
+      "probabilities": {
+        "Acne": 0.21805714070796967,
+        "Candidiasis": 8.458871889160946e-05,
+        "Eczema": 0.6800110936164856,
+        "Lupus": 0.09908169507980347,
+        "Psoriasis": 0.000977937364950776,
+        "SkinCancer": 0.0001250102068297565,
+        "Tinea": 0.0014180975267663598,
+        "Warts": 0.00024437278625555336
+      },
+      "top3": [
+        {
+          "label": "Eczema",
+          "probability": 0.6800110936164856
+        },
+        {
+          "label": "Acne",
+          "probability": 0.21805714070796967
+        },
+        {
+          "label": "Lupus",
+          "probability": 0.09908169507980347
+        }
+      ]
+    },
+    {
+      "sample_id": "sha256:8fe8d043de1df3ab0e6f38243df5ae0bc97e854836390ead09197801823e1d13",
+      "true_label": "Acne",
+      "predicted_label": "Psoriasis",
+      "correct": false,
+      "confidence": 0.6766062378883362,
+      "margin_top1_top2": 0.35821712017059326,
+      "entropy_nats": 0.6608636379241943,
+      "normalized_entropy": 0.31780823104569156,
+      "true_label_rank": 2,
+      "uncertain_at_0_55": false,
+      "probabilities": {
+        "Acne": 0.3183891177177429,
+        "Candidiasis": 9.767978190211579e-05,
+        "Eczema": 0.0031007847283035517,
+        "Lupus": 0.001065822783857584,
+        "Psoriasis": 0.6766062378883362,
+        "SkinCancer": 0.0002423097175778821,
+        "Tinea": 0.00040811070357449353,
+        "Warts": 8.987457113107666e-05
+      },
+      "top3": [
+        {
+          "label": "Psoriasis",
+          "probability": 0.6766062378883362
+        },
+        {
+          "label": "Acne",
+          "probability": 0.3183891177177429
+        },
+        {
+          "label": "Eczema",
+          "probability": 0.0031007847283035517
+        }
+      ]
+    },
+    {
+      "sample_id": "sha256:f200de54e0ed61884adfba180d6ff8e3df8ed63baeddd15f513e41f4560fee10",
+      "true_label": "Eczema",
+      "predicted_label": "Psoriasis",
+      "correct": false,
+      "confidence": 0.6685552000999451,
+      "margin_top1_top2": 0.48651567101478577,
+      "entropy_nats": 0.9968576431274414,
+      "normalized_entropy": 0.47938719273740665,
+      "true_label_rank": 2,
+      "uncertain_at_0_55": false,
+      "probabilities": {
+        "Acne": 0.01970093883574009,
+        "Candidiasis": 0.006877798121422529,
+        "Eczema": 0.1820395290851593,
+        "Lupus": 0.11021628230810165,
+        "Psoriasis": 0.6685552000999451,
+        "SkinCancer": 0.001084909774363041,
+        "Tinea": 0.010234996676445007,
+        "Warts": 0.0012903825845569372
+      },
+      "top3": [
+        {
+          "label": "Psoriasis",
+          "probability": 0.6685552000999451
+        },
+        {
+          "label": "Eczema",
+          "probability": 0.1820395290851593
+        },
+        {
+          "label": "Lupus",
+          "probability": 0.11021628230810165
+        }
+      ]
+    },
+    {
+      "sample_id": "sha256:2b8efb4ab7759a77a2158d68e0505c8d2000fe842d11aac54d394df4041ab536",
+      "true_label": "Psoriasis",
+      "predicted_label": "Eczema",
+      "correct": false,
+      "confidence": 0.6501433849334717,
+      "margin_top1_top2": 0.3221380412578583,
+      "entropy_nats": 0.7430399656295776,
+      "normalized_entropy": 0.3573266911986992,
+      "true_label_rank": 2,
+      "uncertain_at_0_55": false,
+      "probabilities": {
+        "Acne": 0.01847388967871666,
+        "Candidiasis": 0.00019056163728237152,
+        "Eczema": 0.6501433849334717,
+        "Lupus": 0.001041298732161522,
+        "Psoriasis": 0.3280053436756134,
+        "SkinCancer": 0.00020949909230694175,
+        "Tinea": 0.0014526802115142345,
+        "Warts": 0.00048332707956433296
+      },
+      "top3": [
+        {
+          "label": "Eczema",
+          "probability": 0.6501433849334717
+        },
+        {
+          "label": "Psoriasis",
+          "probability": 0.3280053436756134
+        },
+        {
+          "label": "Acne",
+          "probability": 0.01847388967871666
+        }
+      ]
+    },
+    {
+      "sample_id": "sha256:5ad996bae2e35d9709463d4ff1b01974e8437ccd221adb43906c7ad5b58a1b73",
+      "true_label": "Eczema",
+      "predicted_label": "Psoriasis",
+      "correct": false,
+      "confidence": 0.6435947418212891,
+      "margin_top1_top2": 0.3842274844646454,
+      "entropy_nats": 0.9763212203979492,
+      "normalized_entropy": 0.4695112609942607,
+      "true_label_rank": 5,
+      "uncertain_at_0_55": false,
+      "probabilities": {
+        "Acne": 0.2593672573566437,
+        "Candidiasis": 0.030876075848937035,
+        "Eczema": 0.02239866368472576,
+        "Lupus": 0.0013072240399196744,
+        "Psoriasis": 0.6435947418212891,
+        "SkinCancer": 0.00024087767815217376,
+        "Tinea": 0.04088282212615013,
+        "Warts": 0.0013323846505954862
+      },
+      "top3": [
+        {
+          "label": "Psoriasis",
+          "probability": 0.6435947418212891
+        },
+        {
+          "label": "Acne",
+          "probability": 0.2593672573566437
+        },
+        {
+          "label": "Tinea",
+          "probability": 0.04088282212615013
+        }
+      ]
+    },
+    {
+      "sample_id": "sha256:c78ee78a0f2e44c98fd2ed715c58c65702b24f651761a01ba0528486e25ee7ff",
+      "true_label": "Tinea",
+      "predicted_label": "Psoriasis",
+      "correct": false,
+      "confidence": 0.6221157312393188,
+      "margin_top1_top2": 0.2480180561542511,
+      "entropy_nats": 0.6883650422096252,
+      "normalized_entropy": 0.33103361090571615,
+      "true_label_rank": 3,
+      "uncertain_at_0_55": false,
+      "probabilities": {
+        "Acne": 3.1645973649574444e-05,
+        "Candidiasis": 0.0006425704923458397,
+        "Eczema": 0.37409767508506775,
+        "Lupus": 0.0003170081472489983,
+        "Psoriasis": 0.6221157312393188,
+        "SkinCancer": 4.8609967961965594e-06,
+        "Tinea": 0.0023675591219216585,
+        "Warts": 0.0004229091282468289
+      },
+      "top3": [
+        {
+          "label": "Psoriasis",
+          "probability": 0.6221157312393188
+        },
+        {
+          "label": "Eczema",
+          "probability": 0.37409767508506775
+        },
+        {
+          "label": "Tinea",
+          "probability": 0.0023675591219216585
+        }
+      ]
+    },
+    {
+      "sample_id": "sha256:2cefa8d1781248b81a4b989e77896d682bb4ac1bcf934c1dc174a9babd4359ce",
+      "true_label": "Eczema",
+      "predicted_label": "Acne",
+      "correct": false,
+      "confidence": 0.6133891940116882,
+      "margin_top1_top2": 0.3680490255355835,
+      "entropy_nats": 1.0305994749069214,
+      "normalized_entropy": 0.4956135838636618,
+      "true_label_rank": 3,
+      "uncertain_at_0_55": false,
+      "probabilities": {
+        "Acne": 0.6133891940116882,
+        "Candidiasis": 0.0056292046792805195,
+        "Eczema": 0.10906915366649628,
+        "Lupus": 0.0036377019714564085,
+        "Psoriasis": 0.24534016847610474,
+        "SkinCancer": 0.0007893386064097285,
+        "Tinea": 0.0012457948178052902,
+        "Warts": 0.02089942805469036
+      },
+      "top3": [
+        {
+          "label": "Acne",
+          "probability": 0.6133891940116882
+        },
+        {
+          "label": "Psoriasis",
+          "probability": 0.24534016847610474
+        },
+        {
+          "label": "Eczema",
+          "probability": 0.10906915366649628
+        }
+      ]
+    },
+    {
+      "sample_id": "sha256:6ec7f65f6be44b314302b4703d7ba1262d404e78c0502ab2a01135477dafd109",
+      "true_label": "Tinea",
+      "predicted_label": "Eczema",
+      "correct": false,
+      "confidence": 0.6119051575660706,
+      "margin_top1_top2": 0.35518497228622437,
+      "entropy_nats": 1.0967535972595215,
+      "normalized_entropy": 0.5274269919478144,
+      "true_label_rank": 5,
+      "uncertain_at_0_55": false,
+      "probabilities": {
+        "Acne": 0.036789629608392715,
+        "Candidiasis": 0.02158554457128048,
+        "Eczema": 0.6119051575660706,
+        "Lupus": 0.2567201852798462,
+        "Psoriasis": 0.036597684025764465,
+        "SkinCancer": 3.093119084951468e-05,
+        "Tinea": 0.03623175621032715,
+        "Warts": 0.0001391192781738937
+      },
+      "top3": [
+        {
+          "label": "Eczema",
+          "probability": 0.6119051575660706
+        },
+        {
+          "label": "Lupus",
+          "probability": 0.2567201852798462
+        },
+        {
+          "label": "Acne",
+          "probability": 0.036789629608392715
+        }
+      ]
+    },
+    {
+      "sample_id": "sha256:b186a178d43a772cb2c703a63b5dcf6c8e542e5a8e276d5ae476864847e8d7ca",
+      "true_label": "Eczema",
+      "predicted_label": "Acne",
+      "correct": false,
+      "confidence": 0.5949633717536926,
+      "margin_top1_top2": 0.34537598490715027,
+      "entropy_nats": 1.142575740814209,
+      "normalized_entropy": 0.5494627850375643,
+      "true_label_rank": 2,
+      "uncertain_at_0_55": false,
+      "probabilities": {
+        "Acne": 0.5949633717536926,
+        "Candidiasis": 0.031197544187307358,
+        "Eczema": 0.24958738684654236,
+        "Lupus": 0.011391463689506054,
+        "Psoriasis": 0.08536640554666519,
+        "SkinCancer": 0.0035141105763614178,
+        "Tinea": 0.021157514303922653,
+        "Warts": 0.002822257811203599
+      },
+      "top3": [
+        {
+          "label": "Acne",
+          "probability": 0.5949633717536926
+        },
+        {
+          "label": "Eczema",
+          "probability": 0.24958738684654236
+        },
+        {
+          "label": "Psoriasis",
+          "probability": 0.08536640554666519
+        }
+      ]
+    },
+    {
+      "sample_id": "sha256:caf5c592173d6baeed2bd832d980f2661b7e09a627fb430e81af53e28cc30bdb",
+      "true_label": "Eczema",
+      "predicted_label": "Acne",
+      "correct": false,
+      "confidence": 0.5931162238121033,
+      "margin_top1_top2": 0.45241618156433105,
+      "entropy_nats": 1.3030444383621216,
+      "normalized_entropy": 0.6266319164276591,
+      "true_label_rank": 3,
+      "uncertain_at_0_55": false,
+      "probabilities": {
+        "Acne": 0.5931162238121033,
+        "Candidiasis": 0.00233215419575572,
+        "Eczema": 0.10934258997440338,
+        "Lupus": 0.04164838045835495,
+        "Psoriasis": 0.14070002734661102,
+        "SkinCancer": 0.003159068990498781,
+        "Tinea": 0.07540670037269592,
+        "Warts": 0.03429483249783516
+      },
+      "top3": [
+        {
+          "label": "Acne",
+          "probability": 0.5931162238121033
+        },
+        {
+          "label": "Psoriasis",
+          "probability": 0.14070002734661102
+        },
+        {
+          "label": "Eczema",
+          "probability": 0.10934258997440338
+        }
+      ]
+    },
+    {
+      "sample_id": "sha256:a2834a6fc8e218bc4f29533cb78d85ac2444c41d117de3b8e1c34fee854d2bd1",
+      "true_label": "Tinea",
+      "predicted_label": "Eczema",
+      "correct": false,
+      "confidence": 0.5916909575462341,
+      "margin_top1_top2": 0.20610666275024414,
+      "entropy_nats": 0.779229998588562,
+      "normalized_entropy": 0.3747304182252108,
+      "true_label_rank": 2,
+      "uncertain_at_0_55": false,
+      "probabilities": {
+        "Acne": 0.0174946840852499,
+        "Candidiasis": 0.0012105792993679643,
+        "Eczema": 0.5916909575462341,
+        "Lupus": 9.373344255436677e-06,
+        "Psoriasis": 0.003992984537035227,
+        "SkinCancer": 1.3188911225370248e-06,
+        "Tinea": 0.38558429479599,
+        "Warts": 1.5857795006013475e-05
+      },
+      "top3": [
+        {
+          "label": "Eczema",
+          "probability": 0.5916909575462341
+        },
+        {
+          "label": "Tinea",
+          "probability": 0.38558429479599
+        },
+        {
+          "label": "Acne",
+          "probability": 0.0174946840852499
+        }
+      ]
+    },
+    {
+      "sample_id": "sha256:d1ede9324137143ed819223ed0a942c3148ec68df569a04f06e4586b85a2f257",
+      "true_label": "Warts",
+      "predicted_label": "Lupus",
+      "correct": false,
+      "confidence": 0.5787652730941772,
+      "margin_top1_top2": 0.38155484199523926,
+      "entropy_nats": 1.3147943019866943,
+      "normalized_entropy": 0.6322824064217567,
+      "true_label_rank": 2,
+      "uncertain_at_0_55": false,
+      "probabilities": {
+        "Acne": 0.05988683924078941,
+        "Candidiasis": 0.0034477352164685726,
+        "Eczema": 0.06840509921312332,
+        "Lupus": 0.5787652730941772,
+        "Psoriasis": 0.023841500282287598,
+        "SkinCancer": 0.013413969427347183,
+        "Tinea": 0.05502913519740105,
+        "Warts": 0.197210431098938
+      },
+      "top3": [
+        {
+          "label": "Lupus",
+          "probability": 0.5787652730941772
+        },
+        {
+          "label": "Warts",
+          "probability": 0.197210431098938
+        },
+        {
+          "label": "Eczema",
+          "probability": 0.06840509921312332
+        }
+      ]
+    },
+    {
+      "sample_id": "sha256:001381c069ab37c068af6476968079bc94296e65da046c2899d04f19a8fb7488",
+      "true_label": "Acne",
+      "predicted_label": "Psoriasis",
+      "correct": false,
+      "confidence": 0.5696450471878052,
+      "margin_top1_top2": 0.1488780379295349,
+      "entropy_nats": 0.7392138242721558,
+      "normalized_entropy": 0.35548670614466826,
+      "true_label_rank": 2,
+      "uncertain_at_0_55": false,
+      "probabilities": {
+        "Acne": 0.42076700925827026,
+        "Candidiasis": 0.0013167760334908962,
+        "Eczema": 0.006417243741452694,
+        "Lupus": 0.0006480091251432896,
+        "Psoriasis": 0.5696450471878052,
+        "SkinCancer": 3.0682163924211636e-05,
+        "Tinea": 0.0011050826869904995,
+        "Warts": 7.010483386693522e-05
+      },
+      "top3": [
+        {
+          "label": "Psoriasis",
+          "probability": 0.5696450471878052
+        },
+        {
+          "label": "Acne",
+          "probability": 0.42076700925827026
+        },
+        {
+          "label": "Eczema",
+          "probability": 0.006417243741452694
+        }
+      ]
+    },
+    {
+      "sample_id": "sha256:f88a27d919317c6f1846cf469dfee5e4811d04201c3a712050f22e0ec9c3abcc",
+      "true_label": "Eczema",
+      "predicted_label": "Tinea",
+      "correct": false,
+      "confidence": 0.5494889616966248,
+      "margin_top1_top2": 0.2562640309333801,
+      "entropy_nats": 1.1139447689056396,
+      "normalized_entropy": 0.5356941979747896,
+      "true_label_rank": 2,
+      "uncertain_at_0_55": true,
+      "probabilities": {
+        "Acne": 0.03166542202234268,
+        "Candidiasis": 0.005350468680262566,
+        "Eczema": 0.29322493076324463,
+        "Lupus": 0.002682856982573867,
+        "Psoriasis": 0.11355113983154297,
+        "SkinCancer": 0.0016207079170271754,
+        "Tinea": 0.5494889616966248,
+        "Warts": 0.0024155995342880487
+      },
+      "top3": [
+        {
+          "label": "Tinea",
+          "probability": 0.5494889616966248
+        },
+        {
+          "label": "Eczema",
+          "probability": 0.29322493076324463
+        },
+        {
+          "label": "Psoriasis",
+          "probability": 0.11355113983154297
+        }
+      ]
+    },
+    {
+      "sample_id": "sha256:42355a9a72b026b49d9d4746e5306267e421f8d2c2a203453ab2479ce0aa7dfe",
+      "true_label": "Tinea",
+      "predicted_label": "Eczema",
+      "correct": false,
+      "confidence": 0.5401334762573242,
+      "margin_top1_top2": 0.08482638001441956,
+      "entropy_nats": 0.7194205522537231,
+      "normalized_entropy": 0.34596815435001527,
+      "true_label_rank": 6,
+      "uncertain_at_0_55": true,
+      "probabilities": {
+        "Acne": 0.45530709624290466,
+        "Candidiasis": 2.813794526446145e-05,
+        "Eczema": 0.5401334762573242,
+        "Lupus": 0.003173002740368247,
+        "Psoriasis": 0.0009884415194392204,
+        "SkinCancer": 9.06983495951863e-06,
+        "Tinea": 5.218593287281692e-05,
+        "Warts": 0.0003086129727307707
+      },
+      "top3": [
+        {
+          "label": "Eczema",
+          "probability": 0.5401334762573242
+        },
+        {
+          "label": "Acne",
+          "probability": 0.45530709624290466
+        },
+        {
+          "label": "Lupus",
+          "probability": 0.003173002740368247
+        }
+      ]
+    },
+    {
+      "sample_id": "sha256:6b5bed22fb00d1c25938ddf41c30fd82348f62542ad44da32179966ceb39631f",
+      "true_label": "Tinea",
+      "predicted_label": "Psoriasis",
+      "correct": false,
+      "confidence": 0.5323820114135742,
+      "margin_top1_top2": 0.107215017080307,
+      "entropy_nats": 0.8667222261428833,
+      "normalized_entropy": 0.4168052858281935,
+      "true_label_rank": 2,
+      "uncertain_at_0_55": true,
+      "probabilities": {
+        "Acne": 0.021443037316203117,
+        "Candidiasis": 0.0006090357783250511,
+        "Eczema": 0.020206009969115257,
+        "Lupus": 2.954063529614359e-05,
+        "Psoriasis": 0.5323820114135742,
+        "SkinCancer": 8.064096732596227e-07,
+        "Tinea": 0.4251669943332672,
+        "Warts": 0.0001625621662242338
+      },
+      "top3": [
+        {
+          "label": "Psoriasis",
+          "probability": 0.5323820114135742
+        },
+        {
+          "label": "Tinea",
+          "probability": 0.4251669943332672
+        },
+        {
+          "label": "Acne",
+          "probability": 0.021443037316203117
+        }
+      ]
+    },
+    {
+      "sample_id": "sha256:61120ec6f188d561cc498a0097fd57321b34778dfba4b69463ba456e1d1d7777",
+      "true_label": "Eczema",
+      "predicted_label": "Warts",
+      "correct": false,
+      "confidence": 0.5253030061721802,
+      "margin_top1_top2": 0.19083422422409058,
+      "entropy_nats": 1.0202305316925049,
+      "normalized_entropy": 0.4906271762120958,
+      "true_label_rank": 3,
+      "uncertain_at_0_55": true,
+      "probabilities": {
+        "Acne": 0.00010527919221203774,
+        "Candidiasis": 0.0004504730459302664,
+        "Eczema": 0.13126949965953827,
+        "Lupus": 0.00020314859284553677,
+        "Psoriasis": 0.3344687819480896,
+        "SkinCancer": 0.0068653118796646595,
+        "Tinea": 0.001334505737759173,
+        "Warts": 0.5253030061721802
+      },
+      "top3": [
+        {
+          "label": "Warts",
+          "probability": 0.5253030061721802
+        },
+        {
+          "label": "Psoriasis",
+          "probability": 0.3344687819480896
+        },
+        {
+          "label": "Eczema",
+          "probability": 0.13126949965953827
+        }
+      ]
+    },
+    {
+      "sample_id": "sha256:24d5630891b7f8f9873ed2b138bfc330776a89396a479750064abbd44da492b0",
+      "true_label": "Eczema",
+      "predicted_label": "Acne",
+      "correct": false,
+      "confidence": 0.5128723978996277,
+      "margin_top1_top2": 0.16420015692710876,
+      "entropy_nats": 1.0688769817352295,
+      "normalized_entropy": 0.5140211736232596,
+      "true_label_rank": 2,
+      "uncertain_at_0_55": true,
+      "probabilities": {
+        "Acne": 0.5128723978996277,
+        "Candidiasis": 0.011313149705529213,
+        "Eczema": 0.3486722409725189,
+        "Lupus": 0.002257020678371191,
+        "Psoriasis": 0.1173681989312172,
+        "SkinCancer": 0.0009583330829627812,
+        "Tinea": 0.005075038410723209,
+        "Warts": 0.0014836075715720654
+      },
+      "top3": [
+        {
+          "label": "Acne",
+          "probability": 0.5128723978996277
+        },
+        {
+          "label": "Eczema",
+          "probability": 0.3486722409725189
+        },
+        {
+          "label": "Psoriasis",
+          "probability": 0.1173681989312172
+        }
+      ]
+    },
+    {
+      "sample_id": "sha256:7d4937e5ffa60da888684195586665d6478be372f653c894c7fbe5a4737a93a8",
+      "true_label": "Psoriasis",
+      "predicted_label": "Eczema",
+      "correct": false,
+      "confidence": 0.5077866315841675,
+      "margin_top1_top2": 0.15727591514587402,
+      "entropy_nats": 1.057445764541626,
+      "normalized_entropy": 0.5085239201710808,
+      "true_label_rank": 2,
+      "uncertain_at_0_55": true,
+      "probabilities": {
+        "Acne": 0.0022779337596148252,
+        "Candidiasis": 0.003921785391867161,
+        "Eczema": 0.5077866315841675,
+        "Lupus": 0.002294932957738638,
+        "Psoriasis": 0.35051071643829346,
+        "SkinCancer": 0.00030256257741712034,
+        "Tinea": 0.0063979062251746655,
+        "Warts": 0.12650758028030396
+      },
+      "top3": [
+        {
+          "label": "Eczema",
+          "probability": 0.5077866315841675
+        },
+        {
+          "label": "Psoriasis",
+          "probability": 0.35051071643829346
+        },
+        {
+          "label": "Warts",
+          "probability": 0.12650758028030396
+        }
+      ]
+    },
+    {
+      "sample_id": "sha256:f753af52d3a59c247d660ffcd1b6539ee3092772ab4248754c5396d6a5c7e578",
+      "true_label": "Tinea",
+      "predicted_label": "Candidiasis",
+      "correct": false,
+      "confidence": 0.47787052392959595,
+      "margin_top1_top2": 0.1902981996536255,
+      "entropy_nats": 1.2657787799835205,
+      "normalized_entropy": 0.6087109229149025,
+      "true_label_rank": 3,
+      "uncertain_at_0_55": true,
+      "probabilities": {
+        "Acne": 0.0113146947696805,
+        "Candidiasis": 0.47787052392959595,
+        "Eczema": 0.007781216409057379,
+        "Lupus": 0.06518515199422836,
+        "Psoriasis": 0.28757232427597046,
+        "SkinCancer": 5.038853487349115e-05,
+        "Tinea": 0.1498269885778427,
+        "Warts": 0.0003986791125498712
+      },
+      "top3": [
+        {
+          "label": "Candidiasis",
+          "probability": 0.47787052392959595
+        },
+        {
+          "label": "Psoriasis",
+          "probability": 0.28757232427597046
+        },
+        {
+          "label": "Tinea",
+          "probability": 0.1498269885778427
+        }
+      ]
+    },
+    {
+      "sample_id": "sha256:fc4dbb636cad22b0ee4d2e5dc6fd4ccdd2a0228204bccc5d211f02fc2628a4a0",
+      "true_label": "Lupus",
+      "predicted_label": "Psoriasis",
+      "correct": false,
+      "confidence": 0.4496443271636963,
+      "margin_top1_top2": 0.04234883189201355,
+      "entropy_nats": 1.0317542552947998,
+      "normalized_entropy": 0.49616891584329775,
+      "true_label_rank": 6,
+      "uncertain_at_0_55": true,
+      "probabilities": {
+        "Acne": 0.13668248057365417,
+        "Candidiasis": 0.0005138121196068823,
+        "Eczema": 0.40729549527168274,
+        "Lupus": 5.697875894838944e-05,
+        "Psoriasis": 0.4496443271636963,
+        "SkinCancer": 8.179108590411488e-06,
+        "Tinea": 0.0057850005105137825,
+        "Warts": 1.360310307063628e-05
+      },
+      "top3": [
+        {
+          "label": "Psoriasis",
+          "probability": 0.4496443271636963
+        },
+        {
+          "label": "Eczema",
+          "probability": 0.40729549527168274
+        },
+        {
+          "label": "Acne",
+          "probability": 0.13668248057365417
+        }
+      ]
+    },
+    {
+      "sample_id": "sha256:555cfc7d85d69922ea4023d82fa864a05c78566e6a15f93bac8985fcdc2b20d7",
+      "true_label": "Eczema",
+      "predicted_label": "Warts",
+      "correct": false,
+      "confidence": 0.42124834656715393,
+      "margin_top1_top2": 0.13748782873153687,
+      "entropy_nats": 1.3764113187789917,
+      "normalized_entropy": 0.6619139279419632,
+      "true_label_rank": 2,
+      "uncertain_at_0_55": true,
+      "probabilities": {
+        "Acne": 0.020172826945781708,
+        "Candidiasis": 0.0005831925664097071,
+        "Eczema": 0.28376051783561707,
+        "Lupus": 0.00879866722971201,
+        "Psoriasis": 0.03073349967598915,
+        "SkinCancer": 0.026551777496933937,
+        "Tinea": 0.2081512063741684,
+        "Warts": 0.42124834656715393
+      },
+      "top3": [
+        {
+          "label": "Warts",
+          "probability": 0.42124834656715393
+        },
+        {
+          "label": "Eczema",
+          "probability": 0.28376051783561707
+        },
+        {
+          "label": "Tinea",
+          "probability": 0.2081512063741684
+        }
+      ]
+    },
+    {
+      "sample_id": "sha256:38a72bb470f59b02b9b04eb3015b9ee19b34391af20328287a145202b166aea1",
+      "true_label": "Psoriasis",
+      "predicted_label": "Candidiasis",
+      "correct": false,
+      "confidence": 0.4198489487171173,
+      "margin_top1_top2": 0.14675208926200867,
+      "entropy_nats": 1.2909607887268066,
+      "normalized_entropy": 0.6208209092927564,
+      "true_label_rank": 2,
+      "uncertain_at_0_55": true,
+      "probabilities": {
+        "Acne": 0.0019658696837723255,
+        "Candidiasis": 0.4198489487171173,
+        "Eczema": 0.20897318422794342,
+        "Lupus": 0.09486338496208191,
+        "Psoriasis": 0.27309685945510864,
+        "SkinCancer": 0.0003139292821288109,
+        "Tinea": 0.0008798900526016951,
+        "Warts": 5.792196316178888e-05
+      },
+      "top3": [
+        {
+          "label": "Candidiasis",
+          "probability": 0.4198489487171173
+        },
+        {
+          "label": "Psoriasis",
+          "probability": 0.27309685945510864
+        },
+        {
+          "label": "Eczema",
+          "probability": 0.20897318422794342
+        }
+      ]
+    },
+    {
+      "sample_id": "sha256:29dc6b5a2061efb77b74fde900427e85128c9ffbc83071a58d2fb30516f98e27",
+      "true_label": "Eczema",
+      "predicted_label": "Psoriasis",
+      "correct": false,
+      "confidence": 0.4114553928375244,
+      "margin_top1_top2": 0.1679362952709198,
+      "entropy_nats": 1.3931281566619873,
+      "normalized_entropy": 0.669953027646344,
+      "true_label_rank": 2,
+      "uncertain_at_0_55": true,
+      "probabilities": {
+        "Acne": 0.22538919746875763,
+        "Candidiasis": 0.00029574765358120203,
+        "Eczema": 0.24351909756660461,
+        "Lupus": 0.001880650408565998,
+        "Psoriasis": 0.4114553928375244,
+        "SkinCancer": 0.00027890808996744454,
+        "Tinea": 0.05087697133421898,
+        "Warts": 0.06630395352840424
+      },
+      "top3": [
+        {
+          "label": "Psoriasis",
+          "probability": 0.4114553928375244
+        },
+        {
+          "label": "Eczema",
+          "probability": 0.24351909756660461
+        },
+        {
+          "label": "Acne",
+          "probability": 0.22538919746875763
+        }
+      ]
+    },
+    {
+      "sample_id": "sha256:8f251324e3d249a18563af3909881bf482d9e073ed17eee914a99b8f49b16426",
+      "true_label": "Psoriasis",
+      "predicted_label": "Tinea",
+      "correct": false,
+      "confidence": 0.4056842029094696,
+      "margin_top1_top2": 0.04896610975265503,
+      "entropy_nats": 1.1772055625915527,
+      "normalized_entropy": 0.5661162090859119,
+      "true_label_rank": 2,
+      "uncertain_at_0_55": true,
+      "probabilities": {
+        "Acne": 0.0001521687809145078,
+        "Candidiasis": 0.00039117445703595877,
+        "Eczema": 0.20374585688114166,
+        "Lupus": 0.00017623133317101747,
+        "Psoriasis": 0.3567180931568146,
+        "SkinCancer": 7.65573131502606e-05,
+        "Tinea": 0.4056842029094696,
+        "Warts": 0.03305574879050255
+      },
+      "top3": [
+        {
+          "label": "Tinea",
+          "probability": 0.4056842029094696
+        },
+        {
+          "label": "Psoriasis",
+          "probability": 0.3567180931568146
+        },
+        {
+          "label": "Eczema",
+          "probability": 0.20374585688114166
+        }
+      ]
+    },
+    {
+      "sample_id": "sha256:a15492f2f415f03aacda6b95ec5e4bd12bfba2f5316874538b66292ffa7de9e9",
+      "true_label": "Warts",
+      "predicted_label": "Eczema",
+      "correct": false,
+      "confidence": 0.3945242762565613,
+      "margin_top1_top2": 0.09217721223831177,
+      "entropy_nats": 1.333653450012207,
+      "normalized_entropy": 0.6413517395323561,
+      "true_label_rank": 3,
+      "uncertain_at_0_55": true,
+      "probabilities": {
+        "Acne": 0.0061811842024326324,
+        "Candidiasis": 0.00015544629422947764,
+        "Eczema": 0.3945242762565613,
+        "Lupus": 0.007086810190230608,
+        "Psoriasis": 0.04182078316807747,
+        "SkinCancer": 0.3023470640182495,
+        "Tinea": 0.015760095790028572,
+        "Warts": 0.23212435841560364
+      },
+      "top3": [
+        {
+          "label": "Eczema",
+          "probability": 0.3945242762565613
+        },
+        {
+          "label": "SkinCancer",
+          "probability": 0.3023470640182495
+        },
+        {
+          "label": "Warts",
+          "probability": 0.23212435841560364
+        }
+      ]
+    },
+    {
+      "sample_id": "sha256:6bdfef7da303ce0413478e37f2ee42cad8eaf7aa7913cd83f93e643b913a2345",
+      "true_label": "Tinea",
+      "predicted_label": "Eczema",
+      "correct": false,
+      "confidence": 0.3723393976688385,
+      "margin_top1_top2": 0.005119591951370239,
+      "entropy_nats": 1.231947422027588,
+      "normalized_entropy": 0.5924414787983814,
+      "true_label_rank": 2,
+      "uncertain_at_0_55": true,
+      "probabilities": {
+        "Acne": 0.00017874198965728283,
+        "Candidiasis": 0.002360858488827944,
+        "Eczema": 0.3723393976688385,
+        "Lupus": 0.004489685874432325,
+        "Psoriasis": 0.003831316949799657,
+        "SkinCancer": 0.02837478183209896,
+        "Tinea": 0.36721980571746826,
+        "Warts": 0.2212054580450058
+      },
+      "top3": [
+        {
+          "label": "Eczema",
+          "probability": 0.3723393976688385
+        },
+        {
+          "label": "Tinea",
+          "probability": 0.36721980571746826
+        },
+        {
+          "label": "Warts",
+          "probability": 0.2212054580450058
+        }
+      ]
+    },
+    {
+      "sample_id": "sha256:4d55de6f9d09bdfa7bbab1357369cf1fabdf51d359bd4d896b14e65e1a5f0cc2",
+      "true_label": "Eczema",
+      "predicted_label": "Candidiasis",
+      "correct": false,
+      "confidence": 0.3695935606956482,
+      "margin_top1_top2": 0.09656655788421631,
+      "entropy_nats": 1.3243999481201172,
+      "normalized_entropy": 0.6369017457688312,
+      "true_label_rank": 4,
+      "uncertain_at_0_55": true,
+      "probabilities": {
+        "Acne": 7.156016363296658e-05,
+        "Candidiasis": 0.3695935606956482,
+        "Eczema": 0.09980694204568863,
+        "Lupus": 0.0016391683602705598,
+        "Psoriasis": 0.2730270028114319,
+        "SkinCancer": 0.0011739716865122318,
+        "Tinea": 0.2540227472782135,
+        "Warts": 0.0006650945288129151
+      },
+      "top3": [
+        {
+          "label": "Candidiasis",
+          "probability": 0.3695935606956482
+        },
+        {
+          "label": "Psoriasis",
+          "probability": 0.2730270028114319
+        },
+        {
+          "label": "Tinea",
+          "probability": 0.2540227472782135
+        }
+      ]
+    }
+  ],
+  "clinical_review_status": "pending; no dermatologist review was performed by this tool"
+}

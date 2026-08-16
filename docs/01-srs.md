@@ -78,6 +78,9 @@ Phân quyền sử dụng RBAC với bốn role: `PATIENT`, `DOCTOR`, `RECEPTION
   phép; ca cùng ngày không chồng lấn.
 - **FR-DOC-03:** Admin cấu hình `consultation_fee` riêng từng Doctor; lịch lưu
   `consultation_fee_snapshot`; Doctor không tự sửa giá.
+- **FR-DOC-04:** không lưu lịch làm/nghỉ mới nếu thay đổi chồng lấn hoặc làm mất
+  một lịch `CONFIRMED`, `CHECKED_IN` hoặc `IN_PROGRESS`; khi không xác minh được
+  Appointment Service, thao tác phải fail-closed.
 
 ### 3.2. Đặt lịch và điều phối
 
@@ -122,6 +125,9 @@ Phân quyền sử dụng RBAC với bốn role: `PATIENT`, `DOCTOR`, `RECEPTION
   mức độ và thời điểm tái khám nếu có.
 - **FR-RX-01:** chỉ Doctor tạo và ký đơn thuốc gắn với hồ sơ; Patient chỉ đọc
   đơn của chính mình.
+- **FR-MED-03:** Doctor không được liệt kê toàn bộ Patient. Doctor chỉ xem hồ sơ
+  hành chính khi có quan hệ điều trị và chỉ đọc hồ sơ/đơn do mình ký; Admin giữ
+  quyền đối soát toàn phòng khám. Patient chỉ đọc dữ liệu thuộc identity của mình.
 - **FR-FUP-01:** Doctor đánh dấu cần tái khám và ngày sớm nhất; Patient/lễ tân
   chọn lịch mới liên kết lịch gốc.
 
@@ -155,11 +161,13 @@ Phân quyền sử dụng RBAC với bốn role: `PATIENT`, `DOCTOR`, `RECEPTION
   phân loại yêu cầu. Đổi/hủy/đặt hộ, trạng thái lịch cá nhân, tài khoản, phản ánh
   và câu hỏi chuyên môn phải chuyển lễ tân; AI không tự thao tác dữ liệu.
 - **FR-SUP-04:** mọi lượt Patient/AI/System được lưu trong cùng conversation.
-  AI tự chuyển khi nghiệp vụ bắt buộc cần người thật, độ tin cậy thấp, Patient
+  Trợ lý tự chuyển khi nghiệp vụ bắt buộc cần người thật, câu hỏi không khớp rõ
+  quy tắc định tuyến, Patient
   không hài lòng hoặc hai lượt liên tiếp chưa giải quyết được; không hỏi xác nhận
   chuyển và không tạo hội thoại mới.
-- **FR-SUP-05:** trước khi claim, lễ tân thấy toàn bộ transcript cùng intent, độ
-  tin cậy, nội dung đã thử và lý do chuyển. Conversation còn ở `AI_ACTIVE` không
+- **FR-SUP-05:** trước khi claim, lễ tân thấy toàn bộ transcript cùng intent,
+  điểm khớp quy tắc, nội dung đã thử và lý do chuyển. Conversation còn ở
+  `AI_ACTIVE` không
   xuất hiện trong hộp thư lễ tân; trạng thái chuyển/claim được đồng bộ realtime.
 - **FR-REV-01:** mỗi lịch `COMPLETED` chỉ được đánh giá một lần; chỉ review
   `APPROVED` xuất hiện công khai.
@@ -195,7 +203,8 @@ Mọi chuyển trạng thái không hợp lệ trả lỗi 409. `HELD` và `PROP
   retry/dead-letter sau khi cấu hình routing được kiểm chứng.
 - **Hiệu năng:** frontend lazy loading, cache asset tĩnh, index database; metric
   p95 chỉ được công bố sau khi đo trên môi trường xác định.
-- **Riêng tư:** cần consent trước khi dùng ảnh; chỉ role phù hợp được xem hồ sơ;
+- **Riêng tư:** cần consent trước khi dùng ảnh; role và quan hệ sở hữu/điều trị
+  đều phải được kiểm tra tại backend trước khi xem hồ sơ;
   không gửi PII/ảnh bệnh nhân tới Gemini hoặc provider ngoài.
 - **Khả năng tiếp cận:** responsive, keyboard/focus rõ ràng, giảm chuyển động
   theo `prefers-reduced-motion` và độ tương phản đủ đọc.
@@ -242,7 +251,7 @@ availability, Booking Policy hoặc database constraint.
 | UC-06 | Check-in/no-show | Receptionist, Admin | Check-in đúng ngày; no-show chỉ sau giờ bắt đầu 30 phút |
 | UC-07 | Bắt đầu/hoàn tất | Doctor | Xem reason/AI được chia sẻ → bắt đầu → khám → hồ sơ/đơn nếu cần → hoàn tất |
 | UC-08 | AI và chia sẻ | Patient, Doctor | Predict → Top-3/Grad-CAM/RAG → lưu assessment/ảnh → Patient chia sẻ → Doctor phụ trách đọc; ảnh lỗi 4xx, model thiếu 503 |
-| UC-09 | Trợ lý/chat/claim | Patient, Receptionist, Admin | Patient nhắn → AI phân loại/trả lời hoặc tra lịch đọc-only → tự chuyển khi cần → Receptionist thấy transcript + summary, claim và phản hồi realtime; Admin chỉ giám sát |
+| UC-09 | Trợ lý/chat/claim | Patient, Receptionist, Admin | Patient nhắn → bộ định tuyến theo luật xác định nhóm yêu cầu; RAG/Gemini hỗ trợ nội dung trong phạm vi cho phép hoặc Scheduling Engine tra lịch đọc-only → tự chuyển khi cần → Receptionist thấy transcript + summary, claim và phản hồi realtime; Admin chỉ giám sát |
 | UC-10 | Giá khám | Admin | Chọn Doctor → lưu giá không âm → profile update; lịch mới dùng giá mới, lịch cũ giữ snapshot |
 | UC-11 | Đánh giá | Patient, Admin | Patient đánh giá lịch hoàn tất → Admin duyệt/ẩn; lịch chưa hoàn tất hoặc đã review bị từ chối |
 

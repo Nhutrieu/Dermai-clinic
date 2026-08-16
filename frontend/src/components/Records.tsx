@@ -1,13 +1,17 @@
-import { useMemo, useState } from "react";
-import { CalendarDays, Printer, Search } from "lucide-react";
+import { useEffect, useMemo, useState } from "react";
+import { CalendarDays, ChevronDown, ChevronUp, Printer, Search } from "lucide-react";
 import type { MedicalRecord, Patient, Prescription } from "../core/types";
 import { State } from "./Ui";
 import { PrescriptionPdfModal } from "./PrescriptionPdfModal";
+
+const RECORD_PAGE_SIZE = 5;
 
 export function RecordList({ records, patients }: { records: MedicalRecord[]; patients: Record<string, Patient> }) {
     const [query, setQuery] = useState("");
     const [period, setPeriod] = useState("all");
     const [order, setOrder] = useState("newest");
+    const [visibleCount, setVisibleCount] = useState(RECORD_PAGE_SIZE);
+    const [expandedRecordIds, setExpandedRecordIds] = useState<Set<string>>(() => new Set());
 
     const filtered = useMemo(() => {
         const normalized = query.trim().toLocaleLowerCase("vi");
@@ -22,6 +26,15 @@ export function RecordList({ records, patients }: { records: MedicalRecord[]; pa
             new Date(b.signedAt).getTime() - new Date(a.signedAt).getTime()
         ) * (order === "newest" ? 1 : -1));
     }, [order, patients, period, query, records]);
+
+    // A new search or ordering starts from a short, predictable result page.
+    useEffect(() => {
+        setVisibleCount(RECORD_PAGE_SIZE);
+        setExpandedRecordIds(new Set());
+    }, [order, period, query, records.length]);
+
+    const visibleRecords = filtered.slice(0, visibleCount);
+    const remainingRecords = Math.max(0, filtered.length - visibleRecords.length);
 
     const severityLabel: Record<string, string> = {
         MILD: "Nhẹ",
@@ -45,6 +58,15 @@ export function RecordList({ records, patients }: { records: MedicalRecord[]; pa
         .map(part => part.charAt(0))
         .join("")
         .toLocaleUpperCase("vi");
+
+    const toggleRecord = (recordId: string) => {
+        setExpandedRecordIds(current => {
+            const next = new Set(current);
+            if (next.has(recordId)) next.delete(recordId);
+            else next.add(recordId);
+            return next;
+        });
+    };
 
     return (
         <section className="panel records medical-record-browser">
@@ -90,45 +112,96 @@ export function RecordList({ records, patients }: { records: MedicalRecord[]; pa
             ) : filtered.length === 0 ? (
                 <State text="Không tìm thấy hồ sơ phù hợp." />
             ) : (
-                filtered.map(r => {
+                <>
+                {visibleRecords.map(r => {
                     const pName = patients[r.patientId]?.fullName || "Hồ sơ của tôi";
+                    const expanded = expandedRecordIds.has(r.id);
+                    const detailsId = `medical-record-details-${r.id}`;
+                    const availableDetails = [
+                        r.clinicalNotes?.trim() && "Có ghi chú lâm sàng",
+                        r.treatmentPlan?.trim() && "Có kế hoạch điều trị",
+                        r.followUpAt && "Có lịch tái khám",
+                    ].filter(Boolean).join(" · ");
                     return (
-                        <article className="medical-record-row" key={r.id}>
+                        <article className={`medical-record-row${expanded ? " is-expanded" : ""}`} key={r.id}>
                             <header className="medical-record-row-header">
                                 <span className="medical-record-avatar" aria-hidden="true">{getInitials(pName)}</span>
                                 <div>
                                     <h3>{pName}</h3>
                                     <time dateTime={r.signedAt}><CalendarDays aria-hidden="true" />Đã ký {formatSignedAt(r.signedAt)}</time>
                                 </div>
-                                <span className="medical-record-severity" data-severity={r.severity}>
-                                    {severityLabel[r.severity] || r.severity}
-                                </span>
+                                <div className="medical-record-row-actions">
+                                    <span className="medical-record-severity" data-severity={r.severity}>
+                                        {severityLabel[r.severity] || r.severity}
+                                    </span>
+                                    <button
+                                        type="button"
+                                        className="medical-record-detail-toggle"
+                                        aria-expanded={expanded}
+                                        aria-controls={detailsId}
+                                        onClick={() => toggleRecord(r.id)}
+                                    >
+                                        {expanded ? "Thu gọn" : "Xem chi tiết"}
+                                        {expanded ? <ChevronUp aria-hidden="true" /> : <ChevronDown aria-hidden="true" />}
+                                    </button>
+                                </div>
                             </header>
 
-                            <div className="medical-record-summary">
-                                <div className="medical-record-diagnosis">
+                            {!expanded && <div className="medical-record-preview">
+                                <div>
                                     <span>Chẩn đoán</span>
                                     <strong>{r.finalDiagnosis}</strong>
                                 </div>
-                                <div>
-                                    <span>Ghi chú lâm sàng</span>
-                                    <p>{r.clinicalNotes || "Chưa ghi nhận"}</p>
-                                </div>
-                                <div>
-                                    <span>Kế hoạch điều trị</span>
-                                    <p>{r.treatmentPlan || "Chưa ghi nhận"}</p>
-                                </div>
-                            </div>
+                                <p>{availableDetails || "Chưa có nội dung bổ sung"}</p>
+                            </div>}
 
-                            {r.followUpAt && (
-                                <p className="medical-record-follow-up">
-                                    <strong>Tái khám dự kiến</strong>
-                                    <time dateTime={r.followUpAt}>{new Date(r.followUpAt).toLocaleString("vi-VN")}</time>
-                                </p>
-                            )}
+                            <div
+                                id={detailsId}
+                                className="medical-record-details"
+                                role="region"
+                                aria-label={`Chi tiết hồ sơ của ${pName}`}
+                                hidden={!expanded}
+                            >
+                                <div className="medical-record-summary">
+                                    <div className="medical-record-diagnosis">
+                                        <span>Chẩn đoán</span>
+                                        <strong>{r.finalDiagnosis}</strong>
+                                    </div>
+                                    <div>
+                                        <span>Ghi chú lâm sàng</span>
+                                        <p>{r.clinicalNotes || "Chưa ghi nhận"}</p>
+                                    </div>
+                                    <div>
+                                        <span>Kế hoạch điều trị</span>
+                                        <p>{r.treatmentPlan || "Chưa ghi nhận"}</p>
+                                    </div>
+                                </div>
+
+                                {r.followUpAt && (
+                                    <p className="medical-record-follow-up">
+                                        <strong>Tái khám dự kiến</strong>
+                                        <time dateTime={r.followUpAt}>{new Date(r.followUpAt).toLocaleString("vi-VN")}</time>
+                                    </p>
+                                )}
+                            </div>
                         </article>
                     );
-                })
+                })}
+                {filtered.length > RECORD_PAGE_SIZE && <footer className="record-pagination">
+                    <span aria-live="polite">Đang hiển thị {visibleRecords.length} trên {filtered.length} hồ sơ</span>
+                    <button
+                        type="button"
+                        onClick={() => setVisibleCount(current => remainingRecords > 0
+                            ? Math.min(current + RECORD_PAGE_SIZE, filtered.length)
+                            : RECORD_PAGE_SIZE)}
+                    >
+                        {remainingRecords > 0
+                            ? `Xem thêm ${Math.min(RECORD_PAGE_SIZE, remainingRecords)} hồ sơ`
+                            : "Thu gọn danh sách"}
+                        {remainingRecords > 0 ? <ChevronDown aria-hidden="true" /> : <ChevronUp aria-hidden="true" />}
+                    </button>
+                </footer>}
+                </>
             )}
         </section>
     );

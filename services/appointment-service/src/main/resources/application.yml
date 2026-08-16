@@ -12,6 +12,7 @@ spring:
 management.endpoints.web.exposure.include: health,info
 security.service-token: ${SERVICE_TOKEN:}
 doctor-service.url: ${DOCTOR_URL:http://doctor-service:8084}
+patient-service.url: ${PATIENT_URL:http://patient-service:8083}
 ai-service.url: ${AI_URL:http://ai-service:8000}
 spring.rabbitmq:
   host: ${RABBITMQ_HOST:rabbitmq}
