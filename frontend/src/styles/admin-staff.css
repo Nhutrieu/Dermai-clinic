@@ -342,6 +342,38 @@
   font-size: 14px;
 }
 
+.admin-staff-filter-empty {
+  display: grid;
+  min-height: 210px;
+  gap: var(--space-3);
+  place-content: center;
+  justify-items: center;
+  padding: var(--space-4);
+  color: var(--color-text-secondary);
+  text-align: center;
+}
+
+.admin-staff-filter-empty > svg {
+  width: 26px;
+  height: 26px;
+  color: var(--color-primary);
+}
+
+.admin-staff-filter-empty > b { color: var(--color-ink); }
+
+.admin-staff-filter-empty > button {
+  min-height: 44px;
+  padding: 0 var(--space-4);
+  border: 1px solid var(--color-primary);
+  border-radius: var(--radius-control);
+  color: var(--color-primary);
+  background: var(--color-surface);
+  font: inherit;
+  font-size: 14px;
+  font-weight: 750;
+  cursor: pointer;
+}
+
 .admin-staff-list > button {
   display: grid;
   grid-template-columns: 42px minmax(0, 1fr);

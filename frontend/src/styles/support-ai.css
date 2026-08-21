@@ -50,6 +50,21 @@
   line-height: 1.5;
 }
 
+.support-panel .support-conversations button {
+  min-height: 44px;
+  font-size: 13px;
+  line-height: 1.35;
+}
+
+.support-panel .support-messages > p,
+.support-panel .support-messages article {
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+.support-panel .support-messages article > b { font-size: 13px; }
+.support-panel .support-messages article > small { font-size: 12px; }
+
 .support-ai-messages article > b {
   font-size: 12px;
 }
@@ -59,6 +74,106 @@
   margin-top: 7px;
   font-size: 11px;
 }
+
+.support-ai-welcome {
+  display: grid;
+  justify-items: center;
+  gap: 12px;
+  margin: auto 0;
+  padding: 22px 10px;
+  color: var(--color-text-secondary);
+  text-align: center;
+}
+
+.support-ai-welcome-icon {
+  display: grid;
+  width: 54px;
+  height: 54px;
+  place-items: center;
+  border: 1px solid color-mix(in srgb, var(--color-primary) 22%, var(--color-border));
+  border-radius: 50%;
+  color: var(--color-primary);
+  background: var(--color-success-surface);
+}
+
+.support-ai-welcome-icon svg {
+  width: 25px;
+  height: 25px;
+}
+
+.support-ai-welcome h3 {
+  margin: 0;
+  color: var(--color-ink);
+  font-family: Newsreader, serif;
+  font-size: 20px;
+  line-height: 1.2;
+}
+
+.support-ai-welcome p {
+  max-width: 340px;
+  margin: 7px 0 0;
+  font-size: 14px;
+  line-height: 1.55;
+}
+
+.support-ai-suggestions {
+  display: grid;
+  width: 100%;
+  gap: 7px;
+}
+
+.support-ai-suggestions button {
+  display: flex;
+  min-height: 44px;
+  gap: 9px;
+  align-items: center;
+  padding: 9px 12px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-control);
+  color: var(--color-primary);
+  background: var(--color-surface);
+  font: inherit;
+  font-size: 13px;
+  font-weight: 700;
+  text-align: left;
+  cursor: pointer;
+}
+
+.support-ai-suggestions button:hover,
+.support-ai-suggestions button:focus-visible {
+  border-color: var(--color-primary);
+  background: var(--color-success-surface);
+}
+
+.support-ai-suggestions button:focus-visible {
+  outline: none;
+  box-shadow: var(--focus-ring);
+}
+
+.support-ai-suggestions svg {
+  flex: 0 0 auto;
+  width: 17px;
+  height: 17px;
+}
+
+.support-conversations > .support-conversation-empty {
+  flex: 1 0 100%;
+  min-height: 116px;
+  padding: 14px;
+}
+
+.support-conversation-empty .app-state-illustration {
+  width: 42px;
+  height: 42px;
+}
+
+.support-conversation-empty .app-state-illustration svg {
+  width: 20px;
+  height: 20px;
+}
+
+.support-conversation-empty .app-state-copy h3 { font-size: 16px; }
+.support-conversation-empty .app-state-copy p { margin-top: 4px; font-size: 12px; line-height: 1.4; }
 
 .support-ai-handoff {
   width: 100%;

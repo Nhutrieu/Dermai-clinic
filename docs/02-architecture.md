@@ -189,8 +189,12 @@ vận hành:
   [`deployment-production.png`](diagrams/deployment-production.png): kiến trúc
   production mục tiêu. Phần container single-host đã có overlay chạy được; TLS,
   backup ngoài máy và observability vẫn phụ thuộc hạ tầng triển khai thực tế.
-- [`domain-erd.puml`](diagrams/domain-erd.puml) / [`domain-erd.png`](diagrams/domain-erd.png):
-  ERD hiện hành gồm 24 bảng, có `medical_record.patient_record_visibility`.
+- [`database-erd.puml`](diagrams/database-erd.puml): ERD nguồn chuẩn gồm đủ 24 bảng,
+  196 thuộc tính và phân biệt FK vật lý với tham chiếu logic giữa microservice.
+- [`database-class.puml`](diagrams/database-class.puml): class diagram persistence gồm
+  24 lớp dữ liệu và năm enum miền nghiệp vụ.
+- [`database-schema-reference.md`](database-schema-reference.md): bảng tra cứu thuộc tính,
+  cardinality và constraint dùng khi vẽ hoặc thuyết minh.
 
 - Docker Compose chạy PostgreSQL, RabbitMQ, Redis, tám tiến trình Spring (gồm
   Gateway), AI, Frontend/Nginx và Adminer. Email được gửi qua Gmail SMTP.

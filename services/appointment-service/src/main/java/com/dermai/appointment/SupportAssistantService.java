@@ -9,6 +9,8 @@ import org.springframework.web.client.RestClientException;
 
 import java.time.*;
 import java.time.format.DateTimeFormatter;
+import java.text.NumberFormat;
+import java.text.Normalizer;
 import java.util.*;
 
 @Service
@@ -56,6 +58,14 @@ class SupportAssistantService {
   String attempt="AI đã phân loại và trả lời hướng dẫn.";
   if("DOCTOR_AVAILABILITY".equals(decision.category())&&!decision.needsClarification()){
    var lookup=lookupAvailability(decision,patientIdentityId,authorization,role);
+   answer=lookup.answer();failed=lookup.failed();attempt=lookup.attempt();
+  }
+  if("DOCTOR_INFORMATION".equals(decision.category())&&!decision.needsClarification()){
+   var lookup=lookupDoctorInformation(decision,authorization,role);
+   answer=lookup.answer();failed=lookup.failed();attempt=lookup.attempt();
+  }
+  if("DOCTOR_RECOMMENDATION".equals(decision.category())&&!decision.needsClarification()){
+   var lookup=lookupDoctorRecommendation(question,authorization,role);
    answer=lookup.answer();failed=lookup.failed();attempt=lookup.attempt();
   }
 
@@ -117,6 +127,123 @@ class SupportAssistantService {
   }
  }
 
+ private DoctorInformationAnswer lookupDoctorInformation(SupportAiClient.Decision decision,String authorization,String role){
+  try{
+   var result=scheduling.lookupDoctorProfiles(decision.doctorName(),authorization,role);
+   return switch(result.status()){
+    case "ALL" -> {
+     if(result.profiles().isEmpty())yield new DoctorInformationAnswer("Hiện phòng khám chưa có hồ sơ bác sĩ đang hoạt động.",false,"Doctor service trả về danh sách trống.");
+     String list=result.profiles().stream().limit(8).map(this::doctorSummaryLine).reduce((a,b)->a+"\n"+b).orElse("");
+     yield new DoctorInformationAnswer("Các bác sĩ đang hoạt động tại DermAI Clinic:\n"+list+"\nBạn có thể hỏi tên một bác sĩ cụ thể để xem mô tả chi tiết.",false,"Đã đọc "+result.profiles().size()+" hồ sơ bác sĩ thật.");
+    }
+    case "FOUND" -> {
+     var doctor=result.profiles().get(0);
+     String certificate=doctor.certificateNo()==null||doctor.certificateNo().isBlank()?"":" Chứng chỉ: "+doctor.certificateNo()+".";
+     String bio=doctor.bio()==null||doctor.bio().isBlank()?"":"\n"+compactBio(doctor.bio());
+     String answer="Bác sĩ "+doctor.doctorName()+" – "+displaySpecialty(doctor.specialtyCode())+", "+doctor.experienceYears()+" năm kinh nghiệm. Giá khám cơ bản: "+displayFee(doctor.consultationFee())+"."+certificate+bio;
+     yield new DoctorInformationAnswer(answer,false,"Đã đọc hồ sơ thật của Bác sĩ "+doctor.doctorName()+".");
+    }
+    case "AMBIGUOUS" -> new DoctorInformationAnswer("Mình tìm thấy nhiều bác sĩ phù hợp: "+String.join(", ",result.candidates())+". Bạn cho mình biết chính xác tên bác sĩ nhé.",true,"Tên bác sĩ chưa đủ rõ để tra hồ sơ.");
+    default -> new DoctorInformationAnswer("Mình chưa tìm thấy bác sĩ “"+decision.doctorName()+"”. Các bác sĩ hiện có: "+String.join(", ",result.candidates())+". Bạn kiểm tra lại tên giúp mình nhé.",true,"Không tìm thấy hồ sơ bác sĩ trong dữ liệu thật.");
+   };
+  }catch(RuntimeException error){
+   LOG.warn("Doctor profile lookup failed: {}",error.getMessage());
+   return new DoctorInformationAnswer("Mình chưa tải được thông tin bác sĩ ở thời điểm này. Bạn có thể thử lại sau ít phút.",true,"Doctor service trả lỗi: "+error.getClass().getSimpleName());
+  }
+ }
+
+ private DoctorInformationAnswer lookupDoctorRecommendation(String question,String authorization,String role){
+  try{
+   var result=scheduling.lookupDoctorProfiles(null,authorization,role);
+   String topic=careTopic(question);
+   if(topic==null){
+    return new DoctorInformationAnswer(
+     "Bạn cho mình biết vấn đề da cần khám, ví dụ mụn, nấm da, viêm da, dị ứng hoặc vảy nến, để mình đối chiếu với hồ sơ bác sĩ nhé.",
+     true,"Chưa nhận diện được nhu cầu chuyên môn để gợi ý bác sĩ."
+    );
+   }
+   var matches=result.profiles().stream().filter(doctor->profileMatchesTopic(doctor,topic)).toList();
+   if(matches.isEmpty()){
+    return new DoctorInformationAnswer(
+     "Mình chưa tìm thấy hồ sơ bác sĩ ghi rõ thế mạnh phù hợp với "+displayCareTopic(topic)+". Bạn có thể mở mục Lịch khám để xem hồ sơ hoặc liên hệ lễ tân để được phân công chính xác.",
+     false,"Không có hồ sơ bác sĩ khớp rõ với nhu cầu "+displayCareTopic(topic)+"."
+    );
+   }
+   String doctors=matches.stream().limit(3).map(doctor->"Bác sĩ "+doctor.doctorName()+" ("+displaySpecialty(doctor.specialtyCode())+")").reduce((a,b)->a+", "+b).orElse("");
+   String reason=matches.size()==1
+    ? "Hồ sơ chuyên môn của bác sĩ có đề cập đến "+displayCareTopic(topic)+"."
+    : "Các hồ sơ này có chuyên môn hoặc mô tả liên quan đến "+displayCareTopic(topic)+".";
+   return new DoctorInformationAnswer(
+    "Dựa trên hồ sơ bác sĩ đang hoạt động tại phòng khám, bạn có thể ưu tiên "+doctors+". "+reason+" Đây là gợi ý chọn bác sĩ, không phải kết luận chẩn đoán. Bạn mở mục Lịch khám để xem ngày và giờ còn trống.",
+    false,"Đã đối chiếu nhu cầu "+displayCareTopic(topic)+" với "+result.profiles().size()+" hồ sơ bác sĩ thật."
+   );
+  }catch(RuntimeException error){
+   LOG.warn("Doctor recommendation lookup failed: {}",error.getMessage());
+   return new DoctorInformationAnswer("Mình chưa tải được hồ sơ bác sĩ để đối chiếu ở thời điểm này. Bạn thử lại sau ít phút nhé.",true,"Doctor service trả lỗi: "+error.getClass().getSimpleName());
+  }
+ }
+
+ private boolean profileMatchesTopic(SchedulingRecommendationService.DoctorProfile doctor,String topic){
+  String profile=foldText((doctor.specialtyCode()==null?"":doctor.specialtyCode())+" "+(doctor.bio()==null?"":doctor.bio()));
+  return switch(topic){
+   case "fungal" -> profile.contains("nam da")||profile.contains("benh nam")||profile.contains("nam");
+   case "acne" -> profile.contains("mun")||profile.contains("trung ca");
+   case "dermatitis" -> profile.contains("viem da")||profile.contains("eczema")||profile.contains("cham");
+   case "allergy" -> profile.contains("di ung")||profile.contains("me day");
+   case "psoriasis" -> profile.contains("vay nen");
+   case "pigmentation" -> profile.contains("sac to")||profile.contains("tham");
+   case "hair_nail" -> profile.contains("toc")||profile.contains("mong");
+   default -> false;
+  };
+ }
+
+ private String careTopic(String question){
+  String value=foldText(question);
+  if(value.contains("nam da")||value.matches(".*\\bnam\\b.*"))return "fungal";
+  if(value.contains("mun")||value.contains("trung ca"))return "acne";
+  if(value.contains("viem da")||value.contains("eczema")||value.matches(".*\\bcham\\b.*"))return "dermatitis";
+  if(value.contains("di ung")||value.contains("me day"))return "allergy";
+  if(value.contains("vay nen"))return "psoriasis";
+  if(value.contains("sac to")||value.contains("tham"))return "pigmentation";
+  if(value.matches(".*\\b(toc|mong)\\b.*"))return "hair_nail";
+  return null;
+ }
+
+ private String displayCareTopic(String topic){
+  return switch(topic){
+   case "fungal" -> "nấm da";
+   case "acne" -> "mụn/trứng cá";
+   case "dermatitis" -> "viêm da/chàm";
+   case "allergy" -> "dị ứng/mề đay";
+   case "psoriasis" -> "vảy nến";
+   case "pigmentation" -> "rối loạn sắc tố";
+   case "hair_nail" -> "vấn đề tóc hoặc móng";
+   default -> "nhu cầu khám da liễu";
+  };
+ }
+
+ private String foldText(String value){
+  return Normalizer.normalize(value==null?"":value,Normalizer.Form.NFD)
+   .replaceAll("\\p{M}","").replace('đ','d').replace('Đ','D').toLowerCase(Locale.ROOT).replaceAll("\\s+"," ").trim();
+ }
+
+ private String doctorSummaryLine(SchedulingRecommendationService.DoctorProfile doctor){
+  return "• Bác sĩ "+doctor.doctorName()+" – "+displaySpecialty(doctor.specialtyCode())+", "+doctor.experienceYears()+" năm kinh nghiệm, giá khám "+displayFee(doctor.consultationFee());
+ }
+
+ private String displaySpecialty(String specialty){
+  return specialty==null||specialty.isBlank()?"Da liễu":specialty.replace('_',' ').trim();
+ }
+
+ private String displayFee(java.math.BigDecimal fee){
+  return fee==null?"chưa cập nhật":NumberFormat.getIntegerInstance(Locale.forLanguageTag("vi-VN")).format(fee)+" đ";
+ }
+
+ private String compactBio(String bio){
+  String value=bio.trim().replaceAll("\\s+"," ");
+  return value.length()<=320?value:value.substring(0,317)+"...";
+ }
+
  private String escalationReason(SupportAiClient.Decision decision,boolean lowConfidence,int failureCount){
   if(decision.requiresHandoff())return "MANDATORY_"+decision.category();
   if(lowConfidence)return "LOW_CONFIDENCE";
@@ -135,5 +262,6 @@ class SupportAssistantService {
  }
 
  record AvailabilityAnswer(String answer,boolean failed,String attempt){}
+ record DoctorInformationAnswer(String answer,boolean failed,String attempt){}
  record TurnResult(String answer,String intent,double intentConfidence,boolean escalated,String conversationStatus,String escalationReason){}
 }

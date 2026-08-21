@@ -1,7 +1,10 @@
 import { FormEvent, useEffect, useMemo, useState } from "react";
 import { History, KeyRound, LockKeyhole, Search, Unlock, UserRound } from "lucide-react";
 import AuthenticatedAvatar from "../../components/AuthenticatedAvatar";
+import { EmptyState, StateSkeleton } from "../../components/Ui";
 import { request } from "../../core/api";
+import PasswordRequirements from "../../components/PasswordRequirements";
+import { authErrorMessage, isPasswordValid, passwordValidationMessage, PASSWORD_MAX_LENGTH, PASSWORD_MIN_LENGTH } from "../../core/passwordPolicy";
 import type { AppointmentActionLog, StaffAccount, StaffAccountEvent } from "../../core/types";
 
 type Props = { token: string; revision: number };
@@ -163,7 +166,7 @@ export default function AdminReceptionistAccounts({ token, revision }: Props) {
 
   async function resetPassword(event: FormEvent) {
     event.preventDefault();
-    if (!selected || password.length < 10) return;
+    if (!selected || !isPasswordValid(password)) return;
     setBusy(true);
     setError("");
     setMessage("");
@@ -176,7 +179,7 @@ export default function AdminReceptionistAccounts({ token, revision }: Props) {
       setMessage("Đã đặt mật khẩu tạm thời mới và thu hồi các phiên đăng nhập cũ.");
       setAccountEvents(await request<StaffAccountEvent[]>(`/auth/staff/${selected.identityId}/events`, token));
     } catch (reason) {
-      setError((reason as Error).message);
+      setError(authErrorMessage(reason));
     } finally {
       setBusy(false);
     }
@@ -212,9 +215,9 @@ export default function AdminReceptionistAccounts({ token, revision }: Props) {
     {error && <p className="admin-staff-feedback is-error" role="alert">{error}</p>}
     {message && <p className="admin-staff-feedback is-success" aria-live="polite">{message}</p>}
 
-    {loading ? <div className="admin-staff-state" role="status">Đang tải danh sách lễ tân…</div> : accounts.length === 0 ? <div className="admin-staff-state"><UserRound aria-hidden="true" /><b>Chưa có tài khoản lễ tân</b><span>Tạo tài khoản ở biểu mẫu phía trên để bắt đầu phân công nhân sự.</span></div> : <div className="admin-staff-layout">
+    {loading ? <StateSkeleton rows={3} label="Đang tải danh sách lễ tân" /> : accounts.length === 0 ? <EmptyState icon={UserRound} title="Chưa có tài khoản lễ tân" description="Tạo tài khoản ở biểu mẫu phía trên để bắt đầu phân công nhân sự." /> : <div className="admin-staff-layout">
       <nav className="admin-staff-list" aria-label="Danh sách tài khoản lễ tân">
-        {filteredAccounts.length === 0 ? <p>Không tìm thấy tài khoản phù hợp.</p> : filteredAccounts.map(account => <button
+        {filteredAccounts.length === 0 ? <div className="admin-staff-filter-empty"><Search aria-hidden="true" /><b>Không tìm thấy tài khoản phù hợp</b><button type="button" onClick={() => { setQuery(""); setFilter("ALL"); }}>Xóa bộ lọc</button></div> : filteredAccounts.map(account => <button
           type="button"
           className={selectedId === account.identityId ? "is-selected" : ""}
           key={account.identityId}
@@ -258,7 +261,8 @@ export default function AdminReceptionistAccounts({ token, revision }: Props) {
             </button>
             <form onSubmit={resetPassword}>
               <label htmlFor="receptionist-temporary-password">Mật khẩu tạm thời mới</label>
-              <div><input id="receptionist-temporary-password" type="password" minLength={10} required autoComplete="new-password" value={password} onChange={event => setPassword(event.target.value)} placeholder="Tối thiểu 10 ký tự" /><button type="submit" className="secondary" disabled={busy || password.length < 10}><KeyRound aria-hidden="true" />Đặt lại</button></div>
+              <div><input id="receptionist-temporary-password" type="password" minLength={PASSWORD_MIN_LENGTH} maxLength={PASSWORD_MAX_LENGTH} required autoComplete="new-password" aria-describedby="receptionist-password-requirements" value={password} onChange={event => setPassword(event.target.value)} onInput={event => event.currentTarget.setCustomValidity("")} onInvalid={event => event.currentTarget.setCustomValidity(passwordValidationMessage(event.currentTarget.value))} placeholder="Từ 10 đến 100 ký tự" /><button type="submit" className="secondary" disabled={busy || !isPasswordValid(password)}><KeyRound aria-hidden="true" />Đặt lại</button></div>
+              <PasswordRequirements id="receptionist-password-requirements" password={password} />
             </form>
           </div>
         </section>

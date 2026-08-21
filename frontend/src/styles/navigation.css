@@ -16,6 +16,7 @@ nav button.active{background:#d9f278;color:#143d34;font-weight:700}
 .result{display:block;width:100%;text-align:left;margin:6px 0}
 @media(max-width:700px){.management form{grid-template-columns:1fr}}
 .auth-switch{width:100%;border:0;background:transparent;color:#286858;padding:13px 0 0;cursor:pointer;font-weight:700;font-size:11px}
+.auth-forgot-link{display:block;width:max-content;min-height:40px;margin:-8px 0 0 auto;padding:8px 0;border:0;background:transparent;color:#286858;font-size:14px;font-weight:700;line-height:24px;cursor:pointer;text-decoration:underline;text-underline-offset:3px}.auth-forgot-link:hover{color:#164c40}.auth-forgot-link:focus-visible{outline:3px solid #a9c85b;outline-offset:3px;border-radius:4px}
 /* Email verification keeps the six digits readable on desktop and mobile. */
 .email-verification-card{max-width:460px}.email-verification-card>p{line-height:1.6}.email-verification-card>p b{color:#31594e;overflow-wrap:anywhere}.email-verification-card .otp-input{text-align:center;font-size:22px;font-weight:800;letter-spacing:.45em;padding-left:calc(12px + .45em)}.email-verification-card .form-message{padding:10px 12px;border-radius:8px;background:#f0f6f3;color:#31594e;font-size:11px;line-height:1.5}.auth-switch:disabled{cursor:not-allowed;color:#91a29d;opacity:.7}
 /* Google Identity Services tự vẽ nút chính thức; lớp ngoài chỉ căn chỉnh và hỗ trợ mobile. */
@@ -740,6 +741,55 @@ nav button.active{background:#d9f278;color:#143d34;font-weight:700}
   border-top: 1px solid var(--color-border);
 }
 
+.appointment-history-pagination {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  padding-top: var(--space-4);
+}
+
+.appointment-history-pagination > span {
+  color: var(--color-text-secondary);
+  font-size: 14px;
+}
+
+.appointment-history-pagination > button {
+  display: inline-flex;
+  min-height: var(--control-min-height);
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+  padding: 0 14px;
+  border: 1px solid var(--color-border-strong);
+  border-radius: var(--radius-control);
+  background: var(--color-surface);
+  color: var(--color-primary);
+  font-size: 14px;
+  font-weight: 750;
+}
+
+.appointment-history-pagination > button:hover {
+  border-color: var(--color-primary);
+  background: var(--color-surface-subtle);
+}
+
+.appointment-history-pagination > button svg {
+  width: 17px;
+  height: 17px;
+}
+
+@media (max-width: 560px) {
+  .appointment-history-pagination {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .appointment-history-pagination > button {
+    width: 100%;
+  }
+}
+
 .patient-appointment-row {
   display: grid;
   grid-template-columns: 44px minmax(180px, 1fr) minmax(240px, auto);
@@ -802,6 +852,13 @@ nav button.active{background:#d9f278;color:#143d34;font-weight:700}
   justify-content: flex-end;
   gap: var(--space-2);
   align-items: center;
+}
+
+.appointment-review-control {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2);
 }
 
 .patient-appointment-actions > button,
@@ -997,6 +1054,39 @@ nav button.active{background:#d9f278;color:#143d34;font-weight:700}
   color: var(--color-danger);
   font-size: 14px;
   line-height: 1.45;
+}
+
+.appointment-review-control .appointment-review-feedback {
+  display: inline-flex;
+  min-height: 36px;
+  max-width: 32ch;
+  align-items: center;
+  gap: 7px;
+  margin: 0;
+  padding: 7px 10px;
+  border: 1px solid var(--color-success-border);
+  border-radius: var(--radius-control);
+  background: var(--color-success-surface);
+  color: var(--color-success);
+  font-size: 14px;
+  font-weight: 650;
+  line-height: 1.4;
+}
+
+.appointment-review-feedback svg {
+  width: 17px;
+  height: 17px;
+  flex: 0 0 17px;
+}
+
+.appointment-review-control .appointment-review-feedback.is-error {
+  border-color: var(--color-danger-border);
+  background: var(--color-danger-surface);
+  color: var(--color-danger);
+}
+
+.appointment-review-control.is-open .appointment-review-feedback {
+  grid-column: 1 / -1;
 }
 
 .appointment-review-control form {

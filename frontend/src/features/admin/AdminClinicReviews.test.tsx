@@ -23,7 +23,9 @@ describe("AdminClinicReviewList stored-XSS protection", () => {
 
         expect(html).not.toContain("<img");
         expect(html).not.toContain("<script");
-        expect(html).not.toContain("<svg");
+        // The shared error illustration is a trusted React SVG; the persisted
+        // payload itself must still be escaped and never become an SVG node.
+        expect(html).not.toContain('<svg onload="globalThis.pwned=true"');
         expect(html).toContain("&lt;img");
         expect(html).toContain("&lt;script&gt;");
         expect(html).toContain("&lt;svg");

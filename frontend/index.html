@@ -8,6 +8,16 @@
       name="description"
       content="DermAI Clinic hỗ trợ đặt lịch và theo dõi chăm sóc da liễu cùng bác sĩ."
     />
+    <script>
+      (() => {
+        // DermAI Clinic uses one light clinical theme for consistent readability.
+        try {
+          localStorage.removeItem("dermai-theme");
+        } catch {}
+        document.documentElement.dataset.theme = "light";
+        document.documentElement.style.colorScheme = "light";
+      })();
+    </script>
     <title>DermAI Clinic</title>
   </head>
   <body>

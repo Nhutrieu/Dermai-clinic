@@ -1,5 +1,7 @@
 import type { FormEvent } from "react";
 import { ShieldCheck, UserPlus } from "lucide-react";
+import PasswordRequirements from "../../components/PasswordRequirements";
+import { isPasswordValid, passwordValidationMessage, PASSWORD_MAX_LENGTH, PASSWORD_MIN_LENGTH } from "../../core/passwordPolicy";
 
 export type StaffRole = "DOCTOR" | "RECEPTIONIST" | "ADMIN";
 
@@ -63,7 +65,8 @@ export default function AdminStaffCreateForm(props: Props) {
           </label>
           <label>
             <span>Mật khẩu ban đầu</span>
-            <input type="password" autoComplete="new-password" minLength={10} required value={props.password} onChange={event => props.onPasswordChange(event.target.value)} placeholder="Tối thiểu 10 ký tự" />
+            <input type="password" autoComplete="new-password" minLength={PASSWORD_MIN_LENGTH} maxLength={PASSWORD_MAX_LENGTH} required aria-describedby="staff-password-requirements" value={props.password} onChange={event => props.onPasswordChange(event.target.value)} onInput={event => event.currentTarget.setCustomValidity("")} onInvalid={event => event.currentTarget.setCustomValidity(passwordValidationMessage(event.currentTarget.value))} placeholder="Từ 10 đến 100 ký tự" />
+            <PasswordRequirements id="staff-password-requirements" password={props.password} />
             <small>Nhân viên nên đổi mật khẩu sau lần đăng nhập đầu tiên.</small>
           </label>
           <label>
@@ -100,7 +103,7 @@ export default function AdminStaffCreateForm(props: Props) {
 
       <footer>
         <div className="admin-staff-role-note"><ShieldCheck aria-hidden="true" /><span><strong>{guidance.label}</strong><small>{guidance.description}</small></span></div>
-        <button type="submit" className="primary" disabled={props.busy}>
+        <button type="submit" className="primary" disabled={props.busy || !isPasswordValid(props.password)}>
           <UserPlus aria-hidden="true" />{props.busy ? "Đang tạo tài khoản..." : submitLabel}
         </button>
       </footer>

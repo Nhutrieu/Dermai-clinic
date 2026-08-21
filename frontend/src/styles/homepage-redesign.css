@@ -61,7 +61,7 @@
   min-height: var(--home-header-height);
   margin: 0;
   border-bottom: 1px solid var(--home-border);
-  background: rgb(255 254 251 / 0.96);
+  background: color-mix(in srgb, var(--home-surface) 96%, transparent);
   color: var(--home-ink);
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
@@ -131,9 +131,12 @@
   display: inline-flex;
   min-height: 44px;
   align-items: center;
+  flex: 0 0 auto;
+  padding: 0;
   color: var(--home-text);
   font-size: 14px;
   font-weight: 650;
+  white-space: nowrap;
   transition: color var(--home-motion-feedback-duration) ease;
 }
 
@@ -187,6 +190,7 @@
 }
 
 .clinic-home-login,
+.clinic-home-theme-toggle,
 .clinic-home-menu-button,
 .clinic-home-button,
 .clinic-home-text-button {
@@ -194,6 +198,27 @@
   border: 0;
   font: inherit;
   cursor: pointer;
+}
+
+.clinic-home-theme-toggle {
+  width: 44px;
+  height: 44px;
+  padding: 0;
+  border: 1px solid var(--home-border);
+  border-radius: var(--home-radius);
+  display: grid;
+  place-items: center;
+  background: var(--home-surface);
+  color: var(--home-primary);
+}
+
+.clinic-home-theme-toggle:hover {
+  background: var(--home-surface-muted);
+}
+
+.clinic-home-theme-toggle svg {
+  width: 18px;
+  height: 18px;
 }
 
 .clinic-home-login {

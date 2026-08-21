@@ -5,8 +5,12 @@ import {
   BrainCircuit,
   CalendarDays,
   Check,
+  ChevronDown,
+  CircleDollarSign,
   HeartPulse,
+  MapPin,
   Menu,
+  MessageCircle,
   PhoneCall,
   ShieldCheck,
   Star,
@@ -18,6 +22,8 @@ import { request } from "../../core/api";
 import { formatVnd } from "../../core/currency";
 import type { ClinicReview, Doctor } from "../../core/types";
 import AccessibleDialog from "../../components/AccessibleDialog";
+import AppFooter from "../../components/AppFooter";
+import HomeFeatureCarousel from "../../components/HomeFeatureCarousel";
 
 type HomePageProps = {
   openAuth: () => void;
@@ -30,6 +36,44 @@ const NAV_ITEMS = [
   { href: "#doctors", label: "Bác sĩ" },
   { href: "#reviews", label: "Đánh giá" },
   { href: "#process", label: "Quy trình" },
+];
+
+const TREATMENT_GROUPS = [
+  {
+    title: "Mụn và thâm sau mụn",
+    description: "Thăm khám mụn viêm, mụn ẩn, thâm và xây dựng kế hoạch chăm sóc phù hợp với tình trạng da.",
+  },
+  {
+    title: "Viêm da và dị ứng",
+    description: "Đánh giá tình trạng ngứa, mẩn đỏ, viêm da tiếp xúc, mề đay và các biểu hiện da nhạy cảm.",
+  },
+  {
+    title: "Nấm da và rối loạn sắc tố",
+    description: "Khám các biểu hiện nghi ngờ nấm da, tăng hoặc giảm sắc tố và những thay đổi màu sắc trên da.",
+  },
+  {
+    title: "Theo dõi bệnh da tái phát",
+    description: "Theo dõi đáp ứng, lịch tái khám và hướng dẫn chăm sóc giữa các lần gặp bác sĩ.",
+  },
+];
+
+const FAQ_ITEMS = [
+  {
+    question: "Tôi có thể chọn bác sĩ và giờ khám không?",
+    answer: "Có. Sau khi đăng nhập, bạn chọn bác sĩ, ngày khám và khung giờ còn trống được cập nhật trực tiếp từ lịch làm việc.",
+  },
+  {
+    question: "Khi không thể đổi hoặc hủy lịch, tôi cần làm gì?",
+    answer: "Bạn mở hộp thư hỗ trợ để trao đổi với lễ tân. Lễ tân sẽ kiểm tra trạng thái lịch và hỗ trợ theo quy định của phòng khám.",
+  },
+  {
+    question: "Kết quả kiểm tra da bằng AI có phải chẩn đoán không?",
+    answer: "Không. Kết quả chỉ hỗ trợ tham khảo từ hình ảnh. Bác sĩ da liễu là người đánh giá triệu chứng và đưa ra kết luận chuyên môn.",
+  },
+  {
+    question: "Tôi có thể đặt lịch qua điện thoại không?",
+    answer: "Có. Gọi hotline 0352 790 904 để lễ tân tìm hồ sơ, kiểm tra giờ trống và đặt lịch hộ khi cần.",
+  },
 ];
 
 function initials(name: string) {
@@ -77,6 +121,7 @@ export default function HomePage({ openAuth, chat }: HomePageProps) {
   const [reviewsOpen, setReviewsOpen] = useState(false);
   const homeRef = useRef<HTMLDivElement>(null);
   const menuButtonRef = useRef<HTMLButtonElement>(null);
+  const navigationRef = useRef<HTMLElement>(null);
 
   // Keep the existing public data endpoints and doctor-profile realtime refresh intact.
   async function loadDoctors() {
@@ -98,16 +143,35 @@ export default function HomePage({ openAuth, chat }: HomePageProps) {
     return () => window.removeEventListener("doctor-profiles-changed", refresh);
   }, []);
 
-  // The mobile menu remains keyboard operable and returns focus to its trigger on Escape.
+  // Mobile navigation locks background scroll, traps focus and restores the trigger on close.
   useEffect(() => {
     if (!menuOpen) return;
-    const closeOnEscape = (event: KeyboardEvent) => {
-      if (event.key !== "Escape") return;
-      setMenuOpen(false);
-      window.requestAnimationFrame(() => menuButtonRef.current?.focus());
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    navigationRef.current?.querySelector<HTMLElement>("a[href],button:not([disabled])")?.focus();
+    const handleKeyboard = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        setMenuOpen(false);
+        window.requestAnimationFrame(() => menuButtonRef.current?.focus());
+        return;
+      }
+      if (event.key !== "Tab" || !navigationRef.current) return;
+      const items = Array.from(navigationRef.current.querySelectorAll<HTMLElement>("a[href],button:not([disabled])"));
+      const first = items[0];
+      const last = items.at(-1);
+      if (event.shiftKey && document.activeElement === first) {
+        event.preventDefault();
+        last?.focus();
+      } else if (!event.shiftKey && document.activeElement === last) {
+        event.preventDefault();
+        first?.focus();
+      }
     };
-    window.addEventListener("keydown", closeOnEscape);
-    return () => window.removeEventListener("keydown", closeOnEscape);
+    window.addEventListener("keydown", handleKeyboard);
+    return () => {
+      window.removeEventListener("keydown", handleKeyboard);
+      document.body.style.overflow = previousOverflow;
+    };
   }, [menuOpen]);
 
   // One observer coordinates section reveals without running work on every scroll frame.
@@ -143,6 +207,12 @@ export default function HomePage({ openAuth, chat }: HomePageProps) {
   const featuredReview = reviews[0];
   // Keep the homepage concise; the dialog carries the complete approved review list.
   const supportingReviews = reviews.slice(1, 2);
+  const validConsultationFees = doctors
+    .map((doctor) => Number(doctor.consultationFee))
+    .filter((fee) => Number.isFinite(fee) && fee > 0);
+  const minimumConsultationFee = validConsultationFees.length > 0
+    ? Math.min(...validConsultationFees)
+    : null;
 
   return (
     <div ref={homeRef} className="clinic-home home-page">
@@ -156,6 +226,7 @@ export default function HomePage({ openAuth, chat }: HomePageProps) {
           </a>
 
           <nav
+            ref={navigationRef}
             id="clinic-home-navigation"
             className={`clinic-home-nav-links ${menuOpen ? "is-open" : ""}`}
             aria-label="Điều hướng trang chủ"
@@ -197,37 +268,39 @@ export default function HomePage({ openAuth, chat }: HomePageProps) {
                 <span />
                 <span />
               </span>
-              <h1 id="home-hero-title">Chăm sóc da an tâm cùng bác sĩ.</h1>
-              <p>Đặt lịch, theo dõi hồ sơ và dùng AI hỗ trợ kiểm tra ảnh da trong một quy trình an toàn.</p>
+              <h1 id="home-hero-title">Đặt lịch da liễu, gặp đúng bác sĩ.</h1>
+              <p>Chọn bác sĩ, xem giờ trống và theo dõi lịch hẹn. Lễ tân hỗ trợ qua hotline khi cần.</p>
               <div className="clinic-home-hero-actions">
                 <button type="button" className="clinic-home-button" onClick={openAuth}>
                   Đặt lịch khám <ArrowRight aria-hidden="true" />
                 </button>
-                <a className="clinic-home-text-link" href="#services">Tìm hiểu kiểm tra da bằng AI</a>
-              </div>
-              <div className="clinic-home-care-standard">
-                <strong>Chuẩn chăm sóc DermAI</strong>
-                <ul className="clinic-home-trust" aria-label="Cam kết của phòng khám">
-                  <li>Bác sĩ phụ trách chuyên môn</li>
-                  <li>Hồ sơ được theo dõi liên tục</li>
-                  <li>Hỗ trợ đặt lịch qua hotline</li>
-                </ul>
+                <a className="clinic-home-text-link" href="#doctors">Xem bác sĩ đang nhận lịch</a>
               </div>
             </div>
 
-            <figure className="clinic-home-hero-media">
-              <img
-                src="/images/dermatology-consultation.jpg"
-                alt="Bác sĩ da liễu tư vấn trực tiếp cho bệnh nhân tại phòng khám"
-                width="1440"
-                height="770"
-                fetchPriority="high"
-              />
-              <figcaption>
-                <Stethoscope aria-hidden="true" />
-                <span><strong>Tư vấn trực tiếp</strong> Mọi quyết định y khoa do bác sĩ phụ trách.</span>
-              </figcaption>
-            </figure>
+            <HomeFeatureCarousel />
+          </div>
+        </section>
+
+        <section className="clinic-home-access" aria-label="Thông tin đặt lịch nhanh">
+          <div className="clinic-home-container clinic-home-access-grid">
+            <button type="button" className="clinic-home-access-action" onClick={openAuth}>
+              <CalendarDays aria-hidden="true" />
+              <span><small>Đặt lịch trực tuyến</small><strong>Chọn bác sĩ và giờ còn trống</strong></span>
+              <ArrowRight aria-hidden="true" />
+            </button>
+            <div className="clinic-home-access-item">
+              <CircleDollarSign aria-hidden="true" />
+              <span><small>Giá khám cơ bản</small><strong>{minimumConsultationFee ? `Từ ${formatVnd(minimumConsultationFee)}` : "Theo từng bác sĩ"}</strong></span>
+            </div>
+            <a className="clinic-home-access-item" href="https://maps.google.com/?q=32%2F2+Th%E1%BB%91ng+Nh%E1%BA%A5t+G%C3%B2+V%E1%BA%A5p" target="_blank" rel="noreferrer">
+              <MapPin aria-hidden="true" />
+              <span><small>Địa chỉ phòng khám</small><strong>32/2 Thống Nhất, Gò Vấp</strong></span>
+            </a>
+            <a className="clinic-home-access-item" href="tel:0352790904">
+              <MessageCircle aria-hidden="true" />
+              <span><small>Lễ tân hỗ trợ</small><strong>0352 790 904</strong></span>
+            </a>
           </div>
         </section>
 
@@ -257,6 +330,24 @@ export default function HomePage({ openAuth, chat }: HomePageProps) {
           </div>
         </section>
 
+        <section className="clinic-home-section clinic-home-treatments" aria-labelledby="home-treatments-title" data-home-reveal="treatments">
+          <div className="clinic-home-container clinic-home-treatments-layout">
+            <div className="clinic-home-section-heading">
+              <h2 id="home-treatments-title">Các vấn đề da liễu thường được tiếp nhận</h2>
+              <p>Chọn bác sĩ theo chuyên môn phù hợp. Chẩn đoán và kế hoạch điều trị chỉ được xác định sau khi bác sĩ thăm khám.</p>
+              <a className="clinic-home-text-link" href="#doctors">Xem đội ngũ bác sĩ</a>
+            </div>
+            <div className="clinic-home-treatment-list">
+              {TREATMENT_GROUPS.map((group) => (
+                <article key={group.title}>
+                  <h3>{group.title}</h3>
+                  <p>{group.description}</p>
+                </article>
+              ))}
+            </div>
+          </div>
+        </section>
+
         <section className="clinic-home-section clinic-home-process" id="process" aria-labelledby="home-process-title" data-home-reveal="process">
           <div className="clinic-home-container">
             <div className="clinic-home-section-heading clinic-home-section-heading-inline">
@@ -272,12 +363,41 @@ export default function HomePage({ openAuth, chat }: HomePageProps) {
           </div>
         </section>
 
+        <section className="clinic-home-section clinic-home-faq" id="faq" aria-labelledby="home-faq-title" data-home-reveal="faq">
+          <div className="clinic-home-container clinic-home-faq-layout">
+            <div className="clinic-home-section-heading">
+              <h2 id="home-faq-title">Thông tin cần biết trước khi đặt lịch</h2>
+              <p>Câu trả lời ngắn cho những tình huống bệnh nhân thường gặp khi sử dụng DermAI Clinic.</p>
+              <a className="clinic-home-phone-inline" href="tel:0352790904"><PhoneCall aria-hidden="true" /> Cần hỗ trợ thêm? Gọi 0352 790 904</a>
+            </div>
+            <div className="clinic-home-faq-list">
+              {FAQ_ITEMS.map((item) => (
+                <details key={item.question}>
+                  <summary><span>{item.question}</span><ChevronDown aria-hidden="true" /></summary>
+                  <p>{item.answer}</p>
+                </details>
+              ))}
+            </div>
+          </div>
+        </section>
+
         <section className="clinic-home-ai" id="services" aria-labelledby="home-ai-title" data-home-reveal="ai">
           <div className="clinic-home-container clinic-home-ai-layout">
             <div>
               <BrainCircuit className="clinic-home-ai-icon" aria-hidden="true" />
               <h2 id="home-ai-title">AI hỗ trợ bạn chuẩn bị thông tin tốt hơn</h2>
               <p>Hệ thống phân tích ảnh da, hiển thị các khả năng liên quan, vùng ảnh được chú ý và nội dung tham khảo từ tài liệu y khoa.</p>
+              <figure className="clinic-home-ai-visual">
+                <img
+                  src="/images/home-carousel/co-nen-hoc-nganh-bac-si-da-lieu.png"
+                  alt="Bác sĩ da liễu trong môi trường khám và tư vấn chuyên môn"
+                  width="1536"
+                  height="1024"
+                  loading="lazy"
+                />
+                <span className="clinic-home-ai-scan" aria-hidden="true" />
+                <figcaption>Minh họa quy trình xem xét hình ảnh trước khi trao đổi với bác sĩ.</figcaption>
+              </figure>
               <button type="button" className="clinic-home-button" onClick={openAuth}>
                 Kiểm tra da bằng AI <ArrowRight aria-hidden="true" />
               </button>
@@ -432,32 +552,7 @@ export default function HomePage({ openAuth, chat }: HomePageProps) {
         </section>
       </main>
 
-      <footer className="clinic-home-footer">
-        <div className="clinic-home-container clinic-home-footer-layout">
-          <div>
-            <a className="clinic-home-brand is-footer" href="#top" aria-label="DermAI Clinic, về đầu trang">
-              <span className="clinic-home-brand-mark" aria-hidden="true"><Activity /></span>
-              <span><strong>DermAI Clinic</strong><small>Phòng khám da liễu</small></span>
-            </a>
-            <p>Chăm sóc da bằng chuyên môn, sự thấu hiểu và công nghệ có trách nhiệm.</p>
-          </div>
-          <nav aria-label="Điều hướng cuối trang">
-            <a href="#about">Về chúng tôi</a>
-            <a href="#doctors">Bác sĩ</a>
-            <a href="#reviews">Đánh giá</a>
-            <a href="#process">Quy trình</a>
-          </nav>
-          <address>
-            <strong>Liên hệ phòng khám</strong>
-            <span>32/2 Thống Nhất, phường Gò Vấp, TP. Hồ Chí Minh</span>
-            <a href="tel:0352790904">0352 790 904</a>
-          </address>
-        </div>
-        <div className="clinic-home-container clinic-home-footer-bottom">
-          <small>© 2026 DermAI Clinic.</small>
-          <small>AI chỉ hỗ trợ tham khảo, quyết định y khoa thuộc về bác sĩ.</small>
-        </div>
-      </footer>
+      <AppFooter variant="public" />
 
       {chat}
     </div>

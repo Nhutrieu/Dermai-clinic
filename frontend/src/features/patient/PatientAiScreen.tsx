@@ -1,7 +1,8 @@
-import { useEffect, useMemo, useState } from "react";
-import { BrainCircuit, CalendarDays, Check, Trash2 } from "lucide-react";
+import { useCallback, useEffect, useMemo, useState } from "react";
+import { BrainCircuit, CalendarDays, Check, ImagePlus, Trash2 } from "lucide-react";
 import { ApiError, request } from "../../core/api";
 import type { AiAssessment, AiPrediction, Patient } from "../../core/types";
+import { EmptyState, ErrorState, StateSkeleton } from "../../components/Ui";
 import PatientAiIntake, { type AiAnalysisStage } from "./PatientAiIntake";
 import PatientAiResult from "./PatientAiResult";
 import { formatAiPercentage, patientAiLabel } from "./patientAiPresentation";
@@ -47,16 +48,19 @@ export default function PatientAiScreen({ token, patient, openBooking }: { token
   const [historyLoading, setHistoryLoading] = useState(true);
   const [confirmDelete, setConfirmDelete] = useState("");
 
-  useEffect(() => {
-    let live = true;
+  const loadHistory = useCallback(async () => {
     setHistoryLoading(true);
     setHistoryError("");
-    request<AiAssessment[]>("/patients/me/ai-assessments", token)
-      .then(items => { if (live) setHistory(items) })
-      .catch(value => { if (live) setHistoryError((value as Error).message) })
-      .finally(() => { if (live) setHistoryLoading(false) });
-    return () => { live = false };
+    try {
+      setHistory(await request<AiAssessment[]>("/patients/me/ai-assessments", token));
+    } catch (value) {
+      setHistoryError((value as Error).message);
+    } finally {
+      setHistoryLoading(false);
+    }
   }, [token]);
+
+  useEffect(() => { void loadHistory(); }, [loadHistory]);
 
   useEffect(() => {
     if (!file) {
@@ -223,9 +227,18 @@ export default function PatientAiScreen({ token, patient, openBooking }: { token
 
     <section className="ai-history panel">
       <div className="ai-history-head"><div><h3>Kết quả kiểm tra gần đây</h3><p>Lịch sử của {patient.fullName}</p></div>{latestShared && <span><Check /> Có kết quả đang chia sẻ</span>}</div>
-      {historyLoading && <div className="ai-history-empty" role="status" aria-live="polite">Đang tải các kết quả đã lưu...</div>}
-      {!historyLoading && historyError && <div className="ai-history-empty error" role="alert">Không thể tải lịch sử: {historyError}</div>}
-      {!historyLoading && !historyError && history.length === 0 && <div className="ai-history-empty">Chưa có kết quả AI nào được lưu.</div>}
+      {historyLoading && <StateSkeleton rows={2} label="Đang tải kết quả kiểm tra da" />}
+      {!historyLoading && historyError && <ErrorState title="Không thể tải kết quả đã lưu" description={historyError} retry={() => void loadHistory()} />}
+      {!historyLoading && !historyError && history.length === 0 && <EmptyState
+        icon={ImagePlus}
+        title="Chưa có kết quả kiểm tra da"
+        description="Chọn một ảnh rõ nét để bắt đầu. Kết quả chỉ mang tính tham khảo và không thay thế kết luận của bác sĩ."
+        action={{
+          label: "Chọn ảnh để kiểm tra",
+          onClick: () => document.querySelector<HTMLInputElement>(".ai-intake-file-input")?.click(),
+        }}
+        note="Ảnh JPEG, PNG hoặc WebP, tối đa 10 MB."
+      />}
       {!historyLoading && !historyError && history.length > 0 && <div className="ai-history-list">{history.map(item => <article key={item.id}><div className={`ai-history-mark ${item.uncertain ? "uncertain" : ""}`}><BrainCircuit /></div><div><small>{new Date(item.createdAt).toLocaleString("vi-VN")}</small><b>{patientAiLabel(item.predictedLabel)}</b><p>Mức tương đồng mô hình {formatAiPercentage(item.confidence)} · {item.modelVersion}</p></div><div className="ai-history-actions"><button type="button" className={item.sharedWithDoctor ? "shared" : ""} onClick={() => changeSharing(item, !item.sharedWithDoctor)}>{item.sharedWithDoctor ? "Đang chia sẻ" : "Chia sẻ khi đặt lịch"}</button><button type="button" className="ai-history-book" onClick={() => book(item)}><CalendarDays /> Đặt lịch</button><button type="button" className={`ai-delete ${confirmDelete === item.id ? "confirm" : ""}`} aria-label={confirmDelete === item.id ? "Xác nhận xóa kết quả AI" : "Xóa kết quả AI"} aria-pressed={confirmDelete === item.id} onClick={() => remove(item)}><Trash2 />{confirmDelete === item.id && <span>Xác nhận xóa</span>}</button></div></article>)}</div>}
     </section>
   </div>;

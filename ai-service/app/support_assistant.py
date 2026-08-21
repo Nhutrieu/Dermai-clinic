@@ -165,6 +165,26 @@ def classify_support_request(question: str) -> SupportDecision:
             "Bệnh nhân mô tả dấu hiệu cần ưu tiên an toàn; không xử lý y khoa qua chat.",
         )
 
+    # A request to choose a suitable doctor is different from asking how to
+    # operate the booking form. The appointment service will compare the care
+    # topic with real specialty and biography data from doctor-service.
+    doctor_recommendation = _contains(normalized, (
+        "nen chon bac si", "chon bac si nao", "bac si nao phu hop",
+        "goi y bac si", "tu van bac si", "nen kham bac si nao",
+    ))
+    dermatology_topic = _contains(normalized, (
+        "nam da", "nam", "mun", "trung ca", "viem da", "di ung",
+        "me day", "vay nen", "eczema", "cham", "sac to", "toc", "mong",
+    ))
+    if doctor_recommendation and dermatology_topic:
+        return SupportDecision(
+            "DOCTOR_RECOMMENDATION",
+            "Mình đang đối chiếu nhu cầu của bạn với chuyên môn và mô tả hồ sơ bác sĩ tại phòng khám.",
+            False,
+            "Gợi ý bác sĩ dựa trên hồ sơ chuyên môn đang hoạt động tại phòng khám.",
+            0.95,
+        )
+
     personal_appointment = _contains(normalized, ("lich cua toi", "toi co lich", "lich da dat", "trang thai lich"))
     doctor_reference = re.search(r"(?<!\w)(?:bac si|bs\.?)\b", normalized) is not None
     availability_wording = _contains(normalized, (
@@ -341,6 +361,20 @@ def classify_support_request(question: str) -> SupportDecision:
             "Giá khám cơ bản được hiển thị theo từng bác sĩ ở danh sách và phần xem lại trước khi xác nhận. Giá được chốt tại thời điểm đặt và thanh toán trực tiếp tại phòng khám.",
             False,
             "Hỏi về giá khám cơ bản.",
+        )
+
+    if _contains(normalized, (
+        "thong tin bac si", "thong tin ve bac si", "gioi thieu bac si",
+        "ho so bac si", "cho toi thong tin bac si", "cho toi thong tin ve bac si",
+    )):
+        return SupportDecision(
+            "DOCTOR_INFORMATION",
+            "Mình đang tra cứu hồ sơ bác sĩ đang hoạt động tại phòng khám.",
+            False,
+            "Hỏi thông tin hồ sơ bác sĩ.",
+            0.96,
+            False,
+            doctor_name,
         )
 
     if _contains(normalized, ("tim bac si", "bac si nao", "xem bac si", "danh sach bac si", "chuyen mon bac si")):

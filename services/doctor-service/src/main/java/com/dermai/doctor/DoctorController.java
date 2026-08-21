@@ -11,7 +11,7 @@ public class DoctorController{
  record ScheduleBody(@Min(1) @Max(7) short weekday,@NotNull LocalTime startTime,@NotNull LocalTime endTime,@Min(10) @Max(120) int slotMinutes){}
  record LeaveBody(@NotNull Instant startAt,@NotNull Instant endAt,@Size(max=250) String reason){}
  record BioBody(@Size(max=1200) String bio){}
- record SchedulingDoctor(UUID id,UUID identityId,String fullName,String specialtyCode,int experienceYears,BigDecimal consultationFee,List<WorkSchedule> workSchedules,List<SchedulingLeave> leavePeriods){}
+ record SchedulingDoctor(UUID id,UUID identityId,String fullName,String specialtyCode,int experienceYears,String certificateNo,BigDecimal consultationFee,String bio,List<WorkSchedule> workSchedules,List<SchedulingLeave> leavePeriods){}
  record SchedulingLeave(Instant startAt,Instant endAt){}
  @GetMapping List<Doctor> list(@RequestParam(required=false) String specialty){return specialty==null?doctors.findAll():doctors.findBySpecialtyCodeAndActiveTrue(specialty);}
  @GetMapping("/me") Doctor me(@RequestHeader("X-User-Id") UUID identity,@RequestHeader("X-User-Role") String role){require(role,"DOCTOR");return doctors.findByIdentityId(identity).orElseThrow(()->new ResponseStatusException(HttpStatus.NOT_FOUND,"Tài khoản chưa có hồ sơ bác sĩ"));}
@@ -31,7 +31,7 @@ public class DoctorController{
  @GetMapping("/me/schedule") Map<String,Object> mySchedule(@RequestHeader("X-User-Id") UUID identity,@RequestHeader("X-User-Role") String role){require(role,"DOCTOR");var d=doctors.findByIdentityId(identity).orElseThrow(()->new ResponseStatusException(HttpStatus.NOT_FOUND));return Map.of("workSchedules",schedules.findByDoctorId(d.id),"leavePeriods",leaves.findByDoctorId(d.id));}
  @GetMapping("/scheduling-data") List<SchedulingDoctor> schedulingData(@RequestHeader("X-User-Role") String role){
   requireAny(role,"PATIENT","RECEPTIONIST","DOCTOR","ADMIN");
-  return doctors.findAll().stream().filter(d->d.active).map(d->new SchedulingDoctor(d.id,d.identityId,d.fullName,d.specialtyCode,d.experienceYears,d.consultationFee,schedules.findByDoctorId(d.id),leaves.findByDoctorId(d.id).stream().map(x->new SchedulingLeave(x.startAt,x.endAt)).toList())).toList();
+  return doctors.findAll().stream().filter(d->d.active).map(d->new SchedulingDoctor(d.id,d.identityId,d.fullName,d.specialtyCode,d.experienceYears,d.certificateNo,d.consultationFee,d.bio,schedules.findByDoctorId(d.id),leaves.findByDoctorId(d.id).stream().map(x->new SchedulingLeave(x.startAt,x.endAt)).toList())).toList();
  }
  @PostMapping ResponseEntity<Doctor> create(@RequestHeader("X-User-Role") String role,@Valid @RequestBody DoctorBody b){
   require(role,"ADMIN");if(doctors.findByIdentityId(b.identityId()).isPresent())throw new ResponseStatusException(HttpStatus.CONFLICT,"Tài khoản đã có hồ sơ bác sĩ");var d=new Doctor(b.identityId(),b.fullName(),b.specialtyCode());d.experienceYears=b.experienceYears();d.certificateNo=b.certificateNo();d.consultationFee=normalizeFee(b.consultationFee());var saved=doctors.save(d);profileUpdates.broadcastUpdated(saved.id);return ResponseEntity.status(201).body(saved);

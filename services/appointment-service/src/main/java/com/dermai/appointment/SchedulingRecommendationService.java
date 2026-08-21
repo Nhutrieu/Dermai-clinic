@@ -116,6 +116,22 @@ public class SchedulingRecommendationService {
   return new AvailabilityLookup(available.isEmpty()?"NO_SLOTS":"FOUND",doctor.fullName(),date,available,List.of());
  }
 
+ public DoctorProfileLookup lookupDoctorProfiles(String doctorName,String authorization,String role){
+  var all=loadDoctors(authorization,role);
+  if(doctorName==null||doctorName.isBlank())
+   return new DoctorProfileLookup("ALL",all.stream().map(this::toDoctorProfile).toList(),List.of());
+  String needle=foldName(doctorName);
+  var exact=all.stream().filter(item->foldName(item.fullName()).equals(needle)).toList();
+  var matches=exact.isEmpty()?all.stream().filter(item->doctorNameMatches(doctorName,item.fullName())).toList():exact;
+  if(matches.isEmpty())return new DoctorProfileLookup("NOT_FOUND",List.of(),all.stream().map(DoctorData::fullName).toList());
+  if(matches.size()>1)return new DoctorProfileLookup("AMBIGUOUS",List.of(),matches.stream().map(DoctorData::fullName).toList());
+  return new DoctorProfileLookup("FOUND",List.of(toDoctorProfile(matches.get(0))),List.of());
+ }
+
+ private DoctorProfile toDoctorProfile(DoctorData doctor){
+  return new DoctorProfile(doctor.id(),doctor.fullName(),doctor.specialtyCode(),doctor.experienceYears(),doctor.certificateNo(),doctor.consultationFee(),doctor.bio());
+ }
+
  static boolean doctorNameMatches(String requestedName,String actualName){
   String requested=foldName(requestedName),actual=foldName(actualName);
   if(requested.isBlank()||actual.isBlank())return false;
@@ -175,7 +191,9 @@ public class SchedulingRecommendationService {
  public record Availability(List<AvailabilityItem> items,String timezone){}
  public record AvailabilityLookup(String status,String doctorName,LocalDate date,List<AvailabilityItem> items,List<String> candidates){}
  public record AvailabilityItem(UUID doctorId,UUID doctorIdentityId,String doctorName,String specialtyCode,Instant startAt,Instant endAt,String status,UUID holdId,Instant holdExpiresAt){}
- record DoctorData(UUID id,UUID identityId,String fullName,String specialtyCode,int experienceYears,BigDecimal consultationFee,List<ScheduleData> workSchedules,List<LeaveData> leavePeriods){}
+ public record DoctorProfile(UUID doctorId,String doctorName,String specialtyCode,int experienceYears,String certificateNo,BigDecimal consultationFee,String bio){}
+ public record DoctorProfileLookup(String status,List<DoctorProfile> profiles,List<String> candidates){}
+ record DoctorData(UUID id,UUID identityId,String fullName,String specialtyCode,int experienceYears,String certificateNo,BigDecimal consultationFee,String bio,List<ScheduleData> workSchedules,List<LeaveData> leavePeriods){}
  record ScheduleData(UUID id,UUID doctorId,short weekday,LocalTime startTime,LocalTime endTime,int slotMinutes){}
  record LeaveData(Instant startAt,Instant endAt){}
  public static class SlotUnavailableException extends RuntimeException{SlotUnavailableException(String message){super(message);}}

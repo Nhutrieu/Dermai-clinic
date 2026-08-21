@@ -1,6 +1,7 @@
 import { FormEvent, useEffect, useRef, useState } from "react";
-import { CalendarCheck, CircleCheck, Headphones, MessageCircle, ShieldCheck, UserCheck, UserMinus } from "lucide-react";
+import { CalendarCheck, CircleCheck, Headphones, MessageCircle, MessagesSquare, ShieldCheck, UserCheck, UserMinus } from "lucide-react";
 import { request } from "../../core/api";
+import { EmptyState } from "../../components/Ui";
 import { enableChimeNotifications, subscribeRealtime, playChimeNotification } from "../../core/realtime";
 import type { Appointment, AvailabilitySlot, Doctor, Patient, StaffDirectoryEntry, SupportConversation, SupportMessage, Tokens } from "../../core/types";
 import { newIncomingSupportMessages } from "./supportMessageModel";
@@ -351,7 +352,7 @@ export default function SupportChat({ session }: { session: Tokens }) {
             </header>
 
             {staffViewer && <div className="support-conversations">
-                {ids.length === 0 ? <small>Chưa có hội thoại</small> : ids.map(id => {
+                {ids.length === 0 ? <EmptyState compact className="support-conversation-empty" icon={MessagesSquare} title="Chưa có yêu cầu hỗ trợ" description="Các cuộc trò chuyện được chuyển tiếp sẽ xuất hiện tại đây." /> : ids.map(id => {
                     const state = conversationStates.find(item => item.patientIdentityId === id);
                     const mine = receptionist && state?.assignedReceptionistIdentityId === currentIdentityId;
                     return <button className={conversation === id ? "active" : ""} onClick={() => setConversation(id)} key={id}>

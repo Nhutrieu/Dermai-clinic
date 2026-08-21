@@ -1,0 +1,202 @@
+.app-state {
+  --state-accent: var(--color-primary);
+  display: grid;
+  justify-items: center;
+  gap: var(--space-4);
+  min-height: 248px;
+  padding: calc(var(--space-6) + var(--space-2)) var(--space-6);
+  border: 1px dashed var(--color-border-strong);
+  border-radius: var(--radius-panel);
+  color: var(--color-text-secondary);
+  background: color-mix(in srgb, var(--color-surface-subtle) 72%, var(--color-surface));
+  text-align: center;
+  align-content: center;
+}
+
+.app-state.is-compact {
+  min-height: 164px;
+  gap: var(--space-3);
+  padding: var(--space-6) var(--space-4);
+}
+
+.app-state-illustration {
+  position: relative;
+  display: grid;
+  width: 68px;
+  height: 68px;
+  place-items: center;
+  border: 1px solid color-mix(in srgb, var(--state-accent) 22%, var(--color-border));
+  border-radius: 50%;
+  color: var(--state-accent);
+  background: color-mix(in srgb, var(--state-accent) 8%, var(--color-surface));
+}
+
+.app-state-illustration::after {
+  position: absolute;
+  right: 5px;
+  bottom: 5px;
+  width: 13px;
+  height: 13px;
+  border: 3px solid var(--color-surface);
+  border-radius: 50%;
+  background: var(--color-accent);
+  content: "";
+}
+
+.app-state.is-compact .app-state-illustration {
+  width: 54px;
+  height: 54px;
+}
+
+.app-state-illustration svg {
+  width: 29px;
+  height: 29px;
+  stroke-width: 1.7;
+}
+
+.app-state-copy {
+  max-width: 540px;
+}
+
+.app-state-copy h3 {
+  margin: 0;
+  color: var(--color-ink);
+  font-family: Newsreader, serif;
+  font-size: clamp(19px, 2vw, 23px);
+  font-weight: 650;
+  line-height: 1.2;
+}
+
+.app-state-copy p {
+  margin: var(--space-2) 0 0;
+  color: var(--color-text-secondary);
+  font-size: 15px;
+  line-height: 1.6;
+}
+
+.app-state-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: var(--space-2);
+}
+
+.app-state-actions button {
+  min-height: 44px;
+  padding: 0 var(--space-5);
+  border-radius: var(--radius-control);
+  font: inherit;
+  font-size: 14px;
+  font-weight: 750;
+  cursor: pointer;
+}
+
+.app-state-primary {
+  border: 1px solid var(--color-primary);
+  color: var(--color-surface);
+  background: var(--color-primary);
+}
+
+.app-state-secondary {
+  border: 1px solid var(--color-border-strong);
+  color: var(--color-primary);
+  background: var(--color-surface);
+}
+
+.app-state-actions button:hover {
+  transform: translateY(-1px);
+}
+
+.app-state-actions button:focus-visible {
+  outline: none;
+  box-shadow: var(--focus-ring);
+}
+
+.app-state-note {
+  max-width: 520px;
+  color: var(--color-muted);
+  font-size: 13px;
+  line-height: 1.45;
+}
+
+.app-state-error {
+  --state-accent: var(--color-danger);
+  border-style: solid;
+  border-color: color-mix(in srgb, var(--color-danger) 28%, var(--color-border));
+  background: var(--color-danger-surface);
+}
+
+.app-state-skeleton {
+  display: grid;
+  gap: var(--space-3);
+  padding: var(--space-5) 0;
+}
+
+.app-state-skeleton-row {
+  display: grid;
+  grid-template-columns: 48px minmax(0, 1fr);
+  gap: var(--space-3);
+  min-height: 76px;
+  align-items: center;
+  padding: var(--space-3);
+  border-bottom: 1px solid var(--color-border);
+}
+
+.app-state-skeleton-row > span,
+.app-state-skeleton-row i {
+  display: block;
+  border-radius: var(--radius-control);
+  background: linear-gradient(90deg, var(--color-disabled-surface), var(--color-surface-subtle), var(--color-disabled-surface));
+  background-size: 200% 100%;
+  animation: app-state-shimmer 1.35s ease-in-out infinite;
+}
+
+.app-state-skeleton-row > span {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+}
+
+.app-state-skeleton-row div {
+  display: grid;
+  gap: 9px;
+}
+
+.app-state-skeleton-row i:first-child {
+  width: min(260px, 68%);
+  height: 15px;
+}
+
+.app-state-skeleton-row i:last-child {
+  width: min(420px, 92%);
+  height: 11px;
+}
+
+@keyframes app-state-shimmer {
+  to { background-position: -200% 0; }
+}
+
+@media (max-width: 560px) {
+  .app-state {
+    min-height: 210px;
+    padding: var(--space-6) var(--space-4);
+  }
+
+  .app-state.is-compact { min-height: 150px; }
+  .app-state-copy p { font-size: 14px; }
+  .app-state-actions { width: 100%; }
+  .app-state-actions button { flex: 1 1 150px; }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .app-state { animation: app-state-enter 180ms ease-out both; }
+  @keyframes app-state-enter {
+    from { opacity: 0; transform: translateY(6px); }
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .app-state-skeleton-row > span,
+  .app-state-skeleton-row i { animation: none; }
+  .app-state-actions button:hover { transform: none; }
+}

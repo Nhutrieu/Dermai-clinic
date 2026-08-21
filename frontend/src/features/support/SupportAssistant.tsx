@@ -1,5 +1,5 @@
 import { FormEvent, useEffect, useRef, useState } from "react";
-import { ArrowRight, Bot } from "lucide-react";
+import { ArrowRight, Bot, CalendarDays, CircleHelp, ScanSearch } from "lucide-react";
 import { request } from "../../core/api";
 import type { SupportMessage } from "../../core/types";
 
@@ -25,6 +25,7 @@ export default function SupportAssistant({
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
   const messageListRef = useRef<HTMLDivElement>(null);
+  const questionRef = useRef<HTMLTextAreaElement>(null);
   // Keep the human-support history in the same thread when a resolved request
   // returns to AI-first mode; the patient never has to reconstruct the context.
   const transcript = messages.filter(message => ["PATIENT", "AI", "SYSTEM", "RECEPTIONIST"].includes(message.senderRole));
@@ -64,9 +65,22 @@ export default function SupportAssistant({
     }
   }
 
+  function useSuggestion(value: string) {
+    setQuestion(value);
+    window.requestAnimationFrame(() => questionRef.current?.focus());
+  }
+
   return <div className="support-ai-shell">
     <div ref={messageListRef} className="support-messages support-ai-messages" role="log" aria-live="polite" aria-label="Nội dung trao đổi với trợ lý hỗ trợ">
-      {transcript.length === 0 && <article className="theirs support-ai-message"><b>Trợ lý DermAI</b><p>Xin chào! Mình có thể hướng dẫn đặt lịch, kiểm tra giờ trống, giá khám, cách dùng AI và thông tin da liễu tham khảo.</p></article>}
+      {transcript.length === 0 && <section className="support-ai-welcome" aria-labelledby="support-ai-welcome-title">
+        <span className="support-ai-welcome-icon" aria-hidden="true"><Bot /></span>
+        <div><h3 id="support-ai-welcome-title">Bạn cần hỗ trợ điều gì?</h3><p>Trợ lý DermAI có thể hướng dẫn đặt lịch, kiểm tra giờ trống, giá khám và cách sử dụng kiểm tra da bằng AI.</p></div>
+        <div className="support-ai-suggestions" aria-label="Câu hỏi gợi ý">
+          <button type="button" onClick={() => useSuggestion("Tôi muốn đặt lịch khám")}><CalendarDays aria-hidden="true" />Tôi muốn đặt lịch</button>
+          <button type="button" onClick={() => useSuggestion("Làm sao để đổi lịch khám?")}><CircleHelp aria-hidden="true" />Làm sao để đổi lịch?</button>
+          <button type="button" onClick={() => useSuggestion("AI đánh giá da hoạt động thế nào?")}><ScanSearch aria-hidden="true" />AI đánh giá da hoạt động thế nào?</button>
+        </div>
+      </section>}
       {transcript.map(message => <article className={message.senderRole === "PATIENT" ? "mine" : message.senderRole === "SYSTEM" ? "system" : "theirs support-ai-message"} key={message.id}>
         <b>{message.senderRole === "PATIENT" ? "Bạn" : message.senderRole === "SYSTEM" ? "Hệ thống" : message.senderRole === "RECEPTIONIST" ? "Lễ tân DermAI" : "Trợ lý DermAI"}</b>
         <p>{message.body}</p>
@@ -77,7 +91,7 @@ export default function SupportAssistant({
 
     <form className="support-ai-form" onSubmit={send}>
       <label className="sr-only" htmlFor="support-ai-question">Nội dung cần hỗ trợ</label>
-      <textarea id="support-ai-question" aria-keyshortcuts="Enter" title="Enter để gửi, Shift + Enter để xuống dòng" maxLength={1000} value={question} onChange={event => setQuestion(event.target.value)} onKeyDown={event => {
+      <textarea ref={questionRef} id="support-ai-question" aria-keyshortcuts="Enter" title="Enter để gửi, Shift + Enter để xuống dòng" maxLength={1000} value={question} onChange={event => setQuestion(event.target.value)} onKeyDown={event => {
         // Follow familiar chat behavior while keeping Shift+Enter available
         // for a deliberate line break and respecting Vietnamese IME input.
         if (event.key === "Enter" && !event.shiftKey && !event.nativeEvent.isComposing) {

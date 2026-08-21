@@ -247,6 +247,37 @@ def test_doctor_availability_removes_polite_suffixes_from_name():
     assert friendly.doctor_name == "Vương"
 
 
+def test_general_doctor_information_request_stays_with_assistant():
+    decision = classify_support_request("Cho tôi thông tin về bác sĩ")
+
+    assert decision.category == "DOCTOR_INFORMATION"
+    assert decision.requires_handoff is False
+    assert decision.doctor_name is None
+
+
+def test_specific_doctor_information_extracts_doctor_name():
+    decision = classify_support_request("Cho tôi thông tin về bác sĩ Bình")
+
+    assert decision.category == "DOCTOR_INFORMATION"
+    assert decision.requires_handoff is False
+    assert decision.doctor_name == "Bình"
+
+
+def test_condition_based_doctor_question_is_not_mistaken_for_booking_guide():
+    decision = classify_support_request("Tôi đang bị nấm da thì nên chọn bác sĩ nào phù hợp")
+
+    assert decision.category == "DOCTOR_RECOMMENDATION"
+    assert decision.requires_handoff is False
+    assert decision.needs_clarification is False
+
+
+def test_acne_doctor_recommendation_stays_with_assistant():
+    decision = classify_support_request("Mình bị mụn viêm, bác sĩ nào phù hợp?")
+
+    assert decision.category == "DOCTOR_RECOMMENDATION"
+    assert decision.requires_handoff is False
+
+
 def test_dissatisfaction_escalates_without_another_prompt():
     decision = classify_support_request("Tôi đã nói rồi, sao vẫn không được?")
 

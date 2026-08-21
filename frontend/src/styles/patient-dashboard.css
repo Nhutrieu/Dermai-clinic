@@ -1,11 +1,20 @@
 /* Patient overview only. Booking and the other role workspaces keep their existing styles. */
+.role-patient > .app-main {
+  background: var(--patient-canvas);
+}
+
+.role-patient .app-topbar {
+  border-bottom-color: var(--patient-border);
+  background: color-mix(in srgb, var(--patient-surface) 94%, transparent);
+}
+
 .patient-dashboard-active > .app-main {
-  background: var(--color-canvas);
+  background: var(--patient-canvas);
 }
 
 .patient-dashboard-active .app-topbar {
-  border-bottom-color: var(--color-border);
-  background: color-mix(in srgb, var(--color-canvas) 94%, transparent);
+  border-bottom-color: var(--patient-border);
+  background: color-mix(in srgb, var(--patient-surface) 94%, transparent);
 }
 
 .patient-dashboard-active .app-topbar h1 {
@@ -25,8 +34,8 @@
 
 .patient-dashboard-active .app-today {
   min-height: var(--control-min-height);
-  border-color: var(--color-border);
-  background: var(--color-surface);
+  border-color: var(--patient-border);
+  background: var(--patient-surface);
 }
 
 .patient-dashboard-active .app-today > i {
@@ -44,7 +53,7 @@
 .patient-dashboard {
   width: min(100%, var(--patient-dashboard-content-width));
   margin: 0 auto;
-  padding-bottom: 96px;
+  padding: 0 0 96px;
   color: var(--color-ink);
   font-size: 15px;
 }
@@ -115,7 +124,8 @@
   border: 1px solid var(--color-border-strong);
   border-top: 3px solid var(--color-primary);
   border-radius: var(--radius-panel);
-  background: var(--color-surface);
+  background: var(--patient-surface);
+  box-shadow: 0 8px 24px rgb(13 68 57 / 0.06);
 }
 
 .patient-dashboard-next::after {
@@ -152,6 +162,8 @@
   align-items: center;
   justify-content: center;
   text-align: center;
+  border-radius: var(--radius-control) 0 0 var(--radius-control);
+  background: var(--patient-surface-muted);
 }
 
 .patient-dashboard-date-block span,
@@ -390,9 +402,21 @@
 .patient-dashboard-profile {
   margin-top: var(--patient-dashboard-section-gap);
   padding: var(--space-6);
-  border: 1px solid var(--color-border);
+  border: 1px solid var(--patient-border);
   border-radius: var(--radius-panel);
-  background: var(--color-surface);
+  background: var(--patient-surface);
+}
+
+.patient-dashboard-tasks {
+  background: var(--patient-surface-warm);
+}
+
+.patient-dashboard-medical {
+  background: var(--patient-surface-muted);
+}
+
+.patient-dashboard-quick {
+  background: var(--patient-surface);
 }
 
 .patient-dashboard-task-list {
@@ -472,9 +496,17 @@
 .patient-dashboard-notifications {
   min-width: 0;
   padding: var(--space-6);
-  border: 1px solid var(--color-border);
+  border: 1px solid var(--patient-border);
   border-radius: var(--radius-panel);
-  background: var(--color-surface);
+  background: var(--patient-surface);
+}
+
+.patient-dashboard-ai {
+  background: var(--patient-surface-muted);
+}
+
+.patient-dashboard-notifications {
+  background: var(--patient-surface-warm);
 }
 
 .patient-dashboard-ai-summary {

@@ -8,6 +8,7 @@ import AppointmentList from "../../components/AppointmentList";
 import AccessibleDialog from "../../components/AccessibleDialog";
 
 const ACTIVE_UPCOMING_STATUSES = new Set(["PROPOSED", "PENDING", "ASSIGNED", "CONFIRMED", "CHECKED_IN", "IN_PROGRESS"]);
+const HOLD_DURATION_SECONDS = 5 * 60;
 type Feedback = { tone: "info" | "success" | "error"; text: string };
 type BookingDialogProps = {
     title: string;
@@ -114,7 +115,11 @@ export default function PatientAppointmentsView({
 
     const doctor = doctors.find(item => item.id === doctorId);
     const upcomingCount = activeUpcoming(items).length;
-    const holdSeconds = holdUntil ? Math.max(0, Math.ceil((new Date(holdUntil).getTime() - holdClock) / 1000)) : 0;
+    // A hold always lasts five minutes. Clamp the display so a stale render
+    // clock or a small client/server clock skew can never show more than 5:00.
+    const holdSeconds = holdUntil
+        ? Math.min(HOLD_DURATION_SECONDS, Math.max(0, Math.ceil((new Date(holdUntil).getTime() - holdClock) / 1000)))
+        : 0;
     const holdCountdown = Math.floor(holdSeconds / 60) + ":" + String(holdSeconds % 60).padStart(2, "0");
 
     async function loadDoctors() {
@@ -181,6 +186,7 @@ export default function PatientAppointmentsView({
             if (own) {
                 setSelected(own);
                 setHoldId(own.holdId || "");
+                setHoldClock(Date.now());
                 setHoldUntil(own.holdExpiresAt || "");
             } else if (selected && !result.items.some(item => item.startAt === selected.startAt && item.status === "AVAILABLE")) {
                 setSelected(null);
@@ -280,6 +286,8 @@ export default function PatientAppointmentsView({
             });
             setSelected({ ...slot, status: "HELD_BY_YOU", holdId: held.id, holdExpiresAt: held.holdExpiresAt });
             setHoldId(held.id);
+            // Reset the UI clock at the moment the server creates this hold.
+            setHoldClock(Date.now());
             setHoldUntil(held.holdExpiresAt || "");
             // Show the exact server-side quote retained by this hold, even if Admin changes the doctor's price meanwhile.
             setHeldFee(held.consultationFeeSnapshot ?? null);
@@ -729,6 +737,11 @@ export default function PatientAppointmentsView({
                     cancel={cancel}
                     hide={hide}
                     patientName={patient.fullName}
+                    onBookNew={() => {
+                        const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+                        document.querySelector(".booking-page-heading")?.scrollIntoView({ behavior: reducedMotion ? "auto" : "smooth", block: "start" });
+                        window.setTimeout(() => document.querySelector<HTMLButtonElement>(".booking-doctor-selector button")?.focus(), 250);
+                    }}
                 />
             </div>
         </>

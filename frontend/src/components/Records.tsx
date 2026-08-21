@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
-import { CalendarDays, ChevronDown, ChevronUp, Printer, Search } from "lucide-react";
+import { CalendarDays, ChevronDown, ChevronUp, FileText, Printer, Search, SearchX } from "lucide-react";
 import type { MedicalRecord, Patient, Prescription } from "../core/types";
-import { State } from "./Ui";
+import { EmptyState } from "./Ui";
 import { PrescriptionPdfModal } from "./PrescriptionPdfModal";
 
 const RECORD_PAGE_SIZE = 5;
@@ -108,9 +108,14 @@ export function RecordList({ records, patients }: { records: MedicalRecord[]; pa
             </div>
 
             {records.length === 0 ? (
-                <State text="Chưa có hồ sơ y khoa." />
+                <EmptyState icon={FileText} title="Chưa có hồ sơ y khoa đã ký" description="Hồ sơ sẽ xuất hiện sau khi bác sĩ hoàn tất lượt khám và ký nội dung chuyên môn." />
             ) : filtered.length === 0 ? (
-                <State text="Không tìm thấy hồ sơ phù hợp." />
+                <EmptyState
+                    icon={SearchX}
+                    title="Không tìm thấy hồ sơ phù hợp"
+                    description="Hãy thử từ khóa khác hoặc mở rộng khoảng thời gian tìm kiếm."
+                    action={{ label: "Xóa bộ lọc", onClick: () => { setQuery(""); setPeriod("all"); setOrder("newest"); } }}
+                />
             ) : (
                 <>
                 {visibleRecords.map(r => {
@@ -214,7 +219,7 @@ export function PrescriptionList({ prescriptions, token }: { prescriptions: Pres
         <section className="panel records">
             <h2>Đơn thuốc đã ký</h2>
             {prescriptions.length === 0 ? (
-                <State text="Chưa có đơn thuốc trong database." />
+                <EmptyState compact icon={FileText} title="Chưa có đơn thuốc" description="Đơn thuốc điện tử đã được bác sĩ ký sẽ xuất hiện tại đây." />
             ) : (
                 prescriptions.map(rx => (
                     <article key={rx.id}>

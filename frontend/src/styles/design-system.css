@@ -52,6 +52,12 @@
   --patient-dashboard-section-gap: var(--space-5);
   --patient-dashboard-motion-duration: 360ms;
   --patient-dashboard-motion-ease: cubic-bezier(0.22, 1, 0.36, 1);
+  /* Patient workspaces use layered clinical neutrals instead of white-on-white panels. */
+  --patient-canvas: #eaf2ee;
+  --patient-surface: #fffdf8;
+  --patient-surface-muted: #edf5f0;
+  --patient-surface-warm: #f8f3e9;
+  --patient-border: #cbdad4;
   /* Patient AI intake reuses the clinic palette and only defines layout/motion semantics. */
   --patient-ai-content-width: 1120px;
   --patient-ai-motion-duration: 240ms;

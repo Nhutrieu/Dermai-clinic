@@ -102,6 +102,50 @@ class SupportAssistantServiceTest {
   assertThat(result.answer()).contains("09:00").contains("Bác sĩ Bình");
  }
 
+ @Test void doctorInformationUsesActiveDoctorProfilesFromDoctorService(){
+  var fixture=new Fixture();var patient=UUID.randomUUID();
+  var binh=new SchedulingRecommendationService.DoctorProfile(UUID.randomUUID(),"Bình","DA LIỄU TỔNG QUÁT",6,"CCHN-BINH-001",new java.math.BigDecimal("150000"),"Khám và điều trị các bệnh da liễu thường gặp.");
+  var linh=new SchedulingRecommendationService.DoctorProfile(UUID.randomUUID(),"Linh","DA LIỄU - ĐIỀU TRỊ MỤN",6,"CCHN-LINH-001",new java.math.BigDecimal("200000"),"Điều trị mụn và chăm sóc da.");
+  when(fixture.ai.classify(anyString())).thenReturn(new SupportAiClient.Decision("Đang tra cứu","DOCTOR_INFORMATION",false,"Tra hồ sơ bác sĩ",.96,false,null,null,null));
+  when(fixture.conversations.lastIntent(patient)).thenReturn(null);
+  when(fixture.scheduling.lookupDoctorProfiles(null,"Bearer token","PATIENT")).thenReturn(new SchedulingRecommendationService.DoctorProfileLookup("ALL",List.of(binh,linh),List.of()));
+  when(fixture.conversations.recordAiTurn(eq(patient),eq("DOCTOR_INFORMATION"),anyDouble(),eq(0),eq(false),anyString(),isNull())).thenReturn(fixture.state(patient,"AI_ACTIVE"));
+
+  var result=fixture.service.process(patient,"PATIENT","Bearer token","Cho tôi thông tin về bác sĩ");
+
+  assertThat(result.answer()).contains("Bác sĩ Bình").contains("150.000 đ").contains("Bác sĩ Linh").contains("200.000 đ");
+  assertThat(result.escalated()).isFalse();
+ }
+
+ @Test void specificDoctorInformationIncludesProfileDetails(){
+  var fixture=new Fixture();var patient=UUID.randomUUID();
+  var doctor=new SchedulingRecommendationService.DoctorProfile(UUID.randomUUID(),"Bình","DA LIỄU TỔNG QUÁT",6,"CCHN-BINH-001",new java.math.BigDecimal("150000"),"Khám và điều trị các bệnh da liễu thường gặp.");
+  when(fixture.ai.classify(anyString())).thenReturn(new SupportAiClient.Decision("Đang tra cứu","DOCTOR_INFORMATION",false,"Tra hồ sơ bác sĩ",.96,false,"Bình",null,null));
+  when(fixture.conversations.lastIntent(patient)).thenReturn(null);
+  when(fixture.scheduling.lookupDoctorProfiles("Bình","Bearer token","PATIENT")).thenReturn(new SchedulingRecommendationService.DoctorProfileLookup("FOUND",List.of(doctor),List.of()));
+  when(fixture.conversations.recordAiTurn(eq(patient),eq("DOCTOR_INFORMATION"),anyDouble(),eq(0),eq(false),anyString(),isNull())).thenReturn(fixture.state(patient,"AI_ACTIVE"));
+
+  var result=fixture.service.process(patient,"PATIENT","Bearer token","Cho tôi thông tin về bác sĩ Bình");
+
+  assertThat(result.answer()).contains("Bác sĩ Bình").contains("6 năm kinh nghiệm").contains("CCHN-BINH-001").contains("150.000 đ").contains("Khám và điều trị");
+  assertThat(result.escalated()).isFalse();
+ }
+
+ @Test void fungalSkinQuestionRecommendsDoctorFromRealProfileData(){
+  var fixture=new Fixture();var patient=UUID.randomUUID();
+  var binh=new SchedulingRecommendationService.DoctorProfile(UUID.randomUUID(),"Bình","DA LIỄU TỔNG QUÁT",6,"CCHN-BINH-001",new java.math.BigDecimal("150000"),"Khám mụn, viêm da, dị ứng, nấm da và rối loạn sắc tố.");
+  var linh=new SchedulingRecommendationService.DoctorProfile(UUID.randomUUID(),"Linh","DA LIỄU - ĐIỀU TRỊ MỤN",6,"CCHN-LINH-001",new java.math.BigDecimal("200000"),"Điều trị mụn trứng cá, mụn viêm và thâm sau mụn.");
+  when(fixture.ai.classify(anyString())).thenReturn(new SupportAiClient.Decision("Đang đối chiếu","DOCTOR_RECOMMENDATION",false,"Gợi ý bác sĩ",.95,false,null,null,null));
+  when(fixture.conversations.lastIntent(patient)).thenReturn(null);
+  when(fixture.scheduling.lookupDoctorProfiles(null,"Bearer token","PATIENT")).thenReturn(new SchedulingRecommendationService.DoctorProfileLookup("ALL",List.of(binh,linh),List.of()));
+  when(fixture.conversations.recordAiTurn(eq(patient),eq("DOCTOR_RECOMMENDATION"),anyDouble(),eq(0),eq(false),anyString(),isNull())).thenReturn(fixture.state(patient,"AI_ACTIVE"));
+
+  var result=fixture.service.process(patient,"PATIENT","Bearer token","Tôi đang bị nấm da thì nên chọn bác sĩ nào phù hợp");
+
+  assertThat(result.answer()).contains("Bác sĩ Bình").contains("nấm da").contains("không phải kết luận chẩn đoán").doesNotContain("Bác sĩ Linh");
+  assertThat(result.escalated()).isFalse();
+ }
+
  @Test void assistantCannotReplyAfterConversationWasHandedToReceptionist(){
   var fixture=new Fixture();var patient=UUID.randomUUID();
   when(fixture.conversations.aiActiveOrNew(patient)).thenReturn(false);

@@ -1,5 +1,5 @@
 import { FormEvent, useEffect, useState } from "react";
-import { CalendarDays, MessageCircle, Search, Trash2, X } from "lucide-react";
+import { CalendarDays, CheckCircle2, ChevronDown, ChevronUp, CircleAlert, MessageCircle, Search, Trash2, X } from "lucide-react";
 import { request } from "../core/api";
 import { formatVnd } from "../core/currency";
 import {
@@ -9,6 +9,7 @@ import {
 } from "../core/appointmentPolicy";
 import type { Appointment, ClinicReview, Recommendation, RecommendationResult } from "../core/types";
 import AccessibleDialog from "./AccessibleDialog";
+import { EmptyState } from "./Ui";
 
 type AppointmentListProps = {
     appointments: Appointment[];
@@ -18,9 +19,11 @@ type AppointmentListProps = {
     bookFollowUp?: (id: string, slot: Recommendation) => Promise<void>;
     hide?: (id: string) => Promise<void>;
     patientName?: string;
+    onBookNew?: () => void;
 };
 
 const PATIENT_HIDEABLE_STATUSES = new Set(["CANCELLED", "COMPLETED", "NO_SHOW"]);
+const APPOINTMENT_PAGE_SIZE = 5;
 
 export function canHideAppointmentFromHistory(status: string) {
     return PATIENT_HIDEABLE_STATUSES.has(status);
@@ -250,7 +253,7 @@ function AppointmentReviewControl({
     const [rating, setRating] = useState(5);
     const [comment, setComment] = useState("");
     const [submitted, setSubmitted] = useState(false);
-    const [message, setMessage] = useState("");
+    const [message, setMessage] = useState<{ text: string; tone: "success" | "error" } | null>(null);
 
     useEffect(() => {
         request<ClinicReview[]>("/appointments/reviews/mine", token)
@@ -268,9 +271,9 @@ function AppointmentReviewControl({
             setSubmitted(true);
             setOpen(false);
             // Patient only needs confirmation that the review was received; moderation remains internal.
-            setMessage("Cảm ơn bạn đã gửi đánh giá.");
+            setMessage({ text: "Cảm ơn bạn đã gửi đánh giá.", tone: "success" });
         } catch (cause) {
-            setMessage((cause as Error).message);
+            setMessage({ text: (cause as Error).message, tone: "error" });
         }
     }
 
@@ -303,9 +306,18 @@ function AppointmentReviewControl({
                     </div>
                 </form>
             ) : (
-                <button type="button" onClick={() => setOpen(true)}>Đánh giá phòng khám</button>
+                <button type="button" onClick={() => { setMessage(null); setOpen(true); }}>Đánh giá phòng khám</button>
             )}
-            {message && <small role="status" aria-live="polite">{message}</small>}
+            {message && (
+                <small
+                    className={"appointment-review-feedback is-" + message.tone}
+                    role={message.tone === "error" ? "alert" : "status"}
+                    aria-live="polite"
+                >
+                    {message.tone === "success" ? <CheckCircle2 aria-hidden="true" /> : <CircleAlert aria-hidden="true" />}
+                    {message.text}
+                </small>
+            )}
         </div>
     );
 }
@@ -394,12 +406,14 @@ export default function PatientAppointmentList({
     reschedule,
     bookFollowUp,
     hide,
-    patientName = "Bệnh nhân"
+    patientName = "Bệnh nhân",
+    onBookNew,
 }: AppointmentListProps) {
     const [searchKw, setSearchKw] = useState("");
     const [statusFilter, setStatusFilter] = useState("ALL");
     const [dateFilter, setDateFilter] = useState("ALL");
     const [selfServiceNow, setSelfServiceNow] = useState(Date.now());
+    const [visibleCount, setVisibleCount] = useState(APPOINTMENT_PAGE_SIZE);
 
     // Switch to receptionist support as soon as the nearest 30-minute window closes.
     useEffect(() => {
@@ -427,6 +441,11 @@ export default function PatientAppointmentList({
         if (dateFilter === "PAST" && new Date(item.startAt).getTime() >= Date.now()) return false;
         return true;
     });
+    const visibleAppointments = filtered.slice(0, visibleCount);
+    const remainingAppointments = Math.max(0, filtered.length - visibleAppointments.length);
+
+    // A new search or filter starts from a compact five-row view again.
+    useEffect(() => setVisibleCount(APPOINTMENT_PAGE_SIZE), [searchKw, statusFilter, dateFilter]);
 
     return (
         <section className="patient-appointment-history" aria-labelledby="appointment-history-title">
@@ -491,16 +510,23 @@ export default function PatientAppointmentList({
             )}
 
             {filtered.length === 0 ? (
-                <div className="appointment-empty-state">
-                    <CalendarDays aria-hidden="true" />
-                    <strong>{appointments.length === 0 ? "Bạn chưa có lịch khám" : "Không tìm thấy lịch phù hợp"}</strong>
-                    <p>{appointments.length === 0
-                        ? "Lịch sau khi xác nhận sẽ xuất hiện tại đây."
-                        : "Hãy thay đổi từ khóa hoặc bộ lọc."}</p>
-                </div>
+                <EmptyState
+                    compact
+                    icon={appointments.length === 0 ? CalendarDays : Search}
+                    title={appointments.length === 0 ? "Bạn chưa có lịch khám" : "Không tìm thấy lịch phù hợp"}
+                    description={appointments.length === 0
+                        ? "Chọn bác sĩ, ngày và khung giờ phù hợp để tạo lịch hẹn đầu tiên."
+                        : "Hãy thay đổi từ khóa hoặc xóa các bộ lọc đang áp dụng."}
+                    action={appointments.length === 0 && onBookNew
+                        ? { label: "Đặt lịch mới", onClick: onBookNew }
+                        : appointments.length > 0
+                            ? { label: "Xóa bộ lọc", onClick: () => { setSearchKw(""); setStatusFilter("ALL"); setDateFilter("ALL"); } }
+                            : undefined}
+                />
             ) : (
-                <div className="appointment-history-list">
-                    {filtered.map(item => {
+                <>
+                <div className="appointment-history-list" id="patient-appointment-history-list">
+                    {visibleAppointments.map(item => {
                         const canSelfManage = canPatientSelfManageAppointment(item.status, item.createdAt, selfServiceNow);
                         const hasSelfServiceAction = ["PENDING", "ASSIGNED", "CONFIRMED"].includes(item.status);
                         return (
@@ -554,6 +580,25 @@ export default function PatientAppointmentList({
                         );
                     })}
                 </div>
+                {filtered.length > APPOINTMENT_PAGE_SIZE && (
+                    <div className="appointment-history-pagination" aria-live="polite">
+                        <span>Đang hiển thị {visibleAppointments.length}/{filtered.length} lịch</span>
+                        <button
+                            type="button"
+                            aria-controls="patient-appointment-history-list"
+                            aria-expanded={remainingAppointments === 0}
+                            onClick={() => setVisibleCount(current => remainingAppointments > 0
+                                ? Math.min(current + APPOINTMENT_PAGE_SIZE, filtered.length)
+                                : APPOINTMENT_PAGE_SIZE)}
+                        >
+                            {remainingAppointments > 0
+                                ? `Xem thêm ${Math.min(APPOINTMENT_PAGE_SIZE, remainingAppointments)} lịch`
+                                : "Thu gọn"}
+                            {remainingAppointments > 0 ? <ChevronDown aria-hidden="true" /> : <ChevronUp aria-hidden="true" />}
+                        </button>
+                    </div>
+                )}
+                </>
             )}
         </section>
     );

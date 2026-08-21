@@ -7,6 +7,7 @@ import AdminDoctorsManagement from "./AdminDoctorsManagement";
 import AdminReceptionistAccounts from "./AdminReceptionistAccounts";
 import AdminStaffCreateForm, { type StaffRole } from "./AdminStaffCreateForm";
 import AdminClinicReviews from "./AdminClinicReviews";
+import { authErrorMessage, isPasswordValid } from "../../core/passwordPolicy";
 
 export default function AdminPanel({ token, tab }: { token: string; tab: string }) {
     const [doctors, setDoctors] = useState<Doctor[]>([]); const [patients, setPatients] = useState<Patient[]>([]); const [appointments, setAppointments] = useState<Appointment[]>([]); const [query, setQuery] = useState(""); const [patientTotal, setPatientTotal] = useState(0); const [selectedPatientId,setSelectedPatientId]=useState("");const [selectedDoctorId,setSelectedDoctorId]=useState("");const [email, setEmail] = useState(""); const [password, setPassword] = useState(""); const [role, setRole] = useState<StaffRole>("DOCTOR"); const [name, setName] = useState(""); const [specialty, setSpecialty] = useState(""); const [consultationFee, setConsultationFee] = useState("150000"); const [message, setMessage] = useState(""); const [staffRevision, setStaffRevision] = useState(0);
@@ -34,6 +35,11 @@ export default function AdminPanel({ token, tab }: { token: string; tab: string 
     },[selectedPatientId,patients,token]);
     async function create(e: FormEvent) {
         e.preventDefault();
+        if (!isPasswordValid(password)) {
+            setStaffCreateFailed(true);
+            setStaffCreateMessage("Mật khẩu phải có từ 10 đến 100 ký tự.");
+            return;
+        }
         setStaffCreateMessage("");
         setStaffCreateFailed(false);
         setCreatingStaff(true);
@@ -46,7 +52,7 @@ export default function AdminPanel({ token, tab }: { token: string; tab: string 
             await loadDoctors();
         } catch (x) {
             setStaffCreateFailed(true);
-            setStaffCreateMessage((x as Error).message);
+            setStaffCreateMessage(authErrorMessage(x));
         } finally {
             setCreatingStaff(false);
         }

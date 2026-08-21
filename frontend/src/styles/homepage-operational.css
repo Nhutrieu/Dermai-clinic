@@ -1,0 +1,559 @@
+/* Operational homepage layer: adds real clinic information without changing application flows. */
+.clinic-home {
+  --home-section-space: clamp(64px, 7vw, 92px);
+}
+
+.clinic-home-hero-layout {
+  align-items: center;
+}
+
+.clinic-home-section-heading-inline {
+  max-width: 800px;
+  grid-template-columns: 1fr;
+  gap: 12px;
+  align-items: start;
+}
+
+.clinic-home-section-heading-inline > p {
+  max-width: 62ch;
+}
+
+/* A single information rail makes booking, fee, address and human support visible above the fold. */
+.clinic-home-access {
+  border-top: 1px solid var(--home-border);
+  border-bottom: 1px solid var(--home-border);
+  background: var(--home-surface);
+}
+
+.clinic-home-access-grid {
+  display: grid;
+  grid-template-columns: minmax(245px, 1.15fr) minmax(190px, .78fr) minmax(235px, 1fr) minmax(190px, .76fr);
+}
+
+.clinic-home-access-action,
+.clinic-home-access-item {
+  display: grid;
+  min-width: 0;
+  min-height: 112px;
+  grid-template-columns: 28px minmax(0, 1fr);
+  gap: 13px;
+  align-items: center;
+  padding: 22px 24px;
+  border: 0;
+  border-right: 1px solid var(--home-border);
+  background: transparent;
+  color: var(--home-ink);
+  font: inherit;
+  text-align: left;
+}
+
+.clinic-home-access-grid > :last-child {
+  border-right: 0;
+}
+
+.clinic-home-access-action {
+  grid-template-columns: 28px minmax(0, 1fr) 20px;
+  background: var(--home-primary);
+  color: #f7fbf9;
+  cursor: pointer;
+  transition: background-color var(--home-motion-feedback-duration) ease;
+}
+
+.clinic-home-access-action:hover {
+  background: var(--home-primary-hover);
+}
+
+.clinic-home-access-action:active {
+  transform: translateY(1px);
+}
+
+.clinic-home-access-action > svg:last-child {
+  transition: transform var(--home-motion-feedback-duration) var(--home-motion-ease);
+}
+
+.clinic-home-access-action:hover > svg:last-child {
+  transform: translateX(2px);
+}
+
+.clinic-home-access-item {
+  transition: background-color var(--home-motion-feedback-duration) ease;
+}
+
+a.clinic-home-access-item:hover {
+  background: var(--home-surface-muted);
+}
+
+.clinic-home-access-action > svg,
+.clinic-home-access-item > svg {
+  width: 23px;
+  height: 23px;
+  color: var(--home-primary);
+}
+
+.clinic-home-access-action > svg {
+  color: var(--home-accent);
+}
+
+.clinic-home-access-action small,
+.clinic-home-access-action strong,
+.clinic-home-access-item small,
+.clinic-home-access-item strong {
+  display: block;
+}
+
+.clinic-home-access-action small,
+.clinic-home-access-item small {
+  margin-bottom: 3px;
+  color: var(--home-text);
+  font-size: 13px;
+  line-height: 1.35;
+}
+
+.clinic-home-access-action small {
+  color: rgb(247 251 249 / .72);
+}
+
+.clinic-home-access-action strong,
+.clinic-home-access-item strong {
+  color: inherit;
+  font-size: 14px;
+  line-height: 1.45;
+}
+
+/* Treatment groups use editorial dividers instead of a generic four-card grid. */
+.clinic-home-treatments {
+  background: var(--home-canvas);
+}
+
+.clinic-home-treatments-layout {
+  display: grid;
+  grid-template-columns: minmax(280px, .72fr) minmax(0, 1.28fr);
+  gap: clamp(48px, 8vw, 110px);
+  align-items: start;
+}
+
+.clinic-home-treatments .clinic-home-section-heading {
+  margin: 0;
+}
+
+.clinic-home-treatments .clinic-home-text-link {
+  margin-top: 20px;
+  padding-inline: 0;
+}
+
+.clinic-home-treatment-list {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  border-top: 1px solid var(--home-border);
+}
+
+.clinic-home-treatment-list article {
+  min-height: 174px;
+  padding: 28px 30px 28px 0;
+  border-bottom: 1px solid var(--home-border);
+}
+
+.clinic-home-treatment-list article:nth-child(even) {
+  padding-right: 0;
+  padding-left: 30px;
+  border-left: 1px solid var(--home-border);
+}
+
+.clinic-home-treatment-list h3 {
+  margin: 0;
+  color: var(--home-ink);
+  font-size: 18px;
+  line-height: 1.35;
+}
+
+.clinic-home-treatment-list p {
+  margin: 10px 0 0;
+  color: var(--home-text);
+  font-size: 15px;
+  line-height: 1.7;
+}
+
+/* FAQ stays compact and keyboard-native through details/summary. */
+.clinic-home-faq {
+  background: var(--home-canvas);
+}
+
+.clinic-home-faq-layout {
+  display: grid;
+  grid-template-columns: minmax(280px, .75fr) minmax(0, 1.25fr);
+  gap: clamp(48px, 8vw, 110px);
+  align-items: start;
+}
+
+.clinic-home-faq .clinic-home-section-heading {
+  margin: 0;
+}
+
+.clinic-home-phone-inline {
+  display: inline-flex;
+  min-height: 44px;
+  align-items: center;
+  gap: 9px;
+  margin-top: 20px;
+  color: var(--home-primary);
+  font-size: 14px;
+  font-weight: 750;
+}
+
+.clinic-home-phone-inline svg {
+  width: 18px;
+  height: 18px;
+}
+
+.clinic-home-faq-list {
+  border-top: 1px solid var(--home-border);
+}
+
+.clinic-home-faq-list details {
+  border-bottom: 1px solid var(--home-border);
+}
+
+.clinic-home-faq-list summary {
+  display: grid;
+  min-height: 70px;
+  grid-template-columns: minmax(0, 1fr) 22px;
+  gap: 18px;
+  align-items: center;
+  padding: 14px 2px;
+  color: var(--home-ink);
+  font-size: 16px;
+  font-weight: 700;
+  cursor: pointer;
+  list-style: none;
+}
+
+.clinic-home-faq-list summary::-webkit-details-marker {
+  display: none;
+}
+
+.clinic-home-faq-list summary svg {
+  width: 19px;
+  height: 19px;
+  color: var(--home-primary);
+  transition: transform var(--home-motion-feedback-duration) var(--home-motion-ease);
+}
+
+.clinic-home-faq-list details[open] summary svg {
+  transform: rotate(180deg);
+}
+
+.clinic-home-faq-list details > p {
+  max-width: 66ch;
+  margin: -2px 40px 22px 0;
+  color: var(--home-text);
+  font-size: 15px;
+  line-height: 1.7;
+}
+
+.clinic-home-faq-list summary:focus-visible {
+  outline: 3px solid rgb(20 87 73 / .28);
+  outline-offset: 3px;
+}
+
+/* Public footer carries practical clinic information; patient and staff footers keep their layout. */
+.app-footer-public {
+  position: relative;
+  padding: 0;
+  border-top: 1px solid var(--home-border);
+  background: var(--home-surface-muted);
+  color: var(--home-text);
+}
+
+.app-footer-public::before {
+  position: absolute;
+  top: 0;
+  right: 0;
+  left: 0;
+  height: 1px;
+  background: var(--home-border);
+  content: "";
+}
+
+.app-footer-public-main {
+  padding: 40px max(24px, calc((100vw - 1320px) / 2)) 36px;
+}
+
+.app-footer-public .app-footer-layout {
+  grid-template-columns: minmax(310px, 1.2fr) minmax(175px, .7fr) minmax(195px, .8fr) minmax(175px, .7fr);
+  gap: clamp(22px, 2.5vw, 40px);
+  align-items: start;
+}
+
+.app-footer-heading {
+  color: var(--app-footer-strong);
+  font-size: 14px;
+  font-weight: 750;
+}
+
+.app-footer-public .app-footer-brand {
+  gap: 14px;
+  color: var(--home-ink);
+}
+
+.app-footer-public .app-footer-brand > span:first-child {
+  width: 52px;
+  height: 52px;
+  border-radius: 10px;
+  background: var(--color-accent);
+  color: var(--color-primary-strong);
+}
+
+.app-footer-public .app-footer-brand svg {
+  width: 30px;
+  height: 30px;
+}
+
+.app-footer-wordmark {
+  display: grid;
+  gap: 2px;
+}
+
+.app-footer-public .app-footer-brand > .app-footer-wordmark {
+  width: auto;
+  height: auto;
+  border-radius: 0;
+  place-items: initial;
+  background: transparent;
+  color: var(--home-ink);
+}
+
+.app-footer-wordmark strong {
+  color: var(--home-ink);
+  font-family: var(--font-display);
+  font-size: clamp(24px, 2vw, 31px);
+  line-height: 1.05;
+}
+
+.app-footer-wordmark small {
+  color: var(--color-primary);
+  font-size: 13px;
+  letter-spacing: .04em;
+}
+
+.app-footer-public .app-footer-about p {
+  max-width: 47ch;
+  margin: 16px 0 0;
+  color: var(--home-text);
+  font-size: 15px;
+  line-height: 1.7;
+}
+
+.app-footer-public-address {
+  margin-top: 14px;
+  display: grid;
+  gap: 7px;
+  color: var(--home-text);
+  font-size: 14px;
+  line-height: 1.55;
+}
+
+.app-footer-public .app-footer-public-address strong,
+.app-footer-public .app-footer-public-address a {
+  color: var(--home-ink);
+}
+
+.app-footer-public nav {
+  gap: 3px;
+}
+
+.app-footer-public nav .app-footer-heading {
+  margin-bottom: 7px;
+  color: var(--home-ink);
+  font-size: 16px;
+}
+
+.app-footer-public nav a {
+  min-height: 25px;
+  padding: 2px 0;
+  color: var(--home-text);
+  font-size: 14px;
+  line-height: 1.45;
+  transition: color var(--home-motion-feedback-duration) ease, transform var(--home-motion-feedback-duration) ease;
+}
+
+.app-footer-public nav a:hover {
+  color: var(--color-primary);
+  transform: translateX(2px);
+}
+
+.app-footer-public nav a:focus-visible {
+  border-radius: 4px;
+  outline: 3px solid rgb(20 87 73 / .22);
+  outline-offset: 2px;
+}
+
+.app-footer-nav-subheading {
+  margin-top: 10px;
+  color: var(--home-ink);
+  font-size: 15px;
+  font-weight: 750;
+}
+
+.app-footer-contact-line {
+  display: grid;
+  grid-template-columns: 20px minmax(0, 1fr);
+  gap: 9px;
+  align-items: start;
+}
+
+.app-footer-contact-line svg {
+  width: 17px;
+  height: 17px;
+  margin-top: 3px;
+  color: var(--color-accent);
+}
+
+.app-footer-clinical-note {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.app-footer-clinical-note svg {
+  width: 16px;
+  height: 16px;
+}
+
+.app-footer-public .app-footer-bottom {
+  min-height: 64px;
+  margin: 0;
+  padding: 16px max(24px, calc((100vw - 1320px) / 2));
+  border-top: 0;
+  align-items: center;
+  background: var(--color-primary-strong);
+  color: #f7fbf9;
+}
+
+.app-footer-public .app-footer-bottom small {
+  color: inherit;
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  [data-home-reveal="treatments"] .clinic-home-treatment-list article,
+  [data-home-reveal="faq"] .clinic-home-faq-list details {
+    opacity: 0;
+    transform: translate3d(0, 12px, 0);
+    transition: opacity var(--home-motion-reveal-duration) var(--home-motion-ease), transform var(--home-motion-reveal-duration) var(--home-motion-ease);
+  }
+
+  [data-home-reveal="treatments"].is-visible .clinic-home-treatment-list article,
+  [data-home-reveal="faq"].is-visible .clinic-home-faq-list details {
+    opacity: 1;
+    transform: translate3d(0, 0, 0);
+  }
+
+  [data-home-reveal="treatments"] .clinic-home-treatment-list article:nth-child(even),
+  [data-home-reveal="faq"] .clinic-home-faq-list details:nth-child(even) {
+    transition-delay: var(--home-motion-step);
+  }
+}
+
+@media (max-width: 1080px) {
+  .clinic-home-access-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .clinic-home-access-grid > :nth-child(2) {
+    border-right: 0;
+  }
+
+  .clinic-home-access-grid > :nth-child(-n + 2) {
+    border-bottom: 1px solid var(--home-border);
+  }
+
+  .app-footer-public .app-footer-layout {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 860px) {
+  .clinic-home-treatments-layout,
+  .clinic-home-faq-layout {
+    grid-template-columns: 1fr;
+    gap: 38px;
+  }
+
+  .clinic-home-treatments .clinic-home-section-heading,
+  .clinic-home-faq .clinic-home-section-heading {
+    max-width: 680px;
+  }
+}
+
+@media (max-width: 680px) {
+  /* Reserve the launcher corner so the clinic address remains readable. */
+  .clinic-home-hero-media figcaption {
+    padding-right: 72px;
+  }
+
+  .clinic-home-access-grid,
+  .clinic-home-treatment-list,
+  .app-footer-public .app-footer-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .clinic-home-access-action,
+  .clinic-home-access-item,
+  .clinic-home-access-grid > :nth-child(2) {
+    min-height: 92px;
+    border-right: 0;
+    border-bottom: 1px solid var(--home-border);
+  }
+
+  .clinic-home-access-grid > :last-child {
+    border-bottom: 0;
+  }
+
+  .clinic-home-treatment-list article,
+  .clinic-home-treatment-list article:nth-child(even) {
+    min-height: 0;
+    padding: 24px 0;
+    border-left: 0;
+  }
+
+  .clinic-home-faq-list summary {
+    min-height: 64px;
+  }
+
+  .clinic-home-faq-list details > p {
+    margin-right: 0;
+  }
+
+  .app-footer-public {
+    padding-bottom: 0;
+  }
+
+  .app-footer-public-main {
+    padding: 32px 22px 28px;
+  }
+
+  .app-footer-public .app-footer-layout {
+    gap: 26px;
+  }
+
+  .app-footer-public nav a {
+    min-height: 40px;
+    padding: 7px 0;
+  }
+
+  .app-footer-public .app-footer-bottom {
+    padding: 16px 22px 72px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .clinic-home-access-action,
+  .clinic-home-access-action > svg:last-child,
+  .clinic-home-faq-list summary svg,
+  [data-home-reveal="treatments"] .clinic-home-treatment-list article,
+  [data-home-reveal="faq"] .clinic-home-faq-list details {
+    transition: none;
+    transform: none;
+  }
+}

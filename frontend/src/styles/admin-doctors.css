@@ -436,6 +436,25 @@
   line-height: 1.5;
 }
 
+.admin-doctors-list-empty button {
+  min-height: 44px;
+  margin-top: var(--space-2);
+  padding: 0 var(--space-4);
+  border: 1px solid var(--color-primary);
+  border-radius: var(--radius-control);
+  color: var(--color-primary);
+  background: var(--color-surface);
+  font: inherit;
+  font-size: 14px;
+  font-weight: 750;
+  cursor: pointer;
+}
+
+.admin-doctors-list-empty button:focus-visible {
+  outline: none;
+  box-shadow: var(--focus-ring);
+}
+
 @media (max-width: 1050px) {
   .admin-doctors-layout {
     grid-template-columns: minmax(310px, 350px) minmax(0, 1fr);

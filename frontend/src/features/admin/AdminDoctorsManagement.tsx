@@ -48,7 +48,7 @@ export default function AdminDoctorsManagement({ token, doctors, selectedDoctorI
     <div className="admin-doctors-layout">
       <nav className="admin-doctors-list" aria-label="Danh sách bác sĩ">
         <header><strong>Danh sách bác sĩ</strong><span>{filteredDoctors.length}</span></header>
-        {filteredDoctors.length === 0 ? <div className="admin-doctors-list-empty"><Stethoscope aria-hidden="true" /><strong>Không tìm thấy bác sĩ</strong><p>Thử tìm bằng tên hoặc chuyên môn khác.</p></div> : filteredDoctors.map(doctor => <button
+        {filteredDoctors.length === 0 ? <div className="admin-doctors-list-empty"><Stethoscope aria-hidden="true" /><strong>{doctors.length === 0 ? "Chưa có hồ sơ bác sĩ" : "Không tìm thấy bác sĩ"}</strong><p>{doctors.length === 0 ? "Hồ sơ được tạo từ mục Nhân sự sẽ xuất hiện tại đây." : "Thử tìm bằng tên hoặc chuyên môn khác."}</p>{doctors.length > 0 && query && <button type="button" onClick={() => setQuery("")}>Xóa tìm kiếm</button>}</div> : filteredDoctors.map(doctor => <button
           type="button"
           key={doctor.id}
           className={selectedDoctorId === doctor.id ? "is-selected" : ""}
