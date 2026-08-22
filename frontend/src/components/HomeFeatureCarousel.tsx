@@ -22,7 +22,7 @@ const SWIPE_THRESHOLD_PX = 48;
 
 const SLIDES: HomeFeatureSlide[] = [
   {
-    image: "/images/home-carousel/bs-ckii-ngo-thi-ngoc-van-tu-van-dieu-tri-cho-nguoi-benh-1548.jpg",
+    image: "/images/dermai-hero-2026.png",
     imageAlt: "Bác sĩ tư vấn và trao đổi hướng điều trị trực tiếp với người bệnh",
     icon: Stethoscope,
     title: "Tư vấn trực tiếp",
