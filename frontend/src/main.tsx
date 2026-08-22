@@ -26,9 +26,8 @@ import "./styles/chat.css";
 import "./styles/support-assignment.css";
 import "./styles/support-ai.css";
 import "./styles/admin-analytics.css";
-import "./styles/dermai-2026.css";
 import GoogleSignIn, { type GoogleLoginResult } from "./features/auth/GoogleSignIn";
-import HomePage from "./features/public/HomePage";
+import HomePage from "./components/v2/homepage/HomepageV2";
 
 const PublicRoute = lazy(() => import("./routes/PublicRoute"));
 const PatientRoute = lazy(() => import("./routes/PatientRoute"));

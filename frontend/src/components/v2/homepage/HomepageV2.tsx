@@ -1,0 +1,106 @@
+import { AnimatePresence, motion, useInView, useMotionValue, useScroll, useSpring, useTransform } from "framer-motion";
+import { Activity, ArrowRight, Calendar, ChevronRight, Clock3, Droplets, Menu, ScanFace, ShieldCheck, Sparkles, Star, X, Zap } from "lucide-react";
+import { type MouseEvent, type PointerEvent, type ReactNode, useEffect, useRef, useState } from "react";
+import "./homepage-v2.css";
+
+type Props = { openAuth: () => void; chat?: ReactNode };
+const ease = [0.22, 1, 0.36, 1] as const;
+const nav = [["home","Trang chủ"],["diagnostics","DermScan AI"],["results","Kết quả"],["experts","Chuyên gia"]];
+const doctors = [
+  { name:"BS. CKI Lê Minh Anh", role:"Da liễu thẩm mỹ", exp:"12 năm kinh nghiệm", slots:["09:30","14:00","16:30"], tone:"from-teal-500/30 to-cyan-950" },
+  { name:"ThS. BS. Trần Hoài Nam", role:"Điều trị da liễu", exp:"10 năm kinh nghiệm", slots:["08:00","13:30","15:00"], tone:"from-cyan-500/25 to-slate-950" },
+  { name:"BS. CKII Nguyễn An Nhiên", role:"Laser & trẻ hóa", exp:"15 năm kinh nghiệm", slots:["10:00","15:30","17:00"], tone:"from-emerald-500/25 to-zinc-950" },
+];
+const reviews = ["4.9/5 từ 1.200+ khách hàng","Bác sĩ chuyên khoa trực tiếp thăm khám","Công nghệ DermScan AI thế hệ mới","Theo dõi liệu trình minh bạch","Dữ liệu y khoa được bảo mật"];
+
+const reveal = { hidden:{opacity:0,y:30,filter:"blur(12px)"}, show:{opacity:1,y:0,filter:"blur(0px)",transition:{duration:.75,ease}} };
+
+function MagneticButton({children,onClick,className=""}:{children:ReactNode;onClick?:()=>void;className?:string}) {
+  const x=useMotionValue(0), y=useMotionValue(0); const sx=useSpring(x,{stiffness:250,damping:18}), sy=useSpring(y,{stiffness:250,damping:18});
+  function move(e:MouseEvent<HTMLButtonElement>){const r=e.currentTarget.getBoundingClientRect();x.set((e.clientX-r.left-r.width/2)*.18);y.set((e.clientY-r.top-r.height/2)*.18)}
+  return <motion.button type="button" onClick={onClick} onMouseMove={move} onMouseLeave={()=>{x.set(0);y.set(0)}} style={{x:sx,y:sy}} whileTap={{scale:.94}} className={className}>{children}</motion.button>
+}
+
+function Navigation({openAuth}:{openAuth:()=>void}) {
+  const [active,setActive]=useState("home"),[open,setOpen]=useState(false); const {scrollY}=useScroll(); const hidden=useTransform(scrollY,[0,100],[0,-120]); const scale=useTransform(scrollY,[0,100],[1,.94]);
+  return <motion.header style={{y:hidden,scale}} initial={{y:-100,opacity:0}} animate={{y:0,opacity:1}} transition={{duration:.8,ease}} className="fixed inset-x-0 top-5 z-50 mx-auto w-[min(94%,1120px)]">
+    <div className="flex items-center justify-between rounded-full border border-teal-300/15 bg-[#0b111b]/70 px-3 py-2 shadow-[0_20px_60px_rgba(0,0,0,.35)] backdrop-blur-xl">
+      <a href="#home" className="flex items-center gap-2 rounded-full px-3 text-white"><span className="grid size-9 place-items-center rounded-full bg-teal-300 text-slate-950 shadow-[0_0_28px_rgba(45,212,191,.45)]"><Activity size={18}/></span><b className="tracking-tight">DERM<span className="text-teal-300">/AI</span></b></a>
+      <nav className="hidden items-center md:flex">{nav.map(([id,label])=><a key={id} href={'#'+id} onMouseEnter={()=>setActive(id)} onClick={()=>setActive(id)} className="relative px-4 py-2 text-sm text-slate-300">{active===id&&<motion.span layoutId="nav-pill" className="absolute inset-0 rounded-full border border-teal-300/25 bg-teal-300/10 shadow-[inset_0_0_18px_rgba(45,212,191,.08)]" transition={{type:"spring",bounce:.25,duration:.55}}/>}<span className="relative">{label}</span></a>)}</nav>
+      <MagneticButton onClick={openAuth} className="v2-pulse hidden items-center gap-2 rounded-full bg-teal-300 px-5 py-3 text-sm font-bold text-slate-950 md:flex">Đặt lịch <ArrowRight size={16}/></MagneticButton>
+      <motion.button whileTap={{scale:.9}} onClick={()=>setOpen(!open)} className="grid size-11 place-items-center rounded-full border border-white/10 text-white md:hidden">{open?<X/>:<Menu/>}</motion.button>
+    </div>
+    <AnimatePresence>{open&&<motion.nav initial={{opacity:0,y:-12,scale:.96}} animate={{opacity:1,y:0,scale:1}} exit={{opacity:0,y:-10,scale:.96}} className="mt-3 grid rounded-3xl border border-teal-300/15 bg-[#0b111b]/95 p-3 backdrop-blur-xl">{nav.map(([id,label])=><a key={id} href={'#'+id} onClick={()=>setOpen(false)} className="rounded-2xl px-4 py-3 text-slate-200 hover:bg-teal-300/10">{label}</a>)}<button onClick={openAuth} className="mt-2 rounded-2xl bg-teal-300 p-3 font-bold text-slate-950">Đặt lịch khám</button></motion.nav>}</AnimatePresence>
+  </motion.header>
+}
+
+function Hero({openAuth}:{openAuth:()=>void}) {
+  const card=useRef<HTMLDivElement>(null); const rx=useMotionValue(0),ry=useMotionValue(0); const srx=useSpring(rx,{stiffness:130,damping:18}),sry=useSpring(ry,{stiffness:130,damping:18});
+  function tilt(e:MouseEvent<HTMLDivElement>){const r=e.currentTarget.getBoundingClientRect();ry.set(((e.clientX-r.left)/r.width-.5)*15);rx.set(-((e.clientY-r.top)/r.height-.5)*15)}
+  return <section id="home" className="relative flex min-h-screen items-center overflow-hidden px-5 pb-20 pt-36">
+    <motion.div animate={{x:[-40,80,-40],y:[0,50,0],scale:[1,1.2,1]}} transition={{duration:13,repeat:Infinity,ease:"easeInOut"}} className="pointer-events-none absolute left-[8%] top-[18%] size-[420px] rounded-full bg-teal-400/15 blur-[110px]"/>
+    <motion.div animate={{x:[50,-50,50],y:[20,-40,20]}} transition={{duration:16,repeat:Infinity,ease:"easeInOut"}} className="pointer-events-none absolute bottom-0 right-0 size-[500px] rounded-full bg-cyan-500/10 blur-[130px]"/>
+    <div className="mx-auto grid w-full max-w-7xl items-center gap-16 lg:grid-cols-[1.05fr_.95fr]">
+      <motion.div initial="hidden" animate="show" variants={{show:{transition:{staggerChildren:.12}}}}>
+        <motion.div variants={reveal} className="mb-7 inline-flex items-center gap-3 rounded-full border border-teal-300/20 bg-teal-300/[.07] px-4 py-2 text-xs font-semibold tracking-[.14em] text-teal-200"><motion.span animate={{scale:[1,1.5,1],opacity:[.5,1,.5]}} transition={{repeat:Infinity,duration:1.8}} className="size-2 rounded-full bg-teal-300 shadow-[0_0_14px_#2dd4bf]"/>AI-POWERED DERMSCAN V2.0</motion.div>
+        <motion.h1 variants={reveal} className="max-w-4xl text-5xl font-semibold leading-[.96] tracking-[-.055em] text-white sm:text-7xl xl:text-[96px]">Kỷ Nguyên Mới Cho <span className="v2-gradient-text">Làn Da Bạn</span></motion.h1>
+        <motion.p variants={reveal} className="mt-8 max-w-xl text-lg leading-8 text-slate-400">Kết hợp trí tuệ nhân tạo và chuyên môn da liễu để kiến tạo hành trình chăm sóc cá nhân hóa, minh bạch và chính xác hơn.</motion.p>
+        <motion.div variants={reveal} className="mt-10 flex flex-wrap items-center gap-4"><MagneticButton onClick={openAuth} className="v2-pulse flex items-center gap-3 rounded-full bg-teal-300 px-7 py-4 font-bold text-slate-950">Bắt đầu phân tích <ScanFace size={19}/></MagneticButton><a href="#diagnostics" className="flex items-center gap-2 rounded-full border border-white/10 px-6 py-4 font-semibold text-white hover:border-teal-300/40 hover:bg-teal-300/5">Khám phá công nghệ <ChevronRight size={18}/></a></motion.div>
+        <motion.div variants={reveal} className="mt-10 flex flex-wrap gap-6 text-xs uppercase tracking-[.15em] text-slate-500"><span className="flex items-center gap-2"><ShieldCheck size={15} className="text-teal-300"/>Bảo mật y khoa</span><span className="flex items-center gap-2"><Zap size={15} className="text-teal-300"/>Phân tích tức thì</span></motion.div>
+      </motion.div>
+      <motion.div ref={card} onMouseMove={tilt} onMouseLeave={()=>{rx.set(0);ry.set(0)}} style={{rotateX:srx,rotateY:sry,transformStyle:"preserve-3d"}} initial={{opacity:0,scale:.85,rotateY:-12}} animate={{opacity:1,scale:1,rotateY:0}} transition={{duration:1,ease}} className="relative mx-auto w-full max-w-[570px] rounded-[38px] border border-teal-300/20 bg-white/[.055] p-3 shadow-[0_50px_130px_rgba(0,0,0,.55)] backdrop-blur-xl">
+        <div className="relative aspect-[4/5] overflow-hidden rounded-[30px] bg-[#070c13]"><img src="/images/v2/dermscan-face.png" alt="Mô phỏng khuôn mặt được DermScan phân tích" className="h-full w-full object-cover"/><div className="absolute inset-0 bg-gradient-to-t from-[#071018] via-transparent to-transparent"/>
+          <motion.div animate={{y:["0%","760%","0%"]}} transition={{duration:4.8,repeat:Infinity,ease:"easeInOut"}} className="absolute left-5 right-5 top-[10%] h-px bg-teal-200 shadow-[0_0_18px_5px_rgba(45,212,191,.7)]"/>
+          <div className="absolute bottom-5 left-5 right-5 grid grid-cols-3 gap-2">{[["98%","Độ chính xác"],["2.4s","Phân tích"],["24/7","Theo dõi"]].map(([v,l])=><motion.div whileHover={{y:-5}} key={l} className="rounded-2xl border border-white/10 bg-[#0b111b]/70 p-3 text-center backdrop-blur-md"><b className="block text-lg text-teal-200">{v}</b><small className="text-[10px] text-slate-400">{l}</small></motion.div>)}</div>
+        </div><motion.div animate={{rotate:360}} transition={{duration:12,repeat:Infinity,ease:"linear"}} className="absolute -right-5 -top-5 grid size-20 place-items-center rounded-full border border-dashed border-teal-300/35 bg-[#0b0f17]/80 text-teal-300"><Sparkles/></motion.div>
+      </motion.div>
+    </div>
+  </section>
+}
+
+function Counter({to}:{to:number}){const ref=useRef<HTMLSpanElement>(null),view=useInView(ref,{once:true,amount:.8});const [n,setN]=useState(0);useEffect(()=>{if(!view)return;let start=0;const t=window.setInterval(()=>{start+=2;setN(Math.min(start,to));if(start>=to)clearInterval(t)},24);return()=>clearInterval(t)},[view,to]);return <span ref={ref}>{n}%</span>}
+
+function Diagnostics(){
+ const points=[{x:"34%",y:"39%",label:"Độ ẩm",v:"87%"},{x:"63%",y:"48%",label:"Sắc tố",v:"92%"},{x:"48%",y:"67%",label:"Đàn hồi",v:"89%"}];
+ return <motion.section id="diagnostics" initial="hidden" whileInView="show" viewport={{once:true,amount:.15}} variants={{show:{transition:{staggerChildren:.12}}}} className="px-5 py-28"><div className="mx-auto max-w-7xl">
+  <motion.div variants={reveal} className="mb-14 max-w-3xl"><p className="v2-kicker">LIVE DIAGNOSTICS</p><h2 className="v2-title">Nhìn thấy điều làn da chưa thể nói.</h2><p className="v2-lead">Mô phỏng DermScan phân tích đa chỉ số theo thời gian thực và chuẩn hóa dữ liệu để bác sĩ tham khảo.</p></motion.div>
+  <motion.div variants={reveal} className="grid overflow-hidden rounded-[36px] border border-teal-300/15 bg-white/[.035] lg:grid-cols-[1.1fr_.9fr]">
+   <div className="relative min-h-[620px] overflow-hidden border-b border-teal-300/10 bg-[#070c13] lg:border-b-0 lg:border-r"><img src="/images/v2/dermscan-face.png" alt="" className="absolute inset-0 h-full w-full object-cover opacity-75"/><div className="absolute inset-0 bg-[radial-gradient(circle_at_center,transparent,rgba(7,12,19,.8))]"/>
+    <motion.div animate={{top:["8%","88%","8%"]}} transition={{duration:5,repeat:Infinity,ease:"easeInOut"}} className="absolute left-0 right-0 z-10 h-[2px] bg-teal-200 shadow-[0_0_28px_8px_rgba(45,212,191,.65)]"/>
+    {points.map((p,i)=><motion.div key={p.label} style={{left:p.x,top:p.y}} animate={{scale:[1,1.15,1]}} transition={{duration:1.8,repeat:Infinity,delay:i*.35}} className="absolute z-20"><span className="absolute -inset-3 animate-ping rounded-full border border-teal-300/50"/><span className="relative block size-3 rounded-full bg-teal-200 shadow-[0_0_18px_#2dd4bf]"/><span className="absolute left-5 top-[-14px] whitespace-nowrap rounded-xl border border-teal-300/15 bg-[#08121b]/80 px-3 py-2 text-xs text-teal-100 backdrop-blur-md">{p.label} · {p.v}</span></motion.div>)}
+    <div className="absolute left-6 top-6 rounded-full border border-teal-300/20 bg-black/40 px-4 py-2 text-xs tracking-[.15em] text-teal-200">SCANNING · ACTIVE</div>
+   </div>
+   <div className="flex flex-col justify-between p-7 sm:p-10"><div><p className="text-xs font-bold tracking-[.18em] text-teal-300">KẾT QUẢ PHÂN TÍCH</p><div className="mt-8 grid gap-4">{[["Tổng quan làn da",98,"Ổn định"],["Hàng rào bảo vệ",87,"Cân bằng"],["Độ đồng đều",92,"Tối ưu"]].map(([l,v,s])=><motion.div whileHover={{x:8}} key={String(l)} className="rounded-2xl border border-white/[.07] bg-white/[.035] p-5"><div className="flex justify-between"><span className="text-slate-300">{l}</span><b className="text-2xl text-teal-200"><Counter to={Number(v)}/></b></div><div className="mt-4 h-1.5 overflow-hidden rounded-full bg-white/[.06]"><motion.div initial={{width:0}} whileInView={{width:v+"%"}} transition={{duration:1.5,ease}} className="h-full rounded-full bg-gradient-to-r from-teal-600 to-teal-300 shadow-[0_0_12px_#2dd4bf]"/></div><small className="mt-3 block text-slate-500">{s}</small></motion.div>)}</div></div><p className="mt-8 flex gap-3 rounded-2xl bg-teal-300/[.06] p-4 text-sm leading-6 text-slate-400"><ShieldCheck className="shrink-0 text-teal-300" size={19}/>Kết quả AI mang tính hỗ trợ tham khảo, không thay thế chẩn đoán của bác sĩ.</p></div>
+  </motion.div>
+ </div></motion.section>
+}
+
+function BeforeAfter(){
+ const [tab,setTab]=useState("Trị Mụn"),[split,setSplit]=useState(50); const box=useRef<HTMLDivElement>(null);
+ function drag(e:PointerEvent<HTMLDivElement>){const r=box.current?.getBoundingClientRect();if(r)setSplit(Math.max(5,Math.min(95,((e.clientX-r.left)/r.width)*100)))}
+ return <section id="results" className="px-5 py-28"><div className="mx-auto max-w-7xl"><motion.div initial="hidden" whileInView="show" viewport={{once:true}} variants={reveal} className="text-center"><p className="v2-kicker">TREATMENT JOURNEY</p><h2 className="v2-title mx-auto max-w-3xl">Kết quả được theo dõi bằng dữ liệu.</h2></motion.div>
+ <div className="mt-10 flex flex-wrap justify-center gap-2">{["Trị Mụn","Trẻ Hóa","Nám & Tàn Nhang"].map(t=><motion.button layout key={t} onClick={()=>setTab(t)} whileTap={{scale:.95}} className={'relative rounded-full px-5 py-3 text-sm '+(tab===t?"text-slate-950":"text-slate-400")}>{tab===t&&<motion.span layoutId="gallery-tab" className="absolute inset-0 rounded-full bg-teal-300" transition={{type:"spring",bounce:.25}}/>}<span className="relative">{t}</span></motion.button>)}</div>
+ <AnimatePresence mode="wait"><motion.div key={tab} initial={{opacity:0,y:30,scale:.98}} animate={{opacity:1,y:0,scale:1}} exit={{opacity:0,y:-20,scale:.98}} transition={{duration:.45,ease}} className="mx-auto mt-10 max-w-5xl">
+  <div ref={box} onPointerDown={e=>{e.currentTarget.setPointerCapture(e.pointerId);drag(e)}} onPointerMove={e=>{if(e.currentTarget.hasPointerCapture(e.pointerId))drag(e)}} className="relative aspect-[16/9] touch-none select-none overflow-hidden rounded-[34px] border border-teal-300/15 bg-[#070c13]">
+   <img src="/images/v2/acne-comparison.png" alt="Hình ảnh trước chăm sóc" className="absolute inset-0 h-full w-full object-cover object-left"/>
+   <div className="absolute inset-y-0 right-0 overflow-hidden" style={{width:(100-split)+"%"}}><img src="/images/v2/acne-comparison.png" alt="Hình ảnh sau chăm sóc" className="absolute right-0 h-full max-w-none object-cover object-right" style={{width:box.current?.clientWidth||1000}}/></div>
+   <div className="absolute inset-y-0 w-0.5 bg-white shadow-[0_0_20px_4px_rgba(45,212,191,.8)]" style={{left:split+"%"}}><motion.div whileHover={{scale:1.15}} className="absolute left-1/2 top-1/2 grid size-12 -translate-x-1/2 -translate-y-1/2 cursor-ew-resize place-items-center rounded-full border border-white/50 bg-teal-300 text-slate-950 shadow-xl">↔</motion.div></div>
+   <span className="absolute left-5 top-5 rounded-full bg-black/50 px-4 py-2 text-xs text-white backdrop-blur">TRƯỚC</span><span className="absolute right-5 top-5 rounded-full bg-teal-300 px-4 py-2 text-xs font-bold text-slate-950">SAU</span>
+  </div><p className="mt-4 text-center text-xs text-slate-500">Ảnh minh họa trải nghiệm chăm sóc. Kết quả thực tế thay đổi theo từng tình trạng da.</p>
+ </motion.div></AnimatePresence></div></section>
+}
+
+function Experts({openAuth}:{openAuth:()=>void}){
+ const [focus,setFocus]=useState(0);
+ return <section id="experts" className="overflow-hidden px-5 py-28"><div className="mx-auto max-w-7xl"><motion.div initial="hidden" whileInView="show" viewport={{once:true}} variants={reveal}><p className="v2-kicker">MEDICAL EXPERTS</p><h2 className="v2-title max-w-3xl">Công nghệ mạnh hơn khi đi cùng chuyên môn.</h2></motion.div>
+ <div className="mt-14 grid gap-5 lg:grid-cols-3">{doctors.map((d,i)=><motion.article layout onHoverStart={()=>setFocus(i)} whileHover={{y:-10}} transition={{layout:{type:"spring",stiffness:230,damping:24}}} key={d.name} className={'group overflow-hidden rounded-[28px] border p-1 '+(focus===i?"border-teal-300/35":"border-white/[.07]")}><div className={'relative flex min-h-[420px] flex-col justify-end overflow-hidden rounded-[24px] bg-gradient-to-br '+d.tone+' p-6'}><motion.div animate={{scale:focus===i?1.15:1,rotate:focus===i?8:0}} className="absolute -right-14 -top-14 size-60 rounded-full border border-teal-200/15"/><div className="absolute left-6 top-6 grid size-14 place-items-center rounded-2xl border border-white/10 bg-white/[.06] text-xl font-bold text-teal-200">{d.name.split(" ").at(-1)?.[0]}</div><div className="relative"><p className="text-xs font-bold tracking-[.14em] text-teal-300">{d.role}</p><h3 className="mt-2 text-2xl font-semibold text-white">{d.name}</h3><p className="mt-2 text-sm text-slate-400">{d.exp}</p><AnimatePresence>{focus===i&&<motion.div initial={{height:0,opacity:0}} animate={{height:"auto",opacity:1}} exit={{height:0,opacity:0}} className="overflow-hidden"><p className="mb-3 mt-6 text-xs text-slate-400">Lịch trống hôm nay</p><div className="flex gap-2">{d.slots.map(s=><span key={s} className="rounded-full border border-teal-300/20 bg-teal-300/[.08] px-3 py-2 text-xs text-teal-100">{s}</span>)}</div><button onClick={openAuth} className="mt-5 flex w-full items-center justify-center gap-2 rounded-full bg-teal-300 py-3 font-bold text-slate-950">Đặt lịch ngay <ArrowRight size={16}/></button></motion.div>}</AnimatePresence></div></div></motion.article>)}</div>
+ </div><div className="mt-24 -mx-5 rotate-[-1deg] border-y border-teal-300/15 bg-teal-300/[.06] py-5"><motion.div animate={{x:["0%","-50%"]}} transition={{duration:22,repeat:Infinity,ease:"linear"}} className="flex w-max gap-12 whitespace-nowrap">{[...reviews,...reviews].map((r,i)=><span key={i} className="flex items-center gap-4 text-sm font-semibold uppercase tracking-[.12em] text-slate-300"><Star size={16} className="fill-teal-300 text-teal-300"/>{r}</span>)}</motion.div></div></section>
+}
+
+function BookingFooter({openAuth}:{openAuth:()=>void}){
+ const slots=["08:30","10:00","14:30","16:00"];const [slot,setSlot]=useState("10:00");
+ return <><footer className="border-t border-teal-300/10 px-5 pb-36 pt-20"><div className="mx-auto grid max-w-7xl gap-10 md:grid-cols-2"><div><div className="flex items-center gap-3 text-xl font-bold text-white"><Activity className="text-teal-300"/>DERM/AI CLINIC</div><p className="mt-5 max-w-md leading-7 text-slate-500">Chăm sóc da dựa trên dữ liệu, dẫn dắt bởi bác sĩ chuyên khoa và thiết kế quanh trải nghiệm của bạn.</p></div><div className="grid grid-cols-2 gap-4 text-sm text-slate-400"><a href="#diagnostics">DermScan AI</a><a href="#experts">Đội ngũ bác sĩ</a><a href="#results">Kết quả điều trị</a><a href="tel:0352790904">0352 790 904</a></div></div></footer>
+ <motion.aside initial={{y:120}} animate={{y:0}} transition={{delay:1,type:"spring",stiffness:140,damping:20}} className="fixed bottom-3 left-1/2 z-40 flex w-[min(94%,900px)] -translate-x-1/2 items-center justify-between gap-3 rounded-[24px] border border-teal-300/20 bg-[#0b111b]/85 p-3 shadow-[0_25px_80px_rgba(0,0,0,.55)] backdrop-blur-xl"><div className="hidden items-center gap-3 px-3 sm:flex"><span className="grid size-10 place-items-center rounded-full bg-teal-300/10 text-teal-300"><Calendar size={18}/></span><span><b className="block text-sm text-white">Lịch gần nhất</b><small className="text-slate-500">Hôm nay</small></span></div><div className="flex gap-1">{slots.map(s=><motion.button key={s} onClick={()=>setSlot(s)} animate={slot===s?{y:[0,-5,0]}:{}} transition={{type:"spring"}} className={'rounded-xl px-3 py-2 text-xs '+(slot===s?"bg-teal-300 font-bold text-slate-950":"bg-white/5 text-slate-300")}>{s}</motion.button>)}</div><MagneticButton onClick={openAuth} className="flex shrink-0 items-center gap-2 rounded-xl bg-white px-4 py-3 text-sm font-bold text-slate-950">Xác nhận <Clock3 size={16}/></MagneticButton></motion.aside></>
+}
+
+export default function HomepageV2({openAuth,chat}:Props){return <div className="v2-home min-h-screen bg-[#0B0F17] text-slate-200 selection:bg-teal-300 selection:text-slate-950"><Navigation openAuth={openAuth}/><main><Hero openAuth={openAuth}/><Diagnostics/><BeforeAfter/><Experts openAuth={openAuth}/></main><BookingFooter openAuth={openAuth}/>{chat}</div>}
