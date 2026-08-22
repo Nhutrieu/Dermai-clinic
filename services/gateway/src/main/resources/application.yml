@@ -28,6 +28,10 @@ spring:
       - id: doctors
         uri: ${DOCTOR_URL:http://doctor-service:8084}
         predicates: [Path=/api/v1/doctors/**]
+      - id: services
+        uri: ${DOCTOR_URL:http://doctor-service:8084}
+        predicates: [Path=/api/v1/services/**]
+
       - id: appointments
         uri: ${APPOINTMENT_URL:http://appointment-service:8085}
         predicates: [Path=/api/v1/appointments/**]

@@ -29,12 +29,13 @@ public class JwtGatewayFilter implements GlobalFilter, Ordered {
   @Override public Mono<Void> filter(ServerWebExchange exchange, GatewayFilterChain chain) {
     String path=exchange.getRequest().getURI().getPath();
     boolean publicDoctorDirectory = exchange.getRequest().getMethod() == HttpMethod.GET && path.equals("/api/v1/doctors");
+    boolean publicServiceDirectory = exchange.getRequest().getMethod() == HttpMethod.GET && path.equals("/api/v1/services");
     boolean publicDoctorAvatar = exchange.getRequest().getMethod() == HttpMethod.GET && path.matches("/api/v1/doctors/[0-9a-fA-F-]+/avatar");
     boolean publicDoctorProfileUpdates = path.equals("/api/v1/doctors/ws/profile");
     boolean publicGeminiChat = exchange.getRequest().getMethod() == HttpMethod.POST && path.equals("/ai/public-chat");
     boolean publicSlotUpdates = path.equals("/api/v1/appointments/ws/slots");
     boolean publicReviews = exchange.getRequest().getMethod() == HttpMethod.GET && path.equals("/api/v1/appointments/reviews/public");
-    if (PUBLIC.contains(path) || publicDoctorDirectory || publicDoctorAvatar || publicDoctorProfileUpdates || publicGeminiChat || publicSlotUpdates || publicReviews || path.startsWith("/actuator/") || path.startsWith("/ai/health"))
+    if (PUBLIC.contains(path) || publicDoctorDirectory || publicServiceDirectory || publicDoctorAvatar || publicDoctorProfileUpdates || publicGeminiChat || publicSlotUpdates || publicReviews || path.startsWith("/actuator/") || path.startsWith("/ai/health"))
       return chain.filter(exchange);
     String value=exchange.getRequest().getHeaders().getFirst(HttpHeaders.AUTHORIZATION);
     if (value==null || !value.startsWith("Bearer ")) return unauthorized(exchange);

@@ -166,6 +166,20 @@ export default function PatientAppointmentsView({
         }).catch(() => undefined);
     }, [token]);
 
+    useEffect(() => {
+        const raw = sessionStorage.getItem("derm-home-booking");
+        if (!raw || !doctors.length) return;
+        try {
+            const draft = JSON.parse(raw) as { doctorId?: string; date?: string; reason?: string };
+            if (draft.doctorId && doctors.some(item => item.id === draft.doctorId)) setDoctorId(draft.doctorId);
+            if (draft.date) setDate(draft.date);
+            if (draft.reason) setReason(value => value.trim() ? value : draft.reason || "");
+            setFeedback({ tone: "success", text: "Đã khôi phục lựa chọn từ trang chủ. Hãy chọn khung giờ còn trống để tiếp tục." });
+            sessionStorage.removeItem("derm-home-booking");
+        } catch {
+            sessionStorage.removeItem("derm-home-booking");
+        }
+    }, [doctors]);
     useEffect(() => { setItems(appointments) }, [appointments]);
 
     async function findSlots(realtime = false) {

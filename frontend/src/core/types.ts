@@ -28,6 +28,16 @@ export type Doctor = {
   consultationFee: number;
 };
 
+export type ClinicService = {
+  id: string;
+  code: string;
+  name: string;
+  description: string;
+  priceFrom: number;
+  durationMinutes: number;
+  displayOrder: number;
+  active: boolean;
+};
 export type WorkSchedule = { id: string; weekday: number; startTime: string; endTime: string; slotMinutes: number };
 export type LeavePeriod = { id: string; startAt: string; endAt: string; reason?: string };
 export type Appointment = { id: string; patientId: string; doctorId?: string; doctorIdentityId?: string; doctorName?: string; startAt: string; endAt: string; status: string; reason?: string; followUpReason?: string; followUpNotBefore?: string; holdExpiresAt?: string; checkedInAt?: string; consultationFeeSnapshot?: number; createdAt: string; updatedAt?: string };
