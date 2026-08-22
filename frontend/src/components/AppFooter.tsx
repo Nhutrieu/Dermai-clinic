@@ -8,7 +8,7 @@ export default function AppFooter({ variant = "staff" }: AppFooterProps) {
   if (variant === "staff") {
     return (
       <footer className="app-footer app-footer-compact">
-        <span>DermAI Clinic</span>
+        <span>Derm Clinic</span>
         <span>Hỗ trợ vận hành phòng khám da liễu</span>
         <a href="tel:0352790904"><PhoneCall aria-hidden="true" />0352 790 904</a>
       </footer>
@@ -21,14 +21,14 @@ export default function AppFooter({ variant = "staff" }: AppFooterProps) {
         <div className="app-footer-public-main">
           <div className="app-footer-layout">
             <div className="app-footer-about">
-              <a className="app-footer-brand" href="#top" aria-label="DermAI Clinic, về đầu trang">
+              <a className="app-footer-brand" href="#top" aria-label="Derm Clinic, về đầu trang">
                 <span aria-hidden="true"><Activity /></span>
                 <span className="app-footer-wordmark">
-                  <strong>DermAI Clinic</strong>
+                  <strong>Derm Clinic</strong>
                   <small>Đặt lịch da liễu thuận tiện</small>
                 </span>
               </a>
-              <p>DermAI Clinic kết nối bệnh nhân với bác sĩ da liễu, hỗ trợ đặt lịch rõ ràng và theo dõi thông tin khám thuận tiện.</p>
+              <p>Derm Clinic kết nối bệnh nhân với bác sĩ da liễu, hỗ trợ đặt lịch rõ ràng và theo dõi thông tin khám thuận tiện.</p>
               <address className="app-footer-public-address">
                 <span><strong>Địa chỉ:</strong> 32/2 Thống Nhất, phường Gò Vấp, TP. Hồ Chí Minh</span>
                 <span><strong>Hotline:</strong> <a href="tel:0352790904">0352 790 904</a></span>
@@ -36,7 +36,7 @@ export default function AppFooter({ variant = "staff" }: AppFooterProps) {
               </address>
             </div>
 
-            <nav aria-label="Dịch vụ nổi bật tại DermAI Clinic">
+            <nav aria-label="Dịch vụ nổi bật tại Derm Clinic">
               <strong className="app-footer-heading">Dịch vụ nổi bật</strong>
               <a href="#doctors">Đặt lịch với bác sĩ</a>
               <a href="#services">Kiểm tra da bằng AI</a>
@@ -53,8 +53,8 @@ export default function AppFooter({ variant = "staff" }: AppFooterProps) {
               <a href="#reviews">Đánh giá phòng khám</a>
             </nav>
 
-            <nav aria-label="Thông tin về DermAI Clinic">
-              <strong className="app-footer-heading">Về DermAI</strong>
+            <nav aria-label="Thông tin về Derm Clinic">
+              <strong className="app-footer-heading">Về Derm</strong>
               <a href="#about">Về phòng khám</a>
               <a href="#doctors">Đội ngũ bác sĩ</a>
               <a href="#reviews">Cảm nhận bệnh nhân</a>
@@ -66,7 +66,7 @@ export default function AppFooter({ variant = "staff" }: AppFooterProps) {
         </div>
 
         <div className="app-footer-bottom">
-          <small>© 2026 DermAI Clinic. Bản quyền thuộc DermAI Clinic.</small>
+          <small>© 2026 Derm Clinic. Bản quyền thuộc Derm Clinic.</small>
           <small className="app-footer-clinical-note"><CalendarDays aria-hidden="true" />Đặt lịch trực tuyến, khám trực tiếp tại phòng khám.</small>
         </div>
       </footer>
@@ -77,9 +77,9 @@ export default function AppFooter({ variant = "staff" }: AppFooterProps) {
     <footer className={`app-footer app-footer-full app-footer-${variant}`}>
       <div className="app-footer-layout">
         <div className="app-footer-about">
-          <a className="app-footer-brand" href="#app-workspace-content" aria-label="DermAI Clinic, về nội dung chính">
+          <a className="app-footer-brand" href="#app-workspace-content" aria-label="Derm Clinic, về nội dung chính">
             <span aria-hidden="true"><Activity /></span>
-            <strong>DermAI Clinic</strong>
+            <strong>Derm Clinic</strong>
           </a>
           <p>Chăm sóc da bằng chuyên môn, sự thấu hiểu và công nghệ có trách nhiệm.</p>
         </div>
@@ -95,7 +95,7 @@ export default function AppFooter({ variant = "staff" }: AppFooterProps) {
         </address>
       </div>
       <div className="app-footer-bottom">
-        <small>© 2026 DermAI Clinic.</small>
+        <small>© 2026 Derm Clinic.</small>
         <small className="app-footer-clinical-note"><CalendarDays aria-hidden="true" />Đặt lịch trực tuyến, khám trực tiếp tại phòng khám.</small>
       </div>
     </footer>

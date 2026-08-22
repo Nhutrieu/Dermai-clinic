@@ -108,9 +108,9 @@ export default function AppHeader(props: AppHeaderProps) {
   return (
     <header className="app-header">
       <div className="app-header-inner">
-        <button type="button" className="app-brand" onClick={() => navigate("profile")} aria-label="DermAI Clinic, về trang tổng quan">
+        <button type="button" className="app-brand" onClick={() => navigate("profile")} aria-label="Derm Clinic, về trang tổng quan">
           <span className="app-brand-mark" aria-hidden="true"><Activity /></span>
-          <span><strong>DermAI Clinic</strong><small>{props.roleName}</small></span>
+          <span><strong>Derm Clinic</strong><small>{props.roleName}</small></span>
         </button>
         {navigation()}
         <div className="app-header-actions">

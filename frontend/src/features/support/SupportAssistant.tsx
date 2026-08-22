@@ -74,7 +74,7 @@ export default function SupportAssistant({
     <div ref={messageListRef} className="support-messages support-ai-messages" role="log" aria-live="polite" aria-label="Nội dung trao đổi với trợ lý hỗ trợ">
       {transcript.length === 0 && <section className="support-ai-welcome" aria-labelledby="support-ai-welcome-title">
         <span className="support-ai-welcome-icon" aria-hidden="true"><Bot /></span>
-        <div><h3 id="support-ai-welcome-title">Bạn cần hỗ trợ điều gì?</h3><p>Trợ lý DermAI có thể hướng dẫn đặt lịch, kiểm tra giờ trống, giá khám và cách sử dụng kiểm tra da bằng AI.</p></div>
+        <div><h3 id="support-ai-welcome-title">Bạn cần hỗ trợ điều gì?</h3><p>Trợ lý Derm có thể hướng dẫn đặt lịch, kiểm tra giờ trống, giá khám và cách sử dụng kiểm tra da bằng AI.</p></div>
         <div className="support-ai-suggestions" aria-label="Câu hỏi gợi ý">
           <button type="button" onClick={() => useSuggestion("Tôi muốn đặt lịch khám")}><CalendarDays aria-hidden="true" />Tôi muốn đặt lịch</button>
           <button type="button" onClick={() => useSuggestion("Làm sao để đổi lịch khám?")}><CircleHelp aria-hidden="true" />Làm sao để đổi lịch?</button>
@@ -82,7 +82,7 @@ export default function SupportAssistant({
         </div>
       </section>}
       {transcript.map(message => <article className={message.senderRole === "PATIENT" ? "mine" : message.senderRole === "SYSTEM" ? "system" : "theirs support-ai-message"} key={message.id}>
-        <b>{message.senderRole === "PATIENT" ? "Bạn" : message.senderRole === "SYSTEM" ? "Hệ thống" : message.senderRole === "RECEPTIONIST" ? "Lễ tân DermAI" : "Trợ lý DermAI"}</b>
+        <b>{message.senderRole === "PATIENT" ? "Bạn" : message.senderRole === "SYSTEM" ? "Hệ thống" : message.senderRole === "RECEPTIONIST" ? "Lễ tân Derm" : "Trợ lý Derm"}</b>
         <p>{message.body}</p>
         <small>{new Date(message.sentAt).toLocaleTimeString("vi-VN", { hour: "2-digit", minute: "2-digit" })}</small>
       </article>)}

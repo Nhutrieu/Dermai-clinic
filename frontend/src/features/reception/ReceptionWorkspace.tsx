@@ -241,7 +241,7 @@ function ReceptionDashboardContainer({
 
   function openSupport(patient: Patient) {
     sessionStorage.setItem("reception-support-patient", patient.identityId);
-    window.dispatchEvent(new Event("open-support-chat"));
+    window.dispatchEvent(new CustomEvent("open-support-chat", { detail: { patientIdentityId: patient.identityId } }));
   }
 
   async function runAppointmentAction(

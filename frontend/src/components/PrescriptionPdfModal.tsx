@@ -88,7 +88,7 @@ function LegacyPrescriptionPdfModal({
 
     const items = prescription?.items || [];
     const dateSource = appointment?.startAt || record?.signedAt || prescription?.signedAt || new Date().toISOString();
-    const docId = prescription?.id || record?.id || appointment?.id || "RX-DERMAI";
+    const docId = prescription?.id || record?.id || appointment?.id || "RX-DERM";
     const displayName = patient?.fullName || initialPatientName || "Bệnh nhân";
     const displayPhone = patient?.phone || "0352 790 904";
 
@@ -98,7 +98,7 @@ function LegacyPrescriptionPdfModal({
                 <header className="pdf-modal-actions no-print">
                     <div className="pdf-modal-title">
                         <FileText className="icon" />
-                        <span>Đơn Thuốc Điện Tử DermAI Clinic</span>
+                                <span>Đơn Thuốc Điện Tử Derm Clinic</span>
                     </div>
 
                     <div className="pdf-modal-buttons">
@@ -143,10 +143,10 @@ function LegacyPrescriptionPdfModal({
                         <div className="pdf-brand">
                             <div className="pdf-logo-badge">
                                 <Stethoscope className="icon" />
-                                <span>DermAI</span>
+                                <span>Derm</span>
                             </div>
                             <div className="pdf-brand-details">
-                                <h2>PHÒNG KHÁM CHUYÊN KHOA DA LIỄU DERMAI CLINIC</h2>
+                                <h2>PHÒNG KHÁM CHUYÊN KHOA DA LIỄU DERM CLINIC</h2>
                                 <p>Giấy phép hoạt động số: <b>886/SYT-GPHĐ</b> · Bộ Y Tế TP.HCM</p>
                                 <p>Địa chỉ: 123 Đường Y Dược, Phường Bến Nghé, Quận 1, TP. Hồ Chí Minh</p>
                                 <p>Hotline: <b>1900 6868 - 0352 790 904</b> · Email: contact@dermai.clinic</p>
@@ -180,7 +180,7 @@ function LegacyPrescriptionPdfModal({
                             </div>
                             <div className="pdf-info-item">
                                 <span className="label">Mã bệnh nhân:</span>
-                                <span className="val">#{patient?.id ? patient.id.slice(0, 8).toUpperCase() : "PAT-DERMAI"}</span>
+                                <span className="val">#{patient?.id ? patient.id.slice(0, 8).toUpperCase() : "PAT-DERM"}</span>
                             </div>
                             <div className="pdf-info-item">
                                 <span className="label">Bác sĩ chỉ định:</span>
@@ -246,7 +246,7 @@ function LegacyPrescriptionPdfModal({
                     <div className="pdf-footer-section">
                         <div className="pdf-security-notice">
                             <small>
-                                🔒 Đơn thuốc điện tử này có chữ ký số xác thực bởi DermAI Clinic. Bệnh nhân có thể sử dụng mã đơn thuốc để tra cứu tại các nhà thuốc liên kết.
+                                🔒 Đơn thuốc điện tử này có chữ ký số xác thực bởi Derm Clinic. Bệnh nhân có thể sử dụng mã đơn thuốc để tra cứu tại các nhà thuốc liên kết.
                             </small>
                         </div>
                         <div className="pdf-signature-box">
@@ -257,7 +257,7 @@ function LegacyPrescriptionPdfModal({
                             <div className="signature-stamp-area">
                                 <div className="official-stamp">
                                     <div className="stamp-inner">
-                                        <span>DERMAI CLINIC</span>
+                                        <span>DERM CLINIC</span>
                                         <small>VERIFIED & SIGNED</small>
                                     </div>
                                 </div>

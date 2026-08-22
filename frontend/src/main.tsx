@@ -122,7 +122,7 @@ type ChatMessage = { role: "assistant" | "user"; text: string; citations?: { sou
 function ChatBox({ openAuth }: { openAuth: () => void }) {
     const [open, setOpen] = useState(false); const [question, setQuestion] = useState(""); const [busy, setBusy] = useState(false); const [messages, setMessages] = useState<ChatMessage[]>([{ role: "assistant", text: "Xin chào! Tôi có thể tra cứu kiến thức chăm sóc da từ thư viện y khoa của phòng khám. Tôi không chẩn đoán hoặc kê đơn thuốc." }]);
     async function send(e: FormEvent) { e.preventDefault(); const value = question.trim(); if (!value || busy) return; setQuestion(""); setMessages(x => [...x, { role: "user", text: value }]); setBusy(true); try { const result = await request<{ answer: string; citations: { source: string; page: number }[]; disclaimer: string }>("/ai/public-chat", undefined, { method: "POST", body: JSON.stringify({ question: value }) }); setMessages(x => [...x, { role: "assistant", text: result.answer, citations: result.citations }]) } catch (x) { setMessages(items => [...items, { role: "assistant", text: (x as Error).message || "Dịch vụ Gemini hiện chưa sẵn sàng." }]) } finally { setBusy(false) } }
-    return createPortal(<div className={`chat-widget ${open ? "chat-open" : ""}`}><button type="button" className="chat-launch" aria-expanded={open} aria-label={open ? "Đóng trợ lý DermAI" : "Mở trợ lý DermAI"} onClick={() => setOpen(value => !value)}>{open ? <X /> : <><Sparkles /><span>Tư vấn da liễu</span></>}</button>{open && <section className="chat-panel" aria-label="Trợ lý DermAI"><header><div><span><Activity /></span><div><b>Trợ lý DermAI</b><small>Tra cứu kiến thức · không thay thế bác sĩ</small></div></div><button type="button" aria-label="Đóng hộp chat" onClick={() => setOpen(false)}><X /></button></header><div className="chat-messages">{messages.map((m, i) => <div className={`chat-message ${m.role}`} key={i}><p>{m.text}</p>{m.citations?.map((c, j) => <small key={j}>Nguồn: {c.source} · trang {c.page}</small>)}</div>)}{busy && <div className="chat-message assistant"><p>Đang tra cứu tài liệu…</p></div>}</div><form onSubmit={send}><input value={question} onChange={e => setQuestion(e.target.value)} minLength={3} maxLength={1000} aria-label="Câu hỏi chăm sóc da" placeholder="Nhập ít nhất 3 ký tự…" /><button type="submit" aria-label="Gửi câu hỏi" disabled={busy || question.trim().length < 3}><ArrowRight /></button></form><button type="button" className="chat-book" onClick={openAuth}>Đặt lịch với bác sĩ</button></section>}</div>, document.body)
+    return createPortal(<div className={`chat-widget ${open ? "chat-open" : ""}`}><button type="button" className="chat-launch" aria-expanded={open} aria-label={open ? "Đóng trợ lý Derm" : "Mở trợ lý Derm"} onClick={() => setOpen(value => !value)}>{open ? <X /> : <><Sparkles /><span>Tư vấn da liễu</span></>}</button>{open && <section className="chat-panel" aria-label="Trợ lý Derm"><header><div><span><Activity /></span><div><b>Trợ lý Derm</b><small>Tra cứu kiến thức · không thay thế bác sĩ</small></div></div><button type="button" aria-label="Đóng hộp chat" onClick={() => setOpen(false)}><X /></button></header><div className="chat-messages">{messages.map((m, i) => <div className={`chat-message ${m.role}`} key={i}><p>{m.text}</p>{m.citations?.map((c, j) => <small key={j}>Nguồn: {c.source} · trang {c.page}</small>)}</div>)}{busy && <div className="chat-message assistant"><p>Đang tra cứu tài liệu…</p></div>}</div><form onSubmit={send}><input value={question} onChange={e => setQuestion(e.target.value)} minLength={3} maxLength={1000} aria-label="Câu hỏi chăm sóc da" placeholder="Nhập ít nhất 3 ký tự…" /><button type="submit" aria-label="Gửi câu hỏi" disabled={busy || question.trim().length < 3}><ArrowRight /></button></form><button type="button" className="chat-book" onClick={openAuth}>Đặt lịch với bác sĩ</button></section>}</div>, document.body)
 }
 function ForgotPassword({ close }: { close: () => void }) {
     const [step, setStep] = useState<"request" | "reset" | "done">("request"); const [email, setEmail] = useState(""); const [otp, setOtp] = useState(""); const [password, setPassword] = useState(""); const [message, setMessage] = useState(""); const [busy, setBusy] = useState(false);
@@ -277,7 +277,7 @@ function Login({ onLogin, onForgotPassword, notice = "" }: { onLogin: (tokens: T
 
     if (profilePending) {
         return <div className="auth-page"><form className="auth-card google-profile-card" onSubmit={completePatientProfile}>
-            <div className="brand dark"><div className="mark"><Activity /></div><div><b>DermAI</b><span>Clinic</span></div></div>
+            <div className="brand dark"><div className="mark"><Activity /></div><div><b>Derm</b><span>Clinic</span></div></div>
             <h1>Hoàn thiện hồ sơ</h1>
             <p>{profilePending.provider === "google" ? "Google đã xác thực" : "Tài khoản đã xác thực"} <b>{profilePending.email}</b>. Vui lòng bổ sung thông tin liên hệ.</p>
             <label>Họ và tên<input value={fullName} onChange={event => setFullName(event.target.value)} required /></label>
@@ -290,7 +290,7 @@ function Login({ onLogin, onForgotPassword, notice = "" }: { onLogin: (tokens: T
 
     if (verificationPending) {
         return <div className="auth-page"><form className="auth-card email-verification-card" onSubmit={confirmVerification}>
-            <div className="brand dark"><div className="mark"><ShieldCheck /></div><div><b>DermAI</b><span>Xác minh email</span></div></div>
+            <div className="brand dark"><div className="mark"><ShieldCheck /></div><div><b>Derm</b><span>Xác minh email</span></div></div>
             <h1>Nhập mã OTP</h1>
             <p>Mã gồm 6 số đã được gửi đến <b>{email}</b> và có hiệu lực trong 5 phút.</p>
             <label>Họ và tên<input value={fullName} onChange={event => setFullName(event.target.value)} required /></label>
@@ -304,7 +304,7 @@ function Login({ onLogin, onForgotPassword, notice = "" }: { onLogin: (tokens: T
     }
 
     return <div className="auth-page"><form className="auth-card" onSubmit={submit}>
-        <div className="brand dark"><div className="mark"><Activity /></div><div><b>DermAI</b><span>Clinic</span></div></div>
+        <div className="brand dark"><div className="mark"><Activity /></div><div><b>Derm</b><span>Clinic</span></div></div>
         <h1>{register ? "Đăng ký bệnh nhân" : "Đăng nhập hệ thống"}</h1>
         {notice && !register && <div className="auth-session-notice" role="status"><ShieldCheck /> <span>{notice}</span></div>}
         {register && <><label>Họ và tên<input value={fullName} onChange={event => setFullName(event.target.value)} required /></label><label>Số điện thoại<input type="tel" inputMode="tel" pattern="[0-9+ .()\\-]{8,20}" value={phone} onChange={event => setPhone(event.target.value)} required placeholder="Ví dụ: 0352790904" /></label></>}

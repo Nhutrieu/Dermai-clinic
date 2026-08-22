@@ -106,7 +106,7 @@ export default function HomeFeatureCarousel() {
       ref={carouselRef}
       className="clinic-home-feature-carousel"
       role="region"
-      aria-label="Điểm nổi bật của DermAI Clinic"
+      aria-label="Điểm nổi bật của Derm Clinic"
       aria-roledescription="carousel"
       onPointerDown={handlePointerDown}
       onPointerUp={handlePointerUp}

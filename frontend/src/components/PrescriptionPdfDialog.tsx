@@ -211,7 +211,7 @@ export function PrescriptionPdfModal({
                         <article className="clinical-pdf-paper printable-area" aria-label="Nội dung đơn thuốc điện tử">
                             <header className="clinical-pdf-document-header">
                                 <div>
-                                    <strong>DermAI Clinic</strong>
+                                    <strong>Derm Clinic</strong>
                                     <p>Phòng khám chuyên khoa Da liễu</p>
                                     <address>{CLINIC_ADDRESS}<br />Hotline: {CLINIC_HOTLINE}</address>
                                 </div>

@@ -42,11 +42,12 @@ export default function SupportChat({ session }: { session: Tokens }) {
     const knownMessageIdsRef = useRef<Set<string>>(new Set());
     const messagesInitializedRef = useRef(false);
     const messageListRef = useRef<HTMLDivElement>(null);
+    const requestedConversationRef = useRef("");
     const receptionist = session.role === "RECEPTIONIST";
     const admin = session.role === "ADMIN";
     const staffViewer = receptionist || admin;
     const currentIdentityId = tokenSubject(session.accessToken);
-    const ids = [...new Set([...conversationStates.map(item => item.patientIdentityId), ...messages.map(item => item.patientIdentityId)])];
+    const ids = [...new Set([...conversationStates.map(item => item.patientIdentityId), ...messages.map(item => item.patientIdentityId), ...(requestedConversationRef.current ? [requestedConversationRef.current] : [])])];
     const visible = staffViewer ? messages.filter(item => item.patientIdentityId === conversation) : messages;
     const activeConversation = conversationStates.find(item => item.patientIdentityId === conversation);
     const assignedToMe = receptionist && !!currentIdentityId && activeConversation?.assignedReceptionistIdentityId === currentIdentityId;
@@ -55,7 +56,7 @@ export default function SupportChat({ session }: { session: Tokens }) {
 
     const staffName = (identityId?: string | null) => {
         if (!identityId) return "Chưa có người phụ trách";
-        return staffDirectory[identityId]?.displayName?.trim() || "Lễ tân DermAI";
+        return staffDirectory[identityId]?.displayName?.trim() || "Lễ tân Derm";
     };
 
     async function load() {
@@ -77,7 +78,7 @@ export default function SupportChat({ session }: { session: Tokens }) {
             setMessages(list);
             setConversationStates(states);
             setStaffDirectory(Object.fromEntries(directory.map(item => [item.identityId, item])));
-            const patientIds = [...new Set([...states.map(item => item.patientIdentityId), ...list.map(item => item.patientIdentityId)])];
+            const patientIds = [...new Set([...states.map(item => item.patientIdentityId), ...list.map(item => item.patientIdentityId), ...(requestedConversationRef.current ? [requestedConversationRef.current] : [])])];
             if (staffViewer) {
                 const missing = patientIds.filter(id => !patients[id]);
                 if (missing.length) {
@@ -90,7 +91,9 @@ export default function SupportChat({ session }: { session: Tokens }) {
                         ...Object.fromEntries(loaded.filter((patient): patient is Patient => !!patient).map(patient => [patient.identityId, patient])),
                     }));
                 }
-                if (!conversation && patientIds[0]) setConversation(patientIds[0]);
+                const preferredConversation = requestedConversationRef.current || conversation;
+                if (preferredConversation && patientIds.includes(preferredConversation)) setConversation(preferredConversation);
+                else if (!preferredConversation && patientIds[0]) setConversation(patientIds[0]);
             } else if (patientIds[0]) {
                 if (!conversation) setConversation(patientIds[0]);
                 if (!patients[patientIds[0]]) {
@@ -132,9 +135,13 @@ export default function SupportChat({ session }: { session: Tokens }) {
     }), [conversation]);
 
     useEffect(() => {
-        const openChat = () => {
-            const patientIdentityId = sessionStorage.getItem("reception-support-patient");
-            if (receptionist && patientIdentityId) setConversation(patientIdentityId);
+        const openChat = (event: Event) => {
+            const detail = (event as CustomEvent<{ patientIdentityId?: string }>).detail;
+            const patientIdentityId = detail?.patientIdentityId || sessionStorage.getItem("reception-support-patient");
+            if (receptionist && patientIdentityId) {
+                requestedConversationRef.current = patientIdentityId;
+                setConversation(patientIdentityId);
+            }
             setOpen(true);
         };
         window.addEventListener("open-support-chat", openChat);
@@ -201,12 +208,12 @@ export default function SupportChat({ session }: { session: Tokens }) {
 
     async function resolveConversation() {
         if (!conversation || !assignedToMe || assignmentBusy) return;
-        if (!window.confirm("Đánh dấu yêu cầu này đã được hỗ trợ xong? Yêu cầu tiếp theo của bệnh nhân sẽ quay lại Trợ lý DermAI trước.")) return;
+        if (!window.confirm("Đánh dấu yêu cầu này đã được hỗ trợ xong? Yêu cầu tiếp theo của bệnh nhân sẽ quay lại Trợ lý Derm trước.")) return;
         setAssignmentBusy(true);
         setError("");
         try {
             await request(`/appointments/support/conversations/${conversation}/resolve`, session.accessToken, { method: "POST" });
-            setNotice("Đã hoàn tất hỗ trợ. Yêu cầu mới của bệnh nhân sẽ được Trợ lý DermAI tiếp nhận trước.");
+            setNotice("Đã hoàn tất hỗ trợ. Yêu cầu mới của bệnh nhân sẽ được Trợ lý Derm tiếp nhận trước.");
             await load();
         } catch (reason) {
             setError((reason as Error).message);
@@ -322,7 +329,7 @@ export default function SupportChat({ session }: { session: Tokens }) {
     const patientLabel = (id: string) => patients[id]?.fullName || `Bệnh nhân · ${id.slice(0, 8)}`;
     const messageSender = (message: SupportMessage) => message.senderRole === "PATIENT"
         ? patientLabel(message.patientIdentityId)
-        : message.senderRole === "AI" ? "Trợ lý DermAI"
+        : message.senderRole === "AI" ? "Trợ lý Derm"
         : message.senderRole === "SYSTEM" ? "Hệ thống"
         : message.senderRole === "ADMIN" ? "Quản trị viên" : staffName(message.senderIdentityId);
 
@@ -342,10 +349,10 @@ export default function SupportChat({ session }: { session: Tokens }) {
             {open ? "Đóng" : admin ? "Giám sát hỗ trợ" : receptionist ? "Hộp thư hỗ trợ" : "Hỗ trợ"}
             {unread.length > 0 && <span className="support-badge">{unread.length > 99 ? "99+" : unread.length}</span>}
         </button>
-        {open && <section id="reception-support-panel" className="support-panel" aria-label={staffViewer ? "Hộp thư hỗ trợ bệnh nhân" : "Hỗ trợ DermAI Clinic"}>
+        {open && <section id="reception-support-panel" className="support-panel" aria-label={staffViewer ? "Hộp thư hỗ trợ bệnh nhân" : "Hỗ trợ Derm Clinic"}>
             <header>
                 <div>
-                    <b>{admin ? "Giám sát hỗ trợ" : receptionist ? "Hỗ trợ bệnh nhân" : showAssistant ? "Trợ lý DermAI" : "Lễ tân DermAI"}</b>
+                    <b>{admin ? "Giám sát hỗ trợ" : receptionist ? "Hỗ trợ bệnh nhân" : showAssistant ? "Trợ lý Derm" : "Lễ tân Derm"}</b>
                     <small>{admin ? "Chế độ chỉ xem" : receptionist ? "Hộp thư chung của đội ngũ lễ tân" : showAssistant ? "Hỗ trợ thông tin trước khi kết nối nhân viên" : activeConversation?.assignedReceptionistIdentityId ? `Đang hỗ trợ: ${staffName(activeConversation.assignedReceptionistIdentityId)}` : "Đã chuyển yêu cầu · đang chờ lễ tân tiếp nhận"}</small>
                 </div>
                 {receptionist && conversation && assignedToMe && <button className="support-book-for" onClick={() => bookingOpen ? setBookingOpen(false) : openBooking()}>{bookingOpen ? "Quay lại chat" : "Đặt lịch hộ"}</button>}
@@ -355,7 +362,7 @@ export default function SupportChat({ session }: { session: Tokens }) {
                 {ids.length === 0 ? <EmptyState compact className="support-conversation-empty" icon={MessagesSquare} title="Chưa có yêu cầu hỗ trợ" description="Các cuộc trò chuyện được chuyển tiếp sẽ xuất hiện tại đây." /> : ids.map(id => {
                     const state = conversationStates.find(item => item.patientIdentityId === id);
                     const mine = receptionist && state?.assignedReceptionistIdentityId === currentIdentityId;
-                    return <button className={conversation === id ? "active" : ""} onClick={() => setConversation(id)} key={id}>
+                    return <button className={conversation === id ? "active" : ""} onClick={() => { requestedConversationRef.current = id; setConversation(id); }} key={id}>
                         <b>{patientLabel(id)}</b>
                         <span>{patients[id]?.phone || "Chưa có số điện thoại"} · {messages.filter(item => item.patientIdentityId === id).length} tin{messages.some(item => item.patientIdentityId === id && item.senderRole === "PATIENT" && !item.readAt) && <i className="conversation-unread" />}</span>
                         <em className={!state?.assignedReceptionistIdentityId ? "is-unassigned" : mine ? "is-mine" : ""}>{!state?.assignedReceptionistIdentityId ? "Chưa tiếp nhận" : mine ? "Bạn đang phụ trách" : staffName(state.assignedReceptionistIdentityId)}</em>

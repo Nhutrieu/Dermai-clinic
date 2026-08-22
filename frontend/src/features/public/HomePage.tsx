@@ -220,9 +220,9 @@ export default function HomePage({ openAuth, chat }: HomePageProps) {
 
       <header className="clinic-home-header">
         <div className="clinic-home-header-inner">
-          <a className="clinic-home-brand" href="#top" aria-label="DermAI Clinic, về đầu trang">
+          <a className="clinic-home-brand" href="#top" aria-label="Derm Clinic, về đầu trang">
             <span className="clinic-home-brand-mark" aria-hidden="true"><Activity /></span>
-            <span><strong>DermAI Clinic</strong><small>Phòng khám da liễu</small></span>
+            <span><strong>Derm Clinic</strong><small>Phòng khám da liễu</small></span>
           </a>
 
           <nav
@@ -237,7 +237,7 @@ export default function HomePage({ openAuth, chat }: HomePageProps) {
           </nav>
 
           <div className="clinic-home-header-actions">
-            <a className="clinic-home-header-phone" href="tel:0352790904" aria-label="Gọi hotline DermAI Clinic 0352 790 904">
+          <a className="clinic-home-header-phone" href="tel:0352790904" aria-label="Gọi hotline Derm Clinic 0352 790 904">
               <PhoneCall aria-hidden="true" /><span>0352 790 904</span>
             </a>
             <button type="button" className="clinic-home-login" onClick={openAuth}>Đăng nhập</button>
@@ -308,7 +308,7 @@ export default function HomePage({ openAuth, chat }: HomePageProps) {
           <div className="clinic-home-container">
             <div className="clinic-home-section-heading">
               <h2 id="home-about-title">Một hành trình chăm sóc da rõ ràng hơn</h2>
-              <p>DermAI Clinic kết nối bệnh nhân, bác sĩ và lễ tân trên cùng một quy trình, từ đặt lịch đến theo dõi sau khám.</p>
+              <p>Derm Clinic kết nối bệnh nhân, bác sĩ và lễ tân trên cùng một quy trình, từ đặt lịch đến theo dõi sau khám.</p>
             </div>
 
             <div className="clinic-home-values">
@@ -367,7 +367,7 @@ export default function HomePage({ openAuth, chat }: HomePageProps) {
           <div className="clinic-home-container clinic-home-faq-layout">
             <div className="clinic-home-section-heading">
               <h2 id="home-faq-title">Thông tin cần biết trước khi đặt lịch</h2>
-              <p>Câu trả lời ngắn cho những tình huống bệnh nhân thường gặp khi sử dụng DermAI Clinic.</p>
+              <p>Câu trả lời ngắn cho những tình huống bệnh nhân thường gặp khi sử dụng Derm Clinic.</p>
               <a className="clinic-home-phone-inline" href="tel:0352790904"><PhoneCall aria-hidden="true" /> Cần hỗ trợ thêm? Gọi 0352 790 904</a>
             </div>
             <div className="clinic-home-faq-list">
@@ -403,7 +403,7 @@ export default function HomePage({ openAuth, chat }: HomePageProps) {
               </button>
             </div>
             <div className="clinic-home-ai-principles">
-              <h3>Vai trò của AI trong DermAI Clinic</h3>
+              <h3>Vai trò của AI trong Derm Clinic</h3>
               <ul>
                 <li><Check aria-hidden="true" /><span><strong>Gợi ý để tham khảo</strong> Kết quả không phải kết luận chẩn đoán.</span></li>
                 <li><Check aria-hidden="true" /><span><strong>Giải thích trực quan</strong> Vùng ảnh được chú ý giúp kết quả dễ hiểu hơn.</span></li>
@@ -459,7 +459,7 @@ export default function HomePage({ openAuth, chat }: HomePageProps) {
           <div className="clinic-home-container">
             <div className="clinic-home-section-heading clinic-home-section-heading-inline">
               <h2 id="home-reviews-title">Cảm nhận sau buổi khám</h2>
-              <p>Đánh giá đã được duyệt từ những bệnh nhân hoàn thành lịch khám tại DermAI Clinic.</p>
+              <p>Đánh giá đã được duyệt từ những bệnh nhân hoàn thành lịch khám tại Derm Clinic.</p>
             </div>
 
             {!featuredReview ? (
