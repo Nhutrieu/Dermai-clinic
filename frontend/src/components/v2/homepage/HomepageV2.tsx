@@ -12,7 +12,7 @@ const doctors = [
   { name:"BS. CKII Nguyễn An Nhiên", role:"Laser & trẻ hóa", exp:"15 năm kinh nghiệm", slots:["10:00","15:30","17:00"], tone:"from-emerald-500/25 to-zinc-950" },
 ];
 const reviews = ["4.9/5 từ 1.200+ khách hàng","Bác sĩ chuyên khoa trực tiếp thăm khám","Công nghệ DermScan AI thế hệ mới","Theo dõi liệu trình minh bạch","Dữ liệu y khoa được bảo mật"];
-const galleryImages: Record<string,string> = {"Trị Mụn":"/images/v2/acne-comparison.png","Trẻ Hóa":"/images/v2/rejuvenation-comparison.png","Nám & Tàn Nhang":"/images/v2/pigmentation-comparison.png"};
+const galleryImages: Record<string,string> = {"Trị Mụn":"/images/v2/acne-comparison-v2.png","Trẻ Hóa":"/images/v2/rejuvenation-comparison-v2.png","Nám & Tàn Nhang":"/images/v2/pigmentation-comparison-v2.png"};
 
 const reveal = { hidden:{opacity:0,y:30,filter:"blur(12px)"}, show:{opacity:1,y:0,filter:"blur(0px)",transition:{duration:.75,ease}} };
 
@@ -81,8 +81,8 @@ function BeforeAfter(){
  function drag(e:PointerEvent<HTMLDivElement>){const r=box.current?.getBoundingClientRect();if(r)setSplit(Math.max(5,Math.min(95,((e.clientX-r.left)/r.width)*100)))}
  return <section id="results" className="px-5 py-28"><div className="mx-auto max-w-7xl"><motion.div initial="hidden" whileInView="show" viewport={{once:true}} variants={reveal} className="text-center"><p className="v2-kicker">TREATMENT JOURNEY</p><h2 className="v2-title mx-auto max-w-3xl">Kết quả được theo dõi bằng dữ liệu.</h2></motion.div>
  <div className="mt-10 flex flex-wrap justify-center gap-2">{["Trị Mụn","Trẻ Hóa","Nám & Tàn Nhang"].map(t=><motion.button layout key={t} onClick={()=>setTab(t)} whileTap={{scale:.95}} className={'relative rounded-full px-5 py-3 text-sm '+(tab===t?"text-slate-950":"text-slate-400")}>{tab===t&&<motion.span layoutId="gallery-tab" className="absolute inset-0 rounded-full bg-teal-300" transition={{type:"spring",bounce:.25}}/>}<span className="relative">{t}</span></motion.button>)}</div>
- <AnimatePresence mode="wait"><motion.div key={tab} initial={{opacity:0,y:30,scale:.98}} animate={{opacity:1,y:0,scale:1}} exit={{opacity:0,y:-20,scale:.98}} transition={{duration:.45,ease}} className="mx-auto mt-10 max-w-3xl">
-  <div ref={box} onPointerDown={e=>{e.currentTarget.setPointerCapture(e.pointerId);drag(e)}} onPointerMove={e=>{if(e.currentTarget.hasPointerCapture(e.pointerId))drag(e)}} className="relative aspect-[16/9] touch-none select-none overflow-hidden rounded-[34px] border border-teal-300/15 bg-[#070c13]">
+ <AnimatePresence mode="wait"><motion.div key={tab} initial={{opacity:0,y:30,scale:.98}} animate={{opacity:1,y:0,scale:1}} exit={{opacity:0,y:-20,scale:.98}} transition={{duration:.45,ease}} className="mx-auto mt-10 max-w-md">
+  <div ref={box} onPointerDown={e=>{e.currentTarget.setPointerCapture(e.pointerId);drag(e)}} onPointerMove={e=>{if(e.currentTarget.hasPointerCapture(e.pointerId))drag(e)}} className="relative aspect-[3/4] touch-none select-none overflow-hidden rounded-[34px] border border-teal-300/15 bg-[#070c13]">
    <div className="absolute inset-0 overflow-hidden"><img src={image} alt="Hình ảnh trước chăm sóc" className="absolute left-0 top-0 h-full max-w-none object-cover" style={{width:(box.current?.clientWidth||1000)*2}}/></div>
    <div className="absolute inset-y-0 right-0 overflow-hidden" style={{width:(100-split)+"%"}}><img src={image} alt="Hình ảnh sau chăm sóc" className="absolute right-0 top-0 h-full max-w-none object-cover" style={{width:(box.current?.clientWidth||1000)*2}}/></div>
    <div className="absolute inset-y-0 w-0.5 bg-white shadow-[0_0_20px_4px_rgba(45,212,191,.8)]" style={{left:split+"%"}}><motion.div whileHover={{scale:1.15}} className="absolute left-1/2 top-1/2 grid size-12 -translate-x-1/2 -translate-y-1/2 cursor-ew-resize place-items-center rounded-full border border-white/50 bg-teal-300 text-slate-950 shadow-xl">↔</motion.div></div>
