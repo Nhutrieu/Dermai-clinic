@@ -11,3 +11,8 @@ html.v2-hide-scrollbar{scrollbar-width:none}html.v2-hide-scrollbar::-webkit-scro
 .v2-home .v2-booking-fields :is(input,select):focus{border-color:rgba(45,212,191,.65)!important;box-shadow:0 0 0 4px rgba(45,212,191,.1)!important}
 .v2-home .v2-booking-fields input::placeholder{color:#64748b!important}
 @media(max-width:767px){.v2-home .v2-booking-fields{grid-template-columns:minmax(0,1fr)!important}}
+.v2-home .v2-doctor-grid{display:grid!important;grid-template-columns:repeat(3,minmax(0,1fr))!important;gap:20px!important;margin:48px 0 0!important;width:100%!important;align-items:stretch!important}
+.v2-home .v2-doctor-grid>article{width:100%!important;min-width:0!important;margin:0!important}
+.v2-home .v2-doctor-photo{object-position:50% 50%!important;transform-origin:center!important}
+@media(max-width:1023px){.v2-home .v2-doctor-grid{grid-template-columns:repeat(2,minmax(0,1fr))!important}}
+@media(max-width:639px){.v2-home .v2-doctor-grid{grid-template-columns:minmax(0,1fr)!important}}
