@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { MessageSquareCheck } from "lucide-react";
+import { Check, EyeOff, MessageSquareCheck, Star } from "lucide-react";
 import { request } from "../../core/api";
 import type { ClinicReview } from "../../core/types";
 import { EmptyState, ErrorState, StateSkeleton } from "../../components/Ui";
@@ -18,14 +18,20 @@ export function AdminClinicReviewList({ reviews, error, loading = false, onRetry
         {loading && <StateSkeleton rows={2} label="Đang tải đánh giá phòng khám" />}
         {!loading && error && <ErrorState compact title="Không thể tải đánh giá" description={error} retry={onRetry} />}
         {!loading && !error && reviews.length === 0 && <EmptyState compact icon={MessageSquareCheck} title="Không có đánh giá đang chờ duyệt" description="Đánh giá mới từ bệnh nhân đã hoàn tất lượt khám sẽ xuất hiện tại đây." />}
-        {!loading && reviews.map(review => <article key={review.id}>
-            <div>
+        {!loading && reviews.map(review => <article className="admin-review-card" key={review.id}>
+            <div className="admin-review-avatar" aria-hidden="true">{review.displayName.trim().charAt(0).toUpperCase()}</div>
+            <div className="admin-review-content">
                 {/* React text nodes escape stored names/comments before they reach the DOM. */}
-                <b>{review.rating}/5 sao · {review.displayName}</b>
-                <p>{review.comment}</p>
+                <div className="admin-review-meta">
+                    <b>{review.displayName}</b>
+                    <span><Star size={14} fill="currentColor" /> {review.rating}/5</span>
+                </div>
+                <p>{review.comment || "Người dùng không để lại nội dung đánh giá."}</p>
             </div>
-            <button type="button" onClick={() => void onModerate(review.id, "APPROVED")}>Duyệt</button>
-            <button type="button" onClick={() => void onModerate(review.id, "HIDDEN")}>Ẩn</button>
+            <div className="admin-review-actions">
+                <button className="admin-review-approve" type="button" onClick={() => void onModerate(review.id, "APPROVED")}><Check size={17} /> Duyệt</button>
+                <button className="admin-review-hide" type="button" onClick={() => void onModerate(review.id, "HIDDEN")}><EyeOff size={17} /> Ẩn</button>
+            </div>
         </article>)}
     </section>;
 }

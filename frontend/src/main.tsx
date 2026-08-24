@@ -26,6 +26,8 @@ import "./styles/chat.css";
 import "./styles/support-assignment.css";
 import "./styles/support-ai.css";
 import "./styles/admin-analytics.css";
+import "./styles/workspace-theme.css";
+import "./styles/auth-home-theme.css";
 import GoogleSignIn, { type GoogleLoginResult } from "./features/auth/GoogleSignIn";
 import HomePage from "./components/v2/homepage/HomepageV2";
 
@@ -37,7 +39,7 @@ const AdminRoute = lazy(() => import("./routes/AdminRoute"));
 const AdminPanel = lazy(() => import("./features/admin/AdminPanel"));
 const ReceptionWorkspace = lazy(() => import("./features/reception/ReceptionWorkspace"));
 const PatientDashboard = lazy(() => import("./features/patient/PatientDashboard"));
-const PatientAppointments = lazy(() => import("./features/patient/PatientAppointments"));
+const PatientAppointments = lazy(() => import("./features/patient/PatientAppointmentsView"));
 const PatientMedicalRecords = lazy(() => import("./features/patient/PatientMedicalRecords"));
 const DoctorProfile = lazy(() => import("./features/doctor/DoctorProfileScreen"));
 const DoctorView = lazy(() => import("./features/doctor/DoctorView"));
@@ -103,7 +105,12 @@ function App() {
     useEffect(() => subscribeRealtime(event => {
         if (event.type === "DOCTOR_PROFILE_UPDATED") window.dispatchEvent(new CustomEvent("doctor-profiles-changed", { detail: event }));
     }, { path: "/api/v1/doctors/ws/profile" }), []);
-    if (!session) return <Suspense fallback={<State text="Đang tải giao diện..." />}><PublicRoute>{forgotOpen ? <ForgotPassword close={() => setForgotOpen(false)} /> : authOpen ? <><button className="auth-home" onClick={() => setAuthOpen(false)}><X /> Về trang chủ</button><Login notice={authNotice} onForgotPassword={() => setForgotOpen(true)} onLogin={tokens => { sessionStorage.setItem("dermai-session", JSON.stringify(tokens)); setAuthNotice(""); setSession(tokens) }} /></> : <HomePage openAuth={() => { setAuthNotice(""); setAuthOpen(true) }} chat={<ChatBox openAuth={() => { setAuthNotice(""); setAuthOpen(true) }} />} />}</PublicRoute></Suspense>;
+    function openHomeAuth(destination: "appointments" | "ai" = "appointments") {
+        sessionStorage.setItem("derm-home-intent", destination);
+        setAuthNotice("");
+        setAuthOpen(true);
+    }
+    if (!session) return <Suspense fallback={<State text="Đang tải giao diện..." />}><PublicRoute>{forgotOpen ? <ForgotPassword close={() => setForgotOpen(false)} /> : authOpen ? <><button className="auth-home" onClick={() => setAuthOpen(false)}><X /> Về trang chủ</button><Login notice={authNotice} onForgotPassword={() => setForgotOpen(true)} onLogin={tokens => { sessionStorage.setItem("dermai-session", JSON.stringify(tokens)); setAuthNotice(""); setSession(tokens) }} /></> : <HomePage openAuth={openHomeAuth} chat={<ChatBox openAuth={() => openHomeAuth("appointments")} />} />}</PublicRoute></Suspense>;
     if (!sessionRecoveryReady) return <State text="Đang khôi phục phiên đăng nhập..." />;
 
     function logout() {
@@ -130,16 +137,23 @@ function ForgotPassword({ close }: { close: () => void }) {
     async function reset(e: FormEvent) { e.preventDefault(); if (!isPasswordValid(password)) { setMessage(`Mật khẩu phải có từ ${PASSWORD_MIN_LENGTH} đến ${PASSWORD_MAX_LENGTH} ký tự.`); return; } setBusy(true); setMessage(""); try { await request("/auth/reset-password", undefined, { method: "POST", body: JSON.stringify({ email, otp, newPassword: password }) }); setStep("done"); setMessage("Mật khẩu đã được cập nhật thành công.") } catch (x) { setMessage(authErrorMessage(x)) } finally { setBusy(false) } }
     return <div className="auth-page"><button className="auth-home" onClick={close}><X /> Quay lại đăng nhập</button><form className="auth-card" onSubmit={step === "request" ? requestOtp : reset}><div className="brand dark"><div className="mark"><ShieldCheck /></div><div><b>Khôi phục</b><span>Tài khoản</span></div></div><h1>{step === "done" ? "Đã đổi mật khẩu" : step === "request" ? "Quên mật khẩu" : "Nhập mã xác nhận"}</h1>{step === "request" && <label>Email tài khoản<input type="email" required value={email} onChange={e => setEmail(e.target.value)} /></label>}{step === "reset" && <><p>Mã OTP đã được gửi đến email nếu tài khoản tồn tại.</p><label>Mã OTP<input inputMode="numeric" pattern="\d{6}" maxLength={6} required value={otp} onChange={e => setOtp(e.target.value.replace(/\D/g, ""))} /></label><label>Mật khẩu mới<input type="password" minLength={PASSWORD_MIN_LENGTH} maxLength={PASSWORD_MAX_LENGTH} required aria-describedby="reset-password-requirements" value={password} onChange={e => setPassword(e.target.value)} onInput={e => e.currentTarget.setCustomValidity("")} onInvalid={e => e.currentTarget.setCustomValidity(passwordValidationMessage(e.currentTarget.value))} /><PasswordRequirements id="reset-password-requirements" password={password} /></label></>}{message && <div className={step === "done" ? "form-message" : "safety-note"} role={step === "done" ? "status" : "alert"}>{message}</div>}{step !== "done" && <button className="primary" disabled={busy || (step === "reset" && !isPasswordValid(password))}>{busy ? "Đang xử lý…" : step === "request" ? "Gửi mã OTP" : "Đặt lại mật khẩu"}</button>}{step === "done" && <button type="button" className="primary" onClick={close}>Về đăng nhập</button>}</form></div>
 }
+const REGISTRATION_DRAFT_KEY = "derm-registration-pending";
+type RegistrationDraft = { email: string; fullName: string; phone: string };
+function registrationDraft(): RegistrationDraft | null {
+    try { return JSON.parse(sessionStorage.getItem(REGISTRATION_DRAFT_KEY) || "null") as RegistrationDraft | null; }
+    catch { return null; }
+}
 function Login({ onLogin, onForgotPassword, notice = "" }: { onLogin: (tokens: Tokens) => void; onForgotPassword: () => void; notice?: string }) {
-    const [register, setRegister] = useState(false);
-    const [email, setEmail] = useState("");
+    const pendingRegistration = useRef(registrationDraft()).current;
+    const [register, setRegister] = useState(Boolean(pendingRegistration));
+    const [email, setEmail] = useState(pendingRegistration?.email || "");
     const [password, setPassword] = useState("");
-    const [fullName, setFullName] = useState("");
-    const [phone, setPhone] = useState("");
+    const [fullName, setFullName] = useState(pendingRegistration?.fullName || "");
+    const [phone, setPhone] = useState(pendingRegistration?.phone || "");
     const [error, setError] = useState("");
     const [busy, setBusy] = useState(false);
     const [profilePending, setProfilePending] = useState<{ tokens: Tokens; email: string; provider: "email" | "google" } | null>(null);
-    const [verificationPending, setVerificationPending] = useState(false);
+    const [verificationPending, setVerificationPending] = useState(Boolean(pendingRegistration));
     const [verificationOtp, setVerificationOtp] = useState("");
     const [resendCooldown, setResendCooldown] = useState(0);
 
@@ -229,6 +243,7 @@ function Login({ onLogin, onForgotPassword, notice = "" }: { onLogin: (tokens: T
             if (register) {
                 await request("/auth/register", undefined, { method: "POST", body: JSON.stringify({ email, password }) });
                 // The account stays unusable until the owner proves access to this mailbox.
+                sessionStorage.setItem(REGISTRATION_DRAFT_KEY, JSON.stringify({ email, fullName, phone }));
                 setVerificationPending(true);
                 setResendCooldown(60);
                 return;
@@ -257,6 +272,14 @@ function Login({ onLogin, onForgotPassword, notice = "" }: { onLogin: (tokens: T
                 return;
             }
             await request("/auth/verification/confirm", undefined, { method: "POST", body: JSON.stringify({ email, otp: verificationOtp }) });
+            sessionStorage.removeItem(REGISTRATION_DRAFT_KEY);
+            if (!password) {
+                setVerificationPending(false);
+                setRegister(false);
+                setVerificationOtp("");
+                setError("Email đã được xác minh. Vui lòng nhập mật khẩu để đăng nhập và hoàn thiện hồ sơ.");
+                return;
+            }
             const tokens = await request<Tokens>("/auth/login", undefined, { method: "POST", body: JSON.stringify({ email, password }) });
             await request("/patients/me", tokens.accessToken, { method: "POST", body: JSON.stringify({ fullName, phone: normalizedPhone }) });
             onLogin(tokens);
@@ -299,7 +322,7 @@ function Login({ onLogin, onForgotPassword, notice = "" }: { onLogin: (tokens: T
             {error && <div className="form-message">{error}</div>}
             <button className="primary" disabled={busy || verificationOtp.length !== 6}>{busy ? "Đang xác minh..." : "Xác minh và hoàn tất"}</button>
             <button type="button" className="auth-switch" disabled={busy || resendCooldown > 0} onClick={resendVerification}>{resendCooldown > 0 ? `Gửi lại mã sau ${resendCooldown}s` : "Gửi lại mã OTP"}</button>
-            <button type="button" className="auth-switch" onClick={() => { setVerificationPending(false);setRegister(false);setError(""); }}>Quay lại đăng nhập</button>
+            <button type="button" className="auth-switch" onClick={() => { sessionStorage.removeItem(REGISTRATION_DRAFT_KEY);setVerificationPending(false);setRegister(false);setVerificationOtp("");setError(""); }}>Quay lại đăng nhập</button>
         </form></div>;
     }
 
@@ -309,7 +332,7 @@ function Login({ onLogin, onForgotPassword, notice = "" }: { onLogin: (tokens: T
         {notice && !register && <div className="auth-session-notice" role="status"><ShieldCheck /> <span>{notice}</span></div>}
         {register && <><label>Họ và tên<input value={fullName} onChange={event => setFullName(event.target.value)} required /></label><label>Số điện thoại<input type="tel" inputMode="tel" pattern="[0-9+ .()\\-]{8,20}" value={phone} onChange={event => setPhone(event.target.value)} required placeholder="Ví dụ: 0352790904" /></label></>}
         <label>Email<input type="email" value={email} onChange={event => setEmail(event.target.value)} required /></label>
-        <label>Mật khẩu<input type="password" minLength={PASSWORD_MIN_LENGTH} maxLength={PASSWORD_MAX_LENGTH} aria-describedby={register ? "register-password-requirements" : undefined} value={password} onChange={event => setPassword(event.target.value)} onInput={event => event.currentTarget.setCustomValidity("")} onInvalid={event => event.currentTarget.setCustomValidity(passwordValidationMessage(event.currentTarget.value))} required />{register && <PasswordRequirements id="register-password-requirements" password={password} />}</label>
+        <label>Mật khẩu<input type="password" minLength={register ? PASSWORD_MIN_LENGTH : undefined} maxLength={PASSWORD_MAX_LENGTH} aria-describedby={register ? "register-password-requirements" : undefined} value={password} onChange={event => setPassword(event.target.value)} onInput={event => event.currentTarget.setCustomValidity("")} onInvalid={event => event.currentTarget.setCustomValidity(register ? passwordValidationMessage(event.currentTarget.value) : "")} required />{register && <PasswordRequirements id="register-password-requirements" password={password} />}</label>
         {!register && <button type="button" className="auth-forgot-link" onClick={onForgotPassword}>Quên mật khẩu?</button>}
         {error && <div className="error" role="alert">{error}</div>}
         <button className="primary" disabled={busy || (register && !isPasswordValid(password))}>{busy ? "Đang xử lý..." : register ? "Tạo tài khoản" : "Đăng nhập"}</button>
@@ -319,7 +342,13 @@ function Login({ onLogin, onForgotPassword, notice = "" }: { onLogin: (tokens: T
     </form></div>;
 }
 function Dashboard({ session, logout }: { session: Tokens; logout: () => void }) {
-    const [tab, setTab] = useState<"profile" | "appointments" | "records" | "ai">(() => session.role === "PATIENT" && sessionStorage.getItem("derm-home-booking") ? "appointments" : "profile"); const [patient, setPatient] = useState<Patient | null>(null); const [doctor, setDoctor] = useState<Doctor | null>(null); const [appointments, setAppointments] = useState<Appointment[]>([]); const [records, setRecords] = useState<MedicalRecord[]>([]); const [prescriptions, setPrescriptions] = useState<Prescription[]>([]); const [patients, setPatients] = useState<Record<string, Patient>>({}); const [work, setWork] = useState<WorkSchedule[]>([]); const [leave, setLeave] = useState<LeavePeriod[]>([]); const [loading, setLoading] = useState(true); const [error, setError] = useState("");
+    const [tab, setTab] = useState<"profile" | "appointments" | "records" | "ai">(() => {
+        if (session.role !== "PATIENT") return "profile";
+        const intent = sessionStorage.getItem("derm-home-intent");
+        sessionStorage.removeItem("derm-home-intent");
+        if (sessionStorage.getItem("derm-home-booking") || intent === "appointments") return "appointments";
+        return intent === "ai" ? "ai" : "profile";
+    }); const [patient, setPatient] = useState<Patient | null>(null); const [doctor, setDoctor] = useState<Doctor | null>(null); const [appointments, setAppointments] = useState<Appointment[]>([]); const [records, setRecords] = useState<MedicalRecord[]>([]); const [prescriptions, setPrescriptions] = useState<Prescription[]>([]); const [patients, setPatients] = useState<Record<string, Patient>>({}); const [work, setWork] = useState<WorkSchedule[]>([]); const [leave, setLeave] = useState<LeavePeriod[]>([]); const [loading, setLoading] = useState(true); const [error, setError] = useState("");
     const [patientResourceState, setPatientResourceState] = useState({
         appointments: { loading: true, error: "" },
         records: { loading: true, error: "" },

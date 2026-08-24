@@ -79,9 +79,10 @@ def chat(request: ChatRequest):
 @app.post("/public-chat", response_model=ChatResponse)
 async def public_chat(request: ChatRequest):
     if not settings.gemini_api_key:
-        raise HTTPException(503, "Gemini chưa được cấu hình API key.")
+        answer, citations, refused = state["rag"].answer(request.question)
+        return ChatResponse(answer=answer, citations=citations, refused=refused, disclaimer=DISCLAIMER)
     system_instruction = (
-        "Bạn là trợ lý tư vấn thông tin chăm sóc da chung của DermAI Clinic. "
+        "Bạn là Trợ lý Derm, hỗ trợ thông tin chăm sóc da. Khi tự giới thiệu, chỉ dùng đúng tên “Trợ lý Derm”; không dùng tên DermAI Clinic và không tự tạo tên gọi khác. "
         "Trả lời bằng tiếng Việt, ngắn gọn, dễ hiểu và có trách nhiệm. "
         "Không chẩn đoán xác định, không kê đơn, không nêu liều thuốc và không khẳng định thay bác sĩ. "
         "Nếu có dấu hiệu cấp cứu, tổn thương lan nhanh, khó thở, sốt cao, đau dữ dội hoặc nhiễm trùng, "
@@ -107,7 +108,7 @@ async def public_chat(request: ChatRequest):
     models_to_try = [m for m in candidate_models if m and not (m in seen or seen.add(m))]
 
     last_error = None
-    async with httpx.AsyncClient(timeout=25.0) as client:
+    async with httpx.AsyncClient(timeout=8.0) as client:
         for model in models_to_try:
             url = f"https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent"
             try:
@@ -125,9 +126,9 @@ async def public_chat(request: ChatRequest):
                 print(f"GEMINI REQUEST ERROR on model {model}: {error}", flush=True)
                 last_error = error
 
-    if isinstance(last_error, httpx.HTTPStatusError):
-        raise HTTPException(502, f"Gemini error {last_error.response.status_code}: {last_error.response.text[:200]}")
-    raise HTTPException(503, "Không thể kết nối Gemini.")
+    # Gemini có thể quá tải tạm thời; kho tri thức nội bộ vẫn phải phục vụ người dùng.
+    answer, citations, refused = state["rag"].answer(request.question)
+    return ChatResponse(answer=answer, citations=citations, refused=refused, disclaimer=DISCLAIMER)
 
 
 @app.post("/support-chat", response_model=SupportChatResponse)

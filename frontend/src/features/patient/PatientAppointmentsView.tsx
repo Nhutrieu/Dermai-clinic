@@ -218,8 +218,10 @@ export default function PatientAppointmentsView({
                     ? current
                     : { tone: "info", text }
             );
+            return own;
         } catch (error) {
             setFeedback({ tone: "error", text: (error as Error).message });
+            return undefined;
         } finally {
             setBusy(false);
         }
@@ -307,8 +309,12 @@ export default function PatientAppointmentsView({
             setHeldFee(held.consultationFeeSnapshot ?? null);
             setFeedback({ tone: "success", text: "Khung giờ được giữ riêng cho bạn trong 5 phút." });
         } catch (error) {
-            await findSlots(true);
-            setFeedback({ tone: "error", text: (error as Error).message });
+            const own = await findSlots(true);
+            if (own && own.startAt === slot.startAt) {
+                setFeedback({ tone: "success", text: "Khung giờ đã được giữ cho bạn. Hãy nhập lý do khám và xác nhận đặt lịch." });
+            } else {
+                setFeedback({ tone: "error", text: (error as Error).message });
+            }
         } finally {
             setBusy(false);
         }

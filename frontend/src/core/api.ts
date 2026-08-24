@@ -1,4 +1,5 @@
-const API_ROOT = "/api/v1";
+const DEV_GATEWAY_ORIGIN = import.meta.env.DEV ? `http://${window.location.hostname}:8080` : "";
+const API_ROOT = DEV_GATEWAY_ORIGIN + "/api/v1";
 const SESSION_EXPIRED_MESSAGE = "Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.";
 
 type AccessTokenRecovery = (failedAccessToken: string) => Promise<string | null>;

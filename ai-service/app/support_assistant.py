@@ -415,7 +415,7 @@ def classify_support_request(question: str) -> SupportDecision:
     if re.search(r"\b(chao|hello|hi|alo)\b", normalized):
         return SupportDecision(
             "GREETING",
-            "Xin chào! Tôi là trợ lý hỗ trợ tự động của DermAI Clinic. Tôi có thể hướng dẫn đặt lịch, giá khám, lịch làm việc, hotline hoặc chuyển bạn sang lễ tân.",
+            "Xin chào! Tôi là Trợ lý Derm. Tôi có thể hướng dẫn đặt lịch, giá khám, lịch làm việc, hotline hoặc chuyển bạn sang lễ tân.",
             False,
             "Bệnh nhân bắt đầu cuộc trò chuyện.",
         )
@@ -435,7 +435,7 @@ async def polish_safe_answer(decision: SupportDecision, api_key: str, preferred_
         return decision.answer
 
     system_instruction = (
-        "Bạn biên tập câu trả lời thủ tục của DermAI Clinic bằng tiếng Việt. "
+        "Bạn là Trợ lý Derm và biên tập câu trả lời thủ tục bằng tiếng Việt. Nếu cần tự giới thiệu, chỉ dùng đúng tên “Trợ lý Derm”. "
         "Giữ nguyên toàn bộ dữ kiện, tối đa 80 từ, giọng bình tĩnh và chuyên nghiệp. "
         "Không thêm dữ kiện, không chẩn đoán, không kê đơn và không tuyên bố đã thao tác lịch. "
         "Chỉ trả về câu trả lời hoàn chỉnh, không thêm tiêu đề."

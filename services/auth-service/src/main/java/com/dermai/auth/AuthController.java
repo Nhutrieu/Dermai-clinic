@@ -14,6 +14,7 @@ public class AuthController {
  private final AuthService service;private final GoogleIdentityVerifier google;private final String bootstrapToken;private final String serviceToken;
  public AuthController(AuthService service,GoogleIdentityVerifier google,@Value("${security.bootstrap-token}") String token,@Value("${security.service-token}") String serviceToken){this.service=service;this.google=google;this.bootstrapToken=token;this.serviceToken=serviceToken;}
  record Credentials(@Email @NotBlank String email,@NotBlank @Size(min=10,max=100) String password){}
+ record LoginCredentials(@Email @NotBlank String email,@NotBlank @Size(max=100) String password){}
  record Refresh(@NotBlank String refreshToken){}
  record Forgot(@Email @NotBlank String email){}
  record VerifyEmail(@Email @NotBlank String email,@Pattern(regexp="\\d{6}") String otp){}
@@ -29,7 +30,7 @@ public class AuthController {
  @PostMapping("/register") ResponseEntity<?> register(@Valid @RequestBody Credentials x){
   var u=service.register(x.email(),x.password());return ResponseEntity.status(201).body(Map.of("id",u.id,"email",u.email,"role",u.role));
  }
- @PostMapping("/login") AuthService.Tokens login(@Valid @RequestBody Credentials x){return service.login(x.email(),x.password());}
+ @PostMapping("/login") AuthService.Tokens login(@Valid @RequestBody LoginCredentials x){return service.login(x.email(),x.password());}
  @PostMapping("/verification/send") Map<String,String> resendVerification(@Valid @RequestBody Forgot x){
   service.resendVerification(x.email());return Map.of("message","Nếu email đang chờ xác minh, mã OTP mới đã được gửi.");
  }
