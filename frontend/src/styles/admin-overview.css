@@ -981,3 +981,29 @@
     padding: var(--space-2) 0;
   }
 }
+
+/* Patient directory polish */
+.admin-patient-management { overflow: hidden; }
+.admin-patient-directory { grid-template-columns: minmax(250px, 300px) minmax(0, 1fr); gap: 20px; align-items: start; }
+.admin-patient-directory > nav { max-height: 520px; padding: 10px; border: 1px solid var(--admin-overview-border); border-radius: 18px; background: color-mix(in srgb, var(--admin-overview-surface-muted) 55%, white); scrollbar-width: thin; scrollbar-color: var(--color-primary) transparent; }
+.admin-patient-directory nav button { min-height: 72px; padding: 11px 12px; border-radius: 14px; transition: transform 180ms ease, border-color 180ms ease, background 180ms ease, box-shadow 180ms ease; }
+.admin-patient-directory nav button:hover { transform: translateX(3px); }
+.admin-patient-directory nav button.is-selected { border-color: color-mix(in srgb, var(--color-primary) 72%, transparent); background: linear-gradient(135deg, #e8f7f2 0%, #f4fbf8 100%); box-shadow: 0 8px 22px rgba(18, 120, 101, 0.1); }
+.admin-patient-detail { min-height: 0; padding: 24px; border-color: color-mix(in srgb, var(--color-primary) 28%, var(--admin-overview-border)); border-radius: 20px; background: linear-gradient(145deg, #f8fcfa 0%, #eef8f5 100%); box-shadow: 0 16px 38px rgba(28, 78, 68, 0.08); }
+.shell .admin-patient-detail > header { grid-template-columns: 52px minmax(0, 1fr) 38px; padding: 0 0 18px; }
+.admin-patient-detail > header .admin-patient-avatar { width: 52px; height: 52px; color: #275947; background: linear-gradient(145deg, #daf66c, #c5ee55); box-shadow: 0 7px 18px rgba(128, 175, 40, 0.18); }
+.shell .admin-patient-detail > header button { width: 38px; height: 38px; border-radius: 50%; background: #fff; box-shadow: 0 5px 14px rgba(31, 76, 67, 0.08); }
+.admin-patient-detail dl { gap: 12px; margin: 18px 0; }
+.admin-patient-detail dl > div { min-height: 82px; padding: 14px 16px; border: 1px solid rgba(31, 91, 78, 0.1); border-radius: 14px; background: rgba(255, 255, 255, 0.76); }
+.admin-patient-detail dt { margin-bottom: 8px; }
+.admin-patient-detail dd { margin-top: 0; font-size: 15px; }
+.admin-patient-recent { padding: 18px; border: 1px solid rgba(31, 91, 78, 0.11); border-radius: 16px; background: rgba(255, 255, 255, 0.72); }
+.admin-patient-recent h4 { margin-bottom: 10px; }
+.admin-patient-recent li { min-height: 46px; padding: 0 4px; }
+.admin-patient-recent li span { padding: 5px 10px; border-radius: 999px; background: #f1f5f3; font-size: 12px; font-weight: 700; }
+.admin-patient-detail .patient-account-actions { justify-content: flex-end; margin-top: 18px; padding-top: 18px; }
+.admin-patient-detail .patient-account-actions button { width: auto; min-width: 176px; min-height: 44px; padding: 0 20px; border-radius: 12px; font-size: 14px; font-weight: 750; cursor: pointer; transition: transform 160ms ease, box-shadow 160ms ease, background 160ms ease; }
+.admin-patient-detail .patient-account-actions button:hover:not(:disabled) { transform: translateY(-2px); box-shadow: 0 8px 18px rgba(180, 35, 24, 0.12); }
+.admin-patient-detail .patient-account-actions .danger { color: #b42318; border-color: #f2b8b2; background: #fff7f6; }
+@media (max-width: 900px) { .admin-patient-directory { grid-template-columns: 1fr; } .admin-patient-directory > nav { grid-template-columns: repeat(2, minmax(0, 1fr)); max-height: 260px; } }
+@media (max-width: 620px) { .admin-patient-directory > nav, .admin-patient-detail dl { grid-template-columns: 1fr; } .admin-patient-detail { padding: 18px; } .admin-patient-detail .patient-account-actions button { width: 100%; } }

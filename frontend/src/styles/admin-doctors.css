@@ -572,3 +572,123 @@
     height: 60px;
   }
 }
+
+.admin-doctor-security {
+  margin: 0 28px 28px;
+  padding: 20px;
+  border: 1px solid var(--admin-doctors-border);
+  border-radius: 16px;
+  background: var(--admin-doctors-surface-muted);
+}
+.admin-doctor-security > header { display: flex; gap: 12px; align-items: flex-start; margin-bottom: 18px; }
+.admin-doctor-security > header > span { display: grid; width: 38px; height: 38px; flex: 0 0 38px; place-items: center; color: var(--color-primary-strong); border-radius: 12px; background: var(--color-success-surface); }
+.admin-doctor-security > header svg { width: 19px; }
+.admin-doctor-security h4 { margin: 0; }
+.admin-doctor-security > header p { margin: 5px 0 0; color: var(--color-text-secondary); font-size: 14px; }
+.admin-doctor-security form > label { display: block; margin-bottom: 7px; color: var(--color-ink); font-size: 14px; font-weight: 700; }
+.admin-doctor-password-control { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 10px; }
+.admin-doctor-password-control input { width: 100%; min-height: 46px; padding: 0 14px; border: 1px solid var(--admin-doctors-border); border-radius: 12px; background: var(--admin-doctors-surface); }
+.admin-doctor-password-control input:focus { outline: 3px solid color-mix(in srgb, var(--color-primary) 18%, transparent); border-color: var(--color-primary); }
+.admin-doctor-password-control button { min-width: 150px; min-height: 46px; }
+.admin-doctor-password-feedback { margin: 12px 0 0; padding: 10px 12px; border-radius: 10px; font-size: 14px; }
+.admin-doctor-password-feedback.is-success { color: #176b55; background: #e8f7f1; }
+.admin-doctor-password-feedback.is-error { color: #b42318; background: #fff0ee; }
+@media (max-width: 620px) { .admin-doctor-security { margin: 0 16px 20px; padding: 16px; } .admin-doctor-password-control { grid-template-columns: 1fr; } .admin-doctor-password-control button { width: 100%; } }
+
+/* Doctor password panel alignment */
+.admin-doctor-detail .admin-doctor-security {
+  width: 100%;
+  max-width: none;
+  margin: 24px 0 0;
+  padding: 22px 24px;
+  border: 1px solid #c9e0da;
+  border-radius: 18px;
+  background: linear-gradient(135deg, #f3fbf8 0%, #edf7f4 100%);
+  box-shadow: 0 10px 28px rgba(28, 91, 77, 0.06);
+}
+.admin-doctor-detail .admin-doctor-security > header {
+  display: grid;
+  grid-template-columns: 44px minmax(0, 1fr);
+  gap: 14px;
+  align-items: center;
+  justify-content: initial;
+  margin: 0 0 20px;
+  padding: 0;
+  border: 0;
+}
+.admin-doctor-detail .admin-doctor-security > header > span {
+  width: 44px;
+  height: 44px;
+  flex-basis: 44px;
+  border-radius: 14px;
+  background: #def5ed;
+}
+.admin-doctor-detail .admin-doctor-security > header h4 {
+  margin: 0;
+  color: var(--color-ink);
+  font-size: 17px;
+  font-weight: 750;
+  line-height: 1.3;
+}
+.admin-doctor-detail .admin-doctor-security > header p {
+  margin: 4px 0 0;
+  line-height: 1.5;
+}
+.admin-doctor-detail .admin-doctor-security form {
+  display: grid;
+  max-width: none;
+  gap: 0;
+  margin: 0;
+}
+.admin-doctor-detail .admin-doctor-password-control {
+  display: grid;
+  grid-template-columns: minmax(260px, 1fr) 168px;
+  gap: 12px;
+  align-items: stretch;
+}
+.admin-doctor-detail .admin-doctor-password-control input {
+  min-width: 0;
+  min-height: 48px;
+  color: var(--color-ink);
+  font-size: 15px;
+  box-shadow: 0 3px 10px rgba(21, 76, 64, 0.04);
+}
+.admin-doctor-detail .admin-doctor-password-control button.secondary {
+  display: inline-flex;
+  min-width: 168px;
+  min-height: 48px;
+  align-items: center;
+  justify-content: center;
+  padding: 0 18px;
+  color: #fff;
+  border: 1px solid #147d70;
+  border-radius: 12px;
+  background: linear-gradient(135deg, #167d70, #159789);
+  box-shadow: 0 8px 18px rgba(21, 121, 106, 0.16);
+  font-size: 14px;
+  font-weight: 750;
+  white-space: nowrap;
+}
+.admin-doctor-detail .admin-doctor-password-control button.secondary:hover:not(:disabled) {
+  transform: translateY(-1px);
+  background: linear-gradient(135deg, #126b60, #11877a);
+}
+.admin-doctor-detail .admin-doctor-password-control button.secondary:disabled {
+  color: #78918b;
+  border-color: #cbdcd8;
+  background: #e4efec;
+  box-shadow: none;
+  cursor: not-allowed;
+}
+.admin-doctor-detail .admin-doctor-security .password-requirements {
+  margin-top: 10px;
+}
+.admin-doctor-detail .admin-doctor-security .password-requirements-list > span {
+  align-items: center;
+  font-size: 13px;
+}
+@media (max-width: 700px) {
+  .admin-doctor-detail .admin-doctor-security { padding: 18px; }
+  .admin-doctor-detail .admin-doctor-password-control { grid-template-columns: 1fr; }
+  .admin-doctor-detail .admin-doctor-password-control button.secondary { width: 100%; }
+}

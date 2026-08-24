@@ -580,6 +580,7 @@ function Dashboard({ session, logout }: { session: Tokens; logout: () => void })
                     setAccountProfile(profile);
                     if (avatarChanged) void loadAccountAvatar().catch(() => undefined);
                 }}
+                onPatientChanged={setPatient}
                 onClose={() => setAccountDialogOpen(false)}
             />
         )}

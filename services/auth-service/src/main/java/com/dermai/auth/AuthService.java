@@ -57,7 +57,7 @@ public class AuthService {
   staffEvents.save(new StaffAccountEvent(id,actorIdentityId,blocked?"LOCKED":"UNLOCKED"));return staff;
  }
  public Identity resetStaffPassword(UUID id,String newPassword,UUID actorIdentityId){
-  var staff=receptionist(id);staff.passwordHash=encoder.encode(newPassword);revokeSessions(id);
+  var staff=passwordManagedStaff(id);staff.passwordHash=encoder.encode(newPassword);revokeSessions(id);
   staffEvents.save(new StaffAccountEvent(id,actorIdentityId,"PASSWORD_RESET"));return staff;
  }
  public Identity renameReceptionist(UUID id,String displayName,UUID actorIdentityId){
@@ -150,6 +150,11 @@ public class AuthService {
  private Identity receptionist(UUID id){
   var user=users.findById(id).orElseThrow(()->new StaffManagementException("STAFF_NOT_FOUND"));
   if(user.role!=Identity.Role.RECEPTIONIST)throw new StaffManagementException("NOT_RECEPTIONIST");return user;
+ }
+ private Identity passwordManagedStaff(UUID id){
+  var user=users.findById(id).orElseThrow(()->new StaffManagementException("STAFF_NOT_FOUND"));
+  if(user.role!=Identity.Role.RECEPTIONIST&&user.role!=Identity.Role.DOCTOR)throw new StaffManagementException("STAFF_PASSWORD_NOT_MANAGED");
+  return user;
  }
  private void revokeSessions(UUID id){var now=Instant.now();refreshes.findAllByIdentityId(id).forEach(token->token.revokedAt=now);}
  public String createOtp(String email){

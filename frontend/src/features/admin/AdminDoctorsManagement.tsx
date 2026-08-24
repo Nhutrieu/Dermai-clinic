@@ -1,8 +1,11 @@
-import { useMemo, useState } from "react";
-import { BadgeCheck, Search, Stethoscope, X } from "lucide-react";
+import { FormEvent, useMemo, useState } from "react";
+import { BadgeCheck, KeyRound, Search, Stethoscope, X } from "lucide-react";
 import { formatVnd } from "../../core/currency";
+import { request } from "../../core/api";
+import { authErrorMessage, isPasswordValid, passwordValidationMessage, PASSWORD_MAX_LENGTH, PASSWORD_MIN_LENGTH } from "../../core/passwordPolicy";
 import type { Doctor } from "../../core/types";
 import AdminDoctorFeeEditor from "./AdminDoctorFeeEditor";
+import PasswordRequirements from "../../components/PasswordRequirements";
 
 type Props = {
   token: string;
@@ -18,6 +21,10 @@ function specialtyLabel(doctor: Doctor) {
 
 export default function AdminDoctorsManagement({ token, doctors, selectedDoctorId, onSelectDoctor, onSaved }: Props) {
   const [query, setQuery] = useState("");
+  const [password, setPassword] = useState("");
+  const [passwordBusy, setPasswordBusy] = useState(false);
+  const [passwordMessage, setPasswordMessage] = useState("");
+  const [passwordError, setPasswordError] = useState("");
   const needle = query.trim().toLocaleLowerCase("vi-VN");
   const filteredDoctors = useMemo(() => doctors.filter(doctor => {
     if (!needle) return true;
@@ -27,6 +34,25 @@ export default function AdminDoctorsManagement({ token, doctors, selectedDoctorI
   }), [doctors, needle]);
   const selectedDoctor = doctors.find(doctor => doctor.id === selectedDoctorId);
   const configuredFeeCount = doctors.filter(doctor => Number.isFinite(doctor.consultationFee) && doctor.consultationFee >= 0).length;
+  async function resetDoctorPassword(event: FormEvent) {
+    event.preventDefault();
+    if (!selectedDoctor || !isPasswordValid(password)) return;
+    setPasswordBusy(true);
+    setPasswordMessage("");
+    setPasswordError("");
+    try {
+      await request(`/auth/staff/${selectedDoctor.identityId}/password`, token, {
+        method: "PATCH",
+        body: JSON.stringify({ newPassword: password }),
+      });
+      setPassword("");
+      setPasswordMessage("Đã đặt mật khẩu mới và đăng xuất các phiên cũ của bác sĩ.");
+    } catch (reason) {
+      setPasswordError(authErrorMessage(reason));
+    } finally {
+      setPasswordBusy(false);
+    }
+  }
 
   return <section className="admin-doctors-page" aria-labelledby="admin-doctors-title">
     <header className="admin-doctors-heading">
@@ -82,6 +108,22 @@ export default function AdminDoctorsManagement({ token, doctors, selectedDoctorI
         </section>
 
         <AdminDoctorFeeEditor doctor={selectedDoctor} token={token} onSaved={onSaved} />
+        <section className="admin-doctor-security" aria-labelledby={`admin-doctor-security-${selectedDoctor.id}`}>
+          <header>
+            <span><KeyRound aria-hidden="true" /></span>
+            <div><h4 id={`admin-doctor-security-${selectedDoctor.id}`}>Mật khẩu đăng nhập</h4><p>Admin có thể cấp mật khẩu mới khi bác sĩ quên hoặc không thể đăng nhập.</p></div>
+          </header>
+          <form onSubmit={resetDoctorPassword}>
+            <label htmlFor={`doctor-password-${selectedDoctor.id}`}>Mật khẩu mới</label>
+            <div className="admin-doctor-password-control">
+              <input id={`doctor-password-${selectedDoctor.id}`} type="password" minLength={PASSWORD_MIN_LENGTH} maxLength={PASSWORD_MAX_LENGTH} required autoComplete="new-password" aria-describedby={`doctor-password-requirements-${selectedDoctor.id}`} value={password} onChange={event => setPassword(event.target.value)} onInput={event => event.currentTarget.setCustomValidity("")} onInvalid={event => event.currentTarget.setCustomValidity(passwordValidationMessage(event.currentTarget.value))} placeholder="Từ 10 đến 100 ký tự" />
+              <button type="submit" className="secondary" disabled={passwordBusy || !isPasswordValid(password)}>{passwordBusy ? "Đang lưu…" : "Đặt mật khẩu"}</button>
+            </div>
+            <PasswordRequirements id={`doctor-password-requirements-${selectedDoctor.id}`} password={password} />
+          </form>
+          {passwordError && <p className="admin-doctor-password-feedback is-error" role="alert">{passwordError}</p>}
+          {passwordMessage && <p className="admin-doctor-password-feedback is-success" role="status">{passwordMessage}</p>}
+        </section>
       </article> : <div className="admin-doctor-detail-empty"><Stethoscope aria-hidden="true" /><strong>Chọn một bác sĩ</strong><p>Hồ sơ nghề nghiệp và cấu hình giá khám sẽ xuất hiện tại đây.</p></div>}
     </div>
   </section>;
