@@ -530,7 +530,7 @@ export default function PatientAppointmentList({
                         const canSelfManage = canPatientSelfManageAppointment(item.status, item.createdAt, selfServiceNow);
                         const hasSelfServiceAction = ["PENDING", "ASSIGNED", "CONFIRMED"].includes(item.status);
                         return (
-                            <article className="patient-appointment-row" key={item.id}>
+                            <article className="patient-appointment-row" data-appointment-id={item.id} key={item.id}>
                                 <div className="appointment-date-icon" aria-hidden="true"><CalendarDays /></div>
                                 <div className="patient-appointment-details">
                                     <time dateTime={item.startAt}>{formatAppointmentTime(item.startAt)}</time>

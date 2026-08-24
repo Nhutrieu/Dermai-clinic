@@ -15,6 +15,7 @@ import java.util.Optional;
 import java.util.UUID;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
+import org.springframework.dao.CannotAcquireLockException;
 
 class AppointmentServiceTest {
   @Test
@@ -207,5 +208,25 @@ class AppointmentServiceTest {
 
     assertThat(updated.status).isEqualTo(AppointmentStatus.FOLLOW_UP_REQUIRED);
     assertThat(updated.patientHidden).isFalse();
+  }
+
+  @Test
+  void concurrentHoldDeadlockBecomesSlotConflict() {
+    var appointments = mock(AppointmentRepository.class);
+    var service = new AppointmentService(
+        appointments,
+        mock(OutboxRepository.class),
+        mock(SlotUpdateBroadcaster.class),
+        mock(AppointmentNotificationRepository.class),
+        mock(BookingPolicy.class)
+    );
+    var start = Instant.now().plusSeconds(86_400);
+    when(appointments.saveAndFlush(any(Appointment.class)))
+        .thenThrow(new CannotAcquireLockException("deadlock while checking exclusion constraint"));
+
+    assertThatThrownBy(() -> service.hold(
+        UUID.randomUUID(), UUID.randomUUID(), UUID.randomUUID(), UUID.randomUUID(),
+        start, start.plusSeconds(1_800), new BigDecimal("150000")
+    )).isInstanceOf(AppointmentService.SlotConflictException.class);
   }
 }

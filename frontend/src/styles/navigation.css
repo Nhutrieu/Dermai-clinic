@@ -366,6 +366,7 @@ nav button.active{background:#d9f278;color:#143d34;font-weight:700}
 }
 
 .booking-slot-grid > button {
+  scroll-margin-top: 96px;
   min-height: 58px;
   padding: 8px 10px;
   border: 1px solid var(--color-border-strong);

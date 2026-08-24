@@ -414,6 +414,10 @@
   position: relative;
 }
 
+.accepted-action-menu[open] {
+  z-index: 90;
+}
+
 .accepted-action-menu > summary {
   display: inline-flex;
   align-items: center;
@@ -626,6 +630,15 @@
 
 .accepted-appointment-list {
   padding: 0 var(--space-5) var(--space-4);
+}
+
+.accepted-appointment-list > li {
+  position: relative;
+}
+
+.accepted-appointment-list > li:has(.accepted-action-menu[open]),
+.accepted-appointment-item:has(.accepted-action-menu[open]) {
+  z-index: 90;
 }
 
 .accepted-appointment-list > li + li {

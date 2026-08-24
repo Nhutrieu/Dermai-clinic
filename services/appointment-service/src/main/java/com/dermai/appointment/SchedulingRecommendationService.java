@@ -18,7 +18,7 @@ public class SchedulingRecommendationService {
  private static final ZoneId CLINIC_ZONE=ZoneId.of("Asia/Ho_Chi_Minh");
  private static final LocalTime LUNCH_START=LocalTime.of(12,0),LUNCH_END=LocalTime.of(13,0);
  private static final int BOOKING_WINDOW_DAYS=60;
- private static final Set<AppointmentStatus> ACTIVE=EnumSet.of(AppointmentStatus.HELD,AppointmentStatus.PROPOSED,AppointmentStatus.PENDING,AppointmentStatus.ASSIGNED,AppointmentStatus.CONFIRMED,AppointmentStatus.CHECKED_IN,AppointmentStatus.IN_PROGRESS,AppointmentStatus.FOLLOW_UP_REQUIRED);
+ private static final Set<AppointmentStatus> ACTIVE=AppointmentStatus.slotBlockingStatuses();
  private final AppointmentRepository appointments;
  private final SchedulingEngine engine;
  private final RestClient doctors;

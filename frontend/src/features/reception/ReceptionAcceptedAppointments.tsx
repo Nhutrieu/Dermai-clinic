@@ -453,7 +453,7 @@ export default function ReceptionAcceptedAppointments(props: Props) {
               const canMarkNoShow = canManage && Date.now() >= new Date(appointment.startAt).getTime() + 30 * 60_000;
               return (
                 <li key={appointment.id}>
-                  <article className="accepted-appointment-item">
+                  <article className="accepted-appointment-item" data-appointment-id={appointment.id}>
                     <time dateTime={appointment.startAt} className="accepted-appointment-time">
                       <strong>{formatTime(appointment.startAt)}</strong>
                       <span>{formatDate(appointment.startAt)}</span>

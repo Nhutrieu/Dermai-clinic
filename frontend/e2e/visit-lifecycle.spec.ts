@@ -18,6 +18,7 @@ import {
   runtimeUnavailable,
   selectCandidateInUi,
   type Appointment,
+  type BookingCandidate,
   type Doctor,
 } from "./support/clinic";
 
@@ -75,28 +76,52 @@ test.describe("complete clinic visit lifecycle", () => {
         return;
       }
 
-      // Check-in is intentionally same-day, so this suite skips when the configured doctor has no future slot today.
-      const candidate = await findBookingCandidate(page, [active], {
-        doctorId: doctorResult.body.id,
-        startDayOffset: 0,
-        endDayOffset: 0,
-        minimumLeadMinutes: 2,
-      });
-      if (!candidate) {
-        test.skip(true, "Bác sĩ E2E không có slot còn trống trong hôm nay; không thể kiểm tra check-in thật.");
-        return;
+      const reason = "E2E-FLOW-001 - hành trình khám hoàn chỉnh";
+      const rejectedStartAts: string[] = [];
+      let candidate: BookingCandidate | null = null;
+      let held: Appointment | null = null;
+      await openBooking(page);
+
+      // Availability is a snapshot. If another request claims a slot between the GET and
+      // the hold POST, refresh and try the next real slot instead of making the suite flaky.
+      for (let attempt = 0; attempt < 3 && !held; attempt += 1) {
+        candidate = await findBookingCandidate(page, [active], {
+          doctorId: doctorResult.body.id,
+          startDayOffset: 0,
+          endDayOffset: 0,
+          minimumLeadMinutes: 2,
+          excludedStartAts: rejectedStartAts,
+        });
+        if (!candidate) {
+          if (attempt === 0) {
+            test.skip(true, "Bác sĩ E2E không có slot còn trống trong hôm nay; không thể kiểm tra check-in thật.");
+            return;
+          }
+          break;
+        }
+
+        const slotButton = await selectCandidateInUi(page, candidate);
+        const holdResponse = await beginHoldInUi(page, slotButton, active.length);
+        const holdBody = await responseBody<Appointment>(holdResponse);
+        if (holdResponse.status() === 201) {
+          held = holdBody;
+          holdId = held?.id || null;
+          break;
+        }
+        if (holdResponse.status() !== 409) {
+          expect(holdResponse.status(), JSON.stringify(holdBody)).toBe(201);
+        }
+        rejectedStartAts.push(candidate.slot.startAt);
+        await page.reload();
+        await expectRoleNavigation(page, "Bệnh nhân");
+        await openBooking(page);
       }
 
-      const reason = "E2E-FLOW-001 - hành trình khám hoàn chỉnh";
-      await openBooking(page);
-      const slotButton = await selectCandidateInUi(page, candidate);
-      const holdResponse = await beginHoldInUi(page, slotButton, active.length);
-      const held = await responseBody<Appointment>(holdResponse);
-      expect(holdResponse.status(), JSON.stringify(held)).toBe(201);
-      expect(held).not.toBeNull();
-      holdId = held!.id;
+      expect(held, `Không giữ được slot sau ${rejectedStartAts.length} xung đột availability.`).not.toBeNull();
+      expect(candidate).not.toBeNull();
+      expect(holdId).not.toBeNull();
 
-      const bookingResponse = await confirmHoldInUi(page, holdId, reason);
+      const bookingResponse = await confirmHoldInUi(page, holdId!, reason);
       const booked = await responseBody<Appointment>(bookingResponse);
       expect(bookingResponse.status(), JSON.stringify(booked)).toBe(200);
       expect(booked).not.toBeNull();
@@ -109,7 +134,9 @@ test.describe("complete clinic visit lifecycle", () => {
       await receptionistPage.getByRole("navigation", { name: "Điều hướng Lễ tân" })
         .getByRole("button", { name: "Yêu cầu đặt lịch", exact: true }).click();
       await expect(receptionistPage.getByRole("heading", { name: "Yêu cầu đặt lịch", exact: true })).toBeVisible();
-      const requestRow = receptionistPage.locator(".reception-request-item").filter({ hasText: reason });
+      const requestRow = receptionistPage.locator(".reception-request-item")
+        .filter({ hasText: reason })
+        .filter({ has: receptionistPage.getByRole("button", { name: "Xác nhận lịch", exact: true }) });
       await expect(requestRow).toBeVisible({ timeout: 15_000 });
       const confirmResponsePromise = receptionistPage.waitForResponse(response =>
         isApiResponse(response, "POST", `/api/v1/appointments/${appointmentId}/confirm`),
@@ -122,7 +149,7 @@ test.describe("complete clinic visit lifecycle", () => {
       await receptionistPage.getByRole("navigation", { name: "Điều hướng Lễ tân" })
         .getByRole("button", { name: "Lịch đã nhận", exact: true }).click();
       await expect(receptionistPage.getByRole("heading", { name: "Lịch đã được tiếp nhận" })).toBeVisible();
-      const acceptedRow = receptionistPage.locator(".accepted-appointment-item").filter({ hasText: reason });
+      const acceptedRow = receptionistPage.locator(`.accepted-appointment-item[data-appointment-id="${appointmentId}"]`);
       await expect(acceptedRow).toBeVisible({ timeout: 15_000 });
       await acceptedRow.locator("summary").click();
       const checkInResponsePromise = receptionistPage.waitForResponse(response =>
@@ -142,7 +169,9 @@ test.describe("complete clinic visit lifecycle", () => {
       await doctorPage.getByRole("navigation", { name: "Điều hướng Bác sĩ" })
         .getByRole("button", { name: "Lịch khám", exact: true }).click();
       await expect(doctorPage.getByRole("heading", { name: "Lịch khám hôm nay" })).toBeVisible();
-      const doctorRow = doctorPage.locator(".doctor-appointment-row").filter({ hasText: reason });
+      const doctorRow = doctorPage.locator(".doctor-appointment-row")
+        .filter({ hasText: reason })
+        .filter({ has: doctorPage.getByRole("button", { name: "Bắt đầu khám", exact: true }) });
       await expect(doctorRow).toBeVisible({ timeout: 15_000 });
       const startResponsePromise = doctorPage.waitForResponse(response =>
         isApiResponse(response, "POST", `/api/v1/appointments/${appointmentId}/start`),
@@ -181,7 +210,7 @@ test.describe("complete clinic visit lifecycle", () => {
       await page.reload();
       await expectRoleNavigation(page, "Bệnh nhân");
       await openBooking(page);
-      const patientRow = page.locator(".patient-appointment-row").filter({ hasText: reason });
+      const patientRow = page.locator(`.patient-appointment-row[data-appointment-id="${appointmentId}"]`);
       await expect(patientRow).toBeVisible({ timeout: 15_000 });
       await patientRow.getByRole("button", { name: "Đánh giá phòng khám", exact: true }).click();
       // Opening the control re-renders the appointment actions; anchor subsequent steps to the open form itself.
@@ -206,8 +235,8 @@ test.describe("complete clinic visit lifecycle", () => {
           testCase: "E2E-FLOW-001",
           appointmentId,
           medicalRecordId,
-          doctorId: candidate.doctor.id,
-          startAt: candidate.slot.startAt,
+          doctorId: candidate!.doctor.id,
+          startAt: candidate!.slot.startAt,
           finalStatus: "COMPLETED",
           reviewSubmitted: true,
         }, null, 2)),

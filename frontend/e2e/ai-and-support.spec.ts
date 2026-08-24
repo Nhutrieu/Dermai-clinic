@@ -83,6 +83,10 @@ test.describe("AI assessment persistence and sharing consent", () => {
       await page.getByRole("navigation", { name: "Điều hướng Bệnh nhân" })
         .getByRole("button", { name: "Kiểm tra da AI", exact: true }).click();
       await page.getByLabel("Chọn ảnh vùng da để phân tích", { exact: true }).setInputFiles(imagePath!);
+      await page.getByRole("button", {
+        name: "Không, gửi ảnh để hệ thống xác minh",
+        exact: true,
+      }).click();
       await page.getByRole("checkbox", { name: /Chia sẻ ảnh và kết quả khi đặt lịch/ }).check();
 
       const predictPromise = page.waitForResponse(response => isApiResponse(response, "POST", "/ai/predict"), { timeout: 120_000 });

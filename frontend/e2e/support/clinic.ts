@@ -116,7 +116,7 @@ export async function loginAs(page: Page, credentials: PatientCredentials, role:
     ADMIN: "Quản trị viên",
   };
   await page.goto("/");
-  await page.getByRole("button", { name: "Đăng nhập", exact: true }).first().click();
+  await page.getByRole("button", { name: "Đặt lịch", exact: true }).first().click();
   await expect(page.getByRole("heading", { name: "Đăng nhập hệ thống" })).toBeVisible();
   await page.getByLabel("Email", { exact: true }).fill(credentials.email);
   await page.getByLabel("Mật khẩu", { exact: true }).fill(credentials.password);
@@ -219,7 +219,13 @@ function patientCanUseSlot(activeLists: Appointment[][], slot: AvailabilitySlot)
 export async function findBookingCandidate(
   page: Page,
   activeLists: Appointment[][],
-  options: { doctorId?: string; startDayOffset?: number; endDayOffset?: number; minimumLeadMinutes?: number } = {},
+  options: {
+    doctorId?: string;
+    startDayOffset?: number;
+    endDayOffset?: number;
+    minimumLeadMinutes?: number;
+    excludedStartAts?: string[];
+  } = {},
 ): Promise<BookingCandidate | null> {
   const doctorsResult = await browserApi<Doctor[]>(page, "/api/v1/doctors");
   const allDoctors = requireApiSuccess(doctorsResult, "GET /doctors");
@@ -247,6 +253,7 @@ export async function findBookingCandidate(
       const availability = requireApiSuccess(availabilityResult, "GET /appointments/availability");
       const slot = availability.items.find(item => item.status === "AVAILABLE"
         && new Date(item.startAt).getTime() > Date.now() + (options.minimumLeadMinutes || 0) * 60_000
+        && !options.excludedStartAts?.includes(item.startAt)
         && patientCanUseSlot(activeLists, item));
       if (slot) return { doctor, date, slot };
     }
@@ -303,9 +310,13 @@ function isHoldCreationResponse(response: Response) {
     && url.pathname.endsWith("/api/v1/appointments/holds");
 }
 
-export async function beginHoldInUi(page: Page, slotButton: ReturnType<Page["getByRole"]>, activeCount: number) {
+export async function beginHoldInUi(page: Page, slotButton: ReturnType<Page["getByRole"]>, activeCount: number, options: { programmatic?: boolean } = {}) {
   const responsePromise = page.waitForResponse(isHoldCreationResponse);
-  await slotButton.click();
+  if (options.programmatic) {
+    await slotButton.evaluate((element: HTMLElement) => element.click());
+  } else {
+    await slotButton.click();
+  }
   if (activeCount > 0) {
     const continueButton = page.getByRole("button", { name: "Vẫn đặt thêm", exact: true });
     await expect(continueButton).toBeVisible();

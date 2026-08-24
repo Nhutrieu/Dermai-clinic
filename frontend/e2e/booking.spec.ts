@@ -173,21 +173,28 @@ test.describe("same-slot concurrency", () => {
       ]);
 
       // Both clicks start from the same AVAILABLE snapshot; the server/database decides the winner.
-      const holdResponses = await Promise.all([
-        beginHoldInUi(page, firstSlotButton, firstActive.length),
-        beginHoldInUi(secondPage, secondSlotButton, secondActive.length),
+      const holdAttempts = await Promise.allSettled([
+        beginHoldInUi(page, firstSlotButton, firstActive.length, { programmatic: true }),
+        beginHoldInUi(secondPage, secondSlotButton, secondActive.length, { programmatic: true }),
       ]);
-      const holdBodies = await Promise.all(holdResponses.map(response => responseBody<Appointment & { code?: string; detail?: string }>(response)));
+      const holdResponses = holdAttempts.map(result => result.status === "fulfilled" ? result.value : null);
+      const holdBodies = await Promise.all(holdResponses.map(response => response
+        ? responseBody<Appointment & { code?: string; detail?: string }>(response)
+        : null));
       holdResponses.forEach((response, index) => {
-        if (response.status() === 201 && holdBodies[index]?.id) holdIds[index] = holdBodies[index]!.id;
+        if (response?.status() === 201 && holdBodies[index]?.id) holdIds[index] = holdBodies[index]!.id;
       });
+      const holdFailures = holdAttempts
+        .filter((result): result is PromiseRejectedResult => result.status === "rejected")
+        .map(result => String(result.reason));
+      expect(holdFailures, JSON.stringify(holdBodies)).toHaveLength(0);
 
       const successIndexes = holdResponses
-        .map((response, index) => ({ status: response.status(), index }))
+        .map((response, index) => ({ status: response?.status(), index }))
         .filter(result => result.status === 201)
         .map(result => result.index);
       const conflictIndexes = holdResponses
-        .map((response, index) => ({ status: response.status(), index }))
+        .map((response, index) => ({ status: response?.status(), index }))
         .filter(result => result.status === 409)
         .map(result => result.index);
       expect(successIndexes, JSON.stringify(holdBodies)).toHaveLength(1);
@@ -230,7 +237,7 @@ test.describe("same-slot concurrency", () => {
           testCase: "E2E-BOOK-002",
           doctorId: candidate.doctor.id,
           startAt: candidate.slot.startAt,
-          holdHttpStatuses: holdResponses.map(response => response.status()),
+          holdHttpStatuses: holdResponses.map(response => response?.status() || null),
           winnerPatient: winnerIndex + 1,
           bookedAppointmentsAcrossPatients: firstBookings.length + secondBookings.length,
           appointmentId,

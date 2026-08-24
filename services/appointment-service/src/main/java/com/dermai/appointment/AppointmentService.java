@@ -1,5 +1,5 @@
 package com.dermai.appointment;
-import org.springframework.dao.DataIntegrityViolationException;import org.springframework.stereotype.Service;import org.springframework.transaction.annotation.Transactional;import java.math.BigDecimal;import java.time.*;import java.util.*;
+import org.springframework.dao.CannotAcquireLockException;import org.springframework.dao.DataIntegrityViolationException;import org.springframework.stereotype.Service;import org.springframework.transaction.annotation.Transactional;import java.math.BigDecimal;import java.time.*;import java.util.*;
 @Service @Transactional
 public class AppointmentService{
  private final AppointmentRepository repo;private final OutboxRepository outbox;private final SlotUpdateBroadcaster slots;private final AppointmentNotificationRepository notifications;private final BookingPolicy bookingPolicy;
@@ -11,19 +11,19 @@ public class AppointmentService{
   bookingPolicy.validateNewBooking(patientIdentity,doctor,start,bypassActiveLimit);
   requireFeeWhenDoctorSelected(doctor,consultationFeeSnapshot);
   try{var x=repo.saveAndFlush(Appointment.pending(patient,patientIdentity,doctor,doctorIdentity,start,end,reason,key,consultationFeeSnapshot));event(x,"AppointmentCreated");notify(x,"REQUEST_CREATED","Đã gửi yêu cầu đặt lịch","Yêu cầu đặt lịch của bạn đã được ghi nhận.");slots.afterCommit();return x;}
-  catch(DataIntegrityViolationException e){throw conflict(e);}
+  catch(DataIntegrityViolationException|CannotAcquireLockException e){throw conflict(e);}
  }
  public Appointment hold(UUID patient,UUID patientIdentity,UUID doctor,UUID doctorIdentity,Instant start,Instant end,BigDecimal consultationFeeSnapshot){
   if(doctor==null||doctorIdentity==null||!start.isBefore(end)||start.isBefore(Instant.now()))throw new IllegalArgumentException("INVALID_HOLD");
   bookingPolicy.validateNewBooking(patientIdentity,doctor,start,false);
   requireFeeWhenDoctorSelected(doctor,consultationFeeSnapshot);
-  try{var x=repo.saveAndFlush(Appointment.held(patient,patientIdentity,doctor,doctorIdentity,start,end,consultationFeeSnapshot));slots.afterCommit();return x;}catch(DataIntegrityViolationException e){throw conflict(e);}
+  try{var x=repo.saveAndFlush(Appointment.held(patient,patientIdentity,doctor,doctorIdentity,start,end,consultationFeeSnapshot));slots.afterCommit();return x;}catch(DataIntegrityViolationException|CannotAcquireLockException e){throw conflict(e);}
  }
  public Appointment propose(UUID patient,UUID patientIdentity,UUID doctor,UUID doctorIdentity,Instant start,Instant end,String reason,BigDecimal consultationFeeSnapshot){
   if(patient==null||patientIdentity==null||doctor==null||doctorIdentity==null||reason==null||reason.isBlank()||!start.isBefore(end)||start.isBefore(Instant.now()))throw new IllegalArgumentException("INVALID_PROPOSAL");
   bookingPolicy.validateNewBooking(patientIdentity,doctor,start,true);
   requireFeeWhenDoctorSelected(doctor,consultationFeeSnapshot);
-  try{var x=repo.saveAndFlush(Appointment.proposed(patient,patientIdentity,doctor,doctorIdentity,start,end,reason.trim(),consultationFeeSnapshot));event(x,"AppointmentProposed");notify(x,"BOOKING_PROPOSAL","Lễ tân đề nghị lịch khám","Lễ tân đã chọn lịch "+localTime(start)+". Vui lòng xác nhận trong 10 phút.");slots.afterCommit();return x;}catch(DataIntegrityViolationException e){throw conflict(e);}
+  try{var x=repo.saveAndFlush(Appointment.proposed(patient,patientIdentity,doctor,doctorIdentity,start,end,reason.trim(),consultationFeeSnapshot));event(x,"AppointmentProposed");notify(x,"BOOKING_PROPOSAL","Lễ tân đề nghị lịch khám","Lễ tân đã chọn lịch "+localTime(start)+". Vui lòng xác nhận trong 10 phút.");slots.afterCommit();return x;}catch(DataIntegrityViolationException|CannotAcquireLockException e){throw conflict(e);}
  }
  public Appointment acceptProposal(UUID id,UUID patientIdentity){
   var x=locked(id);if(x.status!=AppointmentStatus.PROPOSED||!patientIdentity.equals(x.patientIdentityId))throw new IllegalStateException("INVALID_PROPOSAL");
@@ -60,8 +60,8 @@ public class AppointmentService{
  public Appointment requireFollowUp(UUID completed,String reason,Instant notBefore){if(reason==null||reason.isBlank())throw new IllegalArgumentException("FOLLOW_UP_REASON_REQUIRED");if(notBefore==null)throw new IllegalArgumentException("FOLLOW_UP_DATE_REQUIRED");var old=locked(completed);if(old.status==AppointmentStatus.IN_PROGRESS)old.transition(AppointmentStatus.COMPLETED);if(old.status!=AppointmentStatus.COMPLETED)throw new IllegalStateException("INVALID_TRANSITION");old.transition(AppointmentStatus.FOLLOW_UP_REQUIRED);old.followUpReason=reason;old.followUpNotBefore=notBefore;old.patientHidden=false;event(old,"FollowUpRequired");return old;}
  public Appointment followUp(UUID parent,Instant start,Instant end,BigDecimal consultationFeeSnapshot,String key,boolean bypassActiveLimit){var old=locked(parent);if(old.status!=AppointmentStatus.FOLLOW_UP_REQUIRED)throw new IllegalStateException("FOLLOW_UP_NOT_REQUIRED");if(old.followUpNotBefore!=null&&start.isBefore(old.followUpNotBefore))throw new IllegalArgumentException("FOLLOW_UP_TOO_EARLY");var next=book(old.patientId,old.patientIdentityId,old.doctorId,old.doctorIdentityId,start,end,old.followUpReason,consultationFeeSnapshot,key,bypassActiveLimit);next.parentId=old.id;old.status=AppointmentStatus.COMPLETED;event(next,"FollowUpBooked");return next;}
  private Appointment locked(UUID id){return repo.findLocked(id).orElseThrow(NoSuchElementException::new);}
- private void flushConflict(Appointment x){try{repo.saveAndFlush(x);}catch(DataIntegrityViolationException e){throw new SlotConflictException();}}
- private RuntimeException conflict(DataIntegrityViolationException e){String message=String.valueOf(e.getMostSpecificCause().getMessage());return message.contains("no_patient_overlap")?new PatientOverlapException():new SlotConflictException();}
+ private void flushConflict(Appointment x){try{repo.saveAndFlush(x);}catch(DataIntegrityViolationException|CannotAcquireLockException e){throw new SlotConflictException();}}
+ private RuntimeException conflict(RuntimeException e){String message=e instanceof DataIntegrityViolationException integrity?String.valueOf(integrity.getMostSpecificCause().getMessage()):String.valueOf(e.getMessage());return message.contains("no_patient_overlap")?new PatientOverlapException():new SlotConflictException();}
  private void requireFeeWhenDoctorSelected(UUID doctor,BigDecimal fee){if(doctor!=null&&(fee==null||fee.signum()<0))throw new IllegalArgumentException("CONSULTATION_FEE_REQUIRED");}
  private String localTime(Instant value){return java.time.format.DateTimeFormatter.ofPattern("HH:mm 'ngày' dd/MM/yyyy").withZone(ZoneId.of("Asia/Ho_Chi_Minh")).format(value);}
  void notify(Appointment x,String type,String title,String body){if(!notifications.existsByAppointmentIdAndNotificationType(x.id,type))notifications.save(new AppointmentNotification(x,type,title,body));}
