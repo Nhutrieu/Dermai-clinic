@@ -213,7 +213,7 @@ export function PrescriptionPdfModal({
                                 <div>
                                     <strong>Derm Clinic</strong>
                                     <p>Phòng khám chuyên khoa Da liễu</p>
-                                    <address>{CLINIC_ADDRESS}<br />Hotline: {CLINIC_HOTLINE}</address>
+                                    <address>{CLINIC_ADDRESS}<br />Điện thoại: {CLINIC_HOTLINE}</address>
                                 </div>
                                 <dl>
                                     <div><dt>Mã đơn</dt><dd>{docId ? `RX-${docId.slice(0, 8).toUpperCase()}` : "Chưa có"}</dd></div>

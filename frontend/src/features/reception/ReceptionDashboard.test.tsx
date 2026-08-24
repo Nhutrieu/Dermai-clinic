@@ -128,7 +128,7 @@ describe("ReceptionDashboard", () => {
       searchAttempted: true,
     })} />);
     expect(html).toContain("Không có hồ sơ khớp");
-    expect(html).toContain("Tạo hồ sơ qua hotline");
+    expect(html).toContain("Tạo hồ sơ qua điện thoại");
     expect(html).not.toContain("kết quả AI");
   });
 

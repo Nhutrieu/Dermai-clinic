@@ -1,0 +1,53 @@
+{
+  "method": "frozen_feature_logistic_scope_gate_with_wseg",
+  "model_version": "efficientnet_b0-20260728T185742Z",
+  "seed": 42,
+  "data": {
+    "id_train": 4142,
+    "id_validation": 1036,
+    "id_test_held_out": 569,
+    "local_ood_train": 5132,
+    "local_ood_validation": 1283,
+    "local_ood_test": 43,
+    "wseg_train": 1732,
+    "wseg_validation": 371,
+    "wseg_test_held_out": 371,
+    "wseg_quality_audit": {
+      "accepted": 2474,
+      "invalid": 0,
+      "duplicates": 177,
+      "quality_rejected": 35
+    },
+    "scin_id_train": 977,
+    "scin_calibration": 240
+  },
+  "score_threshold": 0.7523394323671277,
+  "target_max_calibration_false_rejection_rate": 0.05,
+  "validation": {
+    "internal_id_false_rejection_rate": 0.032818532818532815,
+    "scin_false_rejection_rate": 0.05,
+    "local_ood_rejection_rate": 0.426344505066251,
+    "wound_rejection_rate": 0.8194070080862533
+  },
+  "held_out_test": {
+    "id_false_rejection_rate": 0.05272407732864675,
+    "local_ood_rejection_rate": 0.18604651162790697,
+    "wound_rejection_rate": 0.8032345013477089,
+    "id_vs_wound": {
+      "auroc": 0.9484649382517206,
+      "aupr_ood": 0.9342434632340352,
+      "fpr95": 0.30404217926186294
+    }
+  },
+  "previous_profile": {
+    "id_test_false_rejection_rate": 0.0017574692442882249,
+    "wound_test_rejection_rate": 0.11320754716981132,
+    "local_test_rejection_rate": 0.023255813953488372
+  },
+  "activation_ready": false,
+  "limitations": [
+    "WSeg contains clinical wound images; a superficial scratch captured in a casual phone photo can still differ from this distribution.",
+    "This gate rejects unsupported images and does not diagnose wounds, burns, or scratches.",
+    "WSeg is CC BY-NC 4.0 and is used for research/demo evaluation only."
+  ]
+}

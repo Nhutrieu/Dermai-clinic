@@ -1,0 +1,527 @@
+{
+  "source": "Caltech 101",
+  "official_record": "https://data.caltech.edu/records/mzrjq-6wc02",
+  "archive_md5": "3138e1922a9193bfa496528edbbc45d0",
+  "purpose": "Negative/OOD examples only; never used as a disease label.",
+  "seed": 42,
+  "max_per_category": 100,
+  "categories": 102,
+  "counts": {
+    "train": 4472,
+    "validation": 962,
+    "test_held_out": 964
+  },
+  "category_counts": {
+    "accordion": {
+      "train": 38,
+      "validation": 8,
+      "test": 9
+    },
+    "airplanes": {
+      "train": 70,
+      "validation": 15,
+      "test": 15
+    },
+    "anchor": {
+      "train": 29,
+      "validation": 6,
+      "test": 7
+    },
+    "ant": {
+      "train": 29,
+      "validation": 6,
+      "test": 7
+    },
+    "BACKGROUND_Google": {
+      "train": 70,
+      "validation": 15,
+      "test": 15
+    },
+    "barrel": {
+      "train": 33,
+      "validation": 7,
+      "test": 7
+    },
+    "bass": {
+      "train": 38,
+      "validation": 8,
+      "test": 8
+    },
+    "beaver": {
+      "train": 32,
+      "validation": 7,
+      "test": 7
+    },
+    "binocular": {
+      "train": 23,
+      "validation": 5,
+      "test": 5
+    },
+    "bonsai": {
+      "train": 70,
+      "validation": 15,
+      "test": 15
+    },
+    "brain": {
+      "train": 69,
+      "validation": 15,
+      "test": 14
+    },
+    "brontosaurus": {
+      "train": 30,
+      "validation": 6,
+      "test": 7
+    },
+    "buddha": {
+      "train": 59,
+      "validation": 13,
+      "test": 13
+    },
+    "butterfly": {
+      "train": 64,
+      "validation": 14,
+      "test": 13
+    },
+    "camera": {
+      "train": 35,
+      "validation": 8,
+      "test": 7
+    },
+    "cannon": {
+      "train": 30,
+      "validation": 6,
+      "test": 7
+    },
+    "car_side": {
+      "train": 70,
+      "validation": 15,
+      "test": 15
+    },
+    "ceiling_fan": {
+      "train": 33,
+      "validation": 7,
+      "test": 7
+    },
+    "cellphone": {
+      "train": 41,
+      "validation": 9,
+      "test": 9
+    },
+    "chair": {
+      "train": 43,
+      "validation": 9,
+      "test": 10
+    },
+    "chandelier": {
+      "train": 70,
+      "validation": 15,
+      "test": 15
+    },
+    "cougar_body": {
+      "train": 33,
+      "validation": 7,
+      "test": 7
+    },
+    "cougar_face": {
+      "train": 48,
+      "validation": 10,
+      "test": 11
+    },
+    "crab": {
+      "train": 51,
+      "validation": 11,
+      "test": 11
+    },
+    "crayfish": {
+      "train": 49,
+      "validation": 10,
+      "test": 11
+    },
+    "crocodile": {
+      "train": 35,
+      "validation": 8,
+      "test": 7
+    },
+    "crocodile_head": {
+      "train": 36,
+      "validation": 8,
+      "test": 7
+    },
+    "cup": {
+      "train": 40,
+      "validation": 9,
+      "test": 8
+    },
+    "dalmatian": {
+      "train": 47,
+      "validation": 10,
+      "test": 10
+    },
+    "dollar_bill": {
+      "train": 36,
+      "validation": 8,
+      "test": 8
+    },
+    "dolphin": {
+      "train": 46,
+      "validation": 10,
+      "test": 9
+    },
+    "dragonfly": {
+      "train": 48,
+      "validation": 10,
+      "test": 10
+    },
+    "electric_guitar": {
+      "train": 52,
+      "validation": 11,
+      "test": 12
+    },
+    "elephant": {
+      "train": 45,
+      "validation": 10,
+      "test": 9
+    },
+    "emu": {
+      "train": 37,
+      "validation": 8,
+      "test": 8
+    },
+    "euphonium": {
+      "train": 45,
+      "validation": 10,
+      "test": 9
+    },
+    "ewer": {
+      "train": 59,
+      "validation": 13,
+      "test": 13
+    },
+    "Faces": {
+      "train": 70,
+      "validation": 15,
+      "test": 15
+    },
+    "Faces_easy": {
+      "train": 70,
+      "validation": 15,
+      "test": 15
+    },
+    "ferry": {
+      "train": 47,
+      "validation": 10,
+      "test": 10
+    },
+    "flamingo": {
+      "train": 47,
+      "validation": 10,
+      "test": 10
+    },
+    "flamingo_head": {
+      "train": 31,
+      "validation": 7,
+      "test": 7
+    },
+    "garfield": {
+      "train": 24,
+      "validation": 5,
+      "test": 5
+    },
+    "gerenuk": {
+      "train": 24,
+      "validation": 5,
+      "test": 5
+    },
+    "gramophone": {
+      "train": 36,
+      "validation": 8,
+      "test": 7
+    },
+    "grand_piano": {
+      "train": 69,
+      "validation": 15,
+      "test": 15
+    },
+    "hawksbill": {
+      "train": 70,
+      "validation": 15,
+      "test": 15
+    },
+    "headphone": {
+      "train": 29,
+      "validation": 6,
+      "test": 7
+    },
+    "hedgehog": {
+      "train": 38,
+      "validation": 8,
+      "test": 8
+    },
+    "helicopter": {
+      "train": 62,
+      "validation": 13,
+      "test": 13
+    },
+    "ibis": {
+      "train": 56,
+      "validation": 12,
+      "test": 12
+    },
+    "inline_skate": {
+      "train": 22,
+      "validation": 5,
+      "test": 4
+    },
+    "joshua_tree": {
+      "train": 45,
+      "validation": 10,
+      "test": 9
+    },
+    "kangaroo": {
+      "train": 60,
+      "validation": 13,
+      "test": 13
+    },
+    "ketch": {
+      "train": 70,
+      "validation": 15,
+      "test": 15
+    },
+    "lamp": {
+      "train": 43,
+      "validation": 9,
+      "test": 9
+    },
+    "laptop": {
+      "train": 57,
+      "validation": 12,
+      "test": 12
+    },
+    "Leopards": {
+      "train": 70,
+      "validation": 15,
+      "test": 15
+    },
+    "llama": {
+      "train": 55,
+      "validation": 12,
+      "test": 11
+    },
+    "lobster": {
+      "train": 29,
+      "validation": 6,
+      "test": 6
+    },
+    "lotus": {
+      "train": 46,
+      "validation": 10,
+      "test": 10
+    },
+    "mandolin": {
+      "train": 30,
+      "validation": 6,
+      "test": 7
+    },
+    "mayfly": {
+      "train": 28,
+      "validation": 6,
+      "test": 6
+    },
+    "menorah": {
+      "train": 61,
+      "validation": 13,
+      "test": 13
+    },
+    "metronome": {
+      "train": 22,
+      "validation": 5,
+      "test": 5
+    },
+    "minaret": {
+      "train": 53,
+      "validation": 11,
+      "test": 12
+    },
+    "Motorbikes": {
+      "train": 70,
+      "validation": 15,
+      "test": 15
+    },
+    "nautilus": {
+      "train": 38,
+      "validation": 8,
+      "test": 9
+    },
+    "octopus": {
+      "train": 24,
+      "validation": 5,
+      "test": 6
+    },
+    "okapi": {
+      "train": 27,
+      "validation": 6,
+      "test": 6
+    },
+    "pagoda": {
+      "train": 33,
+      "validation": 7,
+      "test": 7
+    },
+    "panda": {
+      "train": 27,
+      "validation": 6,
+      "test": 5
+    },
+    "pigeon": {
+      "train": 31,
+      "validation": 7,
+      "test": 7
+    },
+    "pizza": {
+      "train": 37,
+      "validation": 8,
+      "test": 8
+    },
+    "platypus": {
+      "train": 24,
+      "validation": 5,
+      "test": 5
+    },
+    "pyramid": {
+      "train": 40,
+      "validation": 9,
+      "test": 8
+    },
+    "revolver": {
+      "train": 57,
+      "validation": 12,
+      "test": 13
+    },
+    "rhino": {
+      "train": 41,
+      "validation": 9,
+      "test": 9
+    },
+    "rooster": {
+      "train": 34,
+      "validation": 7,
+      "test": 8
+    },
+    "saxophone": {
+      "train": 28,
+      "validation": 6,
+      "test": 6
+    },
+    "schooner": {
+      "train": 44,
+      "validation": 9,
+      "test": 10
+    },
+    "scissors": {
+      "train": 27,
+      "validation": 6,
+      "test": 6
+    },
+    "scorpion": {
+      "train": 59,
+      "validation": 13,
+      "test": 12
+    },
+    "sea_horse": {
+      "train": 40,
+      "validation": 9,
+      "test": 8
+    },
+    "snoopy": {
+      "train": 24,
+      "validation": 5,
+      "test": 6
+    },
+    "soccer_ball": {
+      "train": 45,
+      "validation": 10,
+      "test": 9
+    },
+    "stapler": {
+      "train": 31,
+      "validation": 7,
+      "test": 7
+    },
+    "starfish": {
+      "train": 60,
+      "validation": 13,
+      "test": 13
+    },
+    "stegosaurus": {
+      "train": 41,
+      "validation": 9,
+      "test": 9
+    },
+    "stop_sign": {
+      "train": 45,
+      "validation": 10,
+      "test": 9
+    },
+    "strawberry": {
+      "train": 24,
+      "validation": 5,
+      "test": 6
+    },
+    "sunflower": {
+      "train": 59,
+      "validation": 13,
+      "test": 13
+    },
+    "tick": {
+      "train": 34,
+      "validation": 7,
+      "test": 8
+    },
+    "trilobite": {
+      "train": 60,
+      "validation": 13,
+      "test": 13
+    },
+    "umbrella": {
+      "train": 52,
+      "validation": 11,
+      "test": 12
+    },
+    "watch": {
+      "train": 70,
+      "validation": 15,
+      "test": 15
+    },
+    "water_lilly": {
+      "train": 26,
+      "validation": 6,
+      "test": 5
+    },
+    "wheelchair": {
+      "train": 41,
+      "validation": 9,
+      "test": 9
+    },
+    "wild_cat": {
+      "train": 24,
+      "validation": 5,
+      "test": 5
+    },
+    "windsor_chair": {
+      "train": 39,
+      "validation": 8,
+      "test": 9
+    },
+    "wrench": {
+      "train": 27,
+      "validation": 6,
+      "test": 6
+    },
+    "yin_yang": {
+      "train": 42,
+      "validation": 9,
+      "test": 9
+    }
+  },
+  "split_integrity": "Deterministic, category-stratified, mutually exclusive file paths."
+}

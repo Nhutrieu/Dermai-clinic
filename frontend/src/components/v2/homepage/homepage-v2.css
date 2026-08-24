@@ -93,3 +93,42 @@ html.v2-hide-scrollbar{scrollbar-width:none}html.v2-hide-scrollbar::-webkit-scro
 
 .v2-home .v2-doctor-grid>article>div{min-height:460px!important}
 @media(max-width:767px){.v2-home .v2-doctor-grid>article>div{min-height:430px!important}.v2-home .v2-doctor-photo{transform:scale(1.12)!important;object-position:50% 20%!important}}
+
+/* Larger doctor portraits */
+.v2-home .v2-doctor-grid > article > div {
+  min-height: 560px !important;
+}
+
+.v2-home .v2-doctor-photo {
+  object-position: 50% 16% !important;
+  opacity: .68 !important;
+  transform: scale(1.06) !important;
+  transform-origin: 50% 18% !important;
+  transition: transform .55s cubic-bezier(.22,1,.36,1), opacity .35s ease !important;
+}
+
+.v2-home .v2-doctor-grid > article:hover .v2-doctor-photo {
+  opacity: .78 !important;
+  transform: scale(1.1) !important;
+}
+
+.v2-home .v2-doctor-copy {
+  background: linear-gradient(145deg, rgba(3,10,18,.9), rgba(7,18,28,.78)) !important;
+}
+
+@media (max-width: 1023px) {
+  .v2-home .v2-doctor-grid > article > div {
+    min-height: 520px !important;
+  }
+}
+
+@media (max-width: 639px) {
+  .v2-home .v2-doctor-grid > article > div {
+    min-height: 500px !important;
+  }
+
+  .v2-home .v2-doctor-photo {
+    object-position: 50% 14% !important;
+    transform: scale(1.03) !important;
+  }
+}

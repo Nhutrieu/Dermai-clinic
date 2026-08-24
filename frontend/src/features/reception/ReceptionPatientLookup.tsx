@@ -85,7 +85,7 @@ function PatientStatusBadge({ patient }: { patient: Patient }) {
   const label = patient.accountLinked === true
     ? "Đã liên kết tài khoản"
     : patient.accountLinked === false
-      ? "Hồ sơ hotline"
+      ? "Hồ sơ qua điện thoại"
       : "Chưa có trạng thái tài khoản";
   return <span className={`reception-patient-account ${patient.accountLinked ? "is-linked" : ""}`}>{label}</span>;
 }
@@ -281,7 +281,7 @@ export default function ReceptionPatientLookup(props: Props) {
         </div>
         <button type="button" className="reception-button-secondary" onClick={() => props.onOpenHotline()}>
           <UserPlus aria-hidden="true" />
-          Tạo hồ sơ qua hotline
+          Tạo hồ sơ qua điện thoại
         </button>
       </header>
 
@@ -348,7 +348,7 @@ export default function ReceptionPatientLookup(props: Props) {
               props.onClearSearch();
               window.setTimeout(() => searchInputRef.current?.focus(), 0);
             }}>Xóa tìm kiếm</button>
-            <button type="button" className="reception-button-primary" onClick={() => props.onOpenHotline()}><UserPlus aria-hidden="true" />Tạo hồ sơ qua hotline</button>
+            <button type="button" className="reception-button-primary" onClick={() => props.onOpenHotline()}><UserPlus aria-hidden="true" />Tạo hồ sơ qua điện thoại</button>
           </div>
         </div>
       )}
@@ -444,7 +444,7 @@ export default function ReceptionPatientLookup(props: Props) {
                       <div><dt>Họ và tên</dt><dd>{selectedPatient.fullName}</dd></div>
                       <div><dt>Ngày sinh</dt><dd>{formatDate(selectedPatient.dob)}</dd></div>
                       <div><dt>Số điện thoại</dt><dd>{selectedPatient.phone || "Chưa khai báo"}</dd></div>
-                      <div><dt>Trạng thái hồ sơ</dt><dd>{selectedPatient.accountLinked === true ? "Đã liên kết tài khoản" : selectedPatient.accountLinked === false ? "Tiếp nhận qua hotline" : "Chưa có dữ liệu"}</dd></div>
+                      <div><dt>Trạng thái hồ sơ</dt><dd>{selectedPatient.accountLinked === true ? "Đã liên kết tài khoản" : selectedPatient.accountLinked === false ? "Tiếp nhận qua điện thoại" : "Chưa có dữ liệu"}</dd></div>
                     </dl>
                     <p className="reception-patient-privacy"><ShieldCheck aria-hidden="true" />Màn hình này không hiển thị chẩn đoán, ảnh da, đơn thuốc, tiền sử bệnh hoặc ghi chú chuyên môn.</p>
                   </section>

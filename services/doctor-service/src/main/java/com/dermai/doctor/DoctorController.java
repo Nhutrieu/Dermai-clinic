@@ -43,14 +43,15 @@ public class DoctorController{
   requireOwner(id,role,identity);if(doctors.findById(id).isEmpty())throw new ResponseStatusException(HttpStatus.NOT_FOUND);
   for(var x:body)if(!x.startTime().isBefore(x.endTime())||Duration.between(x.startTime(),x.endTime()).toMinutes()<x.slotMinutes())throw new ResponseStatusException(HttpStatus.BAD_REQUEST,"Khoảng giờ phải chứa ít nhất một slot");
   for(int i=0;i<body.size();i++)for(int j=i+1;j<body.size();j++){var a=body.get(i);var b=body.get(j);if(a.weekday()==b.weekday()&&a.startTime().isBefore(b.endTime())&&b.startTime().isBefore(a.endTime()))throw new ResponseStatusException(HttpStatus.CONFLICT,"Các ca làm cùng ngày không được chồng lấn");}
-  // Confirmed visits are contractual slots; a schedule edit may not silently orphan them.
-  appointments.upcomingConfirmed(id).stream().filter(slot->body.stream().noneMatch(schedule->covers(schedule,slot))).findFirst().ifPresent(slot->{throw new ConfirmedAppointmentConflict("Lịch làm việc mới xung đột với lịch hẹn đã xác nhận lúc "+slot.startAt().atZone(CLINIC_ZONE));});
+  var conflicts=appointments.upcomingBlocking(id).stream().filter(slot->body.stream().noneMatch(schedule->covers(schedule,slot))).toList();
+  rejectAppointmentConflicts(conflicts,"thay đổi lịch làm việc");
   var next=body.stream().map(x->{var s=new WorkSchedule();s.id=UUID.randomUUID();s.doctorId=id;s.weekday=x.weekday();s.startTime=x.startTime();s.endTime=x.endTime();s.slotMinutes=x.slotMinutes();return s;}).toList();
   schedules.deleteAll(schedules.findByDoctorId(id));schedules.flush();return schedules.saveAll(next);
  }
  @PostMapping("/{id}/leave") ResponseEntity<LeavePeriod> leave(@PathVariable UUID id,@RequestHeader("X-User-Id") UUID identity,@RequestHeader("X-User-Role") String role,@Valid @RequestBody LeaveBody b){
   requireOwner(id,role,identity);if(doctors.findById(id).isEmpty())throw new ResponseStatusException(HttpStatus.NOT_FOUND);if(!b.startAt().isBefore(b.endAt()))throw new ResponseStatusException(HttpStatus.BAD_REQUEST,"Khoảng nghỉ sai");
-  appointments.upcomingConfirmed(id).stream().filter(slot->b.startAt().isBefore(slot.endAt())&&b.endAt().isAfter(slot.startAt())).findFirst().ifPresent(slot->{throw new ConfirmedAppointmentConflict("Khoảng nghỉ xung đột với lịch hẹn đã xác nhận lúc "+slot.startAt().atZone(CLINIC_ZONE));});
+  var conflicts=appointments.upcomingBlocking(id).stream().filter(slot->b.startAt().isBefore(slot.endAt())&&b.endAt().isAfter(slot.startAt())).toList();
+  rejectAppointmentConflicts(conflicts,"thêm khoảng nghỉ");
   var x=new LeavePeriod();x.id=UUID.randomUUID();x.doctorId=id;x.startAt=b.startAt();x.endAt=b.endAt();x.reason=b.reason();return ResponseEntity.status(201).body(leaves.save(x));
  }
  @DeleteMapping("/{id}/leave/{leaveId}") @ResponseStatus(HttpStatus.NO_CONTENT) void deleteLeave(@PathVariable UUID id,@PathVariable UUID leaveId,@RequestHeader("X-User-Id") UUID identity,@RequestHeader("X-User-Role") String role){
@@ -60,5 +61,13 @@ public class DoctorController{
  private void requireAny(String got,String... r){if(Arrays.stream(r).noneMatch(got::equals))throw new ResponseStatusException(HttpStatus.FORBIDDEN);}
  private void requireOwner(UUID doctorId,String role,UUID identity){if("ADMIN".equals(role))return;if(!"DOCTOR".equals(role)||identity==null||doctors.findByIdentityId(identity).map(d->!d.id.equals(doctorId)).orElse(true))throw new ResponseStatusException(HttpStatus.FORBIDDEN);}
  private boolean covers(ScheduleBody schedule,AppointmentScheduleClient.AppointmentSlot slot){var start=slot.startAt().atZone(CLINIC_ZONE);var end=slot.endAt().atZone(CLINIC_ZONE);if(start.getDayOfWeek().getValue()!=schedule.weekday()||!start.toLocalDate().equals(end.toLocalDate()))return false;boolean within=!start.toLocalTime().isBefore(schedule.startTime())&&!end.toLocalTime().isAfter(schedule.endTime());long offset=Duration.between(schedule.startTime(),start.toLocalTime()).toMinutes();return within&&offset>=0&&offset%schedule.slotMinutes()==0;}
+ private void rejectAppointmentConflicts(List<AppointmentScheduleClient.AppointmentSlot> conflicts,String action){
+  if(conflicts.isEmpty())return;
+  var formatter=java.time.format.DateTimeFormatter.ofPattern("HH:mm dd/MM/yyyy");
+  var examples=conflicts.stream().limit(3).map(slot->formatter.format(slot.startAt().atZone(CLINIC_ZONE))+" ("+statusLabel(slot.status())+")").toList();
+  var remaining=conflicts.size()>3?" và "+(conflicts.size()-3)+" lịch khác":"";
+  throw new ActiveAppointmentConflict("Không thể "+action+" vì có "+conflicts.size()+" lịch đang hoạt động: "+String.join(", ",examples)+(remaining.isBlank()?"":" "+remaining)+". Vui lòng nhờ lễ tân đổi hoặc hủy các lịch này trước.");
+ }
+ private String statusLabel(String status){return switch(status){case"HELD"->"đang giữ chỗ";case"PROPOSED"->"đang chờ bệnh nhân xác nhận";case"PENDING","ASSIGNED"->"đang chờ xác nhận";case"CONFIRMED"->"đã xác nhận";case"CHECKED_IN"->"đã tiếp nhận";case"IN_PROGRESS"->"đang khám";default->"đang hoạt động";};}
  private BigDecimal normalizeFee(BigDecimal fee){return fee.setScale(0,RoundingMode.UNNECESSARY);}
 }

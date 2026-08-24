@@ -767,6 +767,21 @@
   font-size: 14px;
 }
 
+.admin-staff-page .clinic-closure-message {
+  margin: var(--space-3) 0 0;
+  padding: 12px 14px;
+  border: 1px solid color-mix(in srgb, var(--color-primary) 28%, transparent);
+  border-radius: var(--radius-md);
+  background: color-mix(in srgb, var(--color-primary) 8%, white);
+  color: var(--color-ink);
+}
+
+.admin-staff-page .clinic-closure-message.is-error {
+  border-color: color-mix(in srgb, var(--color-danger) 36%, transparent);
+  background: color-mix(in srgb, var(--color-danger) 8%, white);
+  color: var(--color-danger);
+}
+
 @media (max-width: 1100px) {
   .admin-staff-create-group,
   .admin-staff-profile-section,

@@ -7,6 +7,8 @@ import java.util.*;
 interface SupportConversationRepository extends JpaRepository<SupportConversation,UUID> {
  List<SupportConversation> findAllByOrderByUpdatedAtDesc();
  List<SupportConversation> findByChannelStatusNotOrderByUpdatedAtDesc(String channelStatus);
+ @Query("select c from SupportConversation c where c.channelStatus<>'AI_ACTIVE' or c.resolvedByIdentityId=:receptionist order by c.updatedAt desc")
+ List<SupportConversation> findInboxForReceptionist(@Param("receptionist") UUID receptionistIdentityId);
 
  @Modifying
  @Query(value="""

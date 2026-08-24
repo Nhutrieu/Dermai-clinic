@@ -25,13 +25,13 @@ class DoctorScheduleConflictTest {
 
   @Test
   void conflictResponseHasAStableCodeAndHumanReadableDetail() {
-    var response = new DoctorErrors().confirmedAppointmentConflict(
-        new ConfirmedAppointmentConflict("Khoảng nghỉ xung đột với lịch hẹn đã xác nhận."));
+    var response = new DoctorErrors().activeAppointmentConflict(
+        new ActiveAppointmentConflict("Khoảng nghỉ xung đột với lịch đang hoạt động."));
 
     assertThat(response.getStatusCode()).isEqualTo(HttpStatus.CONFLICT);
-    assertThat(response.getBody().getDetail()).contains("lịch hẹn đã xác nhận");
+    assertThat(response.getBody().getDetail()).contains("lịch đang hoạt động");
     assertThat(response.getBody().getProperties()).containsEntry(
-        "code", "CONFIRMED_APPOINTMENT_CONFLICT");
+        "code", "ACTIVE_APPOINTMENT_CONFLICT");
   }
 
   @Test
@@ -43,7 +43,7 @@ class DoctorScheduleConflictTest {
     var doctor = doctor();
     when(doctors.findById(doctor.id)).thenReturn(Optional.of(doctor));
     var visit = futureVisitAt(LocalTime.of(9, 0));
-    when(appointments.upcomingConfirmed(doctor.id)).thenReturn(List.of(visit));
+    when(appointments.upcomingBlocking(doctor.id)).thenReturn(List.of(visit));
     var controller = new DoctorController(doctors, schedules, leaves,
         mock(DoctorProfileWebSocketHandler.class), appointments);
     short weekday = (short) visit.startAt().atZone(CLINIC_ZONE).getDayOfWeek().getValue();
@@ -52,7 +52,7 @@ class DoctorScheduleConflictTest {
         new DoctorController.ScheduleBody(weekday, LocalTime.of(10, 0), LocalTime.of(12, 0), 30))))
         .isInstanceOfSatisfying(ResponseStatusException.class, error -> {
           assertThat(error.getStatusCode()).isEqualTo(HttpStatus.CONFLICT);
-          assertThat(error.getReason()).contains("lịch hẹn đã xác nhận");
+          assertThat(error.getReason()).contains("lịch đang hoạt động").contains("đổi hoặc hủy");
         });
 
     verify(schedules, never()).deleteAll(any());
@@ -69,7 +69,7 @@ class DoctorScheduleConflictTest {
     when(doctors.findById(doctor.id)).thenReturn(Optional.of(doctor));
     when(schedules.findByDoctorId(doctor.id)).thenReturn(List.of());
     var visit = futureVisitAt(LocalTime.of(9, 0));
-    when(appointments.upcomingConfirmed(doctor.id)).thenReturn(List.of(visit));
+    when(appointments.upcomingBlocking(doctor.id)).thenReturn(List.of(visit));
     var controller = new DoctorController(doctors, schedules, leaves,
         mock(DoctorProfileWebSocketHandler.class), appointments);
     short weekday = (short) visit.startAt().atZone(CLINIC_ZONE).getDayOfWeek().getValue();
@@ -89,7 +89,7 @@ class DoctorScheduleConflictTest {
     var doctor = doctor();
     when(doctors.findById(doctor.id)).thenReturn(Optional.of(doctor));
     var visit = futureVisitAt(LocalTime.of(9, 0));
-    when(appointments.upcomingConfirmed(doctor.id)).thenReturn(List.of(visit));
+    when(appointments.upcomingBlocking(doctor.id)).thenReturn(List.of(visit));
     var controller = new DoctorController(doctors, mock(ScheduleRepository.class), leaves,
         mock(DoctorProfileWebSocketHandler.class), appointments);
 
@@ -97,7 +97,7 @@ class DoctorScheduleConflictTest {
         new DoctorController.LeaveBody(visit.startAt().minusSeconds(60), visit.endAt(), "Nghỉ")))
         .isInstanceOfSatisfying(ResponseStatusException.class, error -> {
           assertThat(error.getStatusCode()).isEqualTo(HttpStatus.CONFLICT);
-          assertThat(error.getReason()).contains("lịch hẹn đã xác nhận");
+          assertThat(error.getReason()).contains("lịch đang hoạt động").contains("đổi hoặc hủy");
         });
 
     verify(leaves, never()).save(any());
@@ -111,6 +111,6 @@ class DoctorScheduleConflictTest {
     LocalDate date = LocalDate.now(CLINIC_ZONE).plusDays(7);
     while (date.getDayOfWeek() == DayOfWeek.SUNDAY) date = date.plusDays(1);
     Instant start = date.atTime(time).atZone(CLINIC_ZONE).toInstant();
-    return new AppointmentScheduleClient.AppointmentSlot(UUID.randomUUID(), start, start.plusSeconds(1_800));
+    return new AppointmentScheduleClient.AppointmentSlot(UUID.randomUUID(), start, start.plusSeconds(1_800), "ASSIGNED");
   }
 }

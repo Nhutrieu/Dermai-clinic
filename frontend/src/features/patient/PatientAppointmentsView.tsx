@@ -3,9 +3,10 @@ import { AlertTriangle, BrainCircuit, CalendarDays, CheckCircle2, Clock3, Stetho
 import { request } from "../../core/api";
 import { formatVnd } from "../../core/currency";
 import { subscribeRealtime } from "../../core/realtime";
-import type { AiAssessment, Appointment, AvailabilitySlot, Doctor, Patient } from "../../core/types";
+import type { AiAssessment, Appointment, AvailabilityResponse, AvailabilitySlot, Doctor, Patient } from "../../core/types";
 import AppointmentList from "../../components/AppointmentList";
 import AccessibleDialog from "../../components/AccessibleDialog";
+import { formatAiPercentage, patientAiLabel } from "./patientAiPresentation";
 
 const ACTIVE_UPCOMING_STATUSES = new Set(["PROPOSED", "PENDING", "ASSIGNED", "CONFIRMED", "CHECKED_IN", "IN_PROGRESS"]);
 const HOLD_DURATION_SECONDS = 5 * 60;
@@ -98,6 +99,7 @@ export default function PatientAppointmentsView({
     const [doctors, setDoctors] = useState<Doctor[]>([]);
     const [doctorId, setDoctorId] = useState("");
     const [date, setDate] = useState(() => clinicDateInput());
+    const [clinicClosureReason, setClinicClosureReason] = useState<string | null>(null);
     const [slots, setSlots] = useState<AvailabilitySlot[]>([]);
     const [selected, setSelected] = useState<AvailabilitySlot | null>(null);
     const [pendingSlot, setPendingSlot] = useState<AvailabilitySlot | null>(null);
@@ -155,10 +157,10 @@ export default function PatientAppointmentsView({
             if (!assessment) return;
             setSharedAi(assessment);
             const top = assessment.top3
-                .map(item => item.label + " " + (item.probability * 100).toFixed(1) + "%")
+                .map(item => patientAiLabel(item.label) + " " + formatAiPercentage(item.probability))
                 .join("; ");
             const summary = draftSummary
-                || "Kết quả kiểm tra da bằng AI (tham khảo): " + top + ". Model "
+                || "Kết quả kiểm tra da bằng AI (tham khảo): " + top + ". Phiên bản mô hình "
                 + assessment.modelVersion + "."
                 + (assessment.uncertain ? " AI đánh dấu kết quả chưa chắc chắn." : "");
             setReason(value => value.trim() ? value : summary);
@@ -187,14 +189,26 @@ export default function PatientAppointmentsView({
         setBusy(true);
         if (!realtime) {
             setFeedback(null);
+            setClinicClosureReason(null);
             setSlots([]);
         }
         try {
-            const result = await request<{ items: AvailabilitySlot[] }>(
+            const result = await request<AvailabilityResponse>(
                 "/appointments/availability?doctorId=" + encodeURIComponent(doctorId)
                 + "&date=" + encodeURIComponent(date) + "&durationMinutes=30",
                 token
             );
+            const clinicClosed = result.status === "CLINIC_CLOSED";
+            const closureReason = result.closureReason?.trim() || "Phòng khám tạm nghỉ.";
+            setClinicClosureReason(clinicClosed ? closureReason : null);
+            if (clinicClosed) {
+                if (holdId) await releaseHold();
+                else {
+                    setSelected(null);
+                    setHoldUntil("");
+                    setHeldFee(null);
+                }
+            }
             setSlots(result.items);
             const own = result.items.find(item => item.status === "HELD_BY_YOU");
             if (own) {
@@ -209,7 +223,13 @@ export default function PatientAppointmentsView({
                 setHeldFee(null);
             }
             const available = result.items.filter(item => item.status === "AVAILABLE").length;
-            const text = result.items.length
+            const doctorOnLeave = result.items.length > 0
+                && result.items.every(item => item.status === "ON_LEAVE");
+            const text = clinicClosed
+                ? "Phòng khám nghỉ trong ngày này. Lý do: " + closureReason + " Vui lòng chọn ngày khác."
+                : doctorOnLeave
+                ? "Bác sĩ nghỉ trong ngày này. Vui lòng chọn ngày hoặc bác sĩ khác."
+                : result.items.length
                 ? realtime ? "Lịch khám vừa được cập nhật tự động."
                     : available ? "Chọn một khung giờ còn trống." : "Các khung giờ trong ngày này đã kín."
                 : "Bác sĩ chưa có lịch làm việc trong ngày đã chọn.";
@@ -220,6 +240,7 @@ export default function PatientAppointmentsView({
             );
             return own;
         } catch (error) {
+            setClinicClosureReason(null);
             setFeedback({ tone: "error", text: (error as Error).message });
             return undefined;
         } finally {
@@ -632,11 +653,23 @@ export default function PatientAppointmentsView({
                                         <span>Đang kiểm tra lịch bác sĩ...</span>
                                         {Array.from({ length: 8 }, (_, index) => <i key={index} aria-hidden="true" />)}
                                     </div>
+                                ) : clinicClosureReason !== null ? (
+                                    <div className="booking-state booking-state-empty" role="status">
+                                        <CalendarDays aria-hidden="true" />
+                                        <strong>Phòng khám nghỉ trong ngày này</strong>
+                                        <span>Lý do: {clinicClosureReason} Vui lòng chọn ngày khác.</span>
+                                    </div>
                                 ) : slots.length === 0 ? (
                                     <div className="booking-state booking-state-empty">
                                         <Clock3 aria-hidden="true" />
                                         <strong>Chưa có khung giờ</strong>
                                         <span>Hãy thử chọn ngày khác hoặc bác sĩ khác.</span>
+                                    </div>
+                                ) : slots.every(slot => slot.status === "ON_LEAVE") ? (
+                                    <div className="booking-state booking-state-empty" role="status">
+                                        <Clock3 aria-hidden="true" />
+                                        <strong>Bác sĩ nghỉ trong ngày này</strong>
+                                        <span>Không có khung giờ nào có thể đặt. Hãy chọn ngày hoặc bác sĩ khác.</span>
                                     </div>
                                 ) : (
                                     slots.map(slot => {
@@ -692,7 +725,7 @@ export default function PatientAppointmentsView({
                                     <div>
                                         <strong>Đính kèm kết quả AI tham khảo</strong>
                                         <small>
-                                            {sharedAi.predictedLabel} · {(sharedAi.confidence * 100).toFixed(1)}% · {sharedAi.modelVersion}
+                                            {patientAiLabel(sharedAi.predictedLabel)} · {formatAiPercentage(sharedAi.confidence)} · phiên bản {sharedAi.modelVersion}
                                         </small>
                                     </div>
                                     <button type="button" onClick={() => void clearSharedAi()}>Bỏ đính kèm</button>

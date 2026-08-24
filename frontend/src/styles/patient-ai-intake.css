@@ -418,6 +418,30 @@
   line-height: 1.5;
 }
 
+.ai-intake-alert small {
+  display: block;
+  margin-top: 8px;
+  color: var(--color-text-secondary);
+  font-size: 13px;
+  line-height: 1.55;
+}
+
+.ai-intake-alert.is-out-of-scope {
+  border-color: #c7b8e8;
+  background: #f6f1ff;
+  color: #6845a5;
+}
+
+.ai-intake-alert.is-out-of-scope button {
+  color: #6845a5;
+}
+
+.ai-intake-alert.is-quality {
+  border-color: #e2c77c;
+  background: #fff9e8;
+  color: #8a641f;
+}
+
 .ai-intake-alert button {
   min-height: var(--control-min-height);
   margin-top: 8px;

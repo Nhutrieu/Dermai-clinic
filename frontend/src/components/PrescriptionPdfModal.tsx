@@ -149,7 +149,7 @@ function LegacyPrescriptionPdfModal({
                                 <h2>PHÒNG KHÁM CHUYÊN KHOA DA LIỄU DERM CLINIC</h2>
                                 <p>Giấy phép hoạt động số: <b>886/SYT-GPHĐ</b> · Bộ Y Tế TP.HCM</p>
                                 <p>Địa chỉ: 123 Đường Y Dược, Phường Bến Nghé, Quận 1, TP. Hồ Chí Minh</p>
-                                <p>Hotline: <b>1900 6868 - 0352 790 904</b> · Email: contact@dermai.clinic</p>
+                                <p>Điện thoại: <b>1900 6868 - 0352 790 904</b> · Email: contact@dermai.clinic</p>
                             </div>
                         </div>
                         <div className="pdf-code-card">

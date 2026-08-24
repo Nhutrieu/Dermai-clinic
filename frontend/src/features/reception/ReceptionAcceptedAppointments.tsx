@@ -561,17 +561,23 @@ export default function ReceptionAcceptedAppointments(props: Props) {
           {filtered.length > ACCEPTED_PAGE_SIZE && (
             <footer className="accepted-list-pagination">
               <span aria-live="polite">Đang hiển thị {visibleAppointments.length} trên {filtered.length} lịch</span>
-              <button
-                type="button"
-                onClick={() => setVisibleCount(current => remainingAppointments > 0
-                  ? Math.min(current + ACCEPTED_PAGE_SIZE, filtered.length)
-                  : ACCEPTED_PAGE_SIZE)}
-              >
-                {remainingAppointments > 0
-                  ? `Xem thêm ${Math.min(ACCEPTED_PAGE_SIZE, remainingAppointments)} lịch`
-                  : "Thu gọn danh sách"}
-                <ChevronDown className={remainingAppointments > 0 ? "" : "is-up"} aria-hidden="true" />
-              </button>
+              <div className="accepted-pagination-actions">
+                {visibleCount > ACCEPTED_PAGE_SIZE && (
+                  <button type="button" onClick={() => setVisibleCount(ACCEPTED_PAGE_SIZE)}>
+                    Thu gọn danh sách
+                    <ChevronDown className="is-up" aria-hidden="true" />
+                  </button>
+                )}
+                {remainingAppointments > 0 && (
+                  <button
+                    type="button"
+                    onClick={() => setVisibleCount(current => Math.min(current + ACCEPTED_PAGE_SIZE, filtered.length))}
+                  >
+                    {`Xem thêm ${Math.min(ACCEPTED_PAGE_SIZE, remainingAppointments)} lịch`}
+                    <ChevronDown aria-hidden="true" />
+                  </button>
+                )}
+              </div>
             </footer>
           )}
           </>

@@ -3,7 +3,7 @@ import { CalendarCheck, CircleCheck, Headphones, MessageCircle, MessagesSquare, 
 import { request } from "../../core/api";
 import { EmptyState } from "../../components/Ui";
 import { enableChimeNotifications, subscribeRealtime, playChimeNotification } from "../../core/realtime";
-import type { Appointment, AvailabilitySlot, Doctor, Patient, StaffDirectoryEntry, SupportConversation, SupportMessage, Tokens } from "../../core/types";
+import type { Appointment, AvailabilityResponse, AvailabilitySlot, Doctor, Patient, StaffDirectoryEntry, SupportConversation, SupportMessage, Tokens } from "../../core/types";
 import { newIncomingSupportMessages } from "./supportMessageModel";
 import SupportAssistant, { type AssistantTurnResponse } from "./SupportAssistant";
 
@@ -32,6 +32,7 @@ export default function SupportChat({ session }: { session: Tokens }) {
     const [bookingDoctorId, setBookingDoctorId] = useState("");
     const [bookingDate, setBookingDate] = useState(() => new Date().toLocaleDateString("en-CA"));
     const [bookingSlots, setBookingSlots] = useState<AvailabilitySlot[]>([]);
+    const [bookingClosureReason, setBookingClosureReason] = useState<string | null>(null);
     const [bookingSlot, setBookingSlot] = useState<AvailabilitySlot | null>(null);
     const [bookingReason, setBookingReason] = useState("");
     const [bookingBusy, setBookingBusy] = useState(false);
@@ -51,6 +52,7 @@ export default function SupportChat({ session }: { session: Tokens }) {
     const visible = staffViewer ? messages.filter(item => item.patientIdentityId === conversation) : messages;
     const activeConversation = conversationStates.find(item => item.patientIdentityId === conversation);
     const assignedToMe = receptionist && !!currentIdentityId && activeConversation?.assignedReceptionistIdentityId === currentIdentityId;
+    const resolvedConversation = receptionist && activeConversation?.channelStatus === "AI_ACTIVE" && !!activeConversation.resolvedAt;
     const unread = admin ? [] : messages.filter(item => !item.readAt && (receptionist ? item.senderRole === "PATIENT" : item.senderRole !== "PATIENT"));
     const showAssistant = !staffViewer && patientChannel === "assistant";
 
@@ -279,11 +281,15 @@ export default function SupportChat({ session }: { session: Tokens }) {
         setBookingBusy(true);
         setBookingSlot(null);
         try {
-            const result = await request<{ items: AvailabilitySlot[] }>(`/appointments/availability?doctorId=${encodeURIComponent(bookingDoctorId)}&date=${encodeURIComponent(bookingDate)}&durationMinutes=30`, session.accessToken);
+            const result = await request<AvailabilityResponse>(`/appointments/availability?doctorId=${encodeURIComponent(bookingDoctorId)}&date=${encodeURIComponent(bookingDate)}&durationMinutes=30`, session.accessToken);
             setBookingSlots(result.items.filter(item => item.status === "AVAILABLE"));
+            setBookingClosureReason(result.status === "CLINIC_CLOSED"
+                ? result.closureReason?.trim() || "Phòng khám tạm nghỉ."
+                : null);
             setError("");
         } catch (reason) {
             setBookingSlots([]);
+            setBookingClosureReason(null);
             setError((reason as Error).message);
         } finally {
             setBookingBusy(false);
@@ -358,21 +364,27 @@ export default function SupportChat({ session }: { session: Tokens }) {
                 {receptionist && conversation && assignedToMe && <button className="support-book-for" onClick={() => bookingOpen ? setBookingOpen(false) : openBooking()}>{bookingOpen ? "Quay lại chat" : "Đặt lịch hộ"}</button>}
             </header>
 
-            {staffViewer && <div className="support-conversations">
+            {staffViewer && <div className="support-conversations" onWheel={event => {
+                const rail = event.currentTarget;
+                if (rail.scrollWidth <= rail.clientWidth || Math.abs(event.deltaX) >= Math.abs(event.deltaY)) return;
+                rail.scrollLeft += event.deltaY;
+                event.preventDefault();
+            }}>
                 {ids.length === 0 ? <EmptyState compact className="support-conversation-empty" icon={MessagesSquare} title="Chưa có yêu cầu hỗ trợ" description="Các cuộc trò chuyện được chuyển tiếp sẽ xuất hiện tại đây." /> : ids.map(id => {
                     const state = conversationStates.find(item => item.patientIdentityId === id);
                     const mine = receptionist && state?.assignedReceptionistIdentityId === currentIdentityId;
+                    const resolved = state?.channelStatus === "AI_ACTIVE" && !!state.resolvedAt;
                     return <button className={conversation === id ? "active" : ""} onClick={() => { requestedConversationRef.current = id; setConversation(id); }} key={id}>
                         <b>{patientLabel(id)}</b>
                         <span>{patients[id]?.phone || "Chưa có số điện thoại"} · {messages.filter(item => item.patientIdentityId === id).length} tin{messages.some(item => item.patientIdentityId === id && item.senderRole === "PATIENT" && !item.readAt) && <i className="conversation-unread" />}</span>
-                        <em className={!state?.assignedReceptionistIdentityId ? "is-unassigned" : mine ? "is-mine" : ""}>{!state?.assignedReceptionistIdentityId ? "Chưa tiếp nhận" : mine ? "Bạn đang phụ trách" : staffName(state.assignedReceptionistIdentityId)}</em>
+                        <em className={resolved ? "is-resolved" : !state?.assignedReceptionistIdentityId ? "is-unassigned" : mine ? "is-mine" : ""}>{resolved ? "Đã hoàn tất" : !state?.assignedReceptionistIdentityId ? "Chưa tiếp nhận" : mine ? "Bạn đang phụ trách" : staffName(state.assignedReceptionistIdentityId)}</em>
                     </button>;
                 })}
             </div>}
 
-            {staffViewer && conversation && <div className={`support-assignment ${assignedToMe ? "is-mine" : activeConversation?.assignedReceptionistIdentityId ? "is-assigned" : "is-unassigned"}`}>
-                <div>{activeConversation?.assignedReceptionistIdentityId ? <UserCheck aria-hidden="true" /> : <Headphones aria-hidden="true" />}<span><b>{activeConversation?.assignedReceptionistIdentityId ? staffName(activeConversation.assignedReceptionistIdentityId) : "Chưa có lễ tân tiếp nhận"}</b><small>{admin ? "Admin đang xem và không thể gửi tin." : assignedToMe ? "Bạn đang phụ trách cuộc trò chuyện này." : activeConversation?.assignedReceptionistIdentityId ? "Bạn vẫn có thể xem nội dung cuộc trò chuyện." : "Nhận xử lý trước khi trả lời bệnh nhân."}</small></span></div>
-                {receptionist && !activeConversation?.assignedReceptionistIdentityId && <button type="button" disabled={assignmentBusy} onClick={claimConversation}><UserCheck aria-hidden="true" />{assignmentBusy ? "Đang nhận…" : "Nhận xử lý"}</button>}
+            {staffViewer && conversation && <div className={`support-assignment ${resolvedConversation ? "is-resolved" : assignedToMe ? "is-mine" : activeConversation?.assignedReceptionistIdentityId ? "is-assigned" : "is-unassigned"}`}>
+                <div>{resolvedConversation ? <CircleCheck aria-hidden="true" /> : activeConversation?.assignedReceptionistIdentityId ? <UserCheck aria-hidden="true" /> : <Headphones aria-hidden="true" />}<span><b>{resolvedConversation ? "Đã hoàn tất hỗ trợ" : activeConversation?.assignedReceptionistIdentityId ? staffName(activeConversation.assignedReceptionistIdentityId) : "Chưa có lễ tân tiếp nhận"}</b><small>{resolvedConversation ? "Lịch sử trò chuyện được giữ lại để bạn có thể xem khi cần." : admin ? "Quản trị viên đang xem và không thể gửi tin." : assignedToMe ? "Bạn đang phụ trách cuộc trò chuyện này." : activeConversation?.assignedReceptionistIdentityId ? "Bạn vẫn có thể xem nội dung cuộc trò chuyện." : "Nhận xử lý trước khi trả lời bệnh nhân."}</small></span></div>
+                {receptionist && !resolvedConversation && !activeConversation?.assignedReceptionistIdentityId && <button type="button" disabled={assignmentBusy} onClick={claimConversation}><UserCheck aria-hidden="true" />{assignmentBusy ? "Đang nhận…" : "Nhận xử lý"}</button>}
                 {receptionist && assignedToMe && <div className="support-assignment-actions">
                     <button type="button" className="support-resolve" aria-label="Hoàn tất hỗ trợ cuộc trò chuyện" title="Hoàn tất hỗ trợ" disabled={assignmentBusy} onClick={resolveConversation}><CircleCheck aria-hidden="true" />Hoàn tất</button>
                     <button type="button" className="support-release" aria-label="Nhả cuộc trò chuyện" title="Nhả cuộc trò chuyện" disabled={assignmentBusy} onClick={releaseConversation}><UserMinus aria-hidden="true" />Nhả</button>
@@ -389,7 +401,7 @@ export default function SupportChat({ session }: { session: Tokens }) {
                 <div className="support-booking-title"><div><small>ĐẶT LỊCH HỘ</small><b>{patientLabel(conversation)}</b></div><CalendarCheck /></div>
                 <label>Bác sĩ<select value={bookingDoctorId} onChange={event => setBookingDoctorId(event.target.value)}>{doctors.map(doctor => <option key={doctor.id} value={doctor.id}>BS. {doctor.fullName} · {doctor.specialtyCode}</option>)}</select></label>
                 <label>Ngày khám<input type="date" min={new Date().toLocaleDateString("en-CA")} value={bookingDate} onChange={event => setBookingDate(event.target.value)} /></label>
-                <div className="support-slot-list">{bookingBusy && !bookingSlots.length ? <small>Đang tải giờ trống…</small> : bookingSlots.length ? bookingSlots.map(slot => <button type="button" className={bookingSlot?.startAt === slot.startAt ? "selected" : ""} key={slot.startAt} onClick={() => setBookingSlot(slot)}>{new Date(slot.startAt).toLocaleTimeString("vi-VN", { hour: "2-digit", minute: "2-digit" })}</button>) : <small>Không có giờ trống trong ngày này.</small>}</div>
+                <div className="support-slot-list">{bookingBusy && !bookingSlots.length ? <small>Đang tải giờ trống…</small> : bookingClosureReason !== null ? <small>Phòng khám nghỉ trong ngày này. Lý do: {bookingClosureReason} Vui lòng chọn ngày khác.</small> : bookingSlots.length ? bookingSlots.map(slot => <button type="button" className={bookingSlot?.startAt === slot.startAt ? "selected" : ""} key={slot.startAt} onClick={() => setBookingSlot(slot)}>{new Date(slot.startAt).toLocaleTimeString("vi-VN", { hour: "2-digit", minute: "2-digit" })}</button>) : <small>Không có giờ trống trong ngày này.</small>}</div>
                 <label>Lý do khám<textarea required maxLength={500} value={bookingReason} onChange={event => setBookingReason(event.target.value)} placeholder="Nhập triệu chứng hoặc nhu cầu bệnh nhân đã trao đổi…" /></label>
                 {bookingSlot && <p className="support-proposal-summary"><b>{new Date(bookingSlot.startAt).toLocaleString("vi-VN")}</b><span>BS. {bookingSlot.doctorName} · bệnh nhân có 10 phút xác nhận</span></p>}
                 <button className="support-proposal-submit" disabled={bookingBusy || !bookingSlot || !bookingReason.trim()}>{bookingBusy ? "Đang gửi…" : "Gửi bệnh nhân xác nhận"}</button>
@@ -398,7 +410,7 @@ export default function SupportChat({ session }: { session: Tokens }) {
                     const mine=staffViewer ? message.senderIdentityId === currentIdentityId && message.senderRole === "RECEPTIONIST" : message.senderRole === "PATIENT";
                     return <article className={message.senderRole === "SYSTEM" ? "system" : mine ? "mine" : "theirs"} key={message.id}><b>{messageSender(message)}</b><p>{messageBody(message)}</p><small>{new Date(message.sentAt).toLocaleString("vi-VN")}</small></article>;
                 })}</div>
-                {admin ? <div className="support-monitor-note"><ShieldCheck aria-hidden="true" /><span><b>Chế độ giám sát</b><small>Admin có thể xem người phụ trách và nội dung nhưng không gửi tin thay lễ tân.</small></span></div> : receptionist && !assignedToMe ? <div className="support-reply-locked"><Headphones aria-hidden="true" /><span>{activeConversation?.assignedReceptionistIdentityId ? `Cuộc trò chuyện đang do ${staffName(activeConversation.assignedReceptionistIdentityId)} phụ trách.` : "Nhận xử lý để trả lời bệnh nhân."}</span></div> : <form onSubmit={send}><textarea aria-label="Nội dung tin nhắn hỗ trợ" aria-keyshortcuts="Enter" title="Enter để gửi, Shift + Enter để xuống dòng" maxLength={2000} value={text} onChange={event => setText(event.target.value)} onKeyDown={event => {
+                {admin ? <div className="support-monitor-note"><ShieldCheck aria-hidden="true" /><span><b>Chế độ giám sát</b><small>Admin có thể xem người phụ trách và nội dung nhưng không gửi tin thay lễ tân.</small></span></div> : receptionist && !assignedToMe ? <div className="support-reply-locked"><Headphones aria-hidden="true" /><span>{resolvedConversation ? "Yêu cầu đã hoàn tất. Bạn vẫn có thể xem lại toàn bộ lịch sử phía trên." : activeConversation?.assignedReceptionistIdentityId ? `Cuộc trò chuyện đang do ${staffName(activeConversation.assignedReceptionistIdentityId)} phụ trách.` : "Nhận xử lý để trả lời bệnh nhân."}</span></div> : <form onSubmit={send}><textarea aria-label="Nội dung tin nhắn hỗ trợ" aria-keyshortcuts="Enter" title="Enter để gửi, Shift + Enter để xuống dòng" maxLength={2000} value={text} onChange={event => setText(event.target.value)} onKeyDown={event => {
                     // Enter submits like a messaging app; preserve Shift+Enter
                     // for multiline content and never interrupt an active IME.
                     if (event.key === "Enter" && !event.shiftKey && !event.nativeEvent.isComposing) {

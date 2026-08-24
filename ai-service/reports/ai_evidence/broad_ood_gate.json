@@ -1,0 +1,113 @@
+{
+  "method": "frozen_feature_mlp_scope_gate_with_wseg_and_caltech101",
+  "model_version": "efficientnet_b0-20260728T185742Z",
+  "selection": "Hyperparameters, epoch and threshold selected on validation data only.",
+  "trials": [
+    {
+      "hidden": 32,
+      "seed": 42,
+      "epoch": 10,
+      "objective": 1.6569674708654691,
+      "threshold": 0.9705947637557983,
+      "internal_id_false_rejection_rate": 0.006756756756756757,
+      "scin_false_rejection_rate": 0.03333333333333333,
+      "local_ood_rejection_rate": 0.30709275136399067,
+      "wound_rejection_rate": 0.8221024258760108,
+      "broad_ood_rejection_rate": 0.9636174636174636
+    },
+    {
+      "hidden": 32,
+      "seed": 43,
+      "epoch": 4,
+      "objective": 1.577245871856822,
+      "threshold": 0.9452452063560486,
+      "internal_id_false_rejection_rate": 0.003861003861003861,
+      "scin_false_rejection_rate": 0.03333333333333333,
+      "local_ood_rejection_rate": 0.22291504286827749,
+      "wound_rejection_rate": 0.7951482479784366,
+      "broad_ood_rejection_rate": 0.9251559251559252
+    },
+    {
+      "hidden": 64,
+      "seed": 42,
+      "epoch": 5,
+      "objective": 1.6459994423824775,
+      "threshold": 0.9507219791412354,
+      "internal_id_false_rejection_rate": 0.008687258687258687,
+      "scin_false_rejection_rate": 0.03333333333333333,
+      "local_ood_rejection_rate": 0.3156664068589244,
+      "wound_rejection_rate": 0.8032345013477089,
+      "broad_ood_rejection_rate": 0.9646569646569647
+    },
+    {
+      "hidden": 64,
+      "seed": 43,
+      "epoch": 3,
+      "objective": 1.664589386923539,
+      "threshold": 0.891930878162384,
+      "internal_id_false_rejection_rate": 0.012548262548262547,
+      "scin_false_rejection_rate": 0.03333333333333333,
+      "local_ood_rejection_rate": 0.338269680436477,
+      "wound_rejection_rate": 0.8301886792452831,
+      "broad_ood_rejection_rate": 0.9573804573804574
+    },
+    {
+      "hidden": 96,
+      "seed": 42,
+      "epoch": 5,
+      "objective": 1.707077641470059,
+      "threshold": 0.934546709060669,
+      "internal_id_false_rejection_rate": 0.01833976833976834,
+      "scin_false_rejection_rate": 0.03333333333333333,
+      "local_ood_rejection_rate": 0.40218238503507403,
+      "wound_rejection_rate": 0.8544474393530997,
+      "broad_ood_rejection_rate": 0.9656964656964657
+    },
+    {
+      "hidden": 96,
+      "seed": 43,
+      "epoch": 3,
+      "objective": 1.6414385568564305,
+      "threshold": 0.9362037181854248,
+      "internal_id_false_rejection_rate": 0.010617760617760617,
+      "scin_false_rejection_rate": 0.03333333333333333,
+      "local_ood_rejection_rate": 0.32813717848791896,
+      "wound_rejection_rate": 0.8221024258760108,
+      "broad_ood_rejection_rate": 0.9428274428274428
+    }
+  ],
+  "selected": {
+    "hidden": 96,
+    "seed": 42,
+    "epoch": 5,
+    "objective": 1.707077641470059,
+    "threshold": 0.934546709060669,
+    "internal_id_false_rejection_rate": 0.01833976833976834,
+    "scin_false_rejection_rate": 0.03333333333333333,
+    "local_ood_rejection_rate": 0.40218238503507403,
+    "wound_rejection_rate": 0.8544474393530997,
+    "broad_ood_rejection_rate": 0.9656964656964657
+  },
+  "held_out_test": {
+    "id_count": 569,
+    "id_false_rejection_rate": 0.03690685413005272,
+    "local_ood_count": 43,
+    "local_ood_rejection_rate": 0.11627906976744186,
+    "wound_count": 371,
+    "wound_rejection_rate": 0.8544474393530997,
+    "broad_ood_count": 964,
+    "broad_ood_rejection_rate": 0.975103734439834,
+    "id_vs_broad_ood": {
+      "auroc": 0.9961149720336326,
+      "aupr_ood": 0.9978073990637747,
+      "fpr95": 0.01757469244288225
+    }
+  },
+  "deployment_ready": true,
+  "deployment_policy": "Held-out ID false rejection <= 4%, wound rejection >= 75%, broad OOD rejection >= 85%.",
+  "limitations": [
+    "No finite dataset guarantees rejection of every possible uploaded image.",
+    "The gate only rejects unsupported content; it does not diagnose non-skin images or wounds.",
+    "Caltech 101 is used only as broad negative/OOD data and never as a disease class."
+  ]
+}

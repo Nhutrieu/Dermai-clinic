@@ -16,7 +16,11 @@ import org.springframework.web.server.ResponseStatusException;
 @RestController
 @RequestMapping("/api/v1/appointments/internal/doctors")
 class AppointmentScheduleQueryController {
-  private static final EnumSet<AppointmentStatus> PROTECTED_STATUSES = EnumSet.of(
+  private static final EnumSet<AppointmentStatus> SCHEDULE_BLOCKING_STATUSES = EnumSet.of(
+      AppointmentStatus.HELD,
+      AppointmentStatus.PROPOSED,
+      AppointmentStatus.PENDING,
+      AppointmentStatus.ASSIGNED,
       AppointmentStatus.CONFIRMED,
       AppointmentStatus.CHECKED_IN,
       AppointmentStatus.IN_PROGRESS
@@ -32,16 +36,16 @@ class AppointmentScheduleQueryController {
     this.serviceToken = serviceToken;
   }
 
-  @GetMapping("/{doctorId}/confirmed-upcoming")
-  List<AppointmentSlot> confirmedUpcoming(
+  @GetMapping("/{doctorId}/blocking-upcoming")
+  List<AppointmentSlot> blockingUpcoming(
       @PathVariable UUID doctorId,
       @RequestHeader("X-Service-Token") String suppliedToken) {
     requireServiceToken(suppliedToken);
     return appointments.findByDoctorIdAndStatusInAndEndAtAfterOrderByStartAt(
         doctorId,
-        PROTECTED_STATUSES,
+        SCHEDULE_BLOCKING_STATUSES,
         Instant.now()
-    ).stream().map(item -> new AppointmentSlot(item.id, item.startAt, item.endAt)).toList();
+    ).stream().map(item -> new AppointmentSlot(item.id, item.startAt, item.endAt, item.status)).toList();
   }
 
   private void requireServiceToken(String suppliedToken) {
@@ -51,5 +55,5 @@ class AppointmentScheduleQueryController {
     }
   }
 
-  record AppointmentSlot(UUID id, Instant startAt, Instant endAt) {}
+  record AppointmentSlot(UUID id, Instant startAt, Instant endAt, AppointmentStatus status) {}
 }

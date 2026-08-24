@@ -24,13 +24,13 @@ class AppointmentScheduleClient {
     this.serviceToken = serviceToken;
   }
 
-  List<AppointmentSlot> upcomingConfirmed(UUID doctorId) {
+  List<AppointmentSlot> upcomingBlocking(UUID doctorId) {
     if (serviceToken.isBlank()) {
       throw unavailable(null);
     }
     try {
       List<AppointmentSlot> result = appointments.get()
-          .uri("/api/v1/appointments/internal/doctors/{doctorId}/confirmed-upcoming", doctorId)
+          .uri("/api/v1/appointments/internal/doctors/{doctorId}/blocking-upcoming", doctorId)
           .header("X-Service-Token", serviceToken)
           .retrieve()
           .body(new ParameterizedTypeReference<>() {});
@@ -43,10 +43,10 @@ class AppointmentScheduleClient {
   private ResponseStatusException unavailable(Throwable cause) {
     return new ResponseStatusException(
         HttpStatus.SERVICE_UNAVAILABLE,
-        "Không thể kiểm tra lịch hẹn đã xác nhận; chưa thay đổi lịch làm việc.",
+        "Không thể kiểm tra các lịch hẹn đang hoạt động; chưa thay đổi lịch làm việc.",
         cause
     );
   }
 
-  record AppointmentSlot(UUID id, Instant startAt, Instant endAt) {}
+  record AppointmentSlot(UUID id, Instant startAt, Instant endAt, String status) {}
 }

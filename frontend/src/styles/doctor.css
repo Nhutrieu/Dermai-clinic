@@ -173,7 +173,8 @@
 }
 
 .doctor-profile-feedback {
-  margin-top: var(--space-4);
+  grid-column: 1 / -1;
+  margin: 0 0 18px;
   padding: 12px 15px;
   border: 1px solid var(--color-success-border);
   border-radius: var(--radius-control);
@@ -191,21 +192,27 @@
 
 .doctor-profile-layout {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(340px, var(--doctor-profile-side-width));
+  grid-template-columns: minmax(0, 1.04fr) minmax(420px, .96fr);
   align-items: start;
   gap: var(--space-5);
   margin-top: var(--space-5);
 }
 
 .doctor-profile-primary {
-  border-radius: var(--radius-panel);
-  box-shadow: var(--shadow-sm);
+  display: grid;
+  align-content: start;
+  align-items: start;
+  gap: var(--space-5);
+  border: 0;
+  background: transparent;
+  box-shadow: none;
 }
 
 .doctor-profile-primary .doctor-profile-section {
-  border: 0;
-  border-radius: 0;
-  box-shadow: none;
+  width: 100%;
+  border: 1px solid var(--doctor-profile-border);
+  border-radius: var(--radius-panel);
+  box-shadow: var(--shadow-sm);
 }
 
 .doctor-profile-primary .doctor-profile-section + .doctor-profile-section {
@@ -214,6 +221,8 @@
 
 .doctor-profile-secondary {
   display: grid;
+  align-content: start;
+  align-items: start;
   gap: var(--space-5);
 }
 
@@ -531,6 +540,17 @@
 
 .doctor-profile-leave-form {
   padding-top: 2px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.doctor-profile-leave-form > label:nth-child(3),
+.doctor-profile-leave-form > button {
+  grid-column: 1 / -1;
+}
+
+.doctor-profile-schedule,
+.doctor-profile-leave {
+  width: 100%;
 }
 
 @media (max-width: 1280px) {
@@ -555,6 +575,7 @@
     grid-template-columns: minmax(0, 1fr);
   }
 
+  .doctor-profile-primary,
   .doctor-profile-secondary {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
@@ -567,6 +588,7 @@
     padding: 20px;
   }
 
+  .doctor-profile-primary,
   .doctor-profile-secondary,
   .doctor-profile-form {
     grid-template-columns: 1fr;
@@ -579,6 +601,15 @@
   .doctor-profile-section-heading > span {
     display: block;
     padding-top: 9px;
+  }
+
+  .doctor-profile-leave-form {
+    grid-template-columns: 1fr;
+  }
+
+  .doctor-profile-leave-form > label:nth-child(3),
+  .doctor-profile-leave-form > button {
+    grid-column: auto;
   }
 }
 

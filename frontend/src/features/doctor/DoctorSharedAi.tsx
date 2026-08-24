@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { BrainCircuit, Image as ImageIcon } from "lucide-react";
 import { request, requestBlob } from "../../core/api";
 import type { AiAssessment } from "../../core/types";
+import { patientAiLabel } from "../patient/patientAiPresentation";
 
 export default function DoctorSharedAi({ token, appointmentId }: { token: string; appointmentId: string }) {
   const [assessment, setAssessment] = useState<AiAssessment | null>(null);
@@ -41,8 +42,8 @@ export default function DoctorSharedAi({ token, appointmentId }: { token: string
       </div>
       <div className="doctor-ai-summary">
         <small>GỢI Ý CAO NHẤT</small>
-        <div><h4>{assessment.predictedLabel}</h4><strong>{(assessment.confidence * 100).toFixed(1)}%</strong></div>
-        <ul>{assessment.top3.map(item => <li key={item.label}><span>{item.label}</span><b>{(item.probability * 100).toFixed(1)}%</b></li>)}</ul>
+        <div><h4>{patientAiLabel(assessment.predictedLabel)}</h4><strong>{(assessment.confidence * 100).toFixed(1)}%</strong></div>
+        <ul>{assessment.top3.map(item => <li key={item.label}><span>{patientAiLabel(item.label)}</span><b>{(item.probability * 100).toFixed(1)}%</b></li>)}</ul>
         {assessment.uncertain && <p>AI đánh dấu kết quả này chưa chắc chắn.</p>}
         <em>Phân tích lúc {new Date(assessment.createdAt).toLocaleString("vi-VN")} · {assessment.modelVersion}</em>
       </div>

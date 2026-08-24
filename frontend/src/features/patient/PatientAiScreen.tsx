@@ -12,7 +12,7 @@ const ACCEPTED_TYPES = new Set(["image/jpeg", "image/png", "image/webp"]);
 
 function bookingSummary(assessment: AiAssessment) {
   const top = assessment.top3.map(item => `${patientAiLabel(item.label)} ${formatAiPercentage(item.probability)}`).join("; ");
-  return `Kết quả kiểm tra da bằng AI (tham khảo): ${top}. Model ${assessment.modelVersion}.${assessment.uncertain ? " AI đánh dấu kết quả chưa chắc chắn." : ""}`;
+  return `Kết quả kiểm tra da bằng AI (tham khảo): ${top}. Phiên bản mô hình ${assessment.modelVersion}.${assessment.uncertain ? " AI đánh dấu kết quả chưa chắc chắn." : ""}`;
 }
 
 export function validatePhoto(selected: File) {
@@ -30,6 +30,13 @@ export function technicalAnalysisError(value: unknown, failedStage: AiAnalysisSt
       : "Hệ thống chưa thể phân tích ảnh lúc này. Vui lòng thử lại sau ít phút.";
   }
   return (value as Error).message || "Chưa thể hoàn tất phân tích. Vui lòng thử lại.";
+}
+
+export function photoRejectionKind(message: string): "out-of-scope" | "quality" | null {
+  if (!message) return null;
+  if (/ngoài (8 nhóm bệnh|phạm vi)|không thuộc.*nhóm bệnh/i.test(message)) return "out-of-scope";
+  if (/quá nhỏ|quá tối|quá sáng|cháy sáng|bị mờ|thiếu chi tiết|độ tương phản/i.test(message)) return "quality";
+  return null;
 }
 
 export default function PatientAiScreen({ token, patient, openBooking }: { token: string; patient: Patient; openBooking: () => void }) {
@@ -208,6 +215,7 @@ export default function PatientAiScreen({ token, patient, openBooking }: { token
       stage={analysisStage}
       outcome={prediction && current ? (prediction.uncertain ? "uncertain" : "success") : null}
       fileError={fileError}
+      rejectionKind={photoRejectionKind(fileError)}
       analysisError={analysisError}
       onSelectFile={selectFile}
       onRemoveFile={removeFile}

@@ -28,6 +28,7 @@ import {
 } from "../../core/realtime";
 import type {
   Appointment,
+  AvailabilityResponse,
   AvailabilitySlot,
   Doctor,
   Patient,
@@ -97,6 +98,7 @@ export default function ReceptionHotlineBookingView({ session }: { session: Toke
   const [selectedSlot, setSelectedSlot] = useState<AvailabilitySlot | null>(null);
   const [slotState, setSlotState] = useState<LoadState>("idle");
   const [slotError, setSlotError] = useState("");
+  const [clinicClosureReason, setClinicClosureReason] = useState<string | null>(null);
   const [liveNotice, setLiveNotice] = useState("");
   const [changedSlots, setChangedSlots] = useState<Set<string>>(new Set());
   const [lastUpdatedAt, setLastUpdatedAt] = useState<Date | null>(null);
@@ -167,14 +169,18 @@ export default function ReceptionHotlineBookingView({ session }: { session: Toke
     if (!background) {
       setSlotState("loading");
       setSlotError("");
+      setClinicClosureReason(null);
     }
     try {
-      const result = await request<{ items: AvailabilitySlot[] }>(
+      const result = await request<AvailabilityResponse>(
         `/appointments/availability?doctorId=${encodeURIComponent(doctorId)}`
           + `&date=${encodeURIComponent(date)}&durationMinutes=30`,
         session.accessToken,
       );
       const nextSlots = result.items || [];
+      const clinicClosed = result.status === "CLINIC_CLOSED";
+      const closureReason = result.closureReason?.trim() || "Phòng khám tạm nghỉ.";
+      setClinicClosureReason(clinicClosed ? closureReason : null);
       const previousStates = previousSlotStatesRef.current;
       const changed = new Set<string>();
       nextSlots.forEach(slot => {
@@ -196,9 +202,13 @@ export default function ReceptionHotlineBookingView({ session }: { session: Toke
           setSelectedSlot(null);
           setConflict({
             code: "SLOT_CHANGED",
-            title: "Khung giờ vừa thay đổi",
-            detail: "Khung giờ đang chọn không còn trống sau lần cập nhật mới nhất.",
-            action: "Chọn một khung giờ còn trống khác.",
+            title: clinicClosed ? "Phòng khám nghỉ trong ngày này" : "Khung giờ vừa thay đổi",
+            detail: clinicClosed
+              ? `Lý do: ${closureReason} Khung giờ đang chọn đã được bỏ.`
+              : "Khung giờ đang chọn không còn trống sau lần cập nhật mới nhất.",
+            action: clinicClosed
+              ? "Chọn một ngày làm việc khác."
+              : "Chọn một khung giờ còn trống khác.",
             conflict: true,
           });
         } else if (latest !== currentSelection) {
@@ -218,6 +228,7 @@ export default function ReceptionHotlineBookingView({ session }: { session: Toke
         setLiveNotice("Không thể cập nhật giờ trống mới nhất. Dữ liệu gần nhất vẫn được giữ lại.");
       } else {
         setSlots([]);
+        setClinicClosureReason(null);
         setSlotState("error");
         setSlotError(issue.detail);
       }
@@ -543,7 +554,7 @@ export default function ReceptionHotlineBookingView({ session }: { session: Toke
           <div className="reception-hotline-intro">
             <div>
               <PhoneCall aria-hidden="true" />
-              <span><strong>Hotline phòng khám</strong><a href="tel:0352790904">0352 790 904</a></span>
+              <span><strong>Đường dây phòng khám</strong><a href="tel:0352790904">0352 790 904</a></span>
             </div>
             <p>Xác minh người gọi, đọc lại lịch hẹn và chỉ kết thúc khi hệ thống xác nhận.</p>
           </div>
@@ -584,7 +595,7 @@ export default function ReceptionHotlineBookingView({ session }: { session: Toke
                       <div>
                         <strong>{selectedPatient.fullName}</strong>
                         <small>{patientIdentitySummary(selectedPatient)}</small>
-                        <em>{selectedPatient.accountLinked ? "Đã liên kết tài khoản" : "Hồ sơ tiếp nhận qua hotline"}</em>
+                        <em>{selectedPatient.accountLinked ? "Đã liên kết tài khoản" : "Hồ sơ tiếp nhận qua điện thoại"}</em>
                       </div>
                       <Check aria-hidden="true" />
                       <button type="button" disabled={workflowLocked} onClick={changePatient}>Đổi bệnh nhân</button>
@@ -635,7 +646,7 @@ export default function ReceptionHotlineBookingView({ session }: { session: Toke
                         ) : searchAttempted && patients.length === 0 ? (
                           <div className="hotline-state">
                             <strong>Không tìm thấy hồ sơ</strong>
-                            <span>Kiểm tra lại tên, số điện thoại hoặc tạo hồ sơ hotline mới.</span>
+                            <span>Kiểm tra lại tên, số điện thoại hoặc tạo hồ sơ tiếp nhận qua điện thoại mới.</span>
                           </div>
                         ) : (
                           patients.map((patient, index) => (
@@ -648,7 +659,7 @@ export default function ReceptionHotlineBookingView({ session }: { session: Toke
                             >
                               <span aria-hidden="true">{patient.fullName.slice(0, 1).toUpperCase()}</span>
                               <div><strong>{patient.fullName}</strong><small>{patientIdentitySummary(patient)}</small></div>
-                              <em>{patient.accountLinked ? "Có tài khoản" : "Hồ sơ hotline"}</em>
+                              <em>{patient.accountLinked ? "Có tài khoản" : "Hồ sơ qua điện thoại"}</em>
                             </button>
                           ))
                         )}
@@ -823,6 +834,10 @@ export default function ReceptionHotlineBookingView({ session }: { session: Toke
                         <strong>Không thể tải giờ trống</strong><span>{slotError}</span>
                         <button type="button" onClick={() => void loadSlots(false)}>Thử lại</button>
                       </div>
+                    ) : clinicClosureReason !== null ? (
+                      <div className="booking-state" role="status">
+                        <CalendarDays aria-hidden="true" /><strong>Phòng khám nghỉ trong ngày này</strong><span>Lý do: {clinicClosureReason} Vui lòng chọn ngày khác.</span>
+                      </div>
                     ) : slots.length === 0 ? (
                       <div className="booking-state">
                         <Clock3 aria-hidden="true" /><strong>Không có khung giờ</strong><span>Chọn ngày khác hoặc bác sĩ khác.</span>
@@ -853,7 +868,7 @@ export default function ReceptionHotlineBookingView({ session }: { session: Toke
                     )}
                   </div>
                   <p className="hotline-no-hold-note">
-                    Luồng hotline không giữ slot tạm. Hệ thống kiểm tra lại khung giờ khi lễ tân xác nhận.
+                    Quy trình đặt qua điện thoại không giữ khung giờ tạm. Hệ thống kiểm tra lại khung giờ khi lễ tân xác nhận.
                   </p>
                   {liveNotice && <div className="hotline-inline-notice" role="status">{liveNotice}</div>}
                 </section>
@@ -899,8 +914,8 @@ export default function ReceptionHotlineBookingView({ session }: { session: Toke
                   <div><dt>Ngày khám</dt><dd>{date ? new Date(`${date}T00:00:00`).toLocaleDateString("vi-VN") : "Chưa chọn"}</dd><button type="button" disabled={workflowLocked} onClick={() => focusSection("date")}>Sửa</button></div>
                   <div><dt>Khung giờ</dt><dd>{selectedSlot ? formatReceptionTime(selectedSlot.startAt) : "Chưa chọn"}</dd><button type="button" disabled={workflowLocked} onClick={() => focusSection("slot")}>Sửa</button></div>
                   <div><dt>Lý do khám</dt><dd className="hotline-review-reason">{reason.trim() || "Chưa nhập"}</dd><button type="button" disabled={workflowLocked} onClick={() => focusSection("reason")}>Sửa</button></div>
-                  <div><dt>Kênh đặt</dt><dd>Hotline</dd></div>
-                  <div><dt>Trạng thái slot</dt><dd>{selectedSlot ? "Sẽ kiểm tra lại khi xác nhận" : "Chưa chọn"}</dd></div>
+                  <div><dt>Kênh đặt</dt><dd>Điện thoại</dd></div>
+                  <div><dt>Trạng thái khung giờ</dt><dd>{selectedSlot ? "Sẽ kiểm tra lại khi xác nhận" : "Chưa chọn"}</dd></div>
                 </dl>
 
                 {partialAppointment && (

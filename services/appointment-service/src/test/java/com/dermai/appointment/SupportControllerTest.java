@@ -50,6 +50,6 @@ class SupportControllerTest {
 
   var saved=org.mockito.ArgumentCaptor.forClass(SupportMessage.class);
   verify(messages).save(saved.capture());
-  assertThat(saved.getValue().body).contains("Trợ lý DermAI").doesNotContain("AI Assistant");
+  assertThat(saved.getValue().body).contains("Trợ lý Derm").doesNotContain("Trợ lý DermAI").doesNotContain("AI Assistant");
  }
 }

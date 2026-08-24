@@ -1,0 +1,80 @@
+{
+  "method": "frozen_feature_mlp_scope_gate_with_wseg",
+  "model_version": "efficientnet_b0-20260728T185742Z",
+  "selection": "Hyperparameters and epoch selected on validation data only.",
+  "trials": [
+    {
+      "hidden": 32,
+      "seed": 42,
+      "epoch": 9,
+      "objective": 0.9922420077606183,
+      "threshold": 0.9337931871414185,
+      "internal_id_false_rejection_rate": 0.015444015444015444,
+      "scin_false_rejection_rate": 0.05,
+      "local_ood_rejection_rate": 0.4325798908807482,
+      "wound_rejection_rate": 0.8840970350404312
+    },
+    {
+      "hidden": 32,
+      "seed": 43,
+      "epoch": 9,
+      "objective": 1.0055898931286804,
+      "threshold": 0.9053786993026733,
+      "internal_id_false_rejection_rate": 0.03474903474903475,
+      "scin_false_rejection_rate": 0.05,
+      "local_ood_rejection_rate": 0.5183164458300857,
+      "wound_rejection_rate": 0.876010781671159
+    },
+    {
+      "hidden": 64,
+      "seed": 42,
+      "epoch": 14,
+      "objective": 1.0345257178151779,
+      "threshold": 0.9510992765426636,
+      "internal_id_false_rejection_rate": 0.04343629343629344,
+      "scin_false_rejection_rate": 0.05,
+      "local_ood_rejection_rate": 0.6017147310989868,
+      "wound_rejection_rate": 0.8840970350404312
+    },
+    {
+      "hidden": 64,
+      "seed": 43,
+      "epoch": 20,
+      "objective": 1.020463536228474,
+      "threshold": 0.984582781791687,
+      "internal_id_false_rejection_rate": 0.03474903474903475,
+      "scin_false_rejection_rate": 0.05,
+      "local_ood_rejection_rate": 0.534684333593141,
+      "wound_rejection_rate": 0.8867924528301887
+    }
+  ],
+  "selected": {
+    "hidden": 64,
+    "seed": 42,
+    "epoch": 14,
+    "objective": 1.0345257178151779,
+    "threshold": 0.9510992765426636,
+    "internal_id_false_rejection_rate": 0.04343629343629344,
+    "scin_false_rejection_rate": 0.05,
+    "local_ood_rejection_rate": 0.6017147310989868,
+    "wound_rejection_rate": 0.8840970350404312
+  },
+  "held_out_test": {
+    "id_count": 569,
+    "id_false_rejection_rate": 0.10017574692442882,
+    "local_ood_count": 43,
+    "local_ood_rejection_rate": 0.3953488372093023,
+    "wound_count": 371,
+    "wound_rejection_rate": 0.9002695417789758,
+    "id_vs_wound": {
+      "auroc": 0.9623636303345822,
+      "aupr_ood": 0.9526291460755879,
+      "fpr95": 0.2056239015817223
+    }
+  },
+  "activation_ready": false,
+  "limitations": [
+    "WSeg is a clinical wound dataset and does not guarantee rejection of every superficial phone-photo scratch.",
+    "The gate rejects unsupported images; it does not diagnose wounds."
+  ]
+}

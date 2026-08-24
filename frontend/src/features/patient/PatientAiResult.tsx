@@ -218,10 +218,10 @@ export default function PatientAiResult({ prediction, assessment, originalImageU
         <details className="patient-ai-technical-details">
           <summary>Chi tiết kỹ thuật</summary>
           <dl>
-            <div><dt>Nhãn mô hình</dt><dd>{prediction.disease}</dd></div>
+            <div><dt>Nhóm bệnh dự đoán</dt><dd>{patientAiLabel(prediction.disease)}</dd></div>
             <div><dt>Phiên bản mô hình</dt><dd>{prediction.model_version}</dd></div>
             <div><dt>Chỉ số mô hình</dt><dd>{formatAiPercentage(prediction.confidence)}</dd></div>
-            <div><dt>Trạng thái uncertainty</dt><dd>{prediction.uncertain ? "Có" : "Không"}</dd></div>
+            <div><dt>Mức độ chắc chắn</dt><dd>{prediction.uncertain ? "Cần thận trọng" : "Có nhóm hình ảnh phù hợp"}</dd></div>
           </dl>
           <p>{prediction.disclaimer}</p>
         </details>

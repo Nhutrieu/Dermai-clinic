@@ -208,3 +208,55 @@
     flex: 1 1 auto;
   }
 }
+
+.support-conversations button em.is-resolved {
+  color: var(--color-text-secondary);
+}
+
+.support-assignment.is-resolved {
+  border-left: 3px solid var(--color-border-strong);
+  background: color-mix(in srgb, var(--color-surface-subtle) 86%, var(--color-success-surface));
+}
+
+.support-assignment.is-resolved > div:not(.support-assignment-actions) > svg {
+  color: var(--color-success);
+}
+
+/* Scrollable support conversation rail */
+.receptionist-support-chat .support-conversations {
+  min-width: 0;
+  max-width: 100%;
+  overflow-x: auto;
+  overflow-y: hidden;
+  padding-bottom: 11px;
+  scrollbar-width: thin !important;
+  scrollbar-color: #8fb7ad #e7efec !important;
+  overscroll-behavior-x: contain;
+  scroll-snap-type: x proximity;
+  touch-action: pan-x;
+}
+
+.receptionist-support-chat .support-conversations > button {
+  flex: 0 0 162px;
+  min-width: 162px;
+  scroll-snap-align: start;
+}
+
+.receptionist-support-chat .support-conversations::-webkit-scrollbar {
+  display: block !important;
+  height: 7px;
+}
+
+.receptionist-support-chat .support-conversations::-webkit-scrollbar-track {
+  border-radius: 999px;
+  background: #e7efec;
+}
+
+.receptionist-support-chat .support-conversations::-webkit-scrollbar-thumb {
+  border-radius: 999px;
+  background: #8fb7ad;
+}
+
+.receptionist-support-chat .support-conversations::-webkit-scrollbar-thumb:hover {
+  background: #5f9185;
+}

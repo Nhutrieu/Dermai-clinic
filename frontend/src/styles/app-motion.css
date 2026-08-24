@@ -34,3 +34,146 @@
 .doctor-avatar-wrapper .doctor-profile-heading>img,.doctor-avatar-wrapper .doctor-profile-heading>span{opacity:1}.doctor-profile-heading{display:grid;grid-template-columns:88px minmax(0,1fr);gap:20px;align-items:center;margin-bottom:24px;padding-bottom:22px;border-bottom:1px solid #e5e0d7}.doctor-profile-heading .avatar-picker{position:relative;width:88px;height:88px;display:block;cursor:pointer}.doctor-profile-heading .avatar-picker>img,.doctor-profile-heading .avatar-picker>span{width:88px;height:88px;border-radius:18px;display:grid;place-items:center;object-fit:cover;object-position:center top;background:#d9e7ad;color:#173f36;font-family:Newsreader,serif;font-size:24px;font-weight:700}.doctor-profile-heading .avatar-picker>b{position:absolute;right:-7px;bottom:6px;width:28px;height:28px;border-radius:50%;display:grid;place-items:center;background:#173f36;color:#fff;border:3px solid #fffefb;font-size:17px;line-height:1}.doctor-profile-heading .avatar-picker>input{display:none}.doctor-profile-heading h2{margin:4px 0 0!important;font-size:24px!important}.doctor-profile-heading p{margin:6px 0 0}.profile-kicker{color:#6d837b;font-size:8px;letter-spacing:1.5px;font-weight:800}.avatar-message{display:block;margin-top:7px;color:#477567;font-size:9px;font-style:normal}.doctor-settings>.panel:first-child form{padding-top:2px}
 @media(max-width:1100px){.app-topbar:before{left:24px}}
 @media(max-width:780px){.app-topbar:before{left:16px}.shell>.app-main{background:#f6f4ef}.shell>.app-sidebar{background:#173f36}.doctor-profile-heading{grid-template-columns:72px minmax(0,1fr);gap:16px}.doctor-profile-heading .avatar-picker,.doctor-profile-heading .avatar-picker>img,.doctor-profile-heading .avatar-picker>span{width:72px;height:72px;border-radius:14px}.doctor-profile-heading h2{font-size:20px!important}}
+
+/* Unified actor workspace motion: patient, doctor, receptionist and admin */
+.shell[class*="role-"] {
+  animation: actor-shell-enter .45s cubic-bezier(.22, 1, .36, 1) both;
+}
+
+.shell[class*="role-"] > .app-sidebar {
+  animation: actor-sidebar-enter .55s cubic-bezier(.22, 1, .36, 1) both;
+}
+
+.shell[class*="role-"] .app-sidebar .brand,
+.shell[class*="role-"] .workspace-role,
+.shell[class*="role-"] .app-sidebar nav > button,
+.shell[class*="role-"] .sidebar-footer,
+.shell[class*="role-"] .app-sidebar .logout {
+  animation: actor-nav-item-enter .42s cubic-bezier(.22, 1, .36, 1) both;
+}
+
+.shell[class*="role-"] .workspace-role { animation-delay: 70ms; }
+.shell[class*="role-"] .app-sidebar nav > button:nth-child(1) { animation-delay: 100ms; }
+.shell[class*="role-"] .app-sidebar nav > button:nth-child(2) { animation-delay: 135ms; }
+.shell[class*="role-"] .app-sidebar nav > button:nth-child(3) { animation-delay: 170ms; }
+.shell[class*="role-"] .app-sidebar nav > button:nth-child(4) { animation-delay: 205ms; }
+.shell[class*="role-"] .app-sidebar nav > button:nth-child(5) { animation-delay: 240ms; }
+.shell[class*="role-"] .sidebar-footer,
+.shell[class*="role-"] .app-sidebar .logout { animation-delay: 270ms; }
+
+.shell[class*="role-"] .app-topbar {
+  animation: actor-topbar-enter .48s cubic-bezier(.22, 1, .36, 1) both;
+}
+
+.shell[class*="role-"] .app-main > :not(.app-topbar) {
+  animation: actor-page-enter .5s cubic-bezier(.22, 1, .36, 1) both;
+}
+
+.shell[class*="role-"] .app-main :is(.card, .panel, article, .admin-overview-section, .patient-dashboard-section, .doctor-dashboard-section, .reception-dashboard-section) {
+  transition: transform .28s cubic-bezier(.22, 1, .36, 1), box-shadow .28s ease, border-color .28s ease, background-color .28s ease;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .shell[class*="role-"] .app-main :is(.card, article):not(.support-messages article):not(.notification-list article):hover {
+    transform: translateY(-3px);
+    box-shadow: 0 14px 34px rgba(23, 63, 54, .11);
+  }
+
+  .shell[class*="role-"] .app-sidebar nav > button:hover svg,
+  .shell[class*="role-"] button:hover > svg:first-child {
+    transform: scale(1.08);
+  }
+}
+
+.shell[class*="role-"] button > svg {
+  transition: transform .22s cubic-bezier(.22, 1, .36, 1);
+}
+
+.shell[class*="role-"] .app-sidebar nav > button.active {
+  animation: actor-active-tab .35s cubic-bezier(.34, 1.56, .64, 1) both;
+}
+
+.shell[class*="role-"] :is([aria-busy="true"], .animate-spin) {
+  will-change: transform;
+}
+
+.booking-dialog-backdrop,
+.additional-booking-backdrop,
+.hotline-backdrop,
+.pdf-modal-backdrop,
+.doctor-ai-preview-backdrop,
+.reception-dialog-backdrop {
+  animation: actor-backdrop-enter .22s ease-out both;
+}
+
+:is([role="dialog"], [role="alertdialog"], .hotline-dialog, .pdf-modal-container) {
+  animation: actor-dialog-enter .38s cubic-bezier(.22, 1, .36, 1) both;
+  transform-origin: center;
+}
+
+@keyframes actor-shell-enter {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes actor-sidebar-enter {
+  from { opacity: 0; transform: translateX(-22px); }
+  to { opacity: 1; transform: translateX(0); }
+}
+
+@keyframes actor-nav-item-enter {
+  from { opacity: 0; transform: translateX(-12px); }
+  to { opacity: 1; transform: translateX(0); }
+}
+
+@keyframes actor-topbar-enter {
+  from { opacity: 0; transform: translateY(-14px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes actor-page-enter {
+  from { opacity: 0; transform: translateY(18px) scale(.992); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+@keyframes actor-active-tab {
+  from { transform: scale(.96); }
+  to { transform: scale(1); }
+}
+
+@keyframes actor-backdrop-enter {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes actor-dialog-enter {
+  from { opacity: 0; transform: translateY(18px) scale(.965); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+@media (max-width: 780px) {
+  .shell[class*="role-"] > .app-sidebar {
+    animation-name: actor-mobile-nav-enter;
+  }
+
+  @keyframes actor-mobile-nav-enter {
+    from { opacity: 0; transform: translateY(22px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .shell[class*="role-"] *,
+  .shell[class*="role-"],
+  :is([role="dialog"], [role="alertdialog"]),
+  .booking-dialog-backdrop,
+  .additional-booking-backdrop,
+  .hotline-backdrop,
+  .pdf-modal-backdrop,
+  .doctor-ai-preview-backdrop,
+  .reception-dialog-backdrop {
+    animation: none !important;
+    scroll-behavior: auto !important;
+    transition-duration: .01ms !important;
+  }
+}

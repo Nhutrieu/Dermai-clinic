@@ -1,0 +1,101 @@
+{
+  "method": "nearest_class_centroid_cosine_distance",
+  "model_version": "efficientnet_b0-20260728T185742Z",
+  "id_count": 569,
+  "ood_count": 6479,
+  "quality_rejected_before_embedding": 2241,
+  "duplicate_rejected": 0,
+  "auroc": 0.6961311534819401,
+  "aupr_ood": 0.9605390808832571,
+  "fpr95": 0.8488576449912126,
+  "configured_threshold": 0.8326723179221144,
+  "id_false_rejection_rate": 0.0,
+  "ood_rejection_rate": 0.0006173792251890724,
+  "by_category": {
+    "Actinic_Keratosis": {
+      "count": 354,
+      "rejected": 0,
+      "rejection_rate": 0.0,
+      "mean_distance": 0.45614692265704526
+    },
+    "Benign_tumors": {
+      "count": 1091,
+      "rejected": 0,
+      "rejection_rate": 0.0,
+      "mean_distance": 0.43899592437621765
+    },
+    "Bullous": {
+      "count": 284,
+      "rejected": 0,
+      "rejection_rate": 0.0,
+      "mean_distance": 0.4849409724415188
+    },
+    "DrugEruption": {
+      "count": 263,
+      "rejected": 0,
+      "rejection_rate": 0.0,
+      "mean_distance": 0.5110282390289886
+    },
+    "Infestations_Bites": {
+      "count": 428,
+      "rejected": 0,
+      "rejection_rate": 0.0,
+      "mean_distance": 0.5011931661272717
+    },
+    "Lichen": {
+      "count": 428,
+      "rejected": 0,
+      "rejection_rate": 0.0,
+      "mean_distance": 0.48594244026413586
+    },
+    "Moles": {
+      "count": 325,
+      "rejected": 0,
+      "rejection_rate": 0.0,
+      "mean_distance": 0.42609273772973283
+    },
+    "Rosacea": {
+      "count": 184,
+      "rejected": 0,
+      "rejection_rate": 0.0,
+      "mean_distance": 0.4760259623112886
+    },
+    "Seborrh_Keratoses": {
+      "count": 399,
+      "rejected": 0,
+      "rejection_rate": 0.0,
+      "mean_distance": 0.3782850502054195
+    },
+    "Sun_Sunlight_Damage": {
+      "count": 310,
+      "rejected": 0,
+      "rejection_rate": 0.0,
+      "mean_distance": 0.4949368758547691
+    },
+    "Unknown_Normal": {
+      "count": 1137,
+      "rejected": 4,
+      "rejection_rate": 0.003518029903254178,
+      "mean_distance": 0.6084027716737624
+    },
+    "Vascular_Tumors": {
+      "count": 543,
+      "rejected": 0,
+      "rejection_rate": 0.0,
+      "mean_distance": 0.4504106133682293
+    },
+    "Vasculitis": {
+      "count": 461,
+      "rejected": 0,
+      "rejection_rate": 0.0,
+      "mean_distance": 0.4994629787002365
+    },
+    "Vitiligo": {
+      "count": 272,
+      "rejected": 0,
+      "rejection_rate": 0.0,
+      "mean_distance": 0.5493643199477125
+    }
+  },
+  "limitation": "Near-OOD dermatology benchmark; it does not yet contain a labeled wound/scratch/burn cohort."
+}

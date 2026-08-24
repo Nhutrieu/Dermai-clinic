@@ -31,7 +31,7 @@ export default function AppFooter({ variant = "staff" }: AppFooterProps) {
               <p>Derm Clinic kết nối bệnh nhân với bác sĩ da liễu, hỗ trợ đặt lịch rõ ràng và theo dõi thông tin khám thuận tiện.</p>
               <address className="app-footer-public-address">
                 <span><strong>Địa chỉ:</strong> 32/2 Thống Nhất, phường Gò Vấp, TP. Hồ Chí Minh</span>
-                <span><strong>Hotline:</strong> <a href="tel:0352790904">0352 790 904</a></span>
+                <span><strong>Điện thoại:</strong> <a href="tel:0352790904">0352 790 904</a></span>
                 <span><strong>Email:</strong> <a href="mailto:contact@dermai.clinic">contact@dermai.clinic</a></span>
               </address>
             </div>
@@ -59,7 +59,7 @@ export default function AppFooter({ variant = "staff" }: AppFooterProps) {
               <a href="#doctors">Đội ngũ bác sĩ</a>
               <a href="#reviews">Cảm nhận bệnh nhân</a>
               <span className="app-footer-nav-subheading">Liên hệ phòng khám</span>
-              <a href="tel:0352790904">Hotline đặt lịch</a>
+              <a href="tel:0352790904">Điện thoại đặt lịch</a>
               <a href="mailto:contact@dermai.clinic">Email hỗ trợ</a>
             </nav>
           </div>

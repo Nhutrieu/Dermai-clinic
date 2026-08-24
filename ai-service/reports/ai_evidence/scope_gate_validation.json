@@ -1,0 +1,16 @@
+{
+  "method": "frozen_feature_logistic_scope_gate",
+  "model_version": "efficientnet_b0-20260728T185742Z",
+  "seed": 42,
+  "training_id_count": 4142,
+  "training_ood_count": 5183,
+  "validation_id_count": 1036,
+  "validation_ood_count": 1296,
+  "auroc": 0.8861420944754279,
+  "aupr_ood": 0.9113151388185272,
+  "fpr95": 0.5308880308880309,
+  "score_threshold": 0.6760921888479632,
+  "validation_id_false_rejection_rate": 0.04922779922779923,
+  "validation_ood_rejection_rate": 0.5625,
+  "limitation": "Trained on near-OOD dermatology categories; wounds, scratches and burns still require a separate held-out cohort."
+}

@@ -1,0 +1,102 @@
+{
+  "method": "normalized_embedding_support_prototypes",
+  "selection": "Cluster count selected on validation cohorts only.",
+  "max_support_id_false_rejection_rate": 0.01,
+  "trials": [
+    {
+      "cluster_count": 16,
+      "similarity_threshold": 0.3426438570022583,
+      "id_validation_support_rejection_rate": 0.0019305019305019305,
+      "id_validation_combined_rejection_rate": 0.012548262548262547,
+      "scin_calibration_support_rejection_rate": 0.008333333333333333,
+      "scin_calibration_combined_rejection_rate": 0.025,
+      "local_validation_support_rejection_rate": 0.042088854247856584,
+      "local_validation_combined_rejection_rate": 0.31254871395167577,
+      "wound_validation_support_rejection_rate": 0.04043126684636118,
+      "wound_validation_combined_rejection_rate": 0.7951482479784366,
+      "objective": 0.8732854264663555
+    },
+    {
+      "cluster_count": 32,
+      "similarity_threshold": 0.36305874586105347,
+      "id_validation_support_rejection_rate": 0.0009652509652509653,
+      "id_validation_combined_rejection_rate": 0.011583011583011582,
+      "scin_calibration_support_rejection_rate": 0.008333333333333333,
+      "scin_calibration_combined_rejection_rate": 0.025,
+      "local_validation_support_rejection_rate": 0.024162120031176928,
+      "local_validation_combined_rejection_rate": 0.308651597817615,
+      "wound_validation_support_rejection_rate": 0.029649595687331536,
+      "wound_validation_combined_rejection_rate": 0.7924528301886793,
+      "objective": 0.8696157296430831
+    },
+    {
+      "cluster_count": 64,
+      "similarity_threshold": 0.41483473777770996,
+      "id_validation_support_rejection_rate": 0.0019305019305019305,
+      "id_validation_combined_rejection_rate": 0.012548262548262547,
+      "scin_calibration_support_rejection_rate": 0.008333333333333333,
+      "scin_calibration_combined_rejection_rate": 0.025,
+      "local_validation_support_rejection_rate": 0.06391270459859703,
+      "local_validation_combined_rejection_rate": 0.31644583008573657,
+      "wound_validation_support_rejection_rate": 0.08086253369272237,
+      "wound_validation_combined_rejection_rate": 0.7924528301886793,
+      "objective": 0.8715642877101134
+    },
+    {
+      "cluster_count": 128,
+      "similarity_threshold": 0.4492466449737549,
+      "id_validation_support_rejection_rate": 0.0028957528957528956,
+      "id_validation_combined_rejection_rate": 0.013513513513513514,
+      "scin_calibration_support_rejection_rate": 0.008333333333333333,
+      "scin_calibration_combined_rejection_rate": 0.025,
+      "local_validation_support_rejection_rate": 0.07326578332034295,
+      "local_validation_combined_rejection_rate": 0.32190179267342167,
+      "wound_validation_support_rejection_rate": 0.11590296495956873,
+      "wound_validation_combined_rejection_rate": 0.7897574123989218,
+      "objective": 0.8702328605672772
+    }
+  ],
+  "selected": {
+    "cluster_count": 16,
+    "similarity_threshold": 0.3426438570022583,
+    "id_validation_support_rejection_rate": 0.0019305019305019305,
+    "id_validation_combined_rejection_rate": 0.012548262548262547,
+    "scin_calibration_support_rejection_rate": 0.008333333333333333,
+    "scin_calibration_combined_rejection_rate": 0.025,
+    "local_validation_support_rejection_rate": 0.042088854247856584,
+    "local_validation_combined_rejection_rate": 0.31254871395167577,
+    "wound_validation_support_rejection_rate": 0.04043126684636118,
+    "wound_validation_combined_rejection_rate": 0.7951482479784366,
+    "objective": 0.8732854264663555
+  },
+  "held_out_test": {
+    "id_test": {
+      "count": 569,
+      "support_rejection_rate": 0.007029876977152899,
+      "base_rejection_rate": 0.02460456942003515,
+      "combined_rejection_rate": 0.029876977152899824
+    },
+    "local_test": {
+      "count": 43,
+      "support_rejection_rate": 0.046511627906976744,
+      "base_rejection_rate": 0.11627906976744186,
+      "combined_rejection_rate": 0.16279069767441862
+    },
+    "wound_test": {
+      "count": 371,
+      "support_rejection_rate": 0.0431266846361186,
+      "base_rejection_rate": 0.7951482479784366,
+      "combined_rejection_rate": 0.7951482479784366
+    }
+  },
+  "external_regression_case": {
+    "path": "..\\test-results\\user-images\\reported-out-of-scope.webp",
+    "used_for_fit_or_threshold": false,
+    "base_rejected": false,
+    "base_score": 0.18364217475707428,
+    "support_similarity": 0.5705611705780029,
+    "support_threshold": 0.3426438570022583,
+    "support_rejected": false,
+    "combined_rejected": false
+  }
+}

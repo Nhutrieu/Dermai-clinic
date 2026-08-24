@@ -1,5 +1,6 @@
 import base64
 import io
+import math
 from dataclasses import dataclass
 from pathlib import Path
 
@@ -9,6 +10,8 @@ import torch
 from PIL import Image
 from torch import nn
 from torchvision import models, transforms
+
+from .ood import OodProfile, is_out_of_scope, load_ood_profile
 
 CLASSES = [
     "Acne", "Candidiasis", "Eczema", "Lupus",
@@ -24,6 +27,29 @@ class ModelBundle:
     version: str
     classes: list[str]
     device: torch.device
+    ood_profile: OodProfile | None = None
+    temperature: float = 1.0
+
+    def extract_embeddings(self, inputs: torch.Tensor) -> torch.Tensor:
+        captured: list[torch.Tensor] = []
+        handle = self.target_layer.register_forward_hook(
+            lambda _module, _args, output: captured.append(output)
+        )
+        try:
+            with torch.no_grad():
+                self.model(inputs)
+        finally:
+            handle.remove()
+        if not captured:
+            raise RuntimeError("Không thể trích xuất đặc trưng từ mô hình.")
+        features = captured[0]
+        if features.ndim > 2:
+            features = features.mean(dim=tuple(range(2, features.ndim)))
+        return torch.nn.functional.normalize(features.flatten(1), dim=1)
+
+
+class OutOfScopeImageError(ValueError):
+    pass
 
 
 def build_model(architecture: str, num_classes: int) -> tuple[nn.Module, nn.Module]:
@@ -40,7 +66,7 @@ def build_model(architecture: str, num_classes: int) -> tuple[nn.Module, nn.Modu
     return model, model.features[-1]
 
 
-def load_bundle(path: Path) -> ModelBundle | None:
+def load_bundle(path: Path, ood_profile_path: Path | None = None) -> ModelBundle | None:
     if not path.exists():
         return None
     checkpoint = torch.load(path, map_location="cpu", weights_only=False)
@@ -50,7 +76,14 @@ def load_bundle(path: Path) -> ModelBundle | None:
     model.load_state_dict(checkpoint["model_state_dict"])
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     model.to(device).eval()
-    return ModelBundle(model, target, checkpoint.get("version", path.stem), classes, device)
+    version = checkpoint.get("version", path.stem)
+    profile = load_ood_profile(ood_profile_path, classes, version) if ood_profile_path else None
+    temperature = float(checkpoint.get("temperature", 1.0))
+    if not math.isfinite(temperature) or temperature <= 0:
+        raise ValueError(
+            "Temperature calibration trong checkpoint phải là số dương hữu hạn."
+        )
+    return ModelBundle(model, target, version, classes, device, profile, temperature)
 
 
 SPATIAL_PREPROCESS = transforms.Compose([
@@ -106,16 +139,39 @@ def preprocess_image(image: Image.Image) -> tuple[torch.Tensor, np.ndarray]:
     return tensor, np.asarray(spatially_aligned)
 
 
-def predict(bundle: ModelBundle, image: Image.Image, confidence_threshold: float = 0.55) -> dict:
+def predict(
+    bundle: ModelBundle,
+    image: Image.Image,
+    confidence_threshold: float = 0.70,
+    confidence_margin_threshold: float = 0.20,
+    normalized_entropy_threshold: float = 0.65,
+) -> dict:
     tensor, base = preprocess_image(image)
     tensor = tensor.unsqueeze(0).to(bundle.device)
+    if bundle.ood_profile is not None:
+        embedding = bundle.extract_embeddings(tensor)[0].cpu().numpy()
+        rejected, _score = is_out_of_scope(embedding, bundle.ood_profile)
+        if rejected:
+            raise OutOfScopeImageError("Ảnh nằm ngoài 8 nhóm bệnh mà hệ thống hỗ trợ. Vui lòng chọn ảnh tổn thương da khác hoặc khám trực tiếp.")
     with torch.no_grad():
-        probabilities = torch.softmax(bundle.model(tensor), dim=1)[0]
+        logits = bundle.model(tensor)
+        probabilities = torch.softmax(logits / bundle.temperature, dim=1)[0]
     values, indices = probabilities.topk(min(3, len(bundle.classes)))
     top = [
         {"label": bundle.classes[i], "probability": round(float(v), 6)}
         for v, i in zip(values.cpu(), indices.cpu())
     ]
+    probability_values = probabilities.detach().cpu().numpy()
+    normalized_entropy = float(
+        -(probability_values * np.log(np.clip(probability_values, 1e-12, 1.0))).sum()
+        / math.log(max(2, len(probability_values)))
+    )
+    confidence_margin = top[0]["probability"] - (top[1]["probability"] if len(top) > 1 else 0.0)
+    uncertain = (
+        top[0]["probability"] < confidence_threshold
+        or confidence_margin < confidence_margin_threshold
+        or normalized_entropy > normalized_entropy_threshold
+    )
     best_idx = int(indices[0])
     with GradCam(bundle.model, bundle.target_layer) as gradcam:
         heat = gradcam.create(tensor, best_idx)
@@ -131,6 +187,6 @@ def predict(bundle: ModelBundle, image: Image.Image, confidence_threshold: float
         "top3": top,
         "gradcam_image": "data:image/png;base64," + base64.b64encode(output.getvalue()).decode(),
         "model_version": bundle.version,
-        "uncertain": top[0]["probability"] < confidence_threshold,
+        "uncertain": uncertain,
         "disclaimer": DISCLAIMER,
     }

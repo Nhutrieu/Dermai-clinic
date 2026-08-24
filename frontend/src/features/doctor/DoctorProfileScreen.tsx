@@ -11,6 +11,7 @@ type Props = {
   saved: (doctor: Doctor) => void;
 };
 
+type FeedbackScope = "overview" | "professional" | "bio" | "schedule" | "leave";
 type Feedback = { text: string; error: boolean };
 const CLINIC_WORKDAYS = [1, 2, 3, 4, 5];
 
@@ -46,6 +47,7 @@ export default function DoctorProfileScreen({ token, doctor, work, leave, saved 
   const [leaveEnd, setLeaveEnd] = useState("");
   const [leaveReason, setLeaveReason] = useState("");
   const [feedback, setFeedback] = useState<Feedback | null>(null);
+  const [feedbackScope, setFeedbackScope] = useState<FeedbackScope>("professional");
 
   // Preserve the existing delayed save so profile data remains synced across patient views.
   useEffect(() => {
@@ -57,6 +59,7 @@ export default function DoctorProfileScreen({ token, doctor, work, leave, saved 
     ) return;
 
     const timer = window.setTimeout(async () => {
+      setFeedbackScope("professional");
       try {
         const updated = await request<Doctor>("/doctors/me", token, {
           method: "PATCH",
@@ -103,6 +106,7 @@ export default function DoctorProfileScreen({ token, doctor, work, leave, saved 
 
   async function saveProfile(event: FormEvent) {
     event.preventDefault();
+    setFeedbackScope("professional");
     try {
       const updated = await request<Doctor>("/doctors/me", token, {
         method: "PATCH",
@@ -123,6 +127,7 @@ export default function DoctorProfileScreen({ token, doctor, work, leave, saved 
 
   async function chooseAvatar(file?: File) {
     if (!file) return;
+    setFeedbackScope("overview");
     if (file.size > 2 * 1024 * 1024) {
       setFeedback({ text: "Ảnh đại diện tối đa 2 MB.", error: true });
       return;
@@ -141,6 +146,7 @@ export default function DoctorProfileScreen({ token, doctor, work, leave, saved 
 
   async function saveBio(event: FormEvent) {
     event.preventDefault();
+    setFeedbackScope("bio");
     try {
       const updated = await request<Doctor>("/doctors/me/bio", token, {
         method: "PATCH",
@@ -156,6 +162,7 @@ export default function DoctorProfileScreen({ token, doctor, work, leave, saved 
 
   async function saveWeeklySchedule(event: FormEvent) {
     event.preventDefault();
+    setFeedbackScope("schedule");
     try {
       const weekly = CLINIC_WORKDAYS.map(day => ({ id: "", weekday: day, startTime, endTime, slotMinutes }));
       const body = weekly.map(item => ({
@@ -180,6 +187,7 @@ export default function DoctorProfileScreen({ token, doctor, work, leave, saved 
 
   async function addLeave(event: FormEvent) {
     event.preventDefault();
+    setFeedbackScope("leave");
     try {
       await request(`/doctors/${doctor.id}/leave`, token, {
         method: "POST",
@@ -201,6 +209,7 @@ export default function DoctorProfileScreen({ token, doctor, work, leave, saved 
   }
 
   async function removeLeave(id: string) {
+    setFeedbackScope("leave");
     try {
       await request(`/doctors/${doctor.id}/leave/${id}`, token, { method: "DELETE" });
       setLeaves(current => current.filter(item => item.id !== id));
@@ -211,6 +220,11 @@ export default function DoctorProfileScreen({ token, doctor, work, leave, saved 
   }
 
   const displayName = /^bs\.?\s/i.test(profile.fullName) ? profile.fullName : `BS. ${profile.fullName}`;
+  const renderFeedback = (scope: FeedbackScope) => feedback && feedbackScope === scope ? (
+    <div className={`doctor-profile-feedback ${feedback.error ? "is-error" : "is-success"}`} role={feedback.error ? "alert" : "status"} aria-live={feedback.error ? "assertive" : "polite"}>
+      {feedback.text}
+    </div>
+  ) : null;
 
   return (
     <main className="doctor-profile-page" aria-labelledby="doctor-profile-title">
@@ -235,13 +249,8 @@ export default function DoctorProfileScreen({ token, doctor, work, leave, saved 
           <div><dt>Số chứng chỉ</dt><dd>{profile.certificateNo || "Chưa cập nhật"}</dd></div>
           <div><dt>Giá khám cơ bản</dt><dd>{formatFee(profile.consultationFee)}</dd><small>Do quản trị viên cấu hình</small></div>
         </dl>
+        {renderFeedback("overview")}
       </section>
-
-      {feedback && (
-        <div className={`doctor-profile-feedback ${feedback.error ? "is-error" : "is-success"}`} role={feedback.error ? "alert" : "status"} aria-live={feedback.error ? "assertive" : "polite"}>
-          {feedback.text}
-        </div>
-      )}
 
       <div className="doctor-profile-layout">
         <div className="doctor-profile-primary">
@@ -250,6 +259,7 @@ export default function DoctorProfileScreen({ token, doctor, work, leave, saved 
               <div><h2 id="doctor-professional-title">Thông tin chuyên môn</h2><p>Nội dung này xuất hiện trong danh sách bác sĩ và khi bệnh nhân đặt lịch.</p></div>
               <span>Đang bật tự động lưu</span>
             </header>
+            {renderFeedback("professional")}
             <form className="doctor-profile-form" onSubmit={saveProfile}>
               <label>Họ và tên<input required maxLength={160} autoComplete="name" value={profile.fullName} onChange={event => setProfile({ ...profile, fullName: event.target.value })} /></label>
               <label>Chuyên môn<input required maxLength={80} value={profile.specialtyCode} onChange={event => setProfile({ ...profile, specialtyCode: event.target.value })} /></label>
@@ -266,6 +276,7 @@ export default function DoctorProfileScreen({ token, doctor, work, leave, saved 
             <header className="doctor-profile-section-heading">
               <div><h2 id="doctor-bio-title">Giới thiệu với bệnh nhân</h2><p>Nêu kinh nghiệm, thế mạnh điều trị và cách tiếp cận chuyên môn.</p></div>
             </header>
+            {renderFeedback("bio")}
             <form className="doctor-profile-bio-form" onSubmit={saveBio}>
               <label htmlFor="doctor-profile-bio">Mô tả bác sĩ</label>
               <textarea id="doctor-profile-bio" maxLength={1200} value={bio} onChange={event => setBio(event.target.value)} placeholder="Ví dụ: Bác sĩ chuyên điều trị mụn, viêm da và các bệnh lý da liễu thường gặp." />
@@ -282,6 +293,7 @@ export default function DoctorProfileScreen({ token, doctor, work, leave, saved 
             <header className="doctor-profile-section-heading">
               <div><h2 id="doctor-schedule-title"><Clock3 aria-hidden="true" /> Lịch làm việc</h2><p>Thiết lập một khung giờ chung cho các ngày trong tuần.</p></div>
             </header>
+            {renderFeedback("schedule")}
             <div className="doctor-profile-schedule-summary" role="status">
               <div><span>Ngày làm việc</span><strong>{configuredWorkdays === 5 ? "Thứ Hai - Thứ Sáu" : `${configuredWorkdays}/5 ngày đã cấu hình`}</strong></div>
               <div><span>Khung giờ hiện tại</span><strong>{weekdaySchedule ? `${weekdaySchedule.startTime.slice(0, 5)} - ${weekdaySchedule.endTime.slice(0, 5)}` : "Chưa thiết lập"}</strong></div>
@@ -298,8 +310,9 @@ export default function DoctorProfileScreen({ token, doctor, work, leave, saved 
 
           <section className="doctor-profile-section doctor-profile-leave" aria-labelledby="doctor-leave-title">
             <header className="doctor-profile-section-heading">
-              <div><h2 id="doctor-leave-title"><CalendarOff aria-hidden="true" /> Nghỉ phép</h2><p>Các khung giờ trùng ngày nghỉ sẽ không cho bệnh nhân đặt lịch.</p></div>
+              <div><h2 id="doctor-leave-title"><CalendarOff aria-hidden="true" /> Nghỉ phép</h2><p>Nếu khoảng nghỉ trùng lịch đang giữ, chờ hoặc đã xác nhận, hãy nhờ lễ tân đổi hoặc hủy lịch đó trước.</p></div>
             </header>
+            {renderFeedback("leave")}
             {sortedLeaves.length > 0 ? (
               <div className="doctor-profile-leave-list" aria-label="Danh sách ngày nghỉ">
                 {sortedLeaves.map(item => (

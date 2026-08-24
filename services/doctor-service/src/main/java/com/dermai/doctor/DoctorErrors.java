@@ -9,16 +9,16 @@ import org.springframework.web.server.ResponseStatusException;
 
 @RestControllerAdvice
 class DoctorErrors {
-  @ExceptionHandler(ConfirmedAppointmentConflict.class)
-  ResponseEntity<ProblemDetail> confirmedAppointmentConflict(ConfirmedAppointmentConflict error) {
+  @ExceptionHandler(ActiveAppointmentConflict.class)
+  ResponseEntity<ProblemDetail> activeAppointmentConflict(ActiveAppointmentConflict error) {
     var problem = ProblemDetail.forStatusAndDetail(HttpStatus.CONFLICT, error.getReason());
-    problem.setProperty("code", "CONFIRMED_APPOINTMENT_CONFLICT");
+    problem.setProperty("code", "ACTIVE_APPOINTMENT_CONFLICT");
     return ResponseEntity.status(HttpStatus.CONFLICT).body(problem);
   }
 }
 
-class ConfirmedAppointmentConflict extends ResponseStatusException {
-  ConfirmedAppointmentConflict(String detail) {
+class ActiveAppointmentConflict extends ResponseStatusException {
+  ActiveAppointmentConflict(String detail) {
     super(HttpStatus.CONFLICT, detail);
   }
 }

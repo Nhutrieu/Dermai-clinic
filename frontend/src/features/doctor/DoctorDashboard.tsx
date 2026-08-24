@@ -25,6 +25,7 @@ import type {
 } from "../../core/types";
 import type { RealtimeConnectionState } from "../../core/realtime";
 import DoctorAiPreviewButton from "./DoctorAiPreviewButton";
+import { patientAiLabel } from "../patient/patientAiPresentation";
 import {
   buildDoctorTodaySummary,
   formatClinicTime,
@@ -400,7 +401,7 @@ export default function DoctorDashboard({
                 {pendingAi.slice(0, 4).map(({ appointment, assessment }) => (
                   <article key={assessment.id}>
                     <div><b>{patientName(appointment.patientId, patients)}</b><small>Gửi {new Date(assessment.createdAt).toLocaleString("vi-VN")}</small></div>
-                    <p><span>Mẫu hình ảnh</span><b>{assessment.predictedLabel}</b></p>
+                    <p><span>Mẫu hình ảnh</span><b>{patientAiLabel(assessment.predictedLabel)}</b></p>
                     <p><span>Mức độ phù hợp</span><b>{(assessment.confidence * 100).toFixed(1)}%</b></p>
                     <span className="doctor-ai-review-state">Chờ bác sĩ đối chiếu</span>
                     <DoctorAiPreviewButton token={token} appointmentId={appointment.id} available />

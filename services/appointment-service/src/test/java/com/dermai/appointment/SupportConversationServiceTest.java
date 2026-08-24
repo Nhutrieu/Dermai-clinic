@@ -38,10 +38,11 @@ class SupportConversationServiceTest {
  @Test void receptionistInboxExcludesAiOnlyConversations(){
   var repository=mock(SupportConversationRepository.class);
   var service=new SupportConversationService(repository);
-  when(repository.findByChannelStatusNotOrderByUpdatedAtDesc("AI_ACTIVE")).thenReturn(List.of());
+  var receptionist=UUID.randomUUID();
+  when(repository.findInboxForReceptionist(receptionist)).thenReturn(List.of());
 
-  assertThat(service.list(UUID.randomUUID(),"RECEPTIONIST")).isEmpty();
-  verify(repository).findByChannelStatusNotOrderByUpdatedAtDesc("AI_ACTIVE");
+  assertThat(service.list(receptionist,"RECEPTIONIST")).isEmpty();
+  verify(repository).findInboxForReceptionist(receptionist);
  }
 
  @Test void assignedReceptionistCanResolveAndReturnConversationToAi(){

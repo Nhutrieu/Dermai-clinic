@@ -6,7 +6,8 @@ from fastapi import FastAPI, File, Header, HTTPException, UploadFile
 from PIL import Image, UnidentifiedImageError
 
 from .config import settings
-from .model import DISCLAIMER, load_bundle, predict
+from .image_quality import assess_image_quality
+from .model import DISCLAIMER, OutOfScopeImageError, load_bundle, predict
 from .rag import NO_EVIDENCE, RagStore
 from .schemas import ChatRequest, ChatResponse, PredictionResponse, SupportChatRequest, SupportChatResponse
 from .support_assistant import SupportDecision, classify_support_request, polish_safe_answer, rag_disease_key
@@ -16,7 +17,7 @@ state: dict = {}
 
 @asynccontextmanager
 async def lifespan(_app: FastAPI):
-    state["model"] = load_bundle(settings.model_path)
+    state["model"] = load_bundle(settings.model_path, settings.ood_profile_path)
     store = RagStore(settings.rag_index_path)
     store.load()
     state["rag"] = store
@@ -61,7 +62,19 @@ async def prediction(
         source = Image.open(io.BytesIO(content))
     except (UnidentifiedImageError, OSError):
         raise HTTPException(422, "Tệp không phải ảnh hợp lệ.") from None
-    result = predict(state["model"], source, settings.confidence_threshold)
+    quality = assess_image_quality(source)
+    if not quality.accepted:
+        raise HTTPException(422, quality.reason)
+    try:
+        result = predict(
+            state["model"],
+            source,
+            settings.confidence_threshold,
+            settings.confidence_margin_threshold,
+            settings.normalized_entropy_threshold,
+        )
+    except OutOfScopeImageError as error:
+        raise HTTPException(422, str(error)) from None
     rag = state.get("rag")
     if rag:
         result["guidance"] = rag.guidance(result["disease"])

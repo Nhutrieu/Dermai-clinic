@@ -47,6 +47,7 @@ export type Prescription = { id: string; recordId: string; patientId: string; in
 export type Recommendation = { doctorId: string; doctorIdentityId: string; doctorName: string; specialtyCode: string; startAt: string; endAt: string; score: number; reasons: string[] };
 export type AvailabilitySlot = { doctorId: string; doctorIdentityId: string; doctorName: string; specialtyCode: string; startAt: string; endAt: string; status: "AVAILABLE" | "BOOKED" | "ON_LEAVE" | "HELD_BY_YOU" | "HELD_BY_OTHER"; holdId?: string; holdExpiresAt?: string };
 export type PatientNotification = { id: string; appointmentId?: string; notificationType: string; title: string; body: string; createdAt: string; readAt?: string };
+export type AvailabilityResponse = { items: AvailabilitySlot[]; timezone: string; status?: "OPEN" | "CLINIC_CLOSED"; closureReason?: string | null };
 export type ClinicClosure = { id: string; closureDate: string; reason: string };
 export type ReminderAction = { id: string; appointmentId: string; actionType: "CALLED" | "RESENT" | "UNREACHABLE"; createdAt: string };
 export type ReminderItem = { appointment: Appointment; latestAction?: ReminderAction };

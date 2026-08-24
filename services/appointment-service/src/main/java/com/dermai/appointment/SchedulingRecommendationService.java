@@ -80,7 +80,8 @@ public class SchedulingRecommendationService {
   LocalDate today=LocalDate.now(CLINIC_ZONE);
   if(date.isBefore(today)||date.isAfter(today.plusDays(BOOKING_WINDOW_DAYS)))throw new IllegalArgumentException("DATE_OUTSIDE_BOOKING_WINDOW");
   var doctor=loadDoctors(authorization,role).stream().filter(x->doctorId.equals(x.id())).findFirst().orElseThrow(()->new IllegalArgumentException("DOCTOR_NOT_AVAILABLE"));
-  if(closures.existsByClosureDate(date))return new Availability(List.of(),CLINIC_ZONE.getId());
+  var clinicClosure=closures.findByClosureDate(date);
+  if(clinicClosure.isPresent())return new Availability(List.of(),CLINIC_ZONE.getId(),"CLINIC_CLOSED",clinicClosure.get().reason);
   Instant dayStart=date.atStartOfDay(CLINIC_ZONE).toInstant(),dayEnd=date.plusDays(1).atStartOfDay(CLINIC_ZONE).toInstant();
   var busy=appointments.findActiveOverlapping(dayStart,dayEnd);
   var items=new ArrayList<AvailabilityItem>();
@@ -101,7 +102,7 @@ public class SchedulingRecommendationService {
    }
   }
   items.sort(Comparator.comparing(AvailabilityItem::startAt));
-  return new Availability(items,CLINIC_ZONE.getId());
+  return new Availability(items,CLINIC_ZONE.getId(),"OPEN",null);
  }
 
  public AvailabilityLookup lookupAvailability(String doctorName,LocalDate date,UUID viewerIdentity,String authorization,String role){
@@ -188,7 +189,7 @@ public class SchedulingRecommendationService {
  public record Request(UUID patientId,String specialtyCode,UUID preferredDoctorId,Instant preferredStart,Integer durationMinutes,Integer limit){}
  public record Result(List<Item> items,String algorithmVersion,String timezone){}
  public record Item(UUID doctorId,UUID doctorIdentityId,String doctorName,String specialtyCode,Instant startAt,Instant endAt,double score,List<String> reasons){}
- public record Availability(List<AvailabilityItem> items,String timezone){}
+ public record Availability(List<AvailabilityItem> items,String timezone,String status,String closureReason){}
  public record AvailabilityLookup(String status,String doctorName,LocalDate date,List<AvailabilityItem> items,List<String> candidates){}
  public record AvailabilityItem(UUID doctorId,UUID doctorIdentityId,String doctorName,String specialtyCode,Instant startAt,Instant endAt,String status,UUID holdId,Instant holdExpiresAt){}
  public record DoctorProfile(UUID doctorId,String doctorName,String specialtyCode,int experienceYears,String certificateNo,BigDecimal consultationFee,String bio){}

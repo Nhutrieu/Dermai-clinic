@@ -58,11 +58,11 @@ const CLINIC_ADDRESS = "32/2 Thống Nhất, phường Gò Vấp, TP. Hồ Chí 
 
 const AI_LABELS: Record<string, string> = {
     Acne: "Mụn trứng cá",
-    Candidiasis: "Nhiễm nấm Candida",
-    Eczema: "Chàm / eczema",
-    Lupus: "Biểu hiện da liên quan lupus",
+    Candidiasis: "Nhiễm nấm Candida ở da",
+    Eczema: "Chàm / viêm da dạng chàm",
+    Lupus: "Tổn thương da gợi ý lupus",
     Psoriasis: "Vảy nến",
-    SkinCancer: "Nhóm tổn thương cần được bác sĩ đánh giá",
+    SkinCancer: "Tổn thương nghi ngờ ác tính",
     Tinea: "Nấm da",
     Warts: "Mụn cóc",
 };

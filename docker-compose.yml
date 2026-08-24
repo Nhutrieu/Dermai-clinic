@@ -124,6 +124,7 @@ services:
     ports: ["8000:8000"]
     environment:
       MODEL_PATH: /models/best_model.pth
+      OOD_PROFILE_PATH: /models/ood_profile.json
       RAG_INDEX_PATH: /rag-index
       GEMINI_API_KEY: ${GEMINI_API_KEY:-}
       GEMINI_MODEL: ${GEMINI_MODEL:-gemini-2.5-flash}

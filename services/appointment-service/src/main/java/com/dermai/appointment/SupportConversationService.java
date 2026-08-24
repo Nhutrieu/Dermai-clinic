@@ -16,7 +16,7 @@ class SupportConversationService {
   if("PATIENT".equals(role))return conversations.findById(identity).map(List::of).orElseGet(List::of);
   requireViewer(role);
   return "RECEPTIONIST".equals(role)
-   ? conversations.findByChannelStatusNotOrderByUpdatedAtDesc("AI_ACTIVE")
+   ? conversations.findInboxForReceptionist(identity)
    : conversations.findAllByOrderByUpdatedAtDesc();
  }
 
@@ -55,7 +55,7 @@ class SupportConversationService {
  boolean aiActiveOrNew(UUID patientIdentityId){return conversations.findById(patientIdentityId).map(item->"AI_ACTIVE".equals(item.channelStatus)).orElse(true);}
 
  @Transactional(readOnly=true)
- boolean visibleToReceptionist(UUID patientIdentityId){return conversations.findById(patientIdentityId).map(item->!"AI_ACTIVE".equals(item.channelStatus)).orElse(false);}
+ boolean visibleToReceptionist(UUID patientIdentityId,UUID receptionistIdentityId){return conversations.findById(patientIdentityId).map(item->!"AI_ACTIVE".equals(item.channelStatus)||receptionistIdentityId.equals(item.resolvedByIdentityId)).orElse(false);}
 
  @Transactional
  SupportConversation recordAiTurn(UUID patientIdentityId,String intent,double confidence,int failureCount,boolean escalate,String summary,String reason){

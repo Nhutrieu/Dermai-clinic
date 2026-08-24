@@ -1,0 +1,66 @@
+{
+  "method": "confirmed_hard_negative_embedding_bank",
+  "source": "User-confirmed unsupported wound/scratch image.",
+  "image_bytes_stored_in_profile": false,
+  "variant_count": 8,
+  "similarity_threshold": 0.95,
+  "cohorts": {
+    "id_validation": {
+      "count": 1036,
+      "hard_negative_rejection_rate": 0.0,
+      "base_rejection_rate": 0.010617760617760617,
+      "combined_rejection_rate": 0.010617760617760617,
+      "maximum_similarity": 0.6046062707901001
+    },
+    "scin_calibration": {
+      "count": 240,
+      "hard_negative_rejection_rate": 0.0,
+      "base_rejection_rate": 0.016666666666666666,
+      "combined_rejection_rate": 0.016666666666666666,
+      "maximum_similarity": 0.6355229020118713
+    },
+    "id_test": {
+      "count": 569,
+      "hard_negative_rejection_rate": 0.0,
+      "base_rejection_rate": 0.02460456942003515,
+      "combined_rejection_rate": 0.02460456942003515,
+      "maximum_similarity": 0.6450551152229309
+    },
+    "local_validation": {
+      "count": 1283,
+      "hard_negative_rejection_rate": 0.0,
+      "base_rejection_rate": 0.3000779423226812,
+      "combined_rejection_rate": 0.3000779423226812,
+      "maximum_similarity": 0.5853168368339539
+    },
+    "local_test": {
+      "count": 43,
+      "hard_negative_rejection_rate": 0.0,
+      "base_rejection_rate": 0.11627906976744186,
+      "combined_rejection_rate": 0.11627906976744186,
+      "maximum_similarity": 0.4698515832424164
+    },
+    "wound_validation": {
+      "count": 371,
+      "hard_negative_rejection_rate": 0.0,
+      "base_rejection_rate": 0.7897574123989218,
+      "combined_rejection_rate": 0.7897574123989218,
+      "maximum_similarity": 0.619898796081543
+    },
+    "wound_test": {
+      "count": 371,
+      "hard_negative_rejection_rate": 0.0,
+      "base_rejection_rate": 0.7951482479784366,
+      "combined_rejection_rate": 0.7951482479784366,
+      "maximum_similarity": 0.657570481300354
+    }
+  },
+  "regression_case": {
+    "used_as_hard_negative": true,
+    "base_rejected": false,
+    "base_score": 0.18364217475707428,
+    "hard_negative_similarity": 0.9999994039535522,
+    "hard_negative_rejected": true,
+    "combined_rejected": true
+  }
+}

@@ -17,11 +17,14 @@ import {
   LoaderCircle,
   LockKeyhole,
   RefreshCw,
+  ShieldAlert,
   Stethoscope,
   Trash2,
   Upload,
   X,
 } from "lucide-react";
+
+import "../../styles/patient-ai-scope-notice.css";
 
 export type AiAnalysisStage = "idle" | "analyzing" | "saving";
 export type AiAnalysisOutcome = "success" | "uncertain" | null;
@@ -33,6 +36,7 @@ type PatientAiIntakeProps = {
   stage: AiAnalysisStage;
   outcome: AiAnalysisOutcome;
   fileError: string;
+  rejectionKind: "out-of-scope" | "quality" | null;
   analysisError: string;
   onSelectFile: (file: File) => void;
   onRemoveFile: () => void;
@@ -106,6 +110,7 @@ function SkinPhotoUploader({
   stage,
   outcome,
   fileError,
+  rejectionKind,
   analysisError,
   onSelectFile,
   onRemoveFile,
@@ -116,6 +121,7 @@ function SkinPhotoUploader({
   const chooseButtonRef = useRef<HTMLButtonElement>(null);
   const restoreChooserFocus = useRef(false);
   const [dragActive, setDragActive] = useState(false);
+  const [scopeChoice, setScopeChoice] = useState<"supported" | "wound" | null>(null);
   const busy = stage !== "idle";
 
   // Sau khi xóa preview, trả focus về nút chọn ảnh mới để luồng bàn phím không bị đứt.
@@ -124,6 +130,10 @@ function SkinPhotoUploader({
       chooseButtonRef.current?.focus();
       restoreChooserFocus.current = false;
     }
+  }, [file]);
+
+  useEffect(() => {
+    setScopeChoice(null);
   }, [file]);
 
   function openFilePicker() {
@@ -153,6 +163,7 @@ function SkinPhotoUploader({
 
   function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
+    if (scopeChoice !== "supported") return;
     onAnalyze();
   }
 
@@ -174,6 +185,18 @@ function SkinPhotoUploader({
           <p>Chọn một ảnh chụp rõ vùng da. Bạn có thể thay ảnh trước khi gửi.</p>
         </div>
         <ImagePlus aria-hidden="true" />
+      </div>
+
+      <div className="ai-intake-scope-notice" role="status">
+        <ShieldAlert aria-hidden="true" />
+        <div>
+          <strong>Kiểm tra chất lượng và phạm vi đang bật</strong>
+          <p>Trước khi phân tích, hệ thống kiểm tra ảnh mờ, thiếu sáng và ảnh nằm ngoài 8 nhóm bệnh được hỗ trợ.</p>
+        </div>
+        <span>
+          <i aria-hidden="true" />
+          Đang hoạt động
+        </span>
       </div>
 
       <input
@@ -214,7 +237,7 @@ function SkinPhotoUploader({
             <img src={preview} alt="Ảnh vùng da đã chọn, đang chờ phân tích" />
           </div>
           <div className="ai-intake-preview-details">
-            <span className="ai-intake-file-ready"><CircleCheck aria-hidden="true" />Ảnh đã sẵn sàng</span>
+            <span className="ai-intake-file-ready"><Info aria-hidden="true" />Ảnh đã chọn · chưa kiểm tra</span>
             <strong title={file?.name}>{file?.name}</strong>
             {file && <small>{formatFileSize(file.size)} · {file.type.replace("image/", "").toUpperCase()}</small>}
             <div className="ai-intake-preview-actions">
@@ -229,12 +252,38 @@ function SkinPhotoUploader({
         </div>
       )}
 
-      {fileError && (
-        <div className="ai-intake-alert is-error" role="alert">
-          <AlertCircle aria-hidden="true" />
+      {preview && !fileError && (
+        <fieldset className="ai-intake-scope-question">
+          <legend>Ảnh này có phải vết xước, bỏng, vết thương hở hoặc đang chảy máu không?</legend>
+          <p>Những tình trạng này nằm ngoài phạm vi của mô hình phân loại 8 nhóm bệnh da.</p>
           <div>
-            <strong>Ảnh chưa hợp lệ</strong>
-            <p>{fileError} Hãy chọn một ảnh khác theo hướng dẫn bên cạnh.</p>
+            <button type="button" className={scopeChoice === "wound" ? "is-selected" : ""} onClick={() => setScopeChoice("wound")}>Có, đây là vết thương</button>
+            <button type="button" className={scopeChoice === "supported" ? "is-selected" : ""} onClick={() => setScopeChoice("supported")}>Không, gửi ảnh để hệ thống xác minh</button>
+          </div>
+          <small>Lựa chọn này không bỏ qua kiểm tra tự động. Ảnh ngoài phạm vi vẫn bị từ chối và không tạo kết quả 8 nhóm bệnh.</small>
+        </fieldset>
+      )}
+
+      {scopeChoice === "wound" && (
+        <div className="ai-intake-wound-warning" role="alert">
+          <ShieldAlert aria-hidden="true" />
+          <div><strong>Không sử dụng AI cho ảnh này</strong><p>Vết xước, bỏng và vết thương hở chưa nằm trong dữ liệu được hỗ trợ. Hãy vệ sinh phù hợp và liên hệ cơ sở y tế nếu chảy máu khó cầm, đau tăng, sưng đỏ lan rộng, có mủ hoặc sốt.</p></div>
+        </div>
+      )}
+
+      {fileError && (
+        <div className={`ai-intake-alert is-error${rejectionKind ? ` is-${rejectionKind}` : ""}`} role="alert">
+          {rejectionKind === "out-of-scope" ? <ShieldAlert aria-hidden="true" /> : <AlertCircle aria-hidden="true" />}
+          <div>
+            <strong>{rejectionKind === "out-of-scope"
+              ? "Ảnh nằm ngoài phạm vi kiểm tra"
+              : rejectionKind === "quality"
+                ? "Ảnh chưa đủ chất lượng"
+                : "Ảnh chưa hợp lệ"}</strong>
+            <p>{fileError}</p>
+            {rejectionKind === "out-of-scope" && (
+              <small>Công cụ chỉ hỗ trợ 8 nhóm hình ảnh da đã công bố. Nếu vùng da bị xước, bỏng, chảy máu, đau nhiều hoặc có dấu hiệu nhiễm trùng, hãy liên hệ phòng khám để được kiểm tra trực tiếp.</small>
+            )}
             {preview && <button type="button" onClick={openFilePicker}>Chọn ảnh khác</button>}
           </div>
         </div>
@@ -289,7 +338,7 @@ function SkinPhotoUploader({
       </div>
 
       <div className="ai-intake-actions">
-        <button className="ai-intake-submit" disabled={!file || Boolean(fileError) || busy}>
+        <button className="ai-intake-submit" disabled={!file || Boolean(fileError) || busy || scopeChoice !== "supported"}>
           {busy && <LoaderCircle className="ai-intake-button-spinner" aria-hidden="true" />}
           <span>{ctaLabel}</span>
           {!busy && <ArrowRight aria-hidden="true" />}

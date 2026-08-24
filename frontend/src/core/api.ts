@@ -1,6 +1,25 @@
-const DEV_GATEWAY_ORIGIN = import.meta.env.DEV ? `http://${window.location.hostname}:8080` : "";
+const DEV_GATEWAY_HOST = typeof window === "undefined" ? "localhost" : window.location.hostname;
+const DEV_GATEWAY_ORIGIN = import.meta.env.DEV ? `http://${DEV_GATEWAY_HOST}:8080` : "";
 const API_ROOT = DEV_GATEWAY_ORIGIN + "/api/v1";
 const SESSION_EXPIRED_MESSAGE = "Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.";
+
+const API_ERROR_MESSAGES: Record<string, string> = {
+  BAD_CREDENTIALS: "Email hoặc mật khẩu không đúng.",
+  ACCESS_DENIED: "Bạn không có quyền thực hiện thao tác này.",
+  UNAUTHORIZED: "Phiên đăng nhập không hợp lệ. Vui lòng đăng nhập lại.",
+  NOT_FOUND: "Không tìm thấy dữ liệu yêu cầu.",
+  VALIDATION_ERROR: "Thông tin nhập vào chưa hợp lệ. Vui lòng kiểm tra lại.",
+  SLOT_CONFLICT: "Khung giờ này vừa được người khác chọn. Vui lòng chọn giờ khác.",
+  DOCTOR_SLOT_CONFLICT: "Bác sĩ đã có lịch trong khung giờ này.",
+};
+
+function vietnameseApiMessage(detail: string | undefined, code: string | undefined, fallback: string) {
+  if (code && API_ERROR_MESSAGES[code]) return API_ERROR_MESSAGES[code];
+  const message = detail?.trim();
+  if (!message) return fallback;
+  const looksEnglish = /\b(error|failed|failure|invalid|unauthorized|forbidden|not found|required|must|cannot|unable|already exists|conflict|timeout|unavailable)\b/i.test(message);
+  return looksEnglish ? fallback : message;
+}
 
 type AccessTokenRecovery = (failedAccessToken: string) => Promise<string | null>;
 
@@ -81,7 +100,7 @@ async function retryAfterUnauthorized(path: string, token: string | undefined, i
 
 async function readApiError(response: Response, fallback: string) {
   const body = await response.json().catch(() => ({ detail: fallback })) as { detail?: string; code?: string };
-  return new ApiError(body.detail || fallback, response.status, body.code);
+  return new ApiError(vietnameseApiMessage(body.detail, body.code, fallback), response.status, body.code);
 }
 
 export async function request<T>(path: string, token?: string, init?: RequestInit): Promise<T> {
@@ -98,7 +117,7 @@ export async function request<T>(path: string, token?: string, init?: RequestIni
 export async function requestBlob(path: string, token?: string): Promise<Blob> {
   const response = await retryAfterUnauthorized(path, token);
   if (!response.ok) {
-    throw await readApiError(response, `HTTP ${response.status}`);
+    throw await readApiError(response, `Không thể tải tài liệu (mã lỗi ${response.status}).`);
   }
   return response.blob();
 }
