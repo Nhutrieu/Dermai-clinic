@@ -1,5 +1,5 @@
 import { FormEvent, useEffect, useRef, useState } from "react";
-import { CalendarCheck, CircleCheck, Headphones, MessageCircle, MessagesSquare, ShieldCheck, UserCheck, UserMinus } from "lucide-react";
+import { CalendarCheck, CircleCheck, Headphones, MessageCircle, MessagesSquare, ShieldCheck, UserCheck, UserMinus, X } from "lucide-react";
 import { request } from "../../core/api";
 import { EmptyState } from "../../components/Ui";
 import { enableChimeNotifications, subscribeRealtime, playChimeNotification } from "../../core/realtime";
@@ -39,16 +39,19 @@ export default function SupportChat({ session }: { session: Tokens }) {
     const [notice, setNotice] = useState("");
     const [handoffNotice, setHandoffNotice] = useState(false);
     const [patientChannel, setPatientChannel] = useState<"assistant" | "receptionist">("assistant");
+    const [dismissedConversationIds, setDismissedConversationIds] = useState<Set<string>>(new Set());
 
     const knownMessageIdsRef = useRef<Set<string>>(new Set());
     const messagesInitializedRef = useRef(false);
     const messageListRef = useRef<HTMLDivElement>(null);
     const requestedConversationRef = useRef("");
+    const dismissedConversationIdsRef = useRef<Set<string>>(new Set());
     const receptionist = session.role === "RECEPTIONIST";
     const admin = session.role === "ADMIN";
     const staffViewer = receptionist || admin;
     const currentIdentityId = tokenSubject(session.accessToken);
-    const ids = [...new Set([...conversationStates.map(item => item.patientIdentityId), ...messages.map(item => item.patientIdentityId), ...(requestedConversationRef.current ? [requestedConversationRef.current] : [])])];
+    const allConversationIds = [...new Set([...conversationStates.map(item => item.patientIdentityId), ...messages.map(item => item.patientIdentityId), ...(requestedConversationRef.current ? [requestedConversationRef.current] : [])])];
+    const ids = allConversationIds.filter(id => !dismissedConversationIds.has(id));
     const visible = staffViewer ? messages.filter(item => item.patientIdentityId === conversation) : messages;
     const activeConversation = conversationStates.find(item => item.patientIdentityId === conversation);
     const assignedToMe = receptionist && !!currentIdentityId && activeConversation?.assignedReceptionistIdentityId === currentIdentityId;
@@ -72,7 +75,13 @@ export default function SupportChat({ session }: { session: Tokens }) {
             // Compare message IDs so the first message after an empty inbox is not missed.
             if (messagesInitializedRef.current && !admin) {
                 const incoming = newIncomingSupportMessages(knownMessageIdsRef.current, list, receptionist);
-                if (incoming.length) playChimeNotification();
+                if (incoming.length) {
+                    playChimeNotification();
+                    const restored = new Set(dismissedConversationIdsRef.current);
+                    incoming.forEach(item => restored.delete(item.patientIdentityId));
+                    dismissedConversationIdsRef.current = restored;
+                    setDismissedConversationIds(restored);
+                }
             }
             knownMessageIdsRef.current = new Set(list.map(message => message.id));
             messagesInitializedRef.current = true;
@@ -93,9 +102,11 @@ export default function SupportChat({ session }: { session: Tokens }) {
                         ...Object.fromEntries(loaded.filter((patient): patient is Patient => !!patient).map(patient => [patient.identityId, patient])),
                     }));
                 }
+                const selectablePatientIds = patientIds.filter(id => !dismissedConversationIdsRef.current.has(id));
                 const preferredConversation = requestedConversationRef.current || conversation;
-                if (preferredConversation && patientIds.includes(preferredConversation)) setConversation(preferredConversation);
-                else if (!preferredConversation && patientIds[0]) setConversation(patientIds[0]);
+                if (preferredConversation && selectablePatientIds.includes(preferredConversation)) setConversation(preferredConversation);
+                else if (selectablePatientIds[0]) setConversation(selectablePatientIds[0]);
+                else setConversation("");
             } else if (patientIds[0]) {
                 if (!conversation) setConversation(patientIds[0]);
                 if (!patients[patientIds[0]]) {
@@ -141,6 +152,10 @@ export default function SupportChat({ session }: { session: Tokens }) {
             const detail = (event as CustomEvent<{ patientIdentityId?: string }>).detail;
             const patientIdentityId = detail?.patientIdentityId || sessionStorage.getItem("reception-support-patient");
             if (receptionist && patientIdentityId) {
+                const restored = new Set(dismissedConversationIdsRef.current);
+                restored.delete(patientIdentityId);
+                dismissedConversationIdsRef.current = restored;
+                setDismissedConversationIds(restored);
                 requestedConversationRef.current = patientIdentityId;
                 setConversation(patientIdentityId);
             }
@@ -175,6 +190,15 @@ export default function SupportChat({ session }: { session: Tokens }) {
         });
         return () => window.cancelAnimationFrame(frame);
     }, [open, conversation, visible.length, showAssistant, bookingOpen]);
+
+    function dismissConversationCard(patientIdentityId: string) {
+        const dismissed = new Set(dismissedConversationIdsRef.current);
+        dismissed.add(patientIdentityId);
+        dismissedConversationIdsRef.current = dismissed;
+        setDismissedConversationIds(dismissed);
+        if (requestedConversationRef.current === patientIdentityId) requestedConversationRef.current = "";
+        if (conversation === patientIdentityId) setConversation(ids.find(id => id !== patientIdentityId) || "");
+    }
 
     async function claimConversation() {
         if (!conversation || assignmentBusy) return;
@@ -374,11 +398,14 @@ export default function SupportChat({ session }: { session: Tokens }) {
                     const state = conversationStates.find(item => item.patientIdentityId === id);
                     const mine = receptionist && state?.assignedReceptionistIdentityId === currentIdentityId;
                     const resolved = state?.channelStatus === "AI_ACTIVE" && !!state.resolvedAt;
-                    return <button className={conversation === id ? "active" : ""} onClick={() => { requestedConversationRef.current = id; setConversation(id); }} key={id}>
+                    return <div className="support-conversation-card" key={id}>
+                        <button type="button" className={"support-conversation-select" + (conversation === id ? " active" : "")} onClick={() => { requestedConversationRef.current = id; setConversation(id); }}>
                         <b>{patientLabel(id)}</b>
                         <span>{patients[id]?.phone || "Chưa có số điện thoại"} · {messages.filter(item => item.patientIdentityId === id).length} tin{messages.some(item => item.patientIdentityId === id && item.senderRole === "PATIENT" && !item.readAt) && <i className="conversation-unread" />}</span>
                         <em className={resolved ? "is-resolved" : !state?.assignedReceptionistIdentityId ? "is-unassigned" : mine ? "is-mine" : ""}>{resolved ? "Đã hoàn tất" : !state?.assignedReceptionistIdentityId ? "Chưa tiếp nhận" : mine ? "Bạn đang phụ trách" : staffName(state.assignedReceptionistIdentityId)}</em>
-                    </button>;
+                        </button>
+                        <button type="button" className="support-conversation-dismiss" aria-label={"\u0110\u00f3ng th\u1ebb h\u1ed9i tho\u1ea1i c\u1ee7a " + patientLabel(id)} title={"\u0110\u00f3ng th\u1ebb"} onClick={() => dismissConversationCard(id)}><X aria-hidden="true" /></button>
+                    </div>;
                 })}
             </div>}
 
