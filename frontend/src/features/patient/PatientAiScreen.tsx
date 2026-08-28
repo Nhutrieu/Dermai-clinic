@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { BrainCircuit, CalendarDays, Check, ImagePlus, Trash2 } from "lucide-react";
 import { ApiError, request } from "../../core/api";
 import type { AiAssessment, AiPrediction, Patient } from "../../core/types";
@@ -53,7 +53,9 @@ export default function PatientAiScreen({ token, patient, openBooking }: { token
   const [actionError, setActionError] = useState("");
   const [historyError, setHistoryError] = useState("");
   const [historyLoading, setHistoryLoading] = useState(true);
+  const [historyExpanded, setHistoryExpanded] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState("");
+  const resultRef = useRef<HTMLDivElement>(null);
 
   const loadHistory = useCallback(async () => {
     setHistoryLoading(true);
@@ -78,6 +80,40 @@ export default function PatientAiScreen({ token, patient, openBooking }: { token
     setPreview(url);
     return () => URL.revokeObjectURL(url);
   }, [file]);
+
+  useEffect(() => {
+    if (!prediction || !current) return;
+    const result = resultRef.current;
+    if (!result) return;
+
+    let frame = 0;
+    const delay = window.setTimeout(() => {
+      const start = window.scrollY;
+      const target = Math.max(0, window.scrollY + result.getBoundingClientRect().top - 24);
+      const distance = target - start;
+      const duration = 900;
+      const startedAt = performance.now();
+      const prefersReducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+      if (prefersReducedMotion) {
+        window.scrollTo(0, target);
+        return;
+      }
+
+      const animate = (now: number) => {
+        const progress = Math.min(1, (now - startedAt) / duration);
+        const eased = 1 - Math.pow(1 - progress, 3);
+        window.scrollTo(0, start + distance * eased);
+        if (progress < 1) frame = window.requestAnimationFrame(animate);
+      };
+      frame = window.requestAnimationFrame(animate);
+    }, 140);
+
+    return () => {
+      window.clearTimeout(delay);
+      window.cancelAnimationFrame(frame);
+    };
+  }, [prediction, current]);
 
   const latestShared = useMemo(() => history.find(item => item.sharedWithDoctor), [history]);
 
@@ -223,13 +259,14 @@ export default function PatientAiScreen({ token, patient, openBooking }: { token
       onAnalyze={analyze}
     />
 
-    {prediction && current && <PatientAiResult
-      prediction={prediction}
-      assessment={current}
-      originalImageUrl={preview}
-      onBook={() => void book(current)}
-      onViewAppointment={openBooking}
-    />}
+    {prediction && current && <div ref={resultRef} className="patient-ai-result-anchor">
+      <PatientAiResult
+        prediction={prediction}
+        assessment={current}
+        onBook={() => void book(current)}
+        onViewAppointment={openBooking}
+      />
+    </div>}
 
     {(message || actionError) && <p className={`ai-feedback ${actionError ? "error" : ""}`} role={actionError ? "alert" : "status"} aria-live={actionError ? "assertive" : "polite"}>{actionError || message}</p>}
 
@@ -247,7 +284,24 @@ export default function PatientAiScreen({ token, patient, openBooking }: { token
         }}
         note="Ảnh JPEG, PNG hoặc WebP, tối đa 10 MB."
       />}
-      {!historyLoading && !historyError && history.length > 0 && <div className="ai-history-list">{history.map(item => <article key={item.id}><div className={`ai-history-mark ${item.uncertain ? "uncertain" : ""}`}><BrainCircuit /></div><div><small>{new Date(item.createdAt).toLocaleString("vi-VN")}</small><b>{patientAiLabel(item.predictedLabel)}</b><p>Mức tương đồng mô hình {formatAiPercentage(item.confidence)} · {item.modelVersion}</p></div><div className="ai-history-actions"><button type="button" className={item.sharedWithDoctor ? "shared" : ""} onClick={() => changeSharing(item, !item.sharedWithDoctor)}>{item.sharedWithDoctor ? "Đang chia sẻ" : "Chia sẻ khi đặt lịch"}</button><button type="button" className="ai-history-book" onClick={() => book(item)}><CalendarDays /> Đặt lịch</button><button type="button" className={`ai-delete ${confirmDelete === item.id ? "confirm" : ""}`} aria-label={confirmDelete === item.id ? "Xác nhận xóa kết quả AI" : "Xóa kết quả AI"} aria-pressed={confirmDelete === item.id} onClick={() => remove(item)}><Trash2 />{confirmDelete === item.id && <span>Xác nhận xóa</span>}</button></div></article>)}</div>}
+      {!historyLoading && !historyError && history.length > 0 && <>
+        <div className="ai-history-list">{(historyExpanded ? history : history.slice(0, 5)).map(item => <article key={item.id}>
+          <div className={`ai-history-mark ${item.uncertain ? "uncertain" : ""}`}><BrainCircuit /></div>
+          <div className="ai-history-summary">
+            <small>{new Date(item.createdAt).toLocaleString("vi-VN")}</small>
+            <b>{patientAiLabel(item.predictedLabel)}</b>
+            <p>{item.imageAvailable ? "Ảnh đã lưu" : "Không có ảnh đính kèm"}</p>
+          </div>
+          <div className="ai-history-actions">
+            <button type="button" className={item.sharedWithDoctor ? "shared" : ""} onClick={() => changeSharing(item, !item.sharedWithDoctor)}>{item.sharedWithDoctor ? "Đang chia sẻ" : "Chia sẻ khi đặt lịch"}</button>
+            <button type="button" className="ai-history-book" onClick={() => book(item)}><CalendarDays /> Đặt lịch</button>
+            <button type="button" className={`ai-delete ${confirmDelete === item.id ? "confirm" : ""}`} aria-label={confirmDelete === item.id ? "Xác nhận xóa kết quả AI" : "Xóa kết quả AI"} aria-pressed={confirmDelete === item.id} onClick={() => remove(item)}><Trash2 />{confirmDelete === item.id && <span>Xác nhận xóa</span>}</button>
+          </div>
+        </article>)}</div>
+        {history.length > 5 && <button type="button" className="ai-history-toggle" onClick={() => setHistoryExpanded(expanded => !expanded)}>
+          {historyExpanded ? "Thu gọn" : `Xem thêm ${history.length - 5} kết quả`}
+        </button>}
+      </>}
     </section>
   </div>;
 }

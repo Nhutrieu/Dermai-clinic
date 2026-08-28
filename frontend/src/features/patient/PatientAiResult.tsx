@@ -1,10 +1,7 @@
-import { useEffect, useState } from "react";
 import {
   BookOpenText,
   CalendarCheck2,
   CalendarDays,
-  CircleHelp,
-  Image as ImageIcon,
   Info,
   Stethoscope,
 } from "lucide-react";
@@ -18,7 +15,6 @@ import {
 type PatientAiResultProps = {
   prediction: AiPrediction;
   assessment: AiAssessment;
-  originalImageUrl: string;
   onBook: () => void;
   onViewAppointment: () => void;
 };
@@ -90,71 +86,6 @@ function AiObservationSummary({ prediction }: { prediction: AiPrediction }) {
   );
 }
 
-function GradCamComparison({ originalImageUrl, gradCamUrl }: { originalImageUrl: string; gradCamUrl: string }) {
-  const [originalFailed, setOriginalFailed] = useState(false);
-  const [gradCamFailed, setGradCamFailed] = useState(false);
-
-  useEffect(() => setOriginalFailed(false), [originalImageUrl]);
-  useEffect(() => setGradCamFailed(false), [gradCamUrl]);
-
-  // Keep the text result usable when the data URL is missing or the browser cannot render it.
-  const showOriginal = Boolean(originalImageUrl) && !originalFailed;
-  const showGradCam = Boolean(gradCamUrl) && !gradCamFailed;
-  return (
-    <section className="patient-ai-comparison" aria-labelledby="patient-ai-comparison-title">
-      <div className="patient-ai-result-section-heading">
-        <h3 id="patient-ai-comparison-title">Đối chiếu hình ảnh</h3>
-        <p>Xem ảnh gốc cùng vùng hình ảnh mà mô hình tập trung nhiều hơn.</p>
-      </div>
-      <div className="patient-ai-image-grid">
-        <figure>
-          <div className="patient-ai-result-media">
-            {showOriginal
-              ? <img src={originalImageUrl} alt="Ảnh vùng da bạn đã tải lên để phân tích" onError={() => setOriginalFailed(true)} />
-              : <div className="patient-ai-result-media-empty"><ImageIcon aria-hidden="true" /><span>Ảnh gốc tạm thời chưa hiển thị.</span></div>}
-          </div>
-          <figcaption><strong>Ảnh đã tải lên</strong><span>Ảnh gốc dùng cho lần phân tích này.</span></figcaption>
-        </figure>
-        <figure>
-          <div className="patient-ai-result-media">
-            {showGradCam
-              ? <img src={gradCamUrl} alt="Ảnh Grad-CAM thể hiện các vùng mô hình tập trung khi phân tích" onError={() => setGradCamFailed(true)} />
-              : <div className="patient-ai-result-media-empty" role="status"><ImageIcon aria-hidden="true" /><span>Grad-CAM tạm thời chưa có. Kết quả văn bản vẫn có thể xem.</span></div>}
-          </div>
-          <figcaption><strong>Vùng hình ảnh mô hình chú ý</strong><span>Lớp màu được tạo từ Grad-CAM.</span></figcaption>
-        </figure>
-      </div>
-      <div className="patient-ai-gradcam-explanation">
-        <CircleHelp aria-hidden="true" />
-        <div>
-          <h4>Grad-CAM giúp xem điều gì?</h4>
-          <p>Các vùng màu thể hiện nơi mô hình tập trung nhiều hơn khi phân tích. Chúng không xác nhận đây là vùng bị bệnh. Bác sĩ vẫn cần xem ảnh gốc và khám trực tiếp để đánh giá đầy đủ.</p>
-        </div>
-      </div>
-    </section>
-  );
-}
-
-function AiConfidenceExplanation({ prediction }: { prediction: AiPrediction }) {
-  return (
-    <section className={`patient-ai-confidence-note${prediction.uncertain ? " is-uncertain" : ""}`} aria-labelledby="patient-ai-confidence-title">
-      <div>
-        <h3 id="patient-ai-confidence-title">Mức độ phù hợp của hình ảnh với mẫu AI</h3>
-        <p>Chỉ số này phản ánh mức độ phù hợp với dữ liệu mô hình đã học, không phải mức độ chắc chắn về chẩn đoán y khoa.</p>
-      </div>
-      <div className="patient-ai-confidence-value">
-        <span>Chỉ số mô hình</span>
-        <strong>{formatAiPercentage(prediction.confidence)}</strong>
-      </div>
-      <p className="patient-ai-confidence-status" role="status">
-        {prediction.uncertain
-          ? "Mô hình đánh dấu kết quả này còn nhiều không chắc chắn. Ảnh rõ hơn hoặc đánh giá trực tiếp có thể cung cấp thêm thông tin."
-          : "Mô hình tìm thấy một nhóm hình ảnh phù hợp hơn trong dữ liệu đã học. Bác sĩ vẫn cần xác nhận ý nghĩa y khoa."}
-      </p>
-    </section>
-  );
-}
-
 function PatientGuidance({ guidance }: { guidance?: AiDiseaseGuidance }) {
   return (
     <section className="patient-ai-guidance" aria-labelledby="patient-ai-guidance-title">
@@ -192,7 +123,7 @@ function AiResultNextAction({ hasAppointment, onBook, onViewAppointment }: { has
   );
 }
 
-export default function PatientAiResult({ prediction, assessment, originalImageUrl, onBook, onViewAppointment }: PatientAiResultProps) {
+export default function PatientAiResult({ prediction, assessment, onBook, onViewAppointment }: PatientAiResultProps) {
   return (
     <section className="patient-ai-result" aria-labelledby="patient-ai-result-title">
       <header className="patient-ai-result-header">
@@ -207,24 +138,12 @@ export default function PatientAiResult({ prediction, assessment, originalImageU
 
       <div className="patient-ai-result-body" aria-label="Nội dung phân tích từ AI">
         <AiObservationSummary prediction={prediction} />
-        <GradCamComparison originalImageUrl={originalImageUrl} gradCamUrl={prediction.gradcam_image} />
-        <AiConfidenceExplanation prediction={prediction} />
         <PatientGuidance guidance={prediction.guidance} />
         <AiResultNextAction
           hasAppointment={Boolean(assessment.appointmentId)}
           onBook={onBook}
           onViewAppointment={onViewAppointment}
         />
-        <details className="patient-ai-technical-details">
-          <summary>Chi tiết kỹ thuật</summary>
-          <dl>
-            <div><dt>Nhóm bệnh dự đoán</dt><dd>{patientAiLabel(prediction.disease)}</dd></div>
-            <div><dt>Phiên bản mô hình</dt><dd>{prediction.model_version}</dd></div>
-            <div><dt>Chỉ số mô hình</dt><dd>{formatAiPercentage(prediction.confidence)}</dd></div>
-            <div><dt>Mức độ chắc chắn</dt><dd>{prediction.uncertain ? "Cần thận trọng" : "Có nhóm hình ảnh phù hợp"}</dd></div>
-          </dl>
-          <p>{prediction.disclaimer}</p>
-        </details>
       </div>
     </section>
   );

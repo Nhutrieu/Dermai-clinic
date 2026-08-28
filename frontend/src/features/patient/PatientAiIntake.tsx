@@ -121,7 +121,6 @@ function SkinPhotoUploader({
   const chooseButtonRef = useRef<HTMLButtonElement>(null);
   const restoreChooserFocus = useRef(false);
   const [dragActive, setDragActive] = useState(false);
-  const [scopeChoice, setScopeChoice] = useState<"supported" | "wound" | null>(null);
   const busy = stage !== "idle";
 
   // Sau khi xóa preview, trả focus về nút chọn ảnh mới để luồng bàn phím không bị đứt.
@@ -130,10 +129,6 @@ function SkinPhotoUploader({
       chooseButtonRef.current?.focus();
       restoreChooserFocus.current = false;
     }
-  }, [file]);
-
-  useEffect(() => {
-    setScopeChoice(null);
   }, [file]);
 
   function openFilePicker() {
@@ -163,7 +158,6 @@ function SkinPhotoUploader({
 
   function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    if (scopeChoice !== "supported") return;
     onAnalyze();
   }
 
@@ -252,25 +246,6 @@ function SkinPhotoUploader({
         </div>
       )}
 
-      {preview && !fileError && (
-        <fieldset className="ai-intake-scope-question">
-          <legend>Ảnh này có phải vết xước, bỏng, vết thương hở hoặc đang chảy máu không?</legend>
-          <p>Những tình trạng này nằm ngoài phạm vi của mô hình phân loại 8 nhóm bệnh da.</p>
-          <div>
-            <button type="button" className={scopeChoice === "wound" ? "is-selected" : ""} onClick={() => setScopeChoice("wound")}>Có, đây là vết thương</button>
-            <button type="button" className={scopeChoice === "supported" ? "is-selected" : ""} onClick={() => setScopeChoice("supported")}>Không, gửi ảnh để hệ thống xác minh</button>
-          </div>
-          <small>Lựa chọn này không bỏ qua kiểm tra tự động. Ảnh ngoài phạm vi vẫn bị từ chối và không tạo kết quả 8 nhóm bệnh.</small>
-        </fieldset>
-      )}
-
-      {scopeChoice === "wound" && (
-        <div className="ai-intake-wound-warning" role="alert">
-          <ShieldAlert aria-hidden="true" />
-          <div><strong>Không sử dụng AI cho ảnh này</strong><p>Vết xước, bỏng và vết thương hở chưa nằm trong dữ liệu được hỗ trợ. Hãy vệ sinh phù hợp và liên hệ cơ sở y tế nếu chảy máu khó cầm, đau tăng, sưng đỏ lan rộng, có mủ hoặc sốt.</p></div>
-        </div>
-      )}
-
       {fileError && (
         <div className={`ai-intake-alert is-error${rejectionKind ? ` is-${rejectionKind}` : ""}`} role="alert">
           {rejectionKind === "out-of-scope" ? <ShieldAlert aria-hidden="true" /> : <AlertCircle aria-hidden="true" />}
@@ -338,7 +313,7 @@ function SkinPhotoUploader({
       </div>
 
       <div className="ai-intake-actions">
-        <button className="ai-intake-submit" disabled={!file || Boolean(fileError) || busy || scopeChoice !== "supported"}>
+        <button className="ai-intake-submit" disabled={!file || Boolean(fileError) || busy}>
           {busy && <LoaderCircle className="ai-intake-button-spinner" aria-hidden="true" />}
           <span>{ctaLabel}</span>
           {!busy && <ArrowRight aria-hidden="true" />}

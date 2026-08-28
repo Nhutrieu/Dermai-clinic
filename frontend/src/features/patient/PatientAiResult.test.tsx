@@ -35,7 +35,6 @@ function renderResult(nextPrediction = prediction, nextAssessment = assessment) 
     <PatientAiResult
       prediction={nextPrediction}
       assessment={nextAssessment}
-      originalImageUrl="blob:patient-image"
       onBook={vi.fn()}
       onViewAppointment={vi.fn()}
     />,
