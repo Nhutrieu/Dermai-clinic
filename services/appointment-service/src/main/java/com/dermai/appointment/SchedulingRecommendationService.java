@@ -113,8 +113,16 @@ public class SchedulingRecommendationService {
   if(matches.isEmpty())return new AvailabilityLookup("NOT_FOUND",null,date,List.of(),all.stream().map(DoctorData::fullName).toList());
   if(matches.size()>1)return new AvailabilityLookup("AMBIGUOUS",null,date,List.of(),matches.stream().map(DoctorData::fullName).toList());
   var doctor=matches.get(0);
-  var available=availability(doctor.id(),date,30,viewerIdentity,authorization,role).items().stream().filter(item->"AVAILABLE".equals(item.status())).toList();
-  return new AvailabilityLookup(available.isEmpty()?"NO_SLOTS":"FOUND",doctor.fullName(),date,available,List.of());
+  var dayStart=date.atStartOfDay(CLINIC_ZONE).toInstant();
+  var dayEnd=date.plusDays(1).atStartOfDay(CLINIC_ZONE).toInstant();
+  // scheduling-data only exposes admin-approved leave periods. Keep the leave
+  // slots alongside available slots so the support assistant can explain why
+  // a requested date/time cannot be booked instead of reporting a generic gap.
+  var availability=availability(doctor.id(),date,30,viewerIdentity,authorization,role);
+  var leaveSlots=availability.items().stream().filter(item->"ON_LEAVE".equals(item.status())).toList();
+  var available=availability.items().stream().filter(item->"AVAILABLE".equals(item.status())).toList();
+  boolean doctorOnLeave=doctor.leavePeriods().stream().anyMatch(leave->leave.startAt().isBefore(dayEnd)&&leave.endAt().isAfter(dayStart));
+  return new AvailabilityLookup(available.isEmpty()?"NO_SLOTS":"FOUND",doctor.fullName(),date,available,List.of(),doctorOnLeave,leaveSlots);
  }
 
  public DoctorProfileLookup lookupDoctorProfiles(String doctorName,String authorization,String role){
@@ -127,6 +135,25 @@ public class SchedulingRecommendationService {
   if(matches.isEmpty())return new DoctorProfileLookup("NOT_FOUND",List.of(),all.stream().map(DoctorData::fullName).toList());
   if(matches.size()>1)return new DoctorProfileLookup("AMBIGUOUS",List.of(),matches.stream().map(DoctorData::fullName).toList());
   return new DoctorProfileLookup("FOUND",List.of(toDoctorProfile(matches.get(0))),List.of());
+ }
+
+ public DoctorLeaveLookup lookupDoctorLeaveStatuses(String doctorName,LocalDate date,String authorization,String role){
+  var all=loadDoctors(authorization,role);
+  if(doctorName==null||doctorName.isBlank())
+   return new DoctorLeaveLookup("ALL",date,all.stream().map(doctor->new DoctorLeaveStatus(doctor.fullName(),hasLeaveOnDate(doctor,date))).toList(),List.of());
+  String needle=foldName(doctorName);
+  var exact=all.stream().filter(item->foldName(item.fullName()).equals(needle)).toList();
+  var matches=exact.isEmpty()?all.stream().filter(item->doctorNameMatches(doctorName,item.fullName())).toList():exact;
+  if(matches.isEmpty())return new DoctorLeaveLookup("NOT_FOUND",date,List.of(),all.stream().map(DoctorData::fullName).toList());
+  if(matches.size()>1)return new DoctorLeaveLookup("AMBIGUOUS",date,List.of(),matches.stream().map(DoctorData::fullName).toList());
+  var doctor=matches.get(0);
+  return new DoctorLeaveLookup("FOUND",date,List.of(new DoctorLeaveStatus(doctor.fullName(),hasLeaveOnDate(doctor,date))),List.of());
+ }
+
+ private boolean hasLeaveOnDate(DoctorData doctor,LocalDate date){
+  var dayStart=date.atStartOfDay(CLINIC_ZONE).toInstant();
+  var dayEnd=date.plusDays(1).atStartOfDay(CLINIC_ZONE).toInstant();
+  return doctor.leavePeriods().stream().anyMatch(leave->leave.startAt().isBefore(dayEnd)&&leave.endAt().isAfter(dayStart));
  }
 
  private DoctorProfile toDoctorProfile(DoctorData doctor){
@@ -190,10 +217,16 @@ public class SchedulingRecommendationService {
  public record Result(List<Item> items,String algorithmVersion,String timezone){}
  public record Item(UUID doctorId,UUID doctorIdentityId,String doctorName,String specialtyCode,Instant startAt,Instant endAt,double score,List<String> reasons){}
  public record Availability(List<AvailabilityItem> items,String timezone,String status,String closureReason){}
- public record AvailabilityLookup(String status,String doctorName,LocalDate date,List<AvailabilityItem> items,List<String> candidates){}
+ public record AvailabilityLookup(String status,String doctorName,LocalDate date,List<AvailabilityItem> items,List<String> candidates,boolean doctorOnLeave,List<AvailabilityItem> leaveSlots){
+  public AvailabilityLookup(String status,String doctorName,LocalDate date,List<AvailabilityItem> items,List<String> candidates){
+   this(status,doctorName,date,items,candidates,false,List.of());
+  }
+ }
  public record AvailabilityItem(UUID doctorId,UUID doctorIdentityId,String doctorName,String specialtyCode,Instant startAt,Instant endAt,String status,UUID holdId,Instant holdExpiresAt){}
  public record DoctorProfile(UUID doctorId,String doctorName,String specialtyCode,int experienceYears,String certificateNo,BigDecimal consultationFee,String bio){}
  public record DoctorProfileLookup(String status,List<DoctorProfile> profiles,List<String> candidates){}
+ public record DoctorLeaveLookup(String status,LocalDate date,List<DoctorLeaveStatus> items,List<String> candidates){}
+ public record DoctorLeaveStatus(String doctorName,boolean onLeave){}
  record DoctorData(UUID id,UUID identityId,String fullName,String specialtyCode,int experienceYears,String certificateNo,BigDecimal consultationFee,String bio,List<ScheduleData> workSchedules,List<LeaveData> leavePeriods){}
  record ScheduleData(UUID id,UUID doctorId,short weekday,LocalTime startTime,LocalTime endTime,int slotMinutes){}
  record LeaveData(Instant startAt,Instant endAt){}

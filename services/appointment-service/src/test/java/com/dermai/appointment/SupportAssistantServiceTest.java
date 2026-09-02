@@ -70,6 +70,22 @@ class SupportAssistantServiceTest {
   assertThat(result.escalated()).isFalse();
  }
 
+ @Test void availabilityAnswerExplainsApprovedDoctorLeave(){
+  var fixture=new Fixture();var patient=UUID.randomUUID();var doctor=UUID.randomUUID();var identity=UUID.randomUUID();
+  var start=ZonedDateTime.of(LocalDate.of(2026,8,14),LocalTime.of(9,0),ZoneId.of("Asia/Ho_Chi_Minh")).toInstant();
+  var leaveSlot=new SchedulingRecommendationService.AvailabilityItem(doctor,identity,"Bình","DERMATOLOGY",start,start.plusSeconds(1800),"ON_LEAVE",null,null);
+  when(fixture.ai.classify(anyString())).thenReturn(new SupportAiClient.Decision("Đang tra cứu","DOCTOR_AVAILABILITY",false,"Tra lịch",.94,false,"Bình","2026-08-14","09:00"));
+  when(fixture.conversations.failureCount(patient)).thenReturn(0);
+  when(fixture.conversations.lastIntent(patient)).thenReturn(null);
+  when(fixture.scheduling.lookupAvailability("Bình",LocalDate.of(2026,8,14),patient,"Bearer token","PATIENT")).thenReturn(new SchedulingRecommendationService.AvailabilityLookup("NO_SLOTS","Bình",LocalDate.of(2026,8,14),List.of(),List.of(),true,List.of(leaveSlot)));
+  when(fixture.conversations.recordAiTurn(eq(patient),anyString(),anyDouble(),eq(0),eq(false),anyString(),isNull())).thenReturn(fixture.state(patient,"AI_ACTIVE"));
+
+  var result=fixture.service.process(patient,"PATIENT","Bearer token","Bác sĩ Bình nghỉ ngày 14/8 lúc 9h không?");
+
+  assertThat(result.answer()).contains("nghỉ").contains("admin").contains("chọn ngày khác");
+  assertThat(result.escalated()).isFalse();
+ }
+
  @Test void unavailableRequestedTimeReturnsNearestRealSlots(){
   var fixture=new Fixture();var patient=UUID.randomUUID();var doctor=UUID.randomUUID();var identity=UUID.randomUUID();
   var nearby=ZonedDateTime.of(LocalDate.of(2026,8,14),LocalTime.of(9,30),ZoneId.of("Asia/Ho_Chi_Minh")).toInstant();
@@ -114,6 +130,22 @@ class SupportAssistantServiceTest {
   var result=fixture.service.process(patient,"PATIENT","Bearer token","Cho tôi thông tin về bác sĩ");
 
   assertThat(result.answer()).contains("Bác sĩ Bình").contains("150.000 đ").contains("Bác sĩ Linh").contains("200.000 đ");
+  assertThat(result.escalated()).isFalse();
+ }
+
+ @Test void doctorInformationForDateListsApprovedLeaveDoctors(){
+  var fixture=new Fixture();var patient=UUID.randomUUID();
+  var binh=new SchedulingRecommendationService.DoctorProfile(UUID.randomUUID(),"Bình","DA LIỄU TỔNG QUÁT",6,"CCHN-BINH-001",new java.math.BigDecimal("150000"),"Khám và điều trị các bệnh da liễu thường gặp.");
+  var linh=new SchedulingRecommendationService.DoctorProfile(UUID.randomUUID(),"Linh","DA LIỄU - ĐIỀU TRỊ MỤN",6,"CCHN-LINH-001",new java.math.BigDecimal("200000"),"Điều trị mụn và chăm sóc da.");
+  when(fixture.ai.classify(anyString())).thenReturn(new SupportAiClient.Decision("Đang tra cứu","DOCTOR_INFORMATION",false,"Tra hồ sơ bác sĩ",.96,false,null,"2026-09-02",null));
+  when(fixture.conversations.lastIntent(patient)).thenReturn(null);
+  when(fixture.scheduling.lookupDoctorProfiles(null,"Bearer token","PATIENT")).thenReturn(new SchedulingRecommendationService.DoctorProfileLookup("ALL",List.of(binh,linh),List.of()));
+  when(fixture.scheduling.lookupDoctorLeaveStatuses(null,LocalDate.of(2026,9,2),"Bearer token","PATIENT")).thenReturn(new SchedulingRecommendationService.DoctorLeaveLookup("ALL",LocalDate.of(2026,9,2),List.of(new SchedulingRecommendationService.DoctorLeaveStatus("Bình",true),new SchedulingRecommendationService.DoctorLeaveStatus("Linh",false)),List.of()));
+  when(fixture.conversations.recordAiTurn(eq(patient),eq("DOCTOR_INFORMATION"),anyDouble(),eq(0),eq(false),anyString(),isNull())).thenReturn(fixture.state(patient,"AI_ACTIVE"));
+
+  var result=fixture.service.process(patient,"PATIENT","Bearer token","Cho tôi xem thông tin bác sĩ nào cũng được ngày 2/9");
+
+  assertThat(result.answer()).contains("Bình").contains("lịch nghỉ").contains("admin").contains("02/09/2026");
   assertThat(result.escalated()).isFalse();
  }
 

@@ -122,3 +122,55 @@ export function playChimeNotification() {
   }
   renderChime(context);
 }
+
+type AccountStatusEvent = { type: "ACCOUNT_STATUS_CHANGED"; identityId: string; status: string };
+
+/** A bearer-authenticated event stream used for private account state changes. */
+export function subscribeAccountStatus(token: string, listener: (event: AccountStatusEvent) => void) {
+  let active = true;
+  let retry: ReturnType<typeof setTimeout> | undefined;
+  let controller: AbortController | undefined;
+
+  const connect = async () => {
+    controller = new AbortController();
+    try {
+      const response = await fetch("/api/v1/auth/events/account-status", {
+        headers: { Authorization: `Bearer ${token}` },
+        signal: controller.signal,
+      });
+      if (!response.ok || !response.body) throw new Error("ACCOUNT_EVENT_STREAM_UNAVAILABLE");
+
+      const reader = response.body.getReader();
+      const decoder = new TextDecoder();
+      let buffer = "";
+      while (active) {
+        const chunk = await reader.read();
+        if (chunk.done) break;
+        buffer += decoder.decode(chunk.value, { stream: true });
+        const frames = buffer.split(/\r?\n\r?\n/);
+        buffer = frames.pop() || "";
+        for (const frame of frames) {
+          const data = frame.split(/\r?\n/).filter(line => line.startsWith("data:")).map(line => line.slice(5).trim()).join("");
+          if (!data || data === "ready") continue;
+          try {
+            const event = JSON.parse(data) as AccountStatusEvent;
+            if (event.type === "ACCOUNT_STATUS_CHANGED") listener(event);
+          } catch {
+            // Ignore malformed frames; the stream reconnects independently.
+          }
+        }
+      }
+    } catch {
+      // Closing/reconnecting the stream is expected during network changes.
+    } finally {
+      if (active) retry = setTimeout(() => void connect(), 1_000);
+    }
+  };
+
+  void connect();
+  return () => {
+    active = false;
+    if (retry) clearTimeout(retry);
+    controller?.abort();
+  };
+}

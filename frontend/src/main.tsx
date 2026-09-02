@@ -1,9 +1,9 @@
 import { FormEvent, lazy, Suspense, useEffect, useRef, useState } from "react";
 import { createRoot } from "react-dom/client";
 import { createPortal } from "react-dom";
-import { Activity, ArrowRight, ShieldCheck, Sparkles, X } from "lucide-react";
+import { Activity, ArrowLeft, ArrowRight, LockKeyhole, Mail, PhoneCall, ShieldCheck, Sparkles, X } from "lucide-react";
 import { ApiError, configureAccessTokenRecovery, request, requestBlob } from "./core/api";
-import { subscribeRealtime } from "./core/realtime";
+import { subscribeAccountStatus, subscribeRealtime } from "./core/realtime";
 import type { AccountProfile, Appointment, Doctor, LeavePeriod, MedicalRecord, Patient, Prescription, Tokens, WorkSchedule } from "./core/types";
 import { RecordList } from "./components/Records";
 import { State } from "./components/Ui";
@@ -50,12 +50,142 @@ const SupportChat = lazy(() => import("./features/support/SupportChat"));
 const ReceptionistAccountDialog = lazy(() => import("./features/reception/ReceptionistAccountDialog"));
 const PatientAccountDialog = lazy(() => import("./features/patient/PatientAccountDialog"));
 
+function sessionIdentityId(token: string) {
+    try {
+        const encoded = token.split(".")[1].replace(/-/g, "+").replace(/_/g, "/");
+        return JSON.parse(atob(encoded)).sub as string | undefined;
+    } catch { return undefined; }
+}
+const SESSION_STORAGE_KEY = "dermai-session";
+const ACCOUNT_LOCKED_STORAGE_KEY = "dermai-account-locked";
+
+function parseStoredSession(raw: string | null): Tokens | null {
+    if (!raw) return null;
+    try {
+        const value = JSON.parse(raw) as Tokens | null;
+        return value?.accessToken && value?.refreshToken ? value : null;
+    } catch {
+        return null;
+    }
+}
+
+function readSharedSession() {
+    if (typeof window === "undefined") return null;
+    try {
+        const shared = parseStoredSession(window.localStorage.getItem(SESSION_STORAGE_KEY));
+        if (shared) {
+            window.sessionStorage.removeItem(SESSION_STORAGE_KEY);
+            return shared;
+        }
+        // Migrate a session created by the previous per-tab implementation.
+        const legacy = parseStoredSession(window.sessionStorage.getItem(SESSION_STORAGE_KEY));
+        if (legacy) {
+            window.localStorage.setItem(SESSION_STORAGE_KEY, JSON.stringify(legacy));
+            window.sessionStorage.removeItem(SESSION_STORAGE_KEY);
+            return legacy;
+        }
+    } catch {
+        // Storage can be unavailable in private/restricted browser contexts.
+    }
+    return null;
+}
+
+type BrowserLockManager = {
+    request<T>(name: string, callback: () => Promise<T>): Promise<T>;
+};
+
+function withBrowserLock<T>(name: string, work: () => Promise<T>) {
+    const locks = typeof navigator !== "undefined"
+        ? (navigator as Navigator & { locks?: BrowserLockManager }).locks
+        : undefined;
+    return locks ? locks.request(name, work) : work();
+}
+
 function App() {
-    const [session, setSession] = useState<Tokens | null>(() => { try { return JSON.parse(sessionStorage.getItem("dermai-session") || "null") } catch { return null } });
+    const [session, setSession] = useState<Tokens | null>(() => readSharedSession());
     const [authOpen, setAuthOpen] = useState(false); const [forgotOpen, setForgotOpen] = useState(false);
     const [authNotice, setAuthNotice] = useState("");
+    const [accountLocked, setAccountLocked] = useState(() => { try { return localStorage.getItem(ACCOUNT_LOCKED_STORAGE_KEY) === "1" || sessionStorage.getItem(ACCOUNT_LOCKED_STORAGE_KEY) === "1"; } catch { return false; } });
     const [sessionRecoveryReady, setSessionRecoveryReady] = useState(false);
+    const sessionRef = useRef(session);
+    const sessionChannelRef = useRef<BroadcastChannel | null>(null);
 
+    function applySession(next: Tokens | null, notifyOtherTabs = false) {
+        if (next) {
+            const existing = readSharedSession();
+            const existingIdentity = existing ? sessionIdentityId(existing.accessToken) : undefined;
+            const nextIdentity = sessionIdentityId(next.accessToken);
+            if (existing && existingIdentity && nextIdentity && existingIdentity !== nextIdentity) {
+                setAuthNotice("Trình duyệt này đang đăng nhập nick khác ở tab khác. Hãy đăng xuất nick đó trước.");
+                setAuthOpen(true);
+                return false;
+            }
+            localStorage.setItem(SESSION_STORAGE_KEY, JSON.stringify(next));
+            sessionStorage.removeItem(SESSION_STORAGE_KEY);
+            localStorage.removeItem(ACCOUNT_LOCKED_STORAGE_KEY);
+            sessionStorage.removeItem(ACCOUNT_LOCKED_STORAGE_KEY);
+            setAccountLocked(false);
+        } else {
+            localStorage.removeItem(SESSION_STORAGE_KEY);
+            sessionStorage.removeItem(SESSION_STORAGE_KEY);
+        }
+        sessionRef.current = next;
+        setSession(next);
+        if (notifyOtherTabs && !next) {
+            sessionChannelRef.current?.postMessage({ type: "SESSION_CLEARED" });
+        }
+        return true;
+    }
+    function lockAccount(notifyOtherTabs = false) {
+        localStorage.setItem(ACCOUNT_LOCKED_STORAGE_KEY, "1");
+        applySession(null, notifyOtherTabs);
+        setForgotOpen(false);
+        setAuthOpen(false);
+        setAuthNotice("");
+        setAccountLocked(true);
+        if (notifyOtherTabs) sessionChannelRef.current?.postMessage({ type: "ACCOUNT_LOCKED" });
+    }
+    useEffect(() => {
+        if (!("BroadcastChannel" in window)) return;
+        const channel = new BroadcastChannel("dermai-session-sync");
+        sessionChannelRef.current = channel;
+        channel.onmessage = (event: MessageEvent<{ type?: string }>) => {
+            if (event.data?.type === "ACCOUNT_LOCKED") { lockAccount(false); return; }
+            if (event.data?.type === "SESSION_CLEARED") applySession(null, false);
+        };
+        return () => {
+            sessionChannelRef.current = null;
+            channel.close();
+        };
+    }, []);
+
+    useEffect(() => {
+        const handleStorage = (event: StorageEvent) => {
+            if (event.key === SESSION_STORAGE_KEY) {
+                const next = parseStoredSession(event.newValue);
+                sessionRef.current = next;
+                setSession(next);
+                if (next) {
+                    setAuthNotice("");
+                    setAuthOpen(false);
+                } else {
+                    setSessionRecoveryReady(false);
+                }
+            }
+            if (event.key === ACCOUNT_LOCKED_STORAGE_KEY) {
+                const locked = event.newValue === "1";
+                setAccountLocked(locked);
+                if (locked) {
+                    sessionRef.current = null;
+                    setSession(null);
+                    setForgotOpen(false);
+                    setAuthOpen(false);
+                }
+            }
+        };
+        window.addEventListener("storage", handleStorage);
+        return () => window.removeEventListener("storage", handleStorage);
+    }, []);
     useEffect(() => {
         if (!session) {
             setSessionRecoveryReady(false);
@@ -65,12 +195,10 @@ function App() {
         // The refresh token is rotated by the backend. Always read the latest
         // stored session so concurrent requests cannot reuse an older token.
         const dispose = configureAccessTokenRecovery(async failedAccessToken => {
-            let current: Tokens | null = null;
-            try { current = JSON.parse(sessionStorage.getItem("dermai-session") || "null") as Tokens | null } catch { current = null }
+            const current = readSharedSession();
 
             if (!current?.refreshToken) {
-                sessionStorage.removeItem("dermai-session");
-                setSession(null);
+                applySession(null, true);
                 setForgotOpen(false);
                 setAuthOpen(true);
                 setAuthNotice("Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.");
@@ -81,16 +209,30 @@ function App() {
             if (current.accessToken !== failedAccessToken) return current.accessToken;
 
             try {
-                const renewed = await request<Tokens>("/auth/refresh", undefined, {
-                    method: "POST",
-                    body: JSON.stringify({ refreshToken: current.refreshToken }),
+                const renewed = await withBrowserLock("dermai-session-refresh", async () => {
+                    const latest = readSharedSession();
+                    if (!latest?.refreshToken) return null;
+                    if (latest.accessToken !== failedAccessToken) return latest;
+                    return request<Tokens>("/auth/refresh", undefined, {
+                        method: "POST",
+                        body: JSON.stringify({ refreshToken: latest.refreshToken }),
+                    });
                 });
-                sessionStorage.setItem("dermai-session", JSON.stringify(renewed));
-                setSession(renewed);
+                if (!renewed) {
+                    applySession(null, true);
+                    setForgotOpen(false);
+                    setAuthOpen(true);
+                    setAuthNotice("Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.");
+                    return null;
+                }
+                applySession(renewed, true);
                 return renewed.accessToken;
-            } catch {
-                sessionStorage.removeItem("dermai-session");
-                setSession(null);
+            } catch (error) {
+                if (error instanceof ApiError && error.code === "ACCOUNT_BLOCKED") {
+                    lockAccount(true);
+                    return null;
+                }
+                applySession(null, true);
                 setForgotOpen(false);
                 setAuthOpen(true);
                 setAuthNotice("Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.");
@@ -102,29 +244,58 @@ function App() {
         return dispose;
     }, [session?.accessToken, session?.refreshToken]);
 
+    useEffect(() => {
+        if (!session || session.role !== "PATIENT") return;
+        let active = true;
+        const checkAccount = async () => {
+            if (document.visibilityState === "hidden") return;
+            try {
+                const account = await request<{ status?: string }>("/auth/me", session.accessToken);
+                if (active && account.status === "LOCKED") lockAccount(true);
+            } catch (error) {
+                if (active && error instanceof ApiError && error.code === "ACCOUNT_BLOCKED") lockAccount(true);
+            }
+        };
+        void checkAccount();
+        const timer = window.setInterval(() => void checkAccount(), 60000);
+        return () => { active = false; window.clearInterval(timer); };
+    }, [session?.accessToken, session?.role]);
+
+    useEffect(() => {
+        if (!session || session.role !== "PATIENT") return;
+        const identityId = sessionIdentityId(session.accessToken);
+        if (!identityId) return;
+        return subscribeAccountStatus(session.accessToken, event => {
+            if (event.identityId === identityId && event.status === "LOCKED") lockAccount(true);
+        });
+    }, [session?.accessToken, session?.role]);
     useEffect(() => subscribeRealtime(event => {
-        if (event.type === "DOCTOR_PROFILE_UPDATED") window.dispatchEvent(new CustomEvent("doctor-profiles-changed", { detail: event }));
+        if (event.type === "DOCTOR_PROFILE_UPDATED" || event.type === "DOCTOR_LEAVE_APPROVED") window.dispatchEvent(new CustomEvent("doctor-profiles-changed", { detail: event }));
+        if (event.type === "DOCTOR_LEAVE_APPROVED") window.dispatchEvent(new CustomEvent("doctor-leave-approved", { detail: event }));
     }, { path: "/api/v1/doctors/ws/profile" }), []);
     function openHomeAuth(destination: "appointments" | "ai" = "appointments") {
         sessionStorage.setItem("derm-home-intent", destination);
         setAuthNotice("");
         setAuthOpen(true);
     }
-    if (!session) return <Suspense fallback={<State text="Đang tải giao diện..." />}><PublicRoute>{forgotOpen ? <ForgotPassword close={() => setForgotOpen(false)} /> : authOpen ? <><button className="auth-home" onClick={() => setAuthOpen(false)}><X /> Về trang chủ</button><Login notice={authNotice} onForgotPassword={() => setForgotOpen(true)} onLogin={tokens => { sessionStorage.setItem("dermai-session", JSON.stringify(tokens)); setAuthNotice(""); setSession(tokens) }} /></> : <HomePage openAuth={openHomeAuth} chat={<ChatBox openAuth={() => openHomeAuth("appointments")} />} />}</PublicRoute></Suspense>;
+    if (!session) return <Suspense fallback={<State text="Đang tải giao diện..." />}><PublicRoute>{accountLocked ? <LockedAccount onHome={() => { localStorage.removeItem(ACCOUNT_LOCKED_STORAGE_KEY); sessionStorage.removeItem(ACCOUNT_LOCKED_STORAGE_KEY); setAccountLocked(false); }} /> : forgotOpen ? <ForgotPassword close={() => setForgotOpen(false)} /> : authOpen ? <><button className="auth-home" onClick={() => setAuthOpen(false)}><X /> Về trang chủ</button><Login notice={authNotice} onForgotPassword={() => setForgotOpen(true)} onAccountLocked={() => lockAccount(true)} onLogin={tokens => { localStorage.removeItem(ACCOUNT_LOCKED_STORAGE_KEY); sessionStorage.removeItem(ACCOUNT_LOCKED_STORAGE_KEY); setAccountLocked(false); if (applySession(tokens, true)) setAuthNotice("") }} /></> : <HomePage openAuth={openHomeAuth} chat={<ChatBox openAuth={() => openHomeAuth("appointments")} />} />}</PublicRoute></Suspense>
     if (!sessionRecoveryReady) return <State text="Đang khôi phục phiên đăng nhập..." />;
 
     function logout() {
         // Revoke the refresh token server-side, then clear the local session immediately.
         void request("/auth/logout", undefined, { method: "POST", body: JSON.stringify({ refreshToken: session!.refreshToken }) }).catch(() => undefined);
-        sessionStorage.removeItem("dermai-session");
+        applySession(null, true);
         setAuthNotice("");
-        setSession(null);
     }
 
-    const workspace = <><Dashboard session={session} logout={logout} />{session.role === "PATIENT" && <PatientNotifications session={session} />}{session.role === "RECEPTIONIST" && <ReceptionHotlineBooking session={session} />}{["PATIENT", "RECEPTIONIST", "ADMIN"].includes(session.role) && <SupportChat session={session} />}</>;
+    const workspace = <><Dashboard key={session.accessToken} session={session} logout={logout} />{session.role === "PATIENT" && <PatientNotifications session={session} />}{session.role === "RECEPTIONIST" && <ReceptionHotlineBooking session={session} />}{["PATIENT", "RECEPTIONIST", "ADMIN"].includes(session.role) && <SupportChat session={session} />}</>;
     const Route = session.role === "PATIENT" ? PatientRoute : session.role === "DOCTOR" ? DoctorRoute : session.role === "RECEPTIONIST" ? ReceptionistRoute : AdminRoute;
     return <Suspense fallback={<State text="Đang mở không gian làm việc..." />}><Route>{workspace}</Route></Suspense>;
 }
+function LockedAccount({ onHome }: { onHome: () => void }) {
+    return <main className="account-locked-page"><section className="account-locked-card" role="alert"><span className="account-locked-icon"><LockKeyhole aria-hidden="true" /></span><p>TRẠNG THÁI TÀI KHOẢN</p><h1>Tài khoản đã bị khóa</h1><div>Quyền truy cập của bạn đã được quản trị viên tạm khóa. Nếu bạn cho rằng đây là nhầm lẫn, hãy liên hệ phòng khám để được hỗ trợ.</div><nav aria-label="Liên hệ hỗ trợ"><a href="tel:0352790904"><PhoneCall aria-hidden="true" />Gọi hotline 0352 790 904</a><a href="mailto:hello@dermclinic.vn"><Mail aria-hidden="true" />Gửi email hỗ trợ</a></nav><button type="button" onClick={onHome}><ArrowLeft aria-hidden="true" />Về trang chủ</button></section></main>;
+}
+
 type ChatMessage = { role: "assistant" | "user"; text: string; citations?: { source: string; page: number }[] };
 function ChatBox({ openAuth }: { openAuth: () => void }) {
     const [open, setOpen] = useState(false); const [question, setQuestion] = useState(""); const [busy, setBusy] = useState(false); const [messages, setMessages] = useState<ChatMessage[]>([{ role: "assistant", text: "Xin chào! Tôi có thể tra cứu kiến thức chăm sóc da từ thư viện y khoa của phòng khám. Tôi không chẩn đoán hoặc kê đơn thuốc." }]);
@@ -143,7 +314,7 @@ function registrationDraft(): RegistrationDraft | null {
     try { return JSON.parse(sessionStorage.getItem(REGISTRATION_DRAFT_KEY) || "null") as RegistrationDraft | null; }
     catch { return null; }
 }
-function Login({ onLogin, onForgotPassword, notice = "" }: { onLogin: (tokens: Tokens) => void; onForgotPassword: () => void; notice?: string }) {
+function Login({ onLogin, onForgotPassword, onAccountLocked, notice = "" }: { onLogin: (tokens: Tokens) => void; onForgotPassword: () => void; onAccountLocked: () => void; notice?: string }) {
     const pendingRegistration = useRef(registrationDraft()).current;
     const [register, setRegister] = useState(Boolean(pendingRegistration));
     const [email, setEmail] = useState(pendingRegistration?.email || "");
@@ -196,6 +367,12 @@ function Login({ onLogin, onForgotPassword, notice = "" }: { onLogin: (tokens: T
         }
     }
 
+    function handleBlockedAccount(value: unknown) {
+        if (!(value instanceof ApiError) || value.code !== "ACCOUNT_BLOCKED") return false;
+        onAccountLocked();
+        return true;
+    }
+
     async function handleGoogle(result: GoogleLoginResult) {
         const tokens = tokensOf(result);
         setError("");
@@ -208,7 +385,7 @@ function Login({ onLogin, onForgotPassword, notice = "" }: { onLogin: (tokens: T
         try {
             await continuePatientLogin(tokens, result.email, result.fullName, "google");
         } catch (value) {
-            setError(authErrorMessage(value));
+            if (!handleBlockedAccount(value)) setError(authErrorMessage(value));
         }
     }
 
@@ -229,7 +406,7 @@ function Login({ onLogin, onForgotPassword, notice = "" }: { onLogin: (tokens: T
             });
             onLogin(profilePending.tokens);
         } catch (value) {
-            setError(authErrorMessage(value));
+            if (!handleBlockedAccount(value)) setError(authErrorMessage(value));
         } finally {
             setBusy(false);
         }
@@ -251,13 +428,14 @@ function Login({ onLogin, onForgotPassword, notice = "" }: { onLogin: (tokens: T
             const tokens = await request<Tokens>("/auth/login", undefined, { method: "POST", body: JSON.stringify({ email, password }) });
             await continuePatientLogin(tokens, email);
         } catch (value) {
+            if (value instanceof ApiError && value.code === "ACCOUNT_BLOCKED") { onAccountLocked(); return; }
             if (value instanceof ApiError && value.code === "EMAIL_NOT_VERIFIED") {
                 setRegister(true);
                 setVerificationPending(true);
                 setError("Email chưa được xác minh. Nhấn gửi lại mã nếu OTP cũ đã hết hạn.");
                 return;
             }
-            setError(authErrorMessage(value));
+            if (!handleBlockedAccount(value)) setError(authErrorMessage(value));
         } finally {
             setBusy(false);
         }
@@ -284,7 +462,7 @@ function Login({ onLogin, onForgotPassword, notice = "" }: { onLogin: (tokens: T
             await request("/patients/me", tokens.accessToken, { method: "POST", body: JSON.stringify({ fullName, phone: normalizedPhone }) });
             onLogin(tokens);
         } catch (value) {
-            setError(authErrorMessage(value));
+            if (!handleBlockedAccount(value)) setError(authErrorMessage(value));
         } finally { setBusy(false); }
     }
 
@@ -294,7 +472,7 @@ function Login({ onLogin, onForgotPassword, notice = "" }: { onLogin: (tokens: T
             await request("/auth/verification/send", undefined, { method: "POST", body: JSON.stringify({ email }) });
             setResendCooldown(60);
             setError("Mã OTP mới đã được gửi. Mã có hiệu lực trong 5 phút.");
-        } catch (value) { setError(authErrorMessage(value)); }
+        } catch (value) { if (!handleBlockedAccount(value)) setError(authErrorMessage(value)); }
         finally { setBusy(false); }
     }
 

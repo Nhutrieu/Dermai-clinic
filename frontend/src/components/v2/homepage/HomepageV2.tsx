@@ -69,11 +69,11 @@ function Counter({to}:{to:number}){const ref=useRef<HTMLSpanElement>(null),view=
 function Diagnostics(){
  const predictions=[{label:"Mụn trứng cá",probability:92},{label:"Chàm da",probability:5},{label:"Vảy nến",probability:3}];
  return <motion.section id="diagnostics" initial="hidden" whileInView="show" viewport={{once:true,amount:.15}} variants={{show:{transition:{staggerChildren:.12}}}} className="px-5 py-28"><div className="mx-auto max-w-7xl">
-  <motion.div variants={reveal} className="mb-14 max-w-3xl"><p className="v2-kicker">PHÂN LOẠI HÌNH ẢNH BẰNG AI</p><h2 className="v2-title">AI hỗ trợ phân loại nhóm bệnh da từ hình ảnh.</h2><p className="v2-lead">Hệ thống phân tích ảnh, trả về nhóm bệnh dự đoán, độ tin cậy, ba khả năng cao nhất và bản đồ Grad-CAM để hỗ trợ bác sĩ tham khảo.</p></motion.div>
+  <motion.div variants={reveal} className="mb-14 max-w-3xl"><p className="v2-kicker">PHÂN LOẠI HÌNH ẢNH BẰNG AI</p><h2 className="v2-title">AI hỗ trợ phân loại nhóm bệnh da từ hình ảnh.</h2><p className="v2-lead">Hệ thống phân tích ảnh, trả về nhóm bệnh dự đoán, độ tin cậy và ba khả năng cao nhất để hỗ trợ bác sĩ tham khảo.</p></motion.div>
   <motion.div variants={reveal} className="v2-diagnostic-layout grid overflow-hidden rounded-[36px] border border-teal-300/15 bg-white/[.035]">
    <div className="relative min-h-[620px] overflow-hidden border-b border-teal-300/10 bg-[#070c13] lg:border-b-0 lg:border-r"><img src="/images/v2/dermscan-face.png" alt="Minh họa ảnh đầu vào được AI phân tích" className="absolute inset-0 h-full w-full object-cover opacity-75"/><div className="absolute inset-0 bg-[radial-gradient(circle_at_center,transparent,rgba(7,12,19,.8))]"/>
     <motion.div animate={{top:["8%","88%","8%"]}} transition={{duration:5,repeat:Infinity,ease:"easeInOut"}} className="absolute left-0 right-0 z-10 h-[2px] bg-teal-200 shadow-[0_0_28px_8px_rgba(45,212,191,.65)]"/>
-    <motion.div animate={{opacity:[.25,.48,.25],scale:[.94,1.06,.94]}} transition={{duration:3.8,repeat:Infinity,ease:"easeInOut"}} className="v2-gradcam-heatmap"/><div className="v2-gradcam-label">BẢN ĐỒ NHIỆT GRAD-CAM · MINH HỌA</div>
+    <motion.div animate={{opacity:[.25,.48,.25],scale:[.94,1.06,.94]}} transition={{duration:3.8,repeat:Infinity,ease:"easeInOut"}} className="v2-gradcam-heatmap"/><div className="v2-gradcam-label">VÙNG QUAN SÁT HÌNH ẢNH · MINH HỌA</div>
     <div className="absolute left-6 top-6 rounded-full border border-teal-300/20 bg-black/50 px-4 py-2 text-xs tracking-[.15em] text-teal-200">PHÂN TÍCH HÌNH ẢNH · MINH HỌA</div>
    </div>
    <div className="flex min-w-0 flex-col justify-between p-7 sm:p-10"><div><p className="text-xs font-bold tracking-[.18em] text-teal-300">KẾT QUẢ MÔ PHỎNG THEO API</p>

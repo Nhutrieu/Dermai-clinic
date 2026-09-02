@@ -5,6 +5,7 @@ import { request } from "../../core/api";
 import { authErrorMessage, isPasswordValid, passwordValidationMessage, PASSWORD_MAX_LENGTH, PASSWORD_MIN_LENGTH } from "../../core/passwordPolicy";
 import type { Doctor } from "../../core/types";
 import AdminDoctorFeeEditor from "./AdminDoctorFeeEditor";
+import AdminLeaveRequests from "./AdminLeaveRequests";
 import PasswordRequirements from "../../components/PasswordRequirements";
 
 type Props = {
@@ -65,6 +66,8 @@ export default function AdminDoctorsManagement({ token, doctors, selectedDoctorI
         <span><strong>{configuredFeeCount}</strong> đã có giá khám</span>
       </div>
     </header>
+
+    <AdminLeaveRequests token={token} />
 
     <div className="admin-doctors-toolbar">
       <label htmlFor="admin-doctor-search">Tìm bác sĩ</label>

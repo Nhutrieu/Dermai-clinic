@@ -34,6 +34,12 @@ function formatDateTime(value: string) {
   }).format(new Date(value));
 }
 
+function leaveStatusLabel(status: LeavePeriod["status"]) {
+  if (status === "PENDING") return "Chờ admin duyệt";
+  if (status === "REJECTED") return "Đã từ chối";
+  return "Đã duyệt";
+}
+
 export default function DoctorProfileScreen({ token, doctor, work, leave, saved }: Props) {
   const savedWeekday = work.find(item => item.weekday === 1) || work[0];
   const [profile, setProfile] = useState(doctor);
@@ -202,7 +208,7 @@ export default function DoctorProfileScreen({ token, doctor, work, leave, saved 
       setLeaveStart("");
       setLeaveEnd("");
       setLeaveReason("");
-      setFeedback({ text: "Đã thêm ngày nghỉ và đóng các khung giờ liên quan.", error: false });
+      setFeedback({ text: "Đã gửi yêu cầu nghỉ. Lịch bệnh nhân chỉ đóng sau khi admin duyệt.", error: false });
     } catch (cause) {
       setFeedback({ text: (cause as Error).message, error: true });
     }
@@ -310,14 +316,14 @@ export default function DoctorProfileScreen({ token, doctor, work, leave, saved 
 
           <section className="doctor-profile-section doctor-profile-leave" aria-labelledby="doctor-leave-title">
             <header className="doctor-profile-section-heading">
-              <div><h2 id="doctor-leave-title"><CalendarOff aria-hidden="true" /> Nghỉ phép</h2><p>Nếu khoảng nghỉ trùng lịch đang giữ, chờ hoặc đã xác nhận, hãy nhờ lễ tân đổi hoặc hủy lịch đó trước.</p></div>
+              <div><h2 id="doctor-leave-title"><CalendarOff aria-hidden="true" /> Nghỉ phép</h2><p>Yêu cầu nghỉ sẽ chờ admin duyệt trước khi khóa các khung giờ trên lịch bệnh nhân.</p></div>
             </header>
             {renderFeedback("leave")}
             {sortedLeaves.length > 0 ? (
               <div className="doctor-profile-leave-list" aria-label="Danh sách ngày nghỉ">
                 {sortedLeaves.map(item => (
                   <article key={item.id}>
-                    <div><strong>{formatDateTime(item.startAt)}</strong><span>Đến {formatDateTime(item.endAt)}</span><p>{item.reason || "Không ghi lý do"}</p></div>
+                    <div><strong>{formatDateTime(item.startAt)}</strong><span>Đến {formatDateTime(item.endAt)}</span><span className={`doctor-profile-leave-status is-${(item.status || "APPROVED").toLowerCase()}`}>{leaveStatusLabel(item.status)}</span><p>{item.reason || "Không ghi lý do"}</p>{item.reviewNote && <p>Ghi chú admin: {item.reviewNote}</p>}</div>
                     <button type="button" aria-label={`Xóa ngày nghỉ bắt đầu ${formatDateTime(item.startAt)}`} onClick={() => void removeLeave(item.id)}><Trash2 aria-hidden="true" /> Xóa</button>
                   </article>
                 ))}

@@ -49,7 +49,7 @@ describe("patient AI result", () => {
     expect(html).toContain("không thay thế chẩn đoán của bác sĩ da liễu");
   });
 
-  it("keeps the text result visible when Grad-CAM is missing", () => {
+  it("keeps the text result visible when an optional attention image is missing", () => {
     const html = renderResult({
       ...prediction,
       gradcam_image: "",
@@ -60,7 +60,7 @@ describe("patient AI result", () => {
         has_evidence: false,
       },
     });
-    expect(html).toContain("Grad-CAM tạm thời chưa có");
+    expect(html).toContain("Tóm tắt kết quả hỗ trợ");
     expect(html).toContain("Mụn trứng cá");
   });
 

@@ -39,7 +39,8 @@ export type ClinicService = {
   active: boolean;
 };
 export type WorkSchedule = { id: string; weekday: number; startTime: string; endTime: string; slotMinutes: number };
-export type LeavePeriod = { id: string; startAt: string; endAt: string; reason?: string };
+export type LeaveStatus = "PENDING" | "APPROVED" | "REJECTED";
+export type LeavePeriod = { id: string; doctorId?: string; doctorName?: string; startAt: string; endAt: string; reason?: string; status?: LeaveStatus; requestedBy?: string; reviewedBy?: string; reviewedAt?: string; reviewNote?: string };
 export type Appointment = { id: string; patientId: string; doctorId?: string; doctorIdentityId?: string; doctorName?: string; startAt: string; endAt: string; status: string; reason?: string; followUpReason?: string; followUpNotBefore?: string; holdExpiresAt?: string; checkedInAt?: string; consultationFeeSnapshot?: number; createdAt: string; updatedAt?: string };
 export type MedicalRecord = { id: string; appointmentId: string; patientId: string; finalDiagnosis: string; clinicalNotes?: string; treatmentPlan?: string; severity: string; followUpAt?: string; signedAt: string };
 export type PrescriptionItem = { drugName: string; dosage?: string; frequency?: string; duration?: string; instructions?: string };

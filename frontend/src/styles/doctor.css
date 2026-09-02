@@ -814,3 +814,17 @@
     min-height: 44px;
   }
 }
+
+.doctor-profile-leave-list .doctor-profile-leave-status {
+  display: inline-block;
+  width: fit-content;
+  margin-top: 6px;
+  padding: 3px 8px;
+  border-radius: 999px;
+  background: var(--color-warning-surface);
+  color: var(--color-warning);
+  font-size: 11px;
+  font-weight: 800;
+}
+.doctor-profile-leave-list .doctor-profile-leave-status.is-approved { background: var(--color-success-surface); color: var(--color-success); }
+.doctor-profile-leave-list .doctor-profile-leave-status.is-rejected { background: var(--color-danger-surface); color: var(--color-danger); }

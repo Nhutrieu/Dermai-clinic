@@ -1,4 +1,4 @@
-import { useEffect, useState, type ReactNode } from "react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
 import { AlertTriangle, BrainCircuit, CalendarDays, CheckCircle2, Clock3, Stethoscope } from "lucide-react";
 import { request } from "../../core/api";
 import { formatVnd } from "../../core/currency";
@@ -53,6 +53,11 @@ function formatDateTime(value: string) {
     });
 }
 
+function formatDateInput(value: string) {
+    const [year, month, day] = value.split("-");
+    return year && month && day ? day + "/" + month + "/" + year : value;
+}
+
 function slotLabel(status: AvailabilitySlot["status"], holdCountdown: string) {
     switch (status) {
         case "BOOKED": return "Đã có người đặt";
@@ -100,6 +105,7 @@ export default function PatientAppointmentsView({
     const [doctorId, setDoctorId] = useState("");
     const [date, setDate] = useState(() => clinicDateInput());
     const [clinicClosureReason, setClinicClosureReason] = useState<string | null>(null);
+    const [clinicClosureNotice, setClinicClosureNotice] = useState<string | null>(null);
     const [slots, setSlots] = useState<AvailabilitySlot[]>([]);
     const [selected, setSelected] = useState<AvailabilitySlot | null>(null);
     const [pendingSlot, setPendingSlot] = useState<AvailabilitySlot | null>(null);
@@ -114,6 +120,8 @@ export default function PatientAppointmentsView({
     const [items, setItems] = useState(appointments);
     const [feedback, setFeedback] = useState<Feedback | null>(null);
     const [busy, setBusy] = useState(false);
+    const slotRequestInFlight = useRef(false);
+    const clinicClosureNoticeKeyRef = useRef("");
 
     const doctor = doctors.find(item => item.id === doctorId);
     const upcomingCount = activeUpcoming(items).length;
@@ -185,8 +193,11 @@ export default function PatientAppointmentsView({
     useEffect(() => { setItems(appointments) }, [appointments]);
 
     async function findSlots(realtime = false) {
-        if (!doctorId || !date) return;
-        setBusy(true);
+        if (!doctorId || !date || slotRequestInFlight.current) return;
+        slotRequestInFlight.current = true;
+        // Background refreshes must not toggle the whole booking form into a
+        // loading state; that was causing a visible pulse every few seconds.
+        if (!realtime) setBusy(true);
         if (!realtime) {
             setFeedback(null);
             setClinicClosureReason(null);
@@ -202,12 +213,20 @@ export default function PatientAppointmentsView({
             const closureReason = result.closureReason?.trim() || "Phòng khám tạm nghỉ.";
             setClinicClosureReason(clinicClosed ? closureReason : null);
             if (clinicClosed) {
+                const closureKey = doctorId + ":" + date + ":" + closureReason;
+                if (clinicClosureNoticeKeyRef.current !== closureKey) {
+                    clinicClosureNoticeKeyRef.current = closureKey;
+                    setClinicClosureNotice(closureReason);
+                }
                 if (holdId) await releaseHold();
                 else {
                     setSelected(null);
                     setHoldUntil("");
                     setHeldFee(null);
                 }
+            } else {
+                clinicClosureNoticeKeyRef.current = "";
+                setClinicClosureNotice(null);
             }
             setSlots(result.items);
             const own = result.items.find(item => item.status === "HELD_BY_YOU");
@@ -233,18 +252,19 @@ export default function PatientAppointmentsView({
                 ? realtime ? "Lịch khám vừa được cập nhật tự động."
                     : available ? "Chọn một khung giờ còn trống." : "Các khung giờ trong ngày này đã kín."
                 : "Bác sĩ chưa có lịch làm việc trong ngày đã chọn.";
-            setFeedback(current =>
-                realtime && current && current.tone !== "info"
-                    ? current
-                    : { tone: "info", text }
-            );
+            // Keep the user-facing feedback stable during a background sync.
+            // The slot grid itself still reflects any real availability change.
+            if (!realtime) setFeedback({ tone: "info", text });
             return own;
         } catch (error) {
+            clinicClosureNoticeKeyRef.current = "";
             setClinicClosureReason(null);
+            setClinicClosureNotice(null);
             setFeedback({ tone: "error", text: (error as Error).message });
             return undefined;
         } finally {
-            setBusy(false);
+            slotRequestInFlight.current = false;
+            if (!realtime) setBusy(false);
         }
     }
 
@@ -255,15 +275,27 @@ export default function PatientAppointmentsView({
     useEffect(() => {
         if (!doctorId || !date) return;
         let live = true;
-        const refresh = () => { if (live) void findSlots(true) };
-        const unsubscribe = subscribeRealtime(refresh);
-        const fallback = window.setInterval(refresh, 5000);
+        const refresh = () => { if (live && !document.hidden) void findSlots(true); };
+        const unsubscribe = subscribeRealtime(event => {
+            if (event.type === "SLOTS_CHANGED") refresh();
+        });
+        const doctorUpdated = (event: Event) => {
+            const doctorIdFromEvent = (event as CustomEvent<{ doctorId?: string }>).detail?.doctorId;
+            if (!doctorIdFromEvent || doctorIdFromEvent === doctorId) refresh();
+        };
+        window.addEventListener("doctor-profiles-changed", doctorUpdated);
+        // WebSocket is the primary update source. This sparse fallback only
+        // recovers after a missed frame, sleep, or a network change.
+        const fallback = window.setInterval(refresh, 30_000);
         window.addEventListener("focus", refresh);
+        document.addEventListener("visibilitychange", refresh);
         return () => {
             live = false;
             unsubscribe();
             window.clearInterval(fallback);
             window.removeEventListener("focus", refresh);
+            document.removeEventListener("visibilitychange", refresh);
+            window.removeEventListener("doctor-profiles-changed", doctorUpdated);
         };
     }, [doctorId, date]);
 
@@ -406,6 +438,11 @@ export default function PatientAppointmentsView({
         window.setTimeout(() => document.querySelector<HTMLInputElement>("#booking-date")?.focus(), 0);
     }
 
+    function chooseAnotherDateFromClosure() {
+        setClinicClosureNotice(null);
+        window.setTimeout(() => document.querySelector<HTMLInputElement>("#booking-date")?.focus(), 0);
+    }
+
     function chooseAnotherTime() {
         setTimeConflict(null);
         window.setTimeout(() => {
@@ -530,6 +567,21 @@ export default function PatientAppointmentsView({
                         Bạn vẫn muốn đặt thêm lịch với <strong>BS. {pendingSlot.doctorName}</strong>{" "}
                         vào <strong>{formatDateTime(pendingSlot.startAt)}</strong>?
                     </p>
+                </BookingDialog>
+            )}
+            {clinicClosureNotice && (
+                <BookingDialog
+                    title="Phòng khám tạm nghỉ"
+                    titleId="clinic-closure-title"
+                    descriptionId="clinic-closure-description"
+                    primaryLabel="Chọn ngày khác"
+                    secondaryLabel="Đã hiểu"
+                    onPrimary={chooseAnotherDateFromClosure}
+                    onClose={() => setClinicClosureNotice(null)}
+                >
+                    <p>Phòng khám không nhận lịch trong ngày <strong>{formatDateInput(date)}</strong>.</p>
+                    <p>Lý do: <strong>{clinicClosureNotice}</strong></p>
+                    <p>Vui lòng chọn một ngày khác để tiếp tục đặt lịch.</p>
                 </BookingDialog>
             )}
 

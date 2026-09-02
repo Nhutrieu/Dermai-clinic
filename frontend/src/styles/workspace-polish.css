@@ -269,8 +269,8 @@ textarea { resize: none !important; }
   box-shadow: inset 3px 0 0 var(--role-accent);
 }
 
-.shell .admin-directory-detail header button,
-.shell .reception-patient-detail header button {
+.shell .admin-directory-detail > header > button,
+.shell .reception-patient-detail > header > button {
   width: 34px;
   height: 34px;
   padding: 0;
@@ -282,8 +282,8 @@ textarea { resize: none !important; }
   color: #5d7069;
 }
 
-.shell .admin-directory-detail header button:hover,
-.shell .reception-patient-detail header button:hover {
+.shell .admin-directory-detail > header > button:hover,
+.shell .reception-patient-detail > header > button:hover {
   border-color: #aebdb7;
   background: #f2f5f3;
 }

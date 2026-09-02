@@ -985,7 +985,9 @@
 /* Patient directory polish */
 .admin-patient-management { overflow: hidden; }
 .admin-patient-directory { grid-template-columns: minmax(250px, 300px) minmax(0, 1fr); gap: 20px; align-items: start; }
-.admin-patient-directory > nav { max-height: 520px; padding: 10px; border: 1px solid var(--admin-overview-border); border-radius: 18px; background: color-mix(in srgb, var(--admin-overview-surface-muted) 55%, white); scrollbar-width: thin; scrollbar-color: var(--color-primary) transparent; }
+.admin-patient-directory > nav { max-height: 520px; overflow-y: auto; overscroll-behavior: contain; padding: 10px; border: 1px solid var(--admin-overview-border); border-radius: 18px; background: color-mix(in srgb, var(--admin-overview-surface-muted) 55%, white); scrollbar-width: thin; scrollbar-color: var(--color-primary) transparent; }
+.admin-patient-directory > nav::-webkit-scrollbar { width: 8px; }
+.admin-patient-directory > nav::-webkit-scrollbar-thumb { border: 2px solid transparent; border-radius: 999px; background: var(--color-primary); background-clip: padding-box; }
 .admin-patient-directory nav button { min-height: 72px; padding: 11px 12px; border-radius: 14px; transition: transform 180ms ease, border-color 180ms ease, background 180ms ease, box-shadow 180ms ease; }
 .admin-patient-directory nav button:hover { transform: translateX(3px); }
 .admin-patient-directory nav button.is-selected { border-color: color-mix(in srgb, var(--color-primary) 72%, transparent); background: linear-gradient(135deg, #e8f7f2 0%, #f4fbf8 100%); box-shadow: 0 8px 22px rgba(18, 120, 101, 0.1); }

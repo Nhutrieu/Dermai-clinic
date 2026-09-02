@@ -25,9 +25,19 @@ class DoctorProfileWebSocketHandler extends TextWebSocketHandler {
   }
 
   void broadcastUpdated(UUID doctorId) {
-    var message = new TextMessage(
+    broadcast(new TextMessage(
         "{\"type\":\"DOCTOR_PROFILE_UPDATED\",\"doctorId\":\"" + doctorId + "\"}"
-    );
+    ));
+  }
+
+  void broadcastLeaveApproved(UUID leaveId, UUID doctorId) {
+    broadcast(new TextMessage(
+        "{\"type\":\"DOCTOR_LEAVE_APPROVED\",\"leaveId\":\"" + leaveId
+            + "\",\"doctorId\":\"" + doctorId + "\"}"
+    ));
+  }
+
+  private void broadcast(TextMessage message) {
     sessions.removeIf(session -> {
       try {
         if (!session.isOpen()) return true;

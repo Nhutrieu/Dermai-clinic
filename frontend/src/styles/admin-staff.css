@@ -917,3 +917,57 @@
     text-align: left;
   }
 }
+
+/* Clinic closure rows live on the Admin route, so their layout belongs here. */
+.admin-staff-page .clinic-closure-list {
+  display: grid;
+  gap: 10px;
+  margin: 16px 0 20px;
+}
+
+.admin-staff-page .clinic-closure-list article {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 13px 14px;
+  border: 1px solid var(--admin-staff-border);
+  border-radius: var(--radius-md);
+  background: #f5f8f6;
+}
+
+.admin-staff-page .clinic-closure-list article > div {
+  display: grid;
+  min-width: 0;
+  gap: 4px;
+}
+
+.admin-staff-page .clinic-closure-list article > div > b,
+.admin-staff-page .clinic-closure-list article > div > small {
+  display: block;
+}
+
+.admin-staff-page .clinic-closure-list article > div > small {
+  color: var(--color-ink-muted);
+  line-height: 1.45;
+}
+
+.admin-staff-page .clinic-closure-list article > button {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  min-width: 74px;
+  padding: 9px 11px;
+  border: 1px solid #e3c4be;
+  border-radius: 8px;
+  background: #fff9f7;
+  color: #a4483f;
+  font-weight: 700;
+}
+
+.admin-staff-page .clinic-closure-list article > button svg {
+  width: 17px;
+  height: 17px;
+}

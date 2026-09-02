@@ -50,6 +50,7 @@ export type ReceptionQueueSummary = {
   inProgress: number;
   completed: number;
   noShow: number;
+  closed: number;
   attention: number;
 };
 
@@ -167,6 +168,7 @@ export function buildReceptionQueueSummary(
     inProgress: states.filter(item => item.phase === "in_progress").length,
     completed: states.filter(item => item.phase === "completed").length,
     noShow: states.filter(item => item.phase === "no_show").length,
+    closed: states.filter(item => item.phase === "closed").length,
     attention: today.filter(item => attentionIds.has(item.id)).length,
   };
 }

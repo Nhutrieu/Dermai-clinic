@@ -692,3 +692,68 @@
   .admin-doctor-detail .admin-doctor-password-control { grid-template-columns: 1fr; }
   .admin-doctor-detail .admin-doctor-password-control button.secondary { width: 100%; }
 }
+
+.admin-leave-requests {
+  margin: var(--space-5) 0;
+  padding: var(--space-4);
+  border: 1px solid var(--admin-doctors-border);
+  border-radius: var(--radius-control);
+  background: var(--admin-doctors-surface-muted);
+}
+
+.admin-leave-requests-heading {
+  display: flex;
+  gap: var(--space-4);
+  align-items: flex-start;
+  justify-content: space-between;
+}
+
+.admin-leave-requests-heading h3 {
+  display: flex;
+  gap: var(--space-2);
+  align-items: center;
+  margin: 0;
+  color: var(--color-ink);
+  font-size: 18px;
+}
+
+.admin-leave-requests-heading h3 svg { width: 19px; height: 19px; color: var(--color-primary); }
+.admin-leave-requests-heading p { margin: 5px 0 0; color: var(--color-text-secondary); font-size: 13px; line-height: 1.5; }
+.admin-leave-refresh,
+.admin-leave-actions button {
+  min-height: var(--control-min-height);
+  padding: 8px 12px;
+  border: 1px solid var(--color-border-strong);
+  border-radius: var(--radius-control);
+  background: var(--color-surface);
+  color: var(--color-primary);
+  font-size: 13px;
+  font-weight: 800;
+}
+.admin-leave-refresh:disabled,
+.admin-leave-actions button:disabled { cursor: wait; opacity: .6; }
+.admin-leave-list { display: grid; gap: var(--space-3); margin-top: var(--space-4); }
+.admin-leave-list article { display: flex; gap: var(--space-4); align-items: center; justify-content: space-between; padding: var(--space-3); border: 1px solid var(--admin-doctors-border); border-radius: var(--radius-control); background: var(--color-surface); }
+.admin-leave-copy { display: grid; gap: 3px; min-width: 0; }
+.admin-leave-copy strong { color: var(--color-ink); font-size: 15px; }
+.admin-leave-copy span { color: var(--color-primary); font-size: 13px; font-weight: 700; }
+.admin-leave-copy p { margin: 0; color: var(--color-text-secondary); font-size: 13px; }
+.admin-leave-actions { display: flex; gap: var(--space-2); flex: 0 0 auto; }
+.admin-leave-actions button { display: inline-flex; gap: 6px; align-items: center; cursor: pointer; }
+.admin-leave-actions button svg { width: 16px; height: 16px; }
+.admin-leave-approve { border-color: var(--color-primary) !important; background: var(--color-primary) !important; color: var(--color-surface) !important; }
+.admin-leave-approve:hover:not(:disabled) { background: var(--color-primary-strong) !important; }
+.admin-leave-reject { border-color: var(--color-danger); color: var(--color-danger); }
+.admin-leave-reject:hover:not(:disabled) { background: var(--color-danger-surface); }
+.admin-leave-empty { margin: var(--space-4) 0 0; color: var(--color-text-secondary); font-size: 13px; }
+.admin-leave-message { margin: var(--space-3) 0 0; font-size: 13px; font-weight: 700; }
+.admin-leave-message.is-error { color: var(--color-danger); }
+.admin-leave-message.is-success { color: var(--color-success); }
+
+@media (max-width: 680px) {
+  .admin-leave-requests-heading { align-items: stretch; flex-direction: column; }
+  .admin-leave-refresh { align-self: flex-start; }
+  .admin-leave-list article { align-items: stretch; flex-direction: column; }
+  .admin-leave-actions { display: grid; grid-template-columns: 1fr 1fr; }
+  .admin-leave-actions button { justify-content: center; }
+}

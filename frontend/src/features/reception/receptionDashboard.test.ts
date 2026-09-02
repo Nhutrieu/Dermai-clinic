@@ -90,6 +90,7 @@ describe("reception dashboard presentation", () => {
       appointment("progress", "IN_PROGRESS", "2026-08-01T01:30:00.000Z"),
       appointment("complete", "COMPLETED", "2026-08-01T01:00:00.000Z"),
       appointment("absent", "NO_SHOW", "2026-08-01T00:30:00.000Z"),
+      appointment("cancelled", "CANCELLED", "2026-08-01T00:45:00.000Z"),
       appointment("assigned", "ASSIGNED", "2026-08-01T04:30:00.000Z"),
     ];
     expect(buildReceptionQueueSummary(items, [], now)).toEqual({
@@ -99,6 +100,7 @@ describe("reception dashboard presentation", () => {
       inProgress: 1,
       completed: 1,
       noShow: 1,
+      closed: 1,
       attention: 2,
     });
   });

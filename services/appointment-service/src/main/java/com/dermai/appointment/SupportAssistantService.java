@@ -95,6 +95,11 @@ class SupportAssistantService {
    var result=scheduling.lookupAvailability(decision.doctorName(),date,patientIdentityId,authorization,role);
    String displayDate=date.format(DateTimeFormatter.ofPattern("dd/MM/yyyy"));
    LocalTime requestedTime=decision.requestedTime()==null||decision.requestedTime().isBlank()?null:LocalTime.parse(decision.requestedTime());
+   boolean requestedTimeOnLeave=requestedTime!=null&&result.leaveSlots().stream().anyMatch(item->item.startAt().atZone(CLINIC_ZONE).toLocalTime().equals(requestedTime));
+   if(requestedTimeOnLeave){
+    String displayTime=requestedTime.format(DateTimeFormatter.ofPattern("HH:mm"));
+    return new AvailabilityAnswer("Bác sĩ "+result.doctorName()+" có lịch nghỉ đã được admin duyệt vào ngày "+displayDate+"; khung giờ "+displayTime+" không thể đặt. Bạn vui lòng chọn ngày khác hoặc hỏi mình về bác sĩ khác.",false,"Đã xác nhận khung giờ "+displayTime+" nằm trong khoảng nghỉ đã được admin duyệt.");
+   }
    if(requestedTime!=null&&"FOUND".equals(result.status())){
     String displayTime=requestedTime.format(DateTimeFormatter.ofPattern("HH:mm"));
     boolean exact=result.items().stream().anyMatch(item->item.startAt().atZone(CLINIC_ZONE).toLocalTime().equals(requestedTime));
@@ -113,11 +118,13 @@ class SupportAssistantService {
    return switch(result.status()){
     case "FOUND" -> {
      String slots=result.items().stream().limit(8).map(item->item.startAt().atZone(CLINIC_ZONE).format(DateTimeFormatter.ofPattern("HH:mm"))).reduce((a,b)->a+", "+b).orElse("");
-     yield new AvailabilityAnswer("Bác sĩ "+result.doctorName()+" còn các khung giờ ngày "+displayDate+": "+slots+". Bạn mở mục Lịch khám để chọn và xác nhận giờ phù hợp.",false,"Đã tra cứu availability thật và tìm thấy "+result.items().size()+" khung giờ.");
+     String leaveNotice=result.doctorOnLeave()?" Lưu ý: Bác sĩ có khoảng nghỉ đã được admin duyệt trong ngày này; các khung trên là thời gian còn làm việc.":"";
+     yield new AvailabilityAnswer("Bác sĩ "+result.doctorName()+" còn các khung giờ ngày "+displayDate+": "+slots+". Bạn mở mục Lịch khám để chọn và xác nhận giờ phù hợp."+leaveNotice,false,"Đã tra cứu availability thật và tìm thấy "+result.items().size()+" khung giờ."+(result.doctorOnLeave()?" Có khoảng nghỉ đã được admin duyệt trong ngày.":""));
     }
     case "NO_SLOTS" -> {
      String timePrefix=requestedTime==null?"":"Khung giờ "+requestedTime.format(DateTimeFormatter.ofPattern("HH:mm"))+" không còn trống; ";
-     yield new AvailabilityAnswer(timePrefix+"Bác sĩ "+result.doctorName()+" hiện không còn khung giờ trống ngày "+displayDate+". Bạn có thể hỏi một ngày khác để mình kiểm tra tiếp.",false,"Đã tra cứu availability thật; ngày yêu cầu không còn slot.");
+     String leaveNotice=result.doctorOnLeave()?" Bác sĩ có lịch nghỉ đã được admin duyệt trong ngày này, nên bạn vui lòng chọn ngày khác hoặc bác sĩ khác.":" Bạn có thể hỏi một ngày khác để mình kiểm tra tiếp.";
+     yield new AvailabilityAnswer(timePrefix+"Bác sĩ "+result.doctorName()+" hiện không còn khung giờ trống ngày "+displayDate+"."+leaveNotice,false,"Đã tra cứu availability thật; ngày yêu cầu không còn slot."+(result.doctorOnLeave()?" Có lịch nghỉ đã được admin duyệt.":""));
     }
     case "AMBIGUOUS" -> new AvailabilityAnswer("Mình tìm thấy nhiều bác sĩ phù hợp: "+String.join(", ",result.candidates())+". Bạn cho mình biết chính xác bác sĩ muốn xem nhé.",true,"Tên bác sĩ chưa đủ rõ để tra cứu.");
     default -> new AvailabilityAnswer("Mình chưa tìm thấy bác sĩ “"+decision.doctorName()+"”. Các bác sĩ hiện có: "+String.join(", ",result.candidates())+". Bạn kiểm tra lại tên giúp mình nhé.",true,"Không tìm thấy bác sĩ trong dữ liệu thật.");
@@ -130,18 +137,19 @@ class SupportAssistantService {
  private DoctorInformationAnswer lookupDoctorInformation(SupportAiClient.Decision decision,String authorization,String role){
   try{
    var result=scheduling.lookupDoctorProfiles(decision.doctorName(),authorization,role);
+   String dateNotice=doctorLeaveNotice(decision,authorization,role);
    return switch(result.status()){
     case "ALL" -> {
      if(result.profiles().isEmpty())yield new DoctorInformationAnswer("Hiện phòng khám chưa có hồ sơ bác sĩ đang hoạt động.",false,"Doctor service trả về danh sách trống.");
      String list=result.profiles().stream().limit(8).map(this::doctorSummaryLine).reduce((a,b)->a+"\n"+b).orElse("");
-     yield new DoctorInformationAnswer("Các bác sĩ đang hoạt động tại DermAI Clinic:\n"+list+"\nBạn có thể hỏi tên một bác sĩ cụ thể để xem mô tả chi tiết.",false,"Đã đọc "+result.profiles().size()+" hồ sơ bác sĩ thật.");
+     yield new DoctorInformationAnswer("Các bác sĩ đang hoạt động tại DermAI Clinic:\n"+list+"\nBạn có thể hỏi tên một bác sĩ cụ thể để xem mô tả chi tiết."+dateNotice,false,"Đã đọc "+result.profiles().size()+" hồ sơ bác sĩ thật."+(dateNotice.isBlank()?"":" Đã đối chiếu lịch nghỉ đã duyệt."));
     }
     case "FOUND" -> {
      var doctor=result.profiles().get(0);
      String certificate=doctor.certificateNo()==null||doctor.certificateNo().isBlank()?"":" Chứng chỉ: "+doctor.certificateNo()+".";
      String bio=doctor.bio()==null||doctor.bio().isBlank()?"":"\n"+compactBio(doctor.bio());
-     String answer="Bác sĩ "+doctor.doctorName()+" – "+displaySpecialty(doctor.specialtyCode())+", "+doctor.experienceYears()+" năm kinh nghiệm. Giá khám cơ bản: "+displayFee(doctor.consultationFee())+"."+certificate+bio;
-     yield new DoctorInformationAnswer(answer,false,"Đã đọc hồ sơ thật của Bác sĩ "+doctor.doctorName()+".");
+     String answer="Bác sĩ "+doctor.doctorName()+" – "+displaySpecialty(doctor.specialtyCode())+", "+doctor.experienceYears()+" năm kinh nghiệm. Giá khám cơ bản: "+displayFee(doctor.consultationFee())+"."+certificate+bio+dateNotice;
+     yield new DoctorInformationAnswer(answer,false,"Đã đọc hồ sơ thật của Bác sĩ "+doctor.doctorName()+"."+(dateNotice.isBlank()?"":" Đã đối chiếu lịch nghỉ đã duyệt."));
     }
     case "AMBIGUOUS" -> new DoctorInformationAnswer("Mình tìm thấy nhiều bác sĩ phù hợp: "+String.join(", ",result.candidates())+". Bạn cho mình biết chính xác tên bác sĩ nhé.",true,"Tên bác sĩ chưa đủ rõ để tra hồ sơ.");
     default -> new DoctorInformationAnswer("Mình chưa tìm thấy bác sĩ “"+decision.doctorName()+"”. Các bác sĩ hiện có: "+String.join(", ",result.candidates())+". Bạn kiểm tra lại tên giúp mình nhé.",true,"Không tìm thấy hồ sơ bác sĩ trong dữ liệu thật.");
@@ -150,6 +158,24 @@ class SupportAssistantService {
    LOG.warn("Doctor profile lookup failed: {}",error.getMessage());
    return new DoctorInformationAnswer("Mình chưa tải được thông tin bác sĩ ở thời điểm này. Bạn có thể thử lại sau ít phút.",true,"Doctor service trả lỗi: "+error.getClass().getSimpleName());
   }
+ }
+
+ private String doctorLeaveNotice(SupportAiClient.Decision decision,String authorization,String role){
+  if(decision.requestedDate()==null||decision.requestedDate().isBlank())return "";
+  try{
+   LocalDate date=LocalDate.parse(decision.requestedDate());
+   var lookup=scheduling.lookupDoctorLeaveStatuses(decision.doctorName(),date,authorization,role);
+   String displayDate=date.format(DateTimeFormatter.ofPattern("dd/MM/yyyy"));
+   if("FOUND".equals(lookup.status())&&lookup.items().stream().anyMatch(SchedulingRecommendationService.DoctorLeaveStatus::onLeave))
+    return "\nLưu ý: Bác sĩ "+lookup.items().get(0).doctorName()+" có lịch nghỉ đã được admin duyệt vào ngày "+displayDate+". Bạn nên chọn ngày khác hoặc bác sĩ khác trong mục Lịch khám.";
+   if("ALL".equals(lookup.status())){
+    String names=lookup.items().stream().filter(SchedulingRecommendationService.DoctorLeaveStatus::onLeave).map(SchedulingRecommendationService.DoctorLeaveStatus::doctorName).limit(8).reduce((a,b)->a+", "+b).orElse("");
+    if(!names.isBlank())return "\nLưu ý ngày "+displayDate+", các bác sĩ có lịch nghỉ đã được admin duyệt: "+names+". Bạn có thể chọn bác sĩ khác trong mục Lịch khám.";
+   }
+  }catch(RuntimeException error){
+   LOG.warn("Doctor leave lookup failed: {}",error.getMessage());
+  }
+  return "";
  }
 
  private DoctorInformationAnswer lookupDoctorRecommendation(String question,String authorization,String role){

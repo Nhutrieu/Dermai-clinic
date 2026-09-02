@@ -7,6 +7,7 @@ import org.springframework.web.bind.annotation.*;
    case "DISPLAY_NAME_REQUIRED"->"Vui lòng nhập họ tên lễ tân.";
    case "STAFF_NOT_FOUND"->"Không tìm thấy tài khoản nhân viên.";
    case "NOT_RECEPTIONIST"->"Tài khoản này không thuộc vai trò lễ tân.";
+   case "STAFF_PASSWORD_NOT_MANAGED"->"Chỉ có thể đặt mật khẩu cho tài khoản bác sĩ hoặc lễ tân.";
    default->"Không thể cập nhật tài khoản nhân viên.";
   };
   var p=ProblemDetail.forStatusAndDetail(HttpStatus.CONFLICT,detail);p.setProperty("code",e.getMessage());return ResponseEntity.status(409).body(p);

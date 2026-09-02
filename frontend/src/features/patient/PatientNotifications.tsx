@@ -43,19 +43,24 @@ export default function PatientNotifications({ session }: { session: Tokens }) {
     }
 
     useEffect(() => {
-        load();
-        const timer = window.setInterval(load, 2000);
-        window.addEventListener("appointments-changed", load);
+        // WebSocket handles normal updates; this is only a low-cost recovery
+        // fallback for network changes or a tab returning from the background.
+        const refresh = () => { if (!document.hidden) void load(); };
+        refresh();
+        const timer = window.setInterval(refresh, 30_000);
+        window.addEventListener("appointments-changed", refresh);
+        document.addEventListener("visibilitychange", refresh);
         return () => {
             window.clearInterval(timer);
-            window.removeEventListener("appointments-changed", load);
+            window.removeEventListener("appointments-changed", refresh);
+            document.removeEventListener("visibilitychange", refresh);
         };
     }, [session.accessToken]);
 
     useEffect(() => subscribeRealtime(event => {
-        void load();
         // Reuse this shared patient socket so every mounted patient view receives the new status.
         if (event.type === "SLOTS_CHANGED") {
+            void load();
             window.dispatchEvent(new Event("appointments-changed"));
         }
     }), [session.accessToken]);

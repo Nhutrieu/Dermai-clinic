@@ -251,3 +251,57 @@
     grid-row: 1;
   }
 }
+
+/* Patient floating controls use the same navy/blue-teal system as Skin Scan V2. */
+.patient-route .notification-launcher,
+.patient-route .support-launch {
+  border: 1px solid rgba(34, 211, 238, .5);
+  background: linear-gradient(135deg, #0891b2, #0f766e) !important;
+  color: #fff;
+  box-shadow: 0 12px 28px rgba(8, 145, 178, .28) !important;
+}
+.patient-route .notification-launcher:hover,
+.patient-route .support-launch:hover {
+  background: linear-gradient(135deg, #0ea5c0, #0d887f) !important;
+  box-shadow: 0 16px 34px rgba(8, 145, 178, .38) !important;
+}
+/* Blue-teal interior for the patient notification and support panels. */
+.patient-route .notification-panel,
+.patient-route .support-panel {
+  border-color: #b9dce0;
+  box-shadow: 0 24px 70px rgba(8, 91, 112, .24);
+}
+.patient-route .notification-panel > header,
+.patient-route .support-panel > header {
+  background: linear-gradient(135deg, #102f38, #0f766e);
+}
+.patient-route .notification-panel > header small,
+.patient-route .support-panel header small { color: #a5f3fc; }
+.patient-route .notification-panel > header button { background: rgba(34, 211, 238, .14); }
+.patient-route .notification-list > button:hover { background: #edfafa; }
+.patient-route .notification-list > button.unread { background: #e4f7f5; }
+.patient-route .notification-empty > span { background: #dff5f4; color: #0f766e; }
+.patient-route .support-conversations button.active { border-color: #0d9488; background: #e4f7f5; }
+.patient-route .support-messages { background: #f2faf9; }
+.patient-route .support-messages article.mine { background: linear-gradient(135deg, #0f766e, #0891b2); }
+.patient-route .support-messages article.theirs { border-color: #cce5e5; background: #fff; }
+.patient-route .support-panel > form { border-top-color: #d9eaeb; }
+.patient-route .support-panel textarea { border-color: #b9dce0; }
+.patient-route .support-panel textarea:focus { border-color: #0891b2; box-shadow: 0 0 0 3px rgba(8, 145, 178, .14); }
+.patient-route .support-panel form button { background: #2dd4bf; color: #102f38; }
+/* Keep the closure date and reason on separate, readable lines. */
+.clinic-closure-list article > div {
+  min-width: 0;
+  display: grid;
+  gap: 4px;
+}
+
+.clinic-closure-list article > div > b,
+.clinic-closure-list article > div > small {
+  display: block;
+}
+
+.clinic-closure-list article > div > small {
+  color: #526b64;
+  line-height: 1.45;
+}

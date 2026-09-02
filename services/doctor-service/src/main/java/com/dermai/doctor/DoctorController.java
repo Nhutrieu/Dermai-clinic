@@ -1,15 +1,19 @@
 package com.dermai.doctor;
-import jakarta.validation.Valid;import jakarta.validation.constraints.*;import org.springframework.http.*;import org.springframework.transaction.annotation.Transactional;import org.springframework.web.bind.annotation.*;import org.springframework.web.multipart.MultipartFile;import org.springframework.web.server.ResponseStatusException;import java.io.IOException;import java.math.BigDecimal;import java.math.RoundingMode;import java.time.*;import java.util.*;
+import jakarta.validation.Valid;import jakarta.validation.constraints.*;import org.springframework.beans.factory.annotation.Autowired;import org.springframework.http.*;import org.springframework.transaction.annotation.Transactional;import org.springframework.web.bind.annotation.*;import org.springframework.web.multipart.MultipartFile;import org.springframework.web.server.ResponseStatusException;import java.io.IOException;import java.math.BigDecimal;import java.math.RoundingMode;import java.time.*;import java.util.*;
 @RestController @RequestMapping("/api/v1/doctors")
 public class DoctorController{
  private static final ZoneId CLINIC_ZONE=ZoneId.of("Asia/Ho_Chi_Minh");
- private final DoctorRepository doctors;private final ScheduleRepository schedules;private final LeaveRepository leaves;private final DoctorProfileWebSocketHandler profileUpdates;private final AppointmentScheduleClient appointments;
- DoctorController(DoctorRepository d,ScheduleRepository s,LeaveRepository l,DoctorProfileWebSocketHandler p,AppointmentScheduleClient appointments){doctors=d;schedules=s;leaves=l;profileUpdates=p;this.appointments=appointments;}
+ private final DoctorRepository doctors;private final ScheduleRepository schedules;private final LeaveRepository leaves;private final LeaveApprovalViewRepository approvalViews;private final DoctorProfileWebSocketHandler profileUpdates;private final AppointmentScheduleClient appointments;
+ @Autowired DoctorController(DoctorRepository d,ScheduleRepository s,LeaveRepository l,DoctorProfileWebSocketHandler p,AppointmentScheduleClient appointments,LeaveApprovalViewRepository v){doctors=d;schedules=s;leaves=l;approvalViews=v;profileUpdates=p;this.appointments=appointments;}
+ DoctorController(DoctorRepository d,ScheduleRepository s,LeaveRepository l,DoctorProfileWebSocketHandler p,AppointmentScheduleClient appointments){this(d,s,l,p,appointments,null);}
  record DoctorBody(@NotNull UUID identityId,@NotBlank String fullName,@NotBlank String specialtyCode,@Min(0) int experienceYears,String certificateNo,@NotNull @DecimalMin("0") @Digits(integer=10,fraction=0) BigDecimal consultationFee){}
  record DoctorProfileBody(@NotBlank @Size(max=160) String fullName,@NotBlank @Size(max=80) String specialtyCode,@Min(0) @Max(80) int experienceYears,@Size(max=120) String certificateNo){}
  record ConsultationFeeBody(@NotNull @DecimalMin("0") @Digits(integer=10,fraction=0) BigDecimal consultationFee){}
  record ScheduleBody(@Min(1) @Max(7) short weekday,@NotNull LocalTime startTime,@NotNull LocalTime endTime,@Min(10) @Max(120) int slotMinutes){}
  record LeaveBody(@NotNull Instant startAt,@NotNull Instant endAt,@Size(max=250) String reason){}
+ record LeaveDecisionBody(@NotBlank String decision,@Size(max=250) String note){}
+ record LeaveRequest(UUID id,UUID doctorId,String doctorName,Instant startAt,Instant endAt,String reason,String status,UUID requestedBy,Instant reviewedAt,String reviewNote){}
+ record LeaveApproval(UUID id,UUID doctorId,Instant startAt,Instant endAt,Instant reviewedAt){}
  record BioBody(@Size(max=1200) String bio){}
  record SchedulingDoctor(UUID id,UUID identityId,String fullName,String specialtyCode,int experienceYears,String certificateNo,BigDecimal consultationFee,String bio,List<WorkSchedule> workSchedules,List<SchedulingLeave> leavePeriods){}
  record SchedulingLeave(Instant startAt,Instant endAt){}
@@ -31,12 +35,47 @@ public class DoctorController{
  @GetMapping("/me/schedule") Map<String,Object> mySchedule(@RequestHeader("X-User-Id") UUID identity,@RequestHeader("X-User-Role") String role){require(role,"DOCTOR");var d=doctors.findByIdentityId(identity).orElseThrow(()->new ResponseStatusException(HttpStatus.NOT_FOUND));return Map.of("workSchedules",schedules.findByDoctorId(d.id),"leavePeriods",leaves.findByDoctorId(d.id));}
  @GetMapping("/scheduling-data") List<SchedulingDoctor> schedulingData(@RequestHeader("X-User-Role") String role){
   requireAny(role,"PATIENT","RECEPTIONIST","DOCTOR","ADMIN");
-  return doctors.findAll().stream().filter(d->d.active).map(d->new SchedulingDoctor(d.id,d.identityId,d.fullName,d.specialtyCode,d.experienceYears,d.certificateNo,d.consultationFee,d.bio,schedules.findByDoctorId(d.id),leaves.findByDoctorId(d.id).stream().map(x->new SchedulingLeave(x.startAt,x.endAt)).toList())).toList();
+  return doctors.findAll().stream().filter(d->d.active).map(d->new SchedulingDoctor(d.id,d.identityId,d.fullName,d.specialtyCode,d.experienceYears,d.certificateNo,d.consultationFee,d.bio,schedules.findByDoctorId(d.id),leaves.findByDoctorId(d.id).stream().filter(this::isApproved).map(x->new SchedulingLeave(x.startAt,x.endAt)).toList())).toList();
  }
  @PostMapping ResponseEntity<Doctor> create(@RequestHeader("X-User-Role") String role,@Valid @RequestBody DoctorBody b){
   require(role,"ADMIN");if(doctors.findByIdentityId(b.identityId()).isPresent())throw new ResponseStatusException(HttpStatus.CONFLICT,"Tài khoản đã có hồ sơ bác sĩ");var d=new Doctor(b.identityId(),b.fullName(),b.specialtyCode());d.experienceYears=b.experienceYears();d.certificateNo=b.certificateNo();d.consultationFee=normalizeFee(b.consultationFee());var saved=doctors.save(d);profileUpdates.broadcastUpdated(saved.id);return ResponseEntity.status(201).body(saved);
  }
- @PatchMapping("/{id}/consultation-fee") Doctor updateConsultationFee(@PathVariable UUID id,@RequestHeader("X-User-Role") String role,@Valid @RequestBody ConsultationFeeBody body){
+ @GetMapping("/leave-requests") List<LeaveRequest> leaveRequests(@RequestHeader("X-User-Role") String role){
+  require(role,"ADMIN");
+  return leaves.findByStatusOrderByStartAtAsc("PENDING").stream().map(x->{var d=doctors.findById(x.doctorId).orElse(null);return new LeaveRequest(x.id,x.doctorId,d==null?"Bác sĩ":d.fullName,x.startAt,x.endAt,x.reason,x.status,x.requestedBy,x.reviewedAt,x.reviewNote);}).toList();
+ }
+ @GetMapping("/leave-approvals/recent") List<LeaveApproval> recentLeaveApprovals(@RequestHeader("X-User-Id") UUID identity,@RequestHeader("X-User-Role") String role){
+  requireAny(role,"RECEPTIONIST","ADMIN");
+  var recent=leaves.findByStatusAndReviewedAtAfterOrderByReviewedAtDesc("APPROVED",Instant.now().minus(Duration.ofDays(7)));
+  if(!"RECEPTIONIST".equals(role)||approvalViews==null)
+   return recent.stream().map(x->new LeaveApproval(x.id,x.doctorId,x.startAt,x.endAt,x.reviewedAt)).toList();
+  var ids=recent.stream().map(x->x.id).toList();
+  var viewed=ids.isEmpty()?Set.<UUID>of():approvalViews.findByReceptionistIdentityIdAndLeaveIdIn(identity,ids).stream().map(x->x.leaveId).collect(java.util.stream.Collectors.toSet());
+  return recent.stream().filter(x->!viewed.contains(x.id)).map(x->new LeaveApproval(x.id,x.doctorId,x.startAt,x.endAt,x.reviewedAt)).toList();
+ }
+
+ @PostMapping("/leave-approvals/{leaveId}/read") @ResponseStatus(HttpStatus.NO_CONTENT)
+ void markLeaveApprovalRead(@PathVariable UUID leaveId,@RequestHeader("X-User-Id") UUID identity,@RequestHeader("X-User-Role") String role){
+  require(role,"RECEPTIONIST");
+  if(approvalViews==null)return;
+  var leave=leaves.findById(leaveId).orElseThrow(()->new ResponseStatusException(HttpStatus.NOT_FOUND,"Không tìm thấy thông báo nghỉ"));
+  if(!"APPROVED".equalsIgnoreCase(leave.status)||leave.reviewedAt==null)throw new ResponseStatusException(HttpStatus.NOT_FOUND,"Không tìm thấy thông báo nghỉ");
+  approvalViews.findByLeaveIdAndReceptionistIdentityId(leaveId,identity).orElseGet(()->approvalViews.save(new LeaveApprovalView(leaveId,identity)));
+ } @PatchMapping("/{id}/leave/{leaveId}/approval") LeavePeriod decideLeave(@PathVariable UUID id,@PathVariable UUID leaveId,@RequestHeader("X-User-Id") UUID identity,@RequestHeader("X-User-Role") String role,@Valid @RequestBody LeaveDecisionBody body){
+  require(role,"ADMIN");
+  var doctor=doctors.findById(id).orElseThrow(()->new ResponseStatusException(HttpStatus.NOT_FOUND,"Không tìm thấy bác sĩ"));
+  var leave=leaves.findById(leaveId).orElseThrow(()->new ResponseStatusException(HttpStatus.NOT_FOUND,"Không tìm thấy yêu cầu nghỉ"));
+  if(!id.equals(leave.doctorId))throw new ResponseStatusException(HttpStatus.NOT_FOUND,"Không tìm thấy yêu cầu nghỉ");
+  if(!"PENDING".equals(leave.status))throw new ResponseStatusException(HttpStatus.CONFLICT,"Yêu cầu nghỉ này đã được xử lý");
+  var decision=body.decision().trim().toUpperCase(Locale.ROOT);
+  if(!Set.of("APPROVED","REJECTED").contains(decision))throw new ResponseStatusException(HttpStatus.BAD_REQUEST,"Quyết định phải là APPROVED hoặc REJECTED");
+  if("APPROVED".equals(decision)){
+   var hasBlockingAppointment=appointments.upcomingBlocking(id).stream().anyMatch(slot->leave.startAt.isBefore(slot.endAt())&&leave.endAt.isAfter(slot.startAt()));
+   if(hasBlockingAppointment)throw new ResponseStatusException(HttpStatus.CONFLICT,"Chưa thể duyệt vì khoảng nghỉ đang trùng lịch hoạt động; hãy xử lý lịch đó trước.");
+  }
+  leave.status=decision;leave.reviewedBy=identity;leave.reviewedAt=Instant.now();leave.reviewNote=body.note()==null||body.note().isBlank()?null:body.note().trim();
+  var saved=leaves.save(leave);if("APPROVED".equals(decision))profileUpdates.broadcastLeaveApproved(saved.id,doctor.id);return saved;
+ } @PatchMapping("/{id}/consultation-fee") Doctor updateConsultationFee(@PathVariable UUID id,@RequestHeader("X-User-Role") String role,@Valid @RequestBody ConsultationFeeBody body){
   require(role,"ADMIN");var doctor=doctors.findById(id).orElseThrow(()->new ResponseStatusException(HttpStatus.NOT_FOUND,"Không tìm thấy bác sĩ"));doctor.consultationFee=normalizeFee(body.consultationFee());var saved=doctors.save(doctor);profileUpdates.broadcastUpdated(saved.id);return saved;
  }
  @Transactional @PutMapping("/{id}/schedule") List<WorkSchedule> schedule(@PathVariable UUID id,@RequestHeader("X-User-Id") UUID identity,@RequestHeader("X-User-Role") String role,@Valid @RequestBody List<ScheduleBody> body){
@@ -52,11 +91,12 @@ public class DoctorController{
   requireOwner(id,role,identity);if(doctors.findById(id).isEmpty())throw new ResponseStatusException(HttpStatus.NOT_FOUND);if(!b.startAt().isBefore(b.endAt()))throw new ResponseStatusException(HttpStatus.BAD_REQUEST,"Khoảng nghỉ sai");
   var conflicts=appointments.upcomingBlocking(id).stream().filter(slot->b.startAt().isBefore(slot.endAt())&&b.endAt().isAfter(slot.startAt())).toList();
   rejectAppointmentConflicts(conflicts,"thêm khoảng nghỉ");
-  var x=new LeavePeriod();x.id=UUID.randomUUID();x.doctorId=id;x.startAt=b.startAt();x.endAt=b.endAt();x.reason=b.reason();return ResponseEntity.status(201).body(leaves.save(x));
+  var x=new LeavePeriod();x.id=UUID.randomUUID();x.doctorId=id;x.startAt=b.startAt();x.endAt=b.endAt();x.reason=b.reason();x.status="ADMIN".equals(role)?"APPROVED":"PENDING";x.requestedBy=identity;return ResponseEntity.status(201).body(leaves.save(x));
  }
  @DeleteMapping("/{id}/leave/{leaveId}") @ResponseStatus(HttpStatus.NO_CONTENT) void deleteLeave(@PathVariable UUID id,@PathVariable UUID leaveId,@RequestHeader("X-User-Id") UUID identity,@RequestHeader("X-User-Role") String role){
   requireOwner(id,role,identity);var leave=leaves.findById(leaveId).orElseThrow(()->new ResponseStatusException(HttpStatus.NOT_FOUND));if(!id.equals(leave.doctorId))throw new ResponseStatusException(HttpStatus.NOT_FOUND);leaves.delete(leave);
  }
+ private boolean isApproved(LeavePeriod leave){return leave.status==null||"APPROVED".equalsIgnoreCase(leave.status);}
  private void require(String got,String r){if(!r.equals(got))throw new ResponseStatusException(HttpStatus.FORBIDDEN);}
  private void requireAny(String got,String... r){if(Arrays.stream(r).noneMatch(got::equals))throw new ResponseStatusException(HttpStatus.FORBIDDEN);}
  private void requireOwner(UUID doctorId,String role,UUID identity){if("ADMIN".equals(role))return;if(!"DOCTOR".equals(role)||identity==null||doctors.findByIdentityId(identity).map(d->!d.id.equals(doctorId)).orElse(true))throw new ResponseStatusException(HttpStatus.FORBIDDEN);}

@@ -1,3 +1,5 @@
+export { default } from "../../components/v2/skin-analysis/SkinAnalysisV2";
+
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { BrainCircuit, CalendarDays, Check, ImagePlus, Trash2 } from "lucide-react";
 import { ApiError, request } from "../../core/api";
@@ -39,7 +41,7 @@ export function photoRejectionKind(message: string): "out-of-scope" | "quality" 
   return null;
 }
 
-export default function PatientAiScreen({ token, patient, openBooking }: { token: string; patient: Patient; openBooking: () => void }) {
+function LegacyPatientAiScreen({ token, patient, openBooking }: { token: string; patient: Patient; openBooking: () => void }) {
   const [file, setFile] = useState<File | null>(null);
   const [preview, setPreview] = useState("");
   const [prediction, setPrediction] = useState<AiPrediction | null>(null);

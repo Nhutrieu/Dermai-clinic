@@ -127,9 +127,17 @@ export default function SupportChat({ session }: { session: Tokens }) {
     }
 
     useEffect(() => {
-        void load();
-        const timer = window.setInterval(() => void load(), 4000);
-        return () => window.clearInterval(timer);
+        // Chat data is refreshed on demand and through WebSocket. Do not keep
+        // three API requests running while the floating chat is closed.
+        if (!open) return;
+        const refresh = () => { if (!document.hidden) void load(); };
+        refresh();
+        const timer = window.setInterval(refresh, 15_000);
+        document.addEventListener("visibilitychange", refresh);
+        return () => {
+            window.clearInterval(timer);
+            document.removeEventListener("visibilitychange", refresh);
+        };
     }, [open, conversation]);
 
     useEffect(() => {
@@ -144,8 +152,8 @@ export default function SupportChat({ session }: { session: Tokens }) {
     }, []);
 
     useEffect(() => subscribeRealtime(event => {
-        if (event.type === "CHAT_CHANGED") void load();
-    }), [conversation]);
+        if (event.type === "CHAT_CHANGED" && open && !document.hidden) void load();
+    }), [conversation, open]);
 
     useEffect(() => {
         const openChat = (event: Event) => {

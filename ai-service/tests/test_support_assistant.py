@@ -167,6 +167,22 @@ def test_doctor_availability_extracts_read_only_lookup_entities():
     assert decision.requested_date is not None
 
 
+def test_doctor_availability_accepts_doctor_leave_question():
+    decision = classify_support_request("Bác sĩ Bình nghỉ ngày mai không?")
+
+    assert decision.category == "DOCTOR_AVAILABILITY"
+    assert decision.doctor_name == "Bình"
+    assert decision.requested_date is not None
+
+
+def test_doctor_information_treats_any_doctor_wording_as_generic():
+    decision = classify_support_request("Cho tôi xem thông tin bác sĩ nào cũng được ngày 2/9")
+
+    assert decision.category == "DOCTOR_INFORMATION"
+    assert decision.doctor_name is None
+    assert decision.requested_date is not None
+
+
 def test_doctor_availability_accepts_short_doctor_prefix():
     decision = classify_support_request("Lịch BS. Bình ngày mai")
 

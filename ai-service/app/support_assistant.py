@@ -71,7 +71,7 @@ def rag_disease_key(question: str) -> str | None:
 def _appointment_entities(question: str) -> tuple[str | None, str | None, str | None]:
     """Extract routing entities only; Appointment Service remains the scheduling source of truth."""
     doctor_matches = re.finditer(
-        r"(?:bác\s*sĩ|bs\.?)[\s:]+(.+?)(?=\s+(?:ngày|ngay|hôm|hom|vào|vao|còn|con|có|co|lúc|luc|thứ|thu|trống|trong|rảnh|ranh|làm|lam)\b|[?!,.]|$)",
+        r"(?:bác\s*sĩ|bs\.?)[\s:]+(.+?)(?=\s+(?:ngày|ngay|hôm|hom|vào|vao|còn|con|có|co|lúc|luc|thứ|thu|trống|trong|rảnh|ranh|làm|lam|nghỉ|nghi)\b|[?!,.]|$)",
         question,
         re.IGNORECASE,
     )
@@ -81,6 +81,7 @@ def _appointment_entities(question: str) -> tuple[str | None, str | None, str | 
     conversational_suffixes = {
         "a", "nha", "nhe", "vay", "do", "nhi", "hen", "ma", "giup", "minh", "toi", "voi"
     }
+    generic_name_phrases = ("nao cung duoc", "bat ky", "nao do", "mot bac si")
     doctor_candidates = []
     for match in doctor_matches:
         candidate = match.group(1).strip(" -:")
@@ -91,7 +92,7 @@ def _appointment_entities(question: str) -> tuple[str | None, str | None, str | 
             name_parts.pop()
         candidate = " ".join(name_parts).strip(" -:?!,.")
         folded = _normalize(candidate)
-        if candidate and not folded.startswith(invalid_name_prefixes):
+        if candidate and not folded.startswith(invalid_name_prefixes) and not any(phrase in folded for phrase in generic_name_phrases):
             doctor_candidates.append(candidate)
     doctor_name = doctor_candidates[-1] if doctor_candidates else None
     today = datetime.now(ZoneInfo("Asia/Ho_Chi_Minh")).date()
@@ -191,10 +192,10 @@ def classify_support_request(question: str) -> SupportDecision:
         "lich bac si", "lich bs", "gio trong bac si", "gio trong bs",
         "bac si con lich", "bac si co lich", "xem lich", "kiem tra lich",
         "con lich", "co lich", "con trong", "co trong", "gio trong",
-        "gio nao trong", "bac si ranh", "bs ranh", "bac si lam", "bs lam",
+        "gio nao trong", "bac si ranh", "bs ranh", "bac si lam", "bs lam", "bac si nghi", "bs nghi", "ngay nghi",
     ))
     natural_availability = requested_date is not None and _contains(
-        normalized, ("lich", "trong", "ranh", "gio", "lam")
+        normalized, ("lich", "trong", "ranh", "gio", "lam", "nghi")
     )
     if (availability_wording or natural_availability) and doctor_reference and not personal_appointment:
         missing = []
@@ -375,6 +376,8 @@ def classify_support_request(question: str) -> SupportDecision:
             0.96,
             False,
             doctor_name,
+            requested_date,
+            requested_time,
         )
 
     if _contains(normalized, ("tim bac si", "bac si nao", "xem bac si", "danh sach bac si", "chuyen mon bac si")):

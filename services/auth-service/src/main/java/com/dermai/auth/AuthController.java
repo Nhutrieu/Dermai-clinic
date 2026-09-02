@@ -11,8 +11,8 @@ import java.util.*;
 import org.springframework.beans.factory.annotation.Value;
 @RestController @RequestMapping("/api/v1/auth")
 public class AuthController {
- private final AuthService service;private final GoogleIdentityVerifier google;private final String bootstrapToken;private final String serviceToken;
- public AuthController(AuthService service,GoogleIdentityVerifier google,@Value("${security.bootstrap-token}") String token,@Value("${security.service-token}") String serviceToken){this.service=service;this.google=google;this.bootstrapToken=token;this.serviceToken=serviceToken;}
+ private final AuthService service;private final GoogleIdentityVerifier google;private final AccountStatusStream accountStatus;private final String bootstrapToken;private final String serviceToken;
+ public AuthController(AuthService service,GoogleIdentityVerifier google,AccountStatusStream accountStatus,@Value("${security.bootstrap-token}") String token,@Value("${security.service-token}") String serviceToken){this.service=service;this.google=google;this.accountStatus=accountStatus;this.bootstrapToken=token;this.serviceToken=serviceToken;}
  record Credentials(@Email @NotBlank String email,@NotBlank @Size(min=10,max=100) String password){}
  record LoginCredentials(@Email @NotBlank String email,@NotBlank @Size(max=100) String password){}
  record Refresh(@NotBlank String refreshToken){}
@@ -56,6 +56,10 @@ public class AuthController {
  @GetMapping("/staff/directory") ResponseEntity<?> staffDirectory(@RequestHeader("X-User-Role") String caller){
   if(!Set.of("PATIENT","RECEPTIONIST","ADMIN").contains(caller))return ResponseEntity.status(403).body(Map.of("code","FORBIDDEN"));
   return ResponseEntity.ok(service.listStaff(com.dermai.auth.domain.Identity.Role.RECEPTIONIST).stream().map(x->new StaffDirectoryView(x.id,x.displayName,x.status)).toList());
+ }
+ @GetMapping(value="/events/account-status",produces=MediaType.TEXT_EVENT_STREAM_VALUE) org.springframework.web.servlet.mvc.method.annotation.SseEmitter accountStatusEvents(@RequestHeader("X-User-Id") UUID actor,@RequestHeader("X-User-Role") String caller){
+  if(!"PATIENT".equals(caller))throw new ResponseStatusException(HttpStatus.FORBIDDEN);
+  return accountStatus.subscribe(actor);
  }
  @GetMapping("/me") ResponseEntity<?> me(@RequestHeader("X-User-Id") UUID actor,@RequestHeader("X-User-Role") String caller){
   if(!Set.of("PATIENT","RECEPTIONIST").contains(caller))return ResponseEntity.status(403).body(Map.of("code","FORBIDDEN"));
@@ -103,7 +107,7 @@ public class AuthController {
  }
  @PatchMapping("/patients/{id}/account") ResponseEntity<?> updatePatientAccount(@RequestHeader("X-User-Role") String caller,@PathVariable java.util.UUID id,@RequestBody BlockPatient x){
   if(!"ADMIN".equals(caller))return ResponseEntity.status(403).body(Map.of("code","FORBIDDEN"));
-  var u=service.setPatientBlocked(id,x.blocked());return ResponseEntity.ok(Map.of("identityId",u.id,"email",u.email,"status",u.status));
+  var u=service.setPatientBlocked(id,x.blocked());accountStatus.publish(u.id,u.status.name());return ResponseEntity.ok(Map.of("identityId",u.id,"email",u.email,"status",u.status));
  }
  @PostMapping("/bootstrap-admin") ResponseEntity<?> bootstrap(@RequestHeader("X-Bootstrap-Token") String token,@Valid @RequestBody Credentials x){
   if(bootstrapToken.isBlank()||!java.security.MessageDigest.isEqual(bootstrapToken.getBytes(java.nio.charset.StandardCharsets.UTF_8),token.getBytes(java.nio.charset.StandardCharsets.UTF_8)))return ResponseEntity.status(403).body(Map.of("code","FORBIDDEN"));

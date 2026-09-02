@@ -3,7 +3,9 @@ import {
   AlertTriangle,
   CalendarClock,
   CheckCircle2,
+  ChevronDown,
   ChevronRight,
+  ChevronUp,
   CircleSlash2,
   Clock3,
   RefreshCcw,
@@ -50,6 +52,8 @@ type Props = {
   onNoShow: (appointmentId: string) => Promise<void>;
   onRetryQueue: () => Promise<void>;
 };
+
+const INITIAL_VISIBLE_APPOINTMENTS = 5;
 
 const STATUS_ORDER: ReceptionQueuePhase[] = [
   "attention",
@@ -208,15 +212,20 @@ export default function ReceptionQueueBoard(props: Props) {
   const [query, setQuery] = useState("");
   const [doctorFilter, setDoctorFilter] = useState("ALL");
   const [statusFilter, setStatusFilter] = useState<QueueFilter>("ALL");
-  const [sort, setSort] = useState<QueueSort>("TIME_ASC");
+  const [sort, setSort] = useState<QueueSort>("STATUS");
   const [now, setNow] = useState(() => new Date());
   const [noShowAppointment, setNoShowAppointment] = useState<Appointment | null>(null);
+  const [isQueueExpanded, setIsQueueExpanded] = useState(false);
 
   // One shared minute clock keeps time-based labels current without per-row timers.
   useEffect(() => {
     const timer = window.setInterval(() => setNow(new Date()), 60_000);
     return () => window.clearInterval(timer);
   }, []);
+
+  useEffect(() => {
+    setIsQueueExpanded(false);
+  }, [doctorFilter, query, sort, statusFilter]);
 
   const todayAppointments = useMemo(
     () => getOperationalAppointments(props.appointments, now),
@@ -266,12 +275,16 @@ export default function ReceptionQueueBoard(props: Props) {
     });
   }, [attentionIds, doctorFilter, now, props.doctorName, props.patientName, query, sort, statusFilter, todayAppointments]);
 
-  const hasFilters = Boolean(query || doctorFilter !== "ALL" || statusFilter !== "ALL" || sort !== "TIME_ASC");
+  const hasFilters = Boolean(query || doctorFilter !== "ALL" || statusFilter !== "ALL" || sort !== "STATUS");
+  const canToggleVisibleAppointments = filteredAppointments.length > INITIAL_VISIBLE_APPOINTMENTS;
+  const visibleAppointments = isQueueExpanded
+    ? filteredAppointments
+    : filteredAppointments.slice(0, INITIAL_VISIBLE_APPOINTMENTS);
   const summaryItems: { key: QueueFilter; label: string; value: number }[] = [
     { key: "upcoming", label: "Sắp đến", value: summary.upcoming },
     { key: "overdue", label: "Qua giờ hẹn", value: summary.overdue },
     { key: "checked_in", label: "Đã đến", value: summary.checkedIn },
-    { key: "in_progress", label: "Đang khám", value: summary.inProgress },
+    { key: "closed", label: "Đã hủy", value: summary.closed },
     { key: "completed", label: "Hoàn tất", value: summary.completed },
     { key: "no_show", label: "Vắng mặt", value: summary.noShow },
     { key: "ATTENTION", label: "Cần xử lý", value: summary.attention },
@@ -281,7 +294,7 @@ export default function ReceptionQueueBoard(props: Props) {
     setQuery("");
     setDoctorFilter("ALL");
     setStatusFilter("ALL");
-    setSort("TIME_ASC");
+    setSort("STATUS");
   }
 
   return (
@@ -360,7 +373,7 @@ export default function ReceptionQueueBoard(props: Props) {
           <select value={sort} onChange={event => setSort(event.target.value as QueueSort)}>
             <option value="TIME_ASC">Giờ hẹn sớm nhất</option>
             <option value="TIME_DESC">Giờ hẹn muộn nhất</option>
-            <option value="STATUS">Ưu tiên trạng thái</option>
+            <option value="STATUS">Ưu tiên xử lý</option>
           </select>
         </label>
       </div>
@@ -385,12 +398,13 @@ export default function ReceptionQueueBoard(props: Props) {
           {hasFilters && <button type="button" onClick={resetFilters}>Xóa bộ lọc</button>}
         </div>
       ) : (
-        <div className="reception-queue-table-wrap">
+        <>
+          <div className="reception-queue-table-wrap">
           <div className="reception-queue-table-head" aria-hidden="true">
             <span>Giờ hẹn</span><span>Bệnh nhân</span><span>Bác sĩ</span><span>Tiến trình</span><span>Thao tác</span>
           </div>
           <div className="reception-queue-list" role="list" aria-live="polite">
-            {filteredAppointments.map(item => {
+            {visibleAppointments.map(item => {
               const state = getReceptionQueueState(item, now);
               const patient = props.patientName(item);
               const doctor = props.doctorName(item);
@@ -440,10 +454,26 @@ export default function ReceptionQueueBoard(props: Props) {
             })}
           </div>
         </div>
+        {canToggleVisibleAppointments && (
+          <div className="reception-queue-expand-controls">
+            <span>Đang hiển thị {visibleAppointments.length} trong {filteredAppointments.length} lịch phù hợp</span>
+            <button
+              type="button"
+              className="reception-queue-expand"
+              aria-expanded={isQueueExpanded}
+              onClick={() => setIsQueueExpanded(current => !current)}
+            >
+              {isQueueExpanded
+                ? <><ChevronUp aria-hidden="true" />Thu gọn</>
+                : <><ChevronDown aria-hidden="true" />Xem thêm ({filteredAppointments.length - visibleAppointments.length})</>}
+            </button>
+          </div>
+        )}
+        </>
       )}
 
       <footer className="reception-queue-footer">
-        <span>Đang hiển thị {filteredAppointments.length} trong {todayAppointments.length} lịch</span>
+        <span>Đang hiển thị {visibleAppointments.length} trong {filteredAppointments.length} lịch</span>
         <button type="button" className="reception-text-action" onClick={props.onOpenAccepted}>Xem toàn bộ lịch <ChevronRight aria-hidden="true" /></button>
       </footer>
 

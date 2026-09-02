@@ -21,6 +21,30 @@ import {
 
 type PatientPage = { content: Patient[]; totalElements: number };
 type ReceptionTab = "profile" | "appointments" | "records";
+type LeaveApprovalNotice = { id: string; doctorId: string; startAt: string; endAt: string; reviewedAt: string };
+const RECEPTION_LEAVE_APPROVALS_SEEN_KEY = "dermai-reception-leave-approvals-seen";
+
+function tokenIdentityId(token: string) {
+  try {
+    const encoded = token.split(".")[1].replace(/-/g, "+").replace(/_/g, "/");
+    return JSON.parse(atob(encoded)).sub as string | undefined;
+  } catch {
+    return undefined;
+  }
+}
+
+function receptionSeenStorageKey(token: string) {
+  return RECEPTION_LEAVE_APPROVALS_SEEN_KEY + ":" + (tokenIdentityId(token) || "current");
+}
+
+function readSeenLeaveApprovalIds(storageKey: string) {
+  try {
+    const value = JSON.parse(localStorage.getItem(storageKey) || "[]");
+    return new Set<string>(Array.isArray(value) ? value.filter(item => typeof item === "string") : []);
+  } catch {
+    return new Set<string>();
+  }
+}
 
 function appointmentSnapshot(appointment: Appointment) {
   return [
@@ -42,6 +66,17 @@ export default function ReceptionWorkspace({
   tab: string;
   onNavigate: (tab: ReceptionTab) => void;
 }) {
+  const [leaveApprovalNotice, setLeaveApprovalNotice] = useState("");
+  const leaveApprovalSeenStorageKey = receptionSeenStorageKey(token);
+  const seenLeaveApprovalIdsRef = useRef<Set<string>>(readSeenLeaveApprovalIds(leaveApprovalSeenStorageKey));
+  const pendingLeaveApprovalIdsRef = useRef<Set<string>>(new Set());
+
+  function showLeaveApprovalNotice(count: number) {
+    setLeaveApprovalNotice(count > 1
+      ? `Admin vừa duyệt ${count} yêu cầu nghỉ của bác sĩ. Lễ tân vui lòng rà soát các lịch bị ảnh hưởng và liên hệ bệnh nhân nếu cần.`
+      : "Admin vừa duyệt một yêu cầu nghỉ của bác sĩ. Lễ tân vui lòng rà soát các lịch bị ảnh hưởng và liên hệ bệnh nhân nếu cần.");
+  }
+
   useEffect(() => {
     const navigate = (event: Event) => {
       const target = (event as CustomEvent<ReceptionTab>).detail;
@@ -51,8 +86,83 @@ export default function ReceptionWorkspace({
     return () => window.removeEventListener("reception-navigate", navigate);
   }, [onNavigate]);
 
-  if (tab !== "profile") return <ReceptionPanel token={token} tab={tab} />;
-  return <ReceptionDashboardContainer token={token} onNavigate={onNavigate} />;
+  useEffect(() => {
+    const notify = (event: Event) => {
+      const detail = (event as CustomEvent<{ leaveId?: string }>).detail;
+      const leaveId = detail?.leaveId;
+      if (leaveId) {
+        if (seenLeaveApprovalIdsRef.current.has(leaveId)) return;
+        pendingLeaveApprovalIdsRef.current.add(leaveId);
+      }
+      showLeaveApprovalNotice(Math.max(1, pendingLeaveApprovalIdsRef.current.size));
+    };
+    window.addEventListener("doctor-leave-approved", notify);
+    return () => window.removeEventListener("doctor-leave-approved", notify);
+  }, []);
+
+  useEffect(() => {
+    let active = true;
+    const refreshApprovedLeaves = async () => {
+      try {
+        const approvals = await request<LeaveApprovalNotice[]>("/doctors/leave-approvals/recent", token);
+        if (!active) return;
+        const unseen = approvals.filter(item =>
+          !seenLeaveApprovalIdsRef.current.has(item.id)
+          && !pendingLeaveApprovalIdsRef.current.has(item.id)
+        );
+        if (!unseen.length) return;
+        unseen.forEach(item => pendingLeaveApprovalIdsRef.current.add(item.id));
+        showLeaveApprovalNotice(pendingLeaveApprovalIdsRef.current.size);
+      } catch {
+        // Realtime remains the primary path; a temporary polling failure is silent.
+      }
+    };
+    void refreshApprovedLeaves();
+    const timer = window.setInterval(() => void refreshApprovedLeaves(), 10_000);
+    return () => {
+      active = false;
+      window.clearInterval(timer);
+    };
+  }, [token]);
+
+  function dismissLeaveApprovalNotice() {
+    const ids = Array.from(pendingLeaveApprovalIdsRef.current);
+    void Promise.allSettled(ids.map(id =>
+      request("/doctors/leave-approvals/" + id + "/read", token, { method: "POST" })
+    ));
+    const next = new Set([...seenLeaveApprovalIdsRef.current, ...ids]);
+    seenLeaveApprovalIdsRef.current = next;
+    try {
+      localStorage.setItem(leaveApprovalSeenStorageKey, JSON.stringify(Array.from(next).slice(-100)));
+    } catch {
+      // Storage is optional.
+    }
+    pendingLeaveApprovalIdsRef.current.clear();
+    setLeaveApprovalNotice("");
+  }
+
+  const leaveAlert = leaveApprovalNotice ? (
+    <section className="reception-leave-notice" role="alert" aria-live="assertive" aria-label="Thông báo duyệt nghỉ bác sĩ">
+      <div className="reception-leave-notice-icon" aria-hidden="true">!</div>
+      <div className="reception-leave-notice-copy">
+        <strong>Thông báo mới cho lễ tân</strong>
+        <span>{leaveApprovalNotice}</span>
+      </div>
+      <div className="reception-leave-notice-actions">
+        <button type="button" className="reception-leave-notice-view" onClick={() => onNavigate("appointments")}>Xem lịch</button>
+        <button type="button" className="reception-leave-notice-close" onClick={dismissLeaveApprovalNotice} aria-label="Đóng thông báo">Đã xem</button>
+      </div>
+    </section>
+  ) : null;
+
+  if (tab !== "profile") return <>
+    {leaveAlert}
+    <ReceptionPanel token={token} tab={tab} />
+  </>;
+  return <>
+    {leaveAlert}
+    <ReceptionDashboardContainer token={token} onNavigate={onNavigate} />
+  </>;
 }
 
 function ReceptionDashboardContainer({

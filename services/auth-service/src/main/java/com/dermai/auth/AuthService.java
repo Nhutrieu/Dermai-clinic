@@ -78,7 +78,8 @@ public class AuthService {
  @Transactional(readOnly=true) public Optional<Identity> findIdentity(UUID id){return users.findById(id);}
  public Tokens login(String email,String password){
   var user=users.findByEmailIgnoreCase(email).orElseThrow(()->new IllegalArgumentException("BAD_CREDENTIALS"));
-  if(user.status!=Identity.Status.ACTIVE || user.passwordHash==null || !encoder.matches(password,user.passwordHash)) throw new IllegalArgumentException("BAD_CREDENTIALS");
+  if(user.passwordHash==null || !encoder.matches(password,user.passwordHash)) throw new IllegalArgumentException("BAD_CREDENTIALS");
+  if(user.status!=Identity.Status.ACTIVE) throw new IllegalArgumentException("ACCOUNT_BLOCKED");
   if(user.role==Identity.Role.PATIENT&&user.emailVerifiedAt==null)throw new IllegalArgumentException("EMAIL_NOT_VERIFIED");
   return issue(user);
  }

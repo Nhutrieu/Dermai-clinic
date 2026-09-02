@@ -1,10 +1,9 @@
-const DEV_GATEWAY_HOST = typeof window === "undefined" ? "localhost" : window.location.hostname;
-const DEV_GATEWAY_ORIGIN = import.meta.env.DEV ? `http://${DEV_GATEWAY_HOST}:8080` : "";
-const API_ROOT = DEV_GATEWAY_ORIGIN + "/api/v1";
+const API_ROOT = "/api/v1";
 const SESSION_EXPIRED_MESSAGE = "Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.";
 
 const API_ERROR_MESSAGES: Record<string, string> = {
   BAD_CREDENTIALS: "Email hoặc mật khẩu không đúng.",
+  ACCOUNT_BLOCKED: "Tài khoản đã bị khóa. Vui lòng liên hệ phòng khám để được hỗ trợ.",
   ACCESS_DENIED: "Bạn không có quyền thực hiện thao tác này.",
   UNAUTHORIZED: "Phiên đăng nhập không hợp lệ. Vui lòng đăng nhập lại.",
   NOT_FOUND: "Không tìm thấy dữ liệu yêu cầu.",
