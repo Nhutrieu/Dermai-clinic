@@ -15,7 +15,7 @@ type AppointmentListProps = {
     appointments: Appointment[];
     token?: string;
     cancel?: (id: string, reason: string) => Promise<void>;
-    reschedule?: (id: string, value: string) => Promise<void>;
+    reschedule?: (id: string, value: string, endAt?: string) => Promise<void>;
     bookFollowUp?: (id: string, slot: Recommendation) => Promise<void>;
     hide?: (id: string) => Promise<void>;
     patientName?: string;
@@ -116,7 +116,7 @@ export function RescheduleAppointmentControl({
 }: {
     token: string;
     appointment: Appointment;
-    submit: (value: string) => Promise<void>;
+    submit: (value: string, endAt?: string) => Promise<void>;
 }) {
     const [open, setOpen] = useState(false);
     const [value, setValue] = useState("");
@@ -166,7 +166,7 @@ export function RescheduleAppointmentControl({
             {message && <small role="status">{message}</small>}
             {slots.map(slot => (
                 <button type="button" className="appointment-recommended-slot" key={slot.startAt} onClick={async () => {
-                    await submit(slot.startAt);
+                    await submit(slot.startAt, slot.endAt);
                     setOpen(false);
                 }}>
                     {formatAppointmentTime(slot.startAt)}
@@ -550,7 +550,7 @@ export default function PatientAppointmentList({
                                             <RescheduleAppointmentControl
                                                 token={token}
                                                 appointment={item}
-                                                submit={value => reschedule(item.id, value)}
+                                                submit={(value, endAt) => reschedule(item.id, value, endAt)}
                                             />
                                         )}
                                     {hasSelfServiceAction && canSelfManage && cancel && (

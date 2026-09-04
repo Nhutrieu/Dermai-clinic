@@ -54,6 +54,36 @@ class SupportAssistantServiceTest {
   assertThat(result.escalated()).isFalse();
  }
 
+ @Test void clinicClosureAnswerUsesTheSchedulingSourceOfTruth(){
+  var fixture=new Fixture();var patient=UUID.randomUUID();
+  when(fixture.ai.classify(anyString())).thenReturn(new SupportAiClient.Decision("Đang tra cứu","CLINIC_CLOSURE",false,"Tra lịch nghỉ",.96,false,null,"2026-09-02",null));
+  when(fixture.conversations.failureCount(patient)).thenReturn(0);
+  when(fixture.conversations.lastIntent(patient)).thenReturn(null);
+  when(fixture.scheduling.lookupClinicClosure(LocalDate.of(2026,9,2))).thenReturn(new SchedulingRecommendationService.ClinicClosureLookup(LocalDate.of(2026,9,2),true,"Quốc khánh"));
+  when(fixture.conversations.recordAiTurn(eq(patient),eq("CLINIC_CLOSURE"),anyDouble(),eq(0),eq(false),anyString(),isNull())).thenReturn(fixture.state(patient,"AI_ACTIVE"));
+
+  var result=fixture.service.process(patient,"PATIENT","Bearer token","Phòng khám có nghỉ ngày 2/9 không?");
+
+  assertThat(result.answer()).contains("nghỉ ngày 02/09/2026").contains("Quốc khánh");
+  assertThat(result.escalated()).isFalse();
+ }
+
+ @Test void doctorLeaveScheduleAnswerUsesApprovedLeavePeriods(){
+  var fixture=new Fixture();var patient=UUID.randomUUID();
+  var start=ZonedDateTime.of(LocalDate.of(2026,9,3),LocalTime.of(8,0),ZoneId.of("Asia/Ho_Chi_Minh")).toInstant();
+  var end=start.plusSeconds(8*3600);
+  when(fixture.ai.classify(anyString())).thenReturn(new SupportAiClient.Decision("Đang tra cứu","DOCTOR_LEAVE_SCHEDULE",false,"Tra lịch nghỉ",.94,false,"Bình",null,null));
+  when(fixture.conversations.failureCount(patient)).thenReturn(0);
+  when(fixture.conversations.lastIntent(patient)).thenReturn(null);
+  when(fixture.scheduling.lookupDoctorLeavePeriods("Bình","Bearer token","PATIENT")).thenReturn(new SchedulingRecommendationService.DoctorLeavePeriodLookup("FOUND","Bình",List.of(new SchedulingRecommendationService.DoctorLeavePeriod(start,end)),List.of()));
+  when(fixture.conversations.recordAiTurn(eq(patient),eq("DOCTOR_LEAVE_SCHEDULE"),anyDouble(),eq(0),eq(false),anyString(),isNull())).thenReturn(fixture.state(patient,"AI_ACTIVE"));
+
+  var result=fixture.service.process(patient,"PATIENT","Bearer token","Bác sĩ Bình có nghỉ ngày nào không?");
+
+  assertThat(result.answer()).contains("Bác sĩ Bình").contains("03/09/2026 08:00");
+  assertThat(result.escalated()).isFalse();
+ }
+
  @Test void availabilityAnswerChecksTheRequestedTimeExactly(){
   var fixture=new Fixture();var patient=UUID.randomUUID();var doctor=UUID.randomUUID();var identity=UUID.randomUUID();
   var start=ZonedDateTime.of(LocalDate.of(2026,8,14),LocalTime.of(9,0),ZoneId.of("Asia/Ho_Chi_Minh")).toInstant();
@@ -118,6 +148,21 @@ class SupportAssistantServiceTest {
   assertThat(result.answer()).contains("09:00").contains("Bác sĩ Bình");
  }
 
+ @Test void doctorLeaveFollowUpKeepsDoctorFromPreviousPatientTurn(){
+  var fixture=new Fixture();var patient=UUID.randomUUID();var previous=new SupportMessage();
+  previous.id=UUID.randomUUID();previous.patientIdentityId=patient;previous.senderIdentityId=patient;previous.senderRole="PATIENT";previous.body="Lich nghi bac si Binh";previous.sentAt=Instant.now().minusSeconds(10);
+  when(fixture.conversations.lastIntent(patient)).thenReturn("DOCTOR_LEAVE_SCHEDULE");
+  when(fixture.messages.findFirstByPatientIdentityIdAndSenderRoleOrderBySentAtDesc(patient,"PATIENT")).thenReturn(Optional.of(previous));
+  when(fixture.ai.classify("Lich nghi bac si Binh\nNgay 3/9/2026")).thenReturn(new SupportAiClient.Decision("Dang tra cuu","DOCTOR_AVAILABILITY",false,"Tra lich",.94,false,"Binh","2026-09-03",null));
+  when(fixture.conversations.failureCount(patient)).thenReturn(0);
+  when(fixture.scheduling.lookupAvailability("Binh",LocalDate.of(2026,9,3),patient,"Bearer token","PATIENT")).thenReturn(new SchedulingRecommendationService.AvailabilityLookup("NO_SLOTS","Binh",LocalDate.of(2026,9,3),List.of(),List.of()));
+  when(fixture.conversations.recordAiTurn(eq(patient),anyString(),anyDouble(),eq(0),eq(false),anyString(),isNull())).thenReturn(fixture.state(patient,"AI_ACTIVE"));
+
+  var result=fixture.service.process(patient,"PATIENT","Bearer token","Ngay 3/9/2026");
+
+  verify(fixture.ai).classify("Lich nghi bac si Binh\nNgay 3/9/2026");
+  assertThat(result.escalated()).isFalse();
+ }
  @Test void doctorInformationUsesActiveDoctorProfilesFromDoctorService(){
   var fixture=new Fixture();var patient=UUID.randomUUID();
   var binh=new SchedulingRecommendationService.DoctorProfile(UUID.randomUUID(),"Bình","DA LIỄU TỔNG QUÁT",6,"CCHN-BINH-001",new java.math.BigDecimal("150000"),"Khám và điều trị các bệnh da liễu thường gặp.");

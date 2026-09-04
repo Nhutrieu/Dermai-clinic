@@ -72,6 +72,13 @@ def test_greeting_and_call_phrases_do_not_escalate(message: str):
     assert decision.needs_clarification is False
 
 
+@pytest.mark.parametrize("message", ["OK", "Oke", "Cảm ơn", "Vâng"])
+def test_short_acknowledgements_do_not_escalate_to_receptionist(message: str):
+    decision = classify_support_request(message)
+
+    assert decision.category == "ACKNOWLEDGEMENT"
+    assert decision.requires_handoff is False
+
 def test_stacked_conversation_openers_alone_are_a_greeting():
     decision = classify_support_request("Bạn ơi cho mình hỏi")
 
@@ -173,6 +180,34 @@ def test_doctor_availability_accepts_doctor_leave_question():
     assert decision.category == "DOCTOR_AVAILABILITY"
     assert decision.doctor_name == "Bình"
     assert decision.requested_date is not None
+
+
+def test_doctor_leave_schedule_question_without_a_date_is_supported():
+    decision = classify_support_request("Bác sĩ Bình có nghỉ ngày nào không?")
+
+    assert decision.category == "DOCTOR_LEAVE_SCHEDULE"
+    assert decision.doctor_name == "Bình"
+    assert decision.requires_handoff is False
+    assert decision.needs_clarification is False
+
+
+def test_clinic_closure_question_extracts_the_requested_date():
+    decision = classify_support_request("Phòng khám có nghỉ ngày 2/9 không?")
+
+    assert decision.category == "CLINIC_CLOSURE"
+    assert decision.requires_handoff is False
+    assert decision.needs_clarification is False
+    assert decision.requested_date is not None
+    assert decision.requested_date.endswith("-09-02")
+
+
+def test_clinic_closure_question_without_a_date_asks_for_one():
+    decision = classify_support_request("Phòng khám hôm nào nghỉ vậy?")
+
+    assert decision.category == "CLINIC_CLOSURE"
+    assert decision.requires_handoff is False
+    assert decision.needs_clarification is True
+    assert "ngày nào" in decision.answer
 
 
 def test_doctor_information_treats_any_doctor_wording_as_generic():

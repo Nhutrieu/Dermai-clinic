@@ -82,6 +82,29 @@ class DoctorScheduleConflictTest {
   }
 
   @Test
+  void permitsChangingToSixtyMinuteSlotsWithoutChangingAnExistingThirtyMinuteAppointment() {
+    var doctors = mock(DoctorRepository.class);
+    var schedules = mock(ScheduleRepository.class);
+    var leaves = mock(LeaveRepository.class);
+    var appointments = mock(AppointmentScheduleClient.class);
+    var doctor = doctor();
+    when(doctors.findById(doctor.id)).thenReturn(Optional.of(doctor));
+    when(schedules.findByDoctorId(doctor.id)).thenReturn(List.of());
+    var visit = futureVisitAt(LocalTime.of(8, 30));
+    when(appointments.upcomingBlocking(doctor.id)).thenReturn(List.of(visit));
+    var controller = new DoctorController(doctors, schedules, leaves,
+        mock(DoctorProfileWebSocketHandler.class), appointments);
+    short weekday = (short) visit.startAt().atZone(CLINIC_ZONE).getDayOfWeek().getValue();
+
+    controller.schedule(doctor.id, UUID.randomUUID(), "ADMIN", List.of(
+        new DoctorController.ScheduleBody(weekday, LocalTime.of(8, 0), LocalTime.of(12, 0), 60)));
+
+    assertThat(visit.endAt()).isEqualTo(visit.startAt().plusSeconds(1_800));
+    verify(schedules).deleteAll(List.of());
+    verify(schedules).saveAll(any());
+  }
+
+  @Test
   void rejectsLeaveThatOverlapsAConfirmedAppointment() {
     var doctors = mock(DoctorRepository.class);
     var leaves = mock(LeaveRepository.class);

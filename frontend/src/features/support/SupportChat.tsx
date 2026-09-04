@@ -313,7 +313,7 @@ export default function SupportChat({ session }: { session: Tokens }) {
         setBookingBusy(true);
         setBookingSlot(null);
         try {
-            const result = await request<AvailabilityResponse>(`/appointments/availability?doctorId=${encodeURIComponent(bookingDoctorId)}&date=${encodeURIComponent(bookingDate)}&durationMinutes=30`, session.accessToken);
+            const result = await request<AvailabilityResponse>(`/appointments/availability?doctorId=${encodeURIComponent(bookingDoctorId)}&date=${encodeURIComponent(bookingDate)}`, session.accessToken);
             setBookingSlots(result.items.filter(item => item.status === "AVAILABLE"));
             setBookingClosureReason(result.status === "CLINIC_CLOSED"
                 ? result.closureReason?.trim() || "Phòng khám tạm nghỉ."

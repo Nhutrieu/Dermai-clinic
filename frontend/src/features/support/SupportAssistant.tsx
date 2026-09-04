@@ -24,6 +24,7 @@ export default function SupportAssistant({
   const [question, setQuestion] = useState("");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
+  const [pendingQuestion, setPendingQuestion] = useState<string | null>(null);
   const messageListRef = useRef<HTMLDivElement>(null);
   const questionRef = useRef<HTMLTextAreaElement>(null);
   // Keep the human-support history in the same thread when a resolved request
@@ -40,7 +41,7 @@ export default function SupportAssistant({
       list.scrollTo({ top: list.scrollHeight, behavior: reducedMotion ? "auto" : "smooth" });
     });
     return () => window.cancelAnimationFrame(frame);
-  }, [transcript.length, busy]);
+  }, [transcript.length, pendingQuestion, busy]);
 
   async function send(event: FormEvent) {
     event.preventDefault();
@@ -49,6 +50,7 @@ export default function SupportAssistant({
 
     setQuestion("");
     setError("");
+    setPendingQuestion(value);
     setBusy(true);
     try {
       // Appointment Service owns persistence, real availability and escalation,
@@ -58,7 +60,10 @@ export default function SupportAssistant({
         body: JSON.stringify({ question: value }),
       });
       await onUpdated(result);
+      setPendingQuestion(null);
     } catch (reason) {
+      setQuestion(value);
+      setPendingQuestion(null);
       setError((reason as Error).message);
     } finally {
       setBusy(false);
@@ -86,6 +91,11 @@ export default function SupportAssistant({
         <p>{message.body}</p>
         <small>{new Date(message.sentAt).toLocaleTimeString("vi-VN", { hour: "2-digit", minute: "2-digit" })}</small>
       </article>)}
+      {pendingQuestion && <article className="mine support-ai-pending" aria-label="Tin nhan dang gui">
+        <b>Bạn</b>
+        <p>{pendingQuestion}</p>
+        <small>Dang gui...</small>
+      </article>}
       {busy && <article className="theirs support-ai-message support-ai-typing"><Bot aria-hidden="true" /><span>Đang kiểm tra dữ liệu và yêu cầu…</span></article>}
     </div>
 

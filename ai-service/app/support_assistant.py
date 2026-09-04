@@ -147,6 +147,16 @@ def classify_support_request(question: str) -> SupportDecision:
             0.96,
         )
 
+    # Short acknowledgements are normal conversation turns, not requests for
+    # human support.  Never hand them off merely because they have no detail.
+    if normalized in {"ok", "oke", "okay", "oki", "uk", "uh", "u", "vang", "da", "cam on", "thanks", "thank you"}:
+        return SupportDecision(
+            "ACKNOWLEDGEMENT",
+            "Mình đã ghi nhận. Bạn có thể tiếp tục hỏi về lịch bác sĩ, lịch nghỉ, giá khám hoặc cách đặt lịch nhé.",
+            False,
+            "Bệnh nhân xác nhận hoặc cảm ơn; không cần chuyển lễ tân.",
+            0.99,
+        )
     if _contains(normalized, ("ban khong hieu", "toi da noi roi", "sao van khong duoc", "van khong duoc", "tra loi sai")):
         return SupportDecision(
             "DISSATISFACTION",
@@ -197,7 +207,29 @@ def classify_support_request(question: str) -> SupportDecision:
     natural_availability = requested_date is not None and _contains(
         normalized, ("lich", "trong", "ranh", "gio", "lam", "nghi")
     )
-    if (availability_wording or natural_availability) and doctor_reference and not personal_appointment:
+    doctor_leave_question = doctor_reference and _contains(normalized, ("nghi", "ngay nghi", "lich nghi"))
+    if (availability_wording or natural_availability or doctor_leave_question) and doctor_reference and not personal_appointment:
+        if doctor_leave_question and not requested_date:
+            if not doctor_name:
+                return SupportDecision(
+                    "DOCTOR_LEAVE_SCHEDULE",
+                    "Bạn cho mình biết tên bác sĩ để mình kiểm tra các khoảng nghỉ đã được duyệt nhé.",
+                    False,
+                    "Chưa có tên bác sĩ để tra cứu lịch nghỉ.",
+                    0.72,
+                    True,
+                )
+            return SupportDecision(
+                "DOCTOR_LEAVE_SCHEDULE",
+                "Mình đang kiểm tra các khoảng nghỉ đã được duyệt của bác sĩ trên hệ thống.",
+                False,
+                "Tra cứu các khoảng nghỉ của bác sĩ.",
+                0.94,
+                False,
+                doctor_name,
+                None,
+                None,
+            )
         missing = []
         if not doctor_name:
             missing.append("tên bác sĩ")
@@ -225,6 +257,32 @@ def classify_support_request(question: str) -> SupportDecision:
             doctor_name,
             requested_date,
             requested_time,
+        )
+
+    clinic_reference = _contains(normalized, ("phong kham", "clinic"))
+    clinic_closure_question = _contains(normalized, (
+        "nghi", "dong cua", "co lam viec", "mo cua", "ngay nghi",
+    ))
+    if clinic_reference and clinic_closure_question:
+        if not requested_date:
+            return SupportDecision(
+                "CLINIC_CLOSURE",
+                "Bạn muốn kiểm tra phòng khám có nghỉ vào ngày nào? Bạn có thể nhập ví dụ: phòng khám có nghỉ ngày 02/09 không?",
+                False,
+                "Chưa có ngày để tra cứu lịch nghỉ của phòng khám.",
+                0.88,
+                True,
+            )
+        return SupportDecision(
+            "CLINIC_CLOSURE",
+            "Mình đang kiểm tra lịch nghỉ của phòng khám trên hệ thống.",
+            False,
+            "Tra cứu ngày phòng khám nghỉ.",
+            0.96,
+            False,
+            None,
+            requested_date,
+            None,
         )
 
     visit_action = re.search(r"\b(?:nen|can|phai)\s+(?:di\s+)?kham\b", normalized) is not None

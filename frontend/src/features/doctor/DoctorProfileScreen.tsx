@@ -1,12 +1,13 @@
 import { FormEvent, useEffect, useMemo, useState } from "react";
 import { BadgeCheck, CalendarOff, Camera, Clock3, Save, Trash2 } from "lucide-react";
 import { request } from "../../core/api";
-import type { Doctor, LeavePeriod, WorkSchedule } from "../../core/types";
+import type { Doctor, LeavePeriod, SlotDurationPolicy, WorkSchedule } from "../../core/types";
 
 type Props = {
   token: string;
   doctor: Doctor;
   work: WorkSchedule[];
+  slotPolicies: SlotDurationPolicy[];
   leave: LeavePeriod[];
   saved: (doctor: Doctor) => void;
 };
@@ -14,6 +15,19 @@ type Props = {
 type FeedbackScope = "overview" | "professional" | "bio" | "schedule" | "leave";
 type Feedback = { text: string; error: boolean };
 const CLINIC_WORKDAYS = [1, 2, 3, 4, 5];
+
+function localDateValue(date = new Date()) {
+  const offset = date.getTimezoneOffset() * 60_000;
+  return new Date(date.getTime() - offset).toISOString().slice(0, 10);
+}
+
+export function slotMinutesOn(date: string, schedules: WorkSchedule[], policies: SlotDurationPolicy[]) {
+  const latest = policies
+    .filter(policy => policy.effectiveFrom <= date)
+    .sort((left, right) => left.effectiveFrom.localeCompare(right.effectiveFrom))
+    .at(-1);
+  return latest?.slotMinutes ?? schedules.find(item => item.weekday === 1)?.slotMinutes ?? schedules[0]?.slotMinutes ?? 30;
+}
 
 function initials(name: string) {
   return name.trim().split(/\s+/).slice(-2).map(part => part[0]).join("").toUpperCase();
@@ -40,15 +54,17 @@ function leaveStatusLabel(status: LeavePeriod["status"]) {
   return "Đã duyệt";
 }
 
-export default function DoctorProfileScreen({ token, doctor, work, leave, saved }: Props) {
+export default function DoctorProfileScreen({ token, doctor, work, slotPolicies, leave, saved }: Props) {
   const savedWeekday = work.find(item => item.weekday === 1) || work[0];
   const [profile, setProfile] = useState(doctor);
   const [schedules, setSchedules] = useState(work);
   const [leaves, setLeaves] = useState(leave);
+  const [durationPolicies, setDurationPolicies] = useState(slotPolicies);
   const [bio, setBio] = useState(doctor.bio || "");
   const [startTime, setStartTime] = useState(savedWeekday?.startTime.slice(0, 5) || "08:00");
   const [endTime, setEndTime] = useState(savedWeekday?.endTime.slice(0, 5) || "17:00");
-  const [slotMinutes, setSlotMinutes] = useState(savedWeekday?.slotMinutes || 30);
+  const [effectiveFrom, setEffectiveFrom] = useState(localDateValue);
+  const [slotMinutes, setSlotMinutes] = useState(() => slotMinutesOn(localDateValue(), work, slotPolicies));
   const [leaveStart, setLeaveStart] = useState("");
   const [leaveEnd, setLeaveEnd] = useState("");
   const [leaveReason, setLeaveReason] = useState("");
@@ -104,6 +120,10 @@ export default function DoctorProfileScreen({ token, doctor, work, leave, saved 
   const configuredWorkdays = useMemo(
     () => CLINIC_WORKDAYS.filter(day => schedules.some(item => item.weekday === day)).length,
     [schedules],
+  );
+  const currentSlotMinutes = useMemo(
+    () => slotMinutesOn(localDateValue(), schedules, durationPolicies),
+    [durationPolicies, schedules],
   );
   const sortedLeaves = useMemo(
     () => [...leaves].sort((left, right) => new Date(left.startAt).getTime() - new Date(right.startAt).getTime()),
@@ -170,20 +190,25 @@ export default function DoctorProfileScreen({ token, doctor, work, leave, saved 
     event.preventDefault();
     setFeedbackScope("schedule");
     try {
-      const weekly = CLINIC_WORKDAYS.map(day => ({ id: "", weekday: day, startTime, endTime, slotMinutes }));
-      const body = weekly.map(item => ({
-        weekday: item.weekday,
-        startTime: item.startTime,
-        endTime: item.endTime,
-        slotMinutes: item.slotMinutes,
+      const fallbackMinutes = savedWeekday?.slotMinutes || 30;
+      const body = CLINIC_WORKDAYS.map(day => ({
+        weekday: day,
+        startTime,
+        endTime,
+        slotMinutes: schedules.find(item => item.weekday === day)?.slotMinutes || fallbackMinutes,
       }));
       const updated = await request<WorkSchedule[]>(`/doctors/${doctor.id}/schedule`, token, {
         method: "PUT",
         body: JSON.stringify(body),
       });
+      const policy = await request<SlotDurationPolicy>(`/doctors/${doctor.id}/slot-duration`, token, {
+        method: "PUT",
+        body: JSON.stringify({ effectiveFrom, slotMinutes }),
+      });
       setSchedules(updated);
+      setDurationPolicies(current => [...current.filter(item => item.effectiveFrom !== policy.effectiveFrom), policy]);
       setFeedback({
-        text: `Đã lưu giờ làm việc ${startTime} - ${endTime}, mỗi lượt ${slotMinutes} phút, từ Thứ Hai đến Thứ Sáu.`,
+        text: `Đã lưu: mỗi lượt ${slotMinutes} phút từ ngày ${new Date(effectiveFrom + "T00:00:00").toLocaleDateString("vi-VN")} trở đi.`,
         error: false,
       });
     } catch (cause) {
@@ -297,19 +322,20 @@ export default function DoctorProfileScreen({ token, doctor, work, leave, saved 
         <aside className="doctor-profile-secondary" aria-label="Lịch làm việc và nghỉ phép">
           <section className="doctor-profile-section doctor-profile-schedule" aria-labelledby="doctor-schedule-title">
             <header className="doctor-profile-section-heading">
-              <div><h2 id="doctor-schedule-title"><Clock3 aria-hidden="true" /> Lịch làm việc</h2><p>Thiết lập một khung giờ chung cho các ngày trong tuần.</p></div>
+              <div><h2 id="doctor-schedule-title"><Clock3 aria-hidden="true" /> Lịch làm việc</h2><p>Thiết lập khung giờ chung và chọn ngày bắt đầu áp dụng thời lượng slot mới.</p></div>
             </header>
             {renderFeedback("schedule")}
             <div className="doctor-profile-schedule-summary" role="status">
               <div><span>Ngày làm việc</span><strong>{configuredWorkdays === 5 ? "Thứ Hai - Thứ Sáu" : `${configuredWorkdays}/5 ngày đã cấu hình`}</strong></div>
               <div><span>Khung giờ hiện tại</span><strong>{weekdaySchedule ? `${weekdaySchedule.startTime.slice(0, 5)} - ${weekdaySchedule.endTime.slice(0, 5)}` : "Chưa thiết lập"}</strong></div>
-              <div><span>Thời lượng mỗi lượt</span><strong>{weekdaySchedule ? `${weekdaySchedule.slotMinutes} phút` : "Chưa thiết lập"}</strong></div>
+              <div><span>Thời lượng hiện tại</span><strong>{currentSlotMinutes} phút</strong></div>
             </div>
             <form className="doctor-profile-schedule-form" onSubmit={saveWeeklySchedule}>
               <label>Bắt đầu<input type="time" required value={startTime} onChange={event => setStartTime(event.target.value)} /></label>
               <label>Kết thúc<input type="time" required value={endTime} onChange={event => setEndTime(event.target.value)} /></label>
+              <label className="doctor-profile-effective-date-field">Áp dụng slot từ ngày<input type="date" min={localDateValue()} required value={effectiveFrom} onChange={event => setEffectiveFrom(event.target.value)} /></label>
               <label className="doctor-profile-slot-field">Thời lượng mỗi lượt khám<div className="doctor-profile-number-control"><input type="number" min="10" max="120" required value={slotMinutes} onChange={event => setSlotMinutes(Number(event.target.value))} /><span>phút</span></div></label>
-              <p className="doctor-profile-helper">Giờ nghỉ trưa 12:00 - 13:00 được hệ thống áp dụng tự động.</p>
+              <p className="doctor-profile-helper">Slot mới áp dụng cho mọi ngày làm việc kể từ ngày đã chọn. Các lịch hẹn cũ vẫn giữ nguyên thời lượng. Giờ nghỉ trưa 12:00 - 13:00 được áp dụng tự động.</p>
               <button type="submit" className="doctor-profile-primary-button">Lưu giờ làm việc</button>
             </form>
           </section>

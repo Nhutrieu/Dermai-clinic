@@ -34,7 +34,7 @@ class SupportAssistantService {
   if(!conversations.aiActiveOrNew(patientIdentityId))throw new ResponseStatusException(HttpStatus.CONFLICT,"Cuộc trò chuyện đã được chuyển đến lễ tân. Vui lòng tiếp tục nhắn trong kênh hỗ trợ hiện tại.");
   String previousIntent=conversations.lastIntent(patientIdentityId);
   String routedQuestion=question;
-  if("DOCTOR_AVAILABILITY".equals(previousIntent)){
+  if("DOCTOR_AVAILABILITY".equals(previousIntent)||"DOCTOR_LEAVE_SCHEDULE".equals(previousIntent)||"CLINIC_CLOSURE".equals(previousIntent)){
    // Keep the previous patient wording so a follow-up such as "14/8 lúc 9h"
    // retains the doctor name without storing a separate synthetic profile.
    routedQuestion=messages.findFirstByPatientIdentityIdAndSenderRoleOrderBySentAtDesc(patientIdentityId,"PATIENT")
@@ -58,6 +58,14 @@ class SupportAssistantService {
   String attempt="AI đã phân loại và trả lời hướng dẫn.";
   if("DOCTOR_AVAILABILITY".equals(decision.category())&&!decision.needsClarification()){
    var lookup=lookupAvailability(decision,patientIdentityId,authorization,role);
+   answer=lookup.answer();failed=lookup.failed();attempt=lookup.attempt();
+  }
+  if("DOCTOR_LEAVE_SCHEDULE".equals(decision.category())&&!decision.needsClarification()){
+   var lookup=lookupDoctorLeaveSchedule(decision,authorization,role);
+   answer=lookup.answer();failed=lookup.failed();attempt=lookup.attempt();
+  }
+  if("CLINIC_CLOSURE".equals(decision.category())&&!decision.needsClarification()){
+   var lookup=lookupClinicClosure(decision);
    answer=lookup.answer();failed=lookup.failed();attempt=lookup.attempt();
   }
   if("DOCTOR_INFORMATION".equals(decision.category())&&!decision.needsClarification()){
@@ -131,6 +139,40 @@ class SupportAssistantService {
    };
   }catch(RuntimeException error){
    return new AvailabilityAnswer("Mình chưa tra cứu được lịch bác sĩ ở thời điểm này. Bạn có thể cung cấp lại tên bác sĩ và ngày muốn khám.",true,"API availability trả lỗi: "+error.getClass().getSimpleName());
+  }
+ }
+
+ private DoctorLeaveScheduleAnswer lookupDoctorLeaveSchedule(SupportAiClient.Decision decision,String authorization,String role){
+  try{
+   var result=scheduling.lookupDoctorLeavePeriods(decision.doctorName(),authorization,role);
+   return switch(result.status()){
+    case "FOUND" -> {
+     if(result.periods().isEmpty())yield new DoctorLeaveScheduleAnswer("Hệ thống chưa ghi nhận khoảng nghỉ nào đã được duyệt của Bác sĩ "+result.doctorName()+".",false,"Đã tra cứu lịch nghỉ đã duyệt; không có khoảng nghỉ.");
+     String periods=result.periods().stream().limit(8).map(item->item.startAt().atZone(CLINIC_ZONE).format(DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm"))+" – "+item.endAt().atZone(CLINIC_ZONE).format(DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm"))).reduce((a,b)->a+"; "+b).orElse("");
+     yield new DoctorLeaveScheduleAnswer("Các khoảng nghỉ đã được duyệt của Bác sĩ "+result.doctorName()+": "+periods+". Bạn nên chọn ngày hoặc khung giờ khác trong mục Lịch khám.",false,"Đã tra cứu "+result.periods().size()+" khoảng nghỉ đã duyệt.");
+    }
+    case "AMBIGUOUS" -> new DoctorLeaveScheduleAnswer("Mình tìm thấy nhiều bác sĩ phù hợp: "+String.join(", ",result.candidates())+". Bạn cho mình biết chính xác tên bác sĩ nhé.",true,"Tên bác sĩ chưa đủ rõ để tra lịch nghỉ.");
+    default -> new DoctorLeaveScheduleAnswer("Mình chưa tìm thấy bác sĩ “"+decision.doctorName()+"”. Các bác sĩ hiện có: "+String.join(", ",result.candidates())+". Bạn kiểm tra lại tên giúp mình nhé.",true,"Không tìm thấy bác sĩ trong dữ liệu thật.");
+   };
+  }catch(RuntimeException error){
+   LOG.warn("Doctor leave schedule lookup failed: {}",error.getMessage());
+   return new DoctorLeaveScheduleAnswer("Mình chưa tra cứu được lịch nghỉ của bác sĩ ở thời điểm này. Bạn có thể thử lại sau ít phút hoặc để lễ tân kiểm tra giúp.",true,"Tra cứu lịch nghỉ bác sĩ lỗi: "+error.getClass().getSimpleName());
+  }
+ }
+
+ private ClinicClosureAnswer lookupClinicClosure(SupportAiClient.Decision decision){
+  try{
+   LocalDate date=LocalDate.parse(decision.requestedDate());
+   var result=scheduling.lookupClinicClosure(date);
+   String displayDate=date.format(DateTimeFormatter.ofPattern("dd/MM/yyyy"));
+   if(result.closed()){
+    String reason=result.reason()==null||result.reason().isBlank()?"không nêu lý do":"lý do: "+result.reason();
+    return new ClinicClosureAnswer("Phòng khám nghỉ ngày "+displayDate+" ("+reason+"). Bạn vui lòng chọn ngày khác trong mục Lịch khám hoặc liên hệ lễ tân nếu cần hỗ trợ.",false,"Đã tra cứu lịch nghỉ phòng khám ngày "+displayDate+".");
+   }
+   return new ClinicClosureAnswer("Phòng khám không có lịch nghỉ được ghi nhận ngày "+displayDate+". Khung giờ cụ thể vẫn phụ thuộc lịch làm việc và lịch trống của từng bác sĩ; bạn có thể hỏi tên bác sĩ để mình kiểm tra tiếp.",false,"Đã xác nhận không có lịch nghỉ phòng khám ngày "+displayDate+".");
+  }catch(RuntimeException error){
+   LOG.warn("Clinic closure lookup failed: {}",error.getMessage());
+   return new ClinicClosureAnswer("Mình chưa tra cứu được lịch nghỉ của phòng khám. Bạn có thể thử lại sau ít phút hoặc để lễ tân kiểm tra giúp.",true,"Tra cứu lịch nghỉ phòng khám lỗi: "+error.getClass().getSimpleName());
   }
  }
 
@@ -288,6 +330,8 @@ class SupportAssistantService {
  }
 
  record AvailabilityAnswer(String answer,boolean failed,String attempt){}
+ record DoctorLeaveScheduleAnswer(String answer,boolean failed,String attempt){}
+ record ClinicClosureAnswer(String answer,boolean failed,String attempt){}
  record DoctorInformationAnswer(String answer,boolean failed,String attempt){}
  record TurnResult(String answer,String intent,double intentConfidence,boolean escalated,String conversationStatus,String escalationReason){}
 }

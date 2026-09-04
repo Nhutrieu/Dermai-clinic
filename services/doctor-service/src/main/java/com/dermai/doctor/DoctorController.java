@@ -3,19 +3,20 @@ import jakarta.validation.Valid;import jakarta.validation.constraints.*;import o
 @RestController @RequestMapping("/api/v1/doctors")
 public class DoctorController{
  private static final ZoneId CLINIC_ZONE=ZoneId.of("Asia/Ho_Chi_Minh");
- private final DoctorRepository doctors;private final ScheduleRepository schedules;private final LeaveRepository leaves;private final LeaveApprovalViewRepository approvalViews;private final DoctorProfileWebSocketHandler profileUpdates;private final AppointmentScheduleClient appointments;
- @Autowired DoctorController(DoctorRepository d,ScheduleRepository s,LeaveRepository l,DoctorProfileWebSocketHandler p,AppointmentScheduleClient appointments,LeaveApprovalViewRepository v){doctors=d;schedules=s;leaves=l;approvalViews=v;profileUpdates=p;this.appointments=appointments;}
- DoctorController(DoctorRepository d,ScheduleRepository s,LeaveRepository l,DoctorProfileWebSocketHandler p,AppointmentScheduleClient appointments){this(d,s,l,p,appointments,null);}
+ private final DoctorRepository doctors;private final ScheduleRepository schedules;private final SlotDurationPolicyRepository slotPolicies;private final LeaveRepository leaves;private final LeaveApprovalViewRepository approvalViews;private final DoctorProfileWebSocketHandler profileUpdates;private final AppointmentScheduleClient appointments;
+ @Autowired DoctorController(DoctorRepository d,ScheduleRepository s,LeaveRepository l,DoctorProfileWebSocketHandler p,AppointmentScheduleClient appointments,LeaveApprovalViewRepository v,SlotDurationPolicyRepository policies){doctors=d;schedules=s;leaves=l;approvalViews=v;slotPolicies=policies;profileUpdates=p;this.appointments=appointments;}
+ DoctorController(DoctorRepository d,ScheduleRepository s,LeaveRepository l,DoctorProfileWebSocketHandler p,AppointmentScheduleClient appointments){this(d,s,l,p,appointments,null,null);}
  record DoctorBody(@NotNull UUID identityId,@NotBlank String fullName,@NotBlank String specialtyCode,@Min(0) int experienceYears,String certificateNo,@NotNull @DecimalMin("0") @Digits(integer=10,fraction=0) BigDecimal consultationFee){}
  record DoctorProfileBody(@NotBlank @Size(max=160) String fullName,@NotBlank @Size(max=80) String specialtyCode,@Min(0) @Max(80) int experienceYears,@Size(max=120) String certificateNo){}
  record ConsultationFeeBody(@NotNull @DecimalMin("0") @Digits(integer=10,fraction=0) BigDecimal consultationFee){}
  record ScheduleBody(@Min(1) @Max(7) short weekday,@NotNull LocalTime startTime,@NotNull LocalTime endTime,@Min(10) @Max(120) int slotMinutes){}
+ record SlotDurationBody(@NotNull LocalDate effectiveFrom,@Min(10) @Max(120) int slotMinutes){}
  record LeaveBody(@NotNull Instant startAt,@NotNull Instant endAt,@Size(max=250) String reason){}
  record LeaveDecisionBody(@NotBlank String decision,@Size(max=250) String note){}
  record LeaveRequest(UUID id,UUID doctorId,String doctorName,Instant startAt,Instant endAt,String reason,String status,UUID requestedBy,Instant reviewedAt,String reviewNote){}
  record LeaveApproval(UUID id,UUID doctorId,Instant startAt,Instant endAt,Instant reviewedAt){}
  record BioBody(@Size(max=1200) String bio){}
- record SchedulingDoctor(UUID id,UUID identityId,String fullName,String specialtyCode,int experienceYears,String certificateNo,BigDecimal consultationFee,String bio,List<WorkSchedule> workSchedules,List<SchedulingLeave> leavePeriods){}
+ record SchedulingDoctor(UUID id,UUID identityId,String fullName,String specialtyCode,int experienceYears,String certificateNo,BigDecimal consultationFee,String bio,List<WorkSchedule> workSchedules,List<SlotDurationPolicy> slotPolicies,List<SchedulingLeave> leavePeriods){}
  record SchedulingLeave(Instant startAt,Instant endAt){}
  @GetMapping List<Doctor> list(@RequestParam(required=false) String specialty){return specialty==null?doctors.findAll():doctors.findBySpecialtyCodeAndActiveTrue(specialty);}
  @GetMapping("/me") Doctor me(@RequestHeader("X-User-Id") UUID identity,@RequestHeader("X-User-Role") String role){require(role,"DOCTOR");return doctors.findByIdentityId(identity).orElseThrow(()->new ResponseStatusException(HttpStatus.NOT_FOUND,"Tài khoản chưa có hồ sơ bác sĩ"));}
@@ -32,10 +33,10 @@ public class DoctorController{
  }
  @PatchMapping("/me/bio") Doctor updateBio(@RequestHeader("X-User-Id") UUID identity,@RequestHeader("X-User-Role") String role,@Valid @RequestBody BioBody body){require(role,"DOCTOR");var doctor=doctors.findByIdentityId(identity).orElseThrow(()->new ResponseStatusException(HttpStatus.NOT_FOUND));doctor.bio=body.bio()==null||body.bio().isBlank()?null:body.bio().trim();var saved=doctors.save(doctor);profileUpdates.broadcastUpdated(saved.id);return saved;}
  @GetMapping("/{id}/avatar") ResponseEntity<byte[]> avatar(@PathVariable UUID id){var doctor=doctors.findById(id).orElseThrow(()->new ResponseStatusException(HttpStatus.NOT_FOUND));if(doctor.avatarData==null)throw new ResponseStatusException(HttpStatus.NOT_FOUND);return ResponseEntity.ok().contentType(MediaType.parseMediaType(doctor.avatarMime)).cacheControl(CacheControl.noCache()).body(doctor.avatarData);}
- @GetMapping("/me/schedule") Map<String,Object> mySchedule(@RequestHeader("X-User-Id") UUID identity,@RequestHeader("X-User-Role") String role){require(role,"DOCTOR");var d=doctors.findByIdentityId(identity).orElseThrow(()->new ResponseStatusException(HttpStatus.NOT_FOUND));return Map.of("workSchedules",schedules.findByDoctorId(d.id),"leavePeriods",leaves.findByDoctorId(d.id));}
+ @GetMapping("/me/schedule") Map<String,Object> mySchedule(@RequestHeader("X-User-Id") UUID identity,@RequestHeader("X-User-Role") String role){require(role,"DOCTOR");var d=doctors.findByIdentityId(identity).orElseThrow(()->new ResponseStatusException(HttpStatus.NOT_FOUND));return Map.of("workSchedules",schedules.findByDoctorId(d.id),"slotPolicies",slotPolicies==null?List.of():slotPolicies.findByDoctorIdOrderByEffectiveFromAsc(d.id),"leavePeriods",leaves.findByDoctorId(d.id));}
  @GetMapping("/scheduling-data") List<SchedulingDoctor> schedulingData(@RequestHeader("X-User-Role") String role){
   requireAny(role,"PATIENT","RECEPTIONIST","DOCTOR","ADMIN");
-  return doctors.findAll().stream().filter(d->d.active).map(d->new SchedulingDoctor(d.id,d.identityId,d.fullName,d.specialtyCode,d.experienceYears,d.certificateNo,d.consultationFee,d.bio,schedules.findByDoctorId(d.id),leaves.findByDoctorId(d.id).stream().filter(this::isApproved).map(x->new SchedulingLeave(x.startAt,x.endAt)).toList())).toList();
+  return doctors.findAll().stream().filter(d->d.active).map(d->new SchedulingDoctor(d.id,d.identityId,d.fullName,d.specialtyCode,d.experienceYears,d.certificateNo,d.consultationFee,d.bio,schedules.findByDoctorId(d.id),slotPolicies==null?List.of():slotPolicies.findByDoctorIdOrderByEffectiveFromAsc(d.id),leaves.findByDoctorId(d.id).stream().filter(this::isApproved).map(x->new SchedulingLeave(x.startAt,x.endAt)).toList())).toList();
  }
  @PostMapping ResponseEntity<Doctor> create(@RequestHeader("X-User-Role") String role,@Valid @RequestBody DoctorBody b){
   require(role,"ADMIN");if(doctors.findByIdentityId(b.identityId()).isPresent())throw new ResponseStatusException(HttpStatus.CONFLICT,"Tài khoản đã có hồ sơ bác sĩ");var d=new Doctor(b.identityId(),b.fullName(),b.specialtyCode());d.experienceYears=b.experienceYears();d.certificateNo=b.certificateNo();d.consultationFee=normalizeFee(b.consultationFee());var saved=doctors.save(d);profileUpdates.broadcastUpdated(saved.id);return ResponseEntity.status(201).body(saved);
@@ -87,6 +88,12 @@ public class DoctorController{
   var next=body.stream().map(x->{var s=new WorkSchedule();s.id=UUID.randomUUID();s.doctorId=id;s.weekday=x.weekday();s.startTime=x.startTime();s.endTime=x.endTime();s.slotMinutes=x.slotMinutes();return s;}).toList();
   schedules.deleteAll(schedules.findByDoctorId(id));schedules.flush();return schedules.saveAll(next);
  }
+ @PutMapping("/{id}/slot-duration") SlotDurationPolicy slotDuration(@PathVariable UUID id,@RequestHeader("X-User-Id") UUID identity,@RequestHeader("X-User-Role") String role,@Valid @RequestBody SlotDurationBody body){
+  requireOwner(id,role,identity);if(doctors.findById(id).isEmpty())throw new ResponseStatusException(HttpStatus.NOT_FOUND);
+  if(body.effectiveFrom().isBefore(LocalDate.now(CLINIC_ZONE)))throw new ResponseStatusException(HttpStatus.BAD_REQUEST,"Ngày áp dụng không được ở trong quá khứ");
+  var policy=slotPolicies.findByDoctorIdAndEffectiveFrom(id,body.effectiveFrom()).orElseGet(()->{var created=new SlotDurationPolicy();created.id=UUID.randomUUID();created.doctorId=id;created.effectiveFrom=body.effectiveFrom();return created;});
+  policy.slotMinutes=body.slotMinutes();var saved=slotPolicies.save(policy);profileUpdates.broadcastUpdated(id);return saved;
+ }
  @PostMapping("/{id}/leave") ResponseEntity<LeavePeriod> leave(@PathVariable UUID id,@RequestHeader("X-User-Id") UUID identity,@RequestHeader("X-User-Role") String role,@Valid @RequestBody LeaveBody b){
   requireOwner(id,role,identity);if(doctors.findById(id).isEmpty())throw new ResponseStatusException(HttpStatus.NOT_FOUND);if(!b.startAt().isBefore(b.endAt()))throw new ResponseStatusException(HttpStatus.BAD_REQUEST,"Khoảng nghỉ sai");
   var conflicts=appointments.upcomingBlocking(id).stream().filter(slot->b.startAt().isBefore(slot.endAt())&&b.endAt().isAfter(slot.startAt())).toList();
@@ -100,7 +107,7 @@ public class DoctorController{
  private void require(String got,String r){if(!r.equals(got))throw new ResponseStatusException(HttpStatus.FORBIDDEN);}
  private void requireAny(String got,String... r){if(Arrays.stream(r).noneMatch(got::equals))throw new ResponseStatusException(HttpStatus.FORBIDDEN);}
  private void requireOwner(UUID doctorId,String role,UUID identity){if("ADMIN".equals(role))return;if(!"DOCTOR".equals(role)||identity==null||doctors.findByIdentityId(identity).map(d->!d.id.equals(doctorId)).orElse(true))throw new ResponseStatusException(HttpStatus.FORBIDDEN);}
- private boolean covers(ScheduleBody schedule,AppointmentScheduleClient.AppointmentSlot slot){var start=slot.startAt().atZone(CLINIC_ZONE);var end=slot.endAt().atZone(CLINIC_ZONE);if(start.getDayOfWeek().getValue()!=schedule.weekday()||!start.toLocalDate().equals(end.toLocalDate()))return false;boolean within=!start.toLocalTime().isBefore(schedule.startTime())&&!end.toLocalTime().isAfter(schedule.endTime());long offset=Duration.between(schedule.startTime(),start.toLocalTime()).toMinutes();return within&&offset>=0&&offset%schedule.slotMinutes()==0;}
+ private boolean covers(ScheduleBody schedule,AppointmentScheduleClient.AppointmentSlot slot){var start=slot.startAt().atZone(CLINIC_ZONE);var end=slot.endAt().atZone(CLINIC_ZONE);if(start.getDayOfWeek().getValue()!=schedule.weekday()||!start.toLocalDate().equals(end.toLocalDate()))return false;return !start.toLocalTime().isBefore(schedule.startTime())&&!end.toLocalTime().isAfter(schedule.endTime());}
  private void rejectAppointmentConflicts(List<AppointmentScheduleClient.AppointmentSlot> conflicts,String action){
   if(conflicts.isEmpty())return;
   var formatter=java.time.format.DateTimeFormatter.ofPattern("HH:mm dd/MM/yyyy");

@@ -4,7 +4,7 @@ import { createPortal } from "react-dom";
 import { Activity, ArrowLeft, ArrowRight, LockKeyhole, Mail, PhoneCall, ShieldCheck, Sparkles, X } from "lucide-react";
 import { ApiError, configureAccessTokenRecovery, request, requestBlob } from "./core/api";
 import { subscribeAccountStatus, subscribeRealtime } from "./core/realtime";
-import type { AccountProfile, Appointment, Doctor, LeavePeriod, MedicalRecord, Patient, Prescription, Tokens, WorkSchedule } from "./core/types";
+import type { AccountProfile, Appointment, Doctor, LeavePeriod, MedicalRecord, Patient, Prescription, SlotDurationPolicy, Tokens, WorkSchedule } from "./core/types";
 import { RecordList } from "./components/Records";
 import { State } from "./components/Ui";
 import AppHeader from "./components/AppHeader";
@@ -526,7 +526,7 @@ function Dashboard({ session, logout }: { session: Tokens; logout: () => void })
         sessionStorage.removeItem("derm-home-intent");
         if (sessionStorage.getItem("derm-home-booking") || intent === "appointments") return "appointments";
         return intent === "ai" ? "ai" : "profile";
-    }); const [patient, setPatient] = useState<Patient | null>(null); const [doctor, setDoctor] = useState<Doctor | null>(null); const [appointments, setAppointments] = useState<Appointment[]>([]); const [records, setRecords] = useState<MedicalRecord[]>([]); const [prescriptions, setPrescriptions] = useState<Prescription[]>([]); const [patients, setPatients] = useState<Record<string, Patient>>({}); const [work, setWork] = useState<WorkSchedule[]>([]); const [leave, setLeave] = useState<LeavePeriod[]>([]); const [loading, setLoading] = useState(true); const [error, setError] = useState("");
+    }); const [patient, setPatient] = useState<Patient | null>(null); const [doctor, setDoctor] = useState<Doctor | null>(null); const [appointments, setAppointments] = useState<Appointment[]>([]); const [records, setRecords] = useState<MedicalRecord[]>([]); const [prescriptions, setPrescriptions] = useState<Prescription[]>([]); const [patients, setPatients] = useState<Record<string, Patient>>({}); const [work, setWork] = useState<WorkSchedule[]>([]); const [slotPolicies, setSlotPolicies] = useState<SlotDurationPolicy[]>([]); const [leave, setLeave] = useState<LeavePeriod[]>([]); const [loading, setLoading] = useState(true); const [error, setError] = useState("");
     const [patientResourceState, setPatientResourceState] = useState({
         appointments: { loading: true, error: "" },
         records: { loading: true, error: "" },
@@ -576,12 +576,12 @@ function Dashboard({ session, logout }: { session: Tokens; logout: () => void })
         };
     }, [session.accessToken, session.role]);
     async function loadDoctor() {
-        const d = await request<Doctor>("/doctors/me", session.accessToken); const schedule = await request<{ workSchedules: WorkSchedule[]; leavePeriods: LeavePeriod[] }>("/doctors/me/schedule", session.accessToken);
+        const d = await request<Doctor>("/doctors/me", session.accessToken); const schedule = await request<{ workSchedules: WorkSchedule[]; slotPolicies?: SlotDurationPolicy[]; leavePeriods: LeavePeriod[] }>("/doctors/me/schedule", session.accessToken);
         // Include recent history so a forgotten IN_PROGRESS visit remains visible to the doctor.
         const from = new Date(); from.setDate(from.getDate() - 90); from.setHours(0, 0, 0, 0); const to = new Date(); to.setFullYear(to.getFullYear() + 1);
         const [a, r] = await Promise.all([request<Appointment[]>(`/appointments/doctor/mine?from=${encodeURIComponent(from.toISOString())}&to=${encodeURIComponent(to.toISOString())}`, session.accessToken), request<MedicalRecord[]>("/medical-records/doctor/mine", session.accessToken)]);
         const unique = [...new Set(a.map(x => x.patientId))]; const entries = await Promise.all(unique.map(async id => [id, await request<Patient>(`/patients/${id}`, session.accessToken)] as const));
-        setDoctor(d); setWork(schedule.workSchedules); setLeave(schedule.leavePeriods); setAppointments(a); setRecords(r); setPatients(Object.fromEntries(entries));
+        setDoctor(d); setWork(schedule.workSchedules); setSlotPolicies(schedule.slotPolicies || []); setLeave(schedule.leavePeriods); setAppointments(a); setRecords(r); setPatients(Object.fromEntries(entries));
     }
     useEffect(() => {
         let live = true;
@@ -729,7 +729,7 @@ function Dashboard({ session, logout }: { session: Tokens; logout: () => void })
             {!loading && !error && session.role === "PATIENT" && patient && tab === "appointments" && <PatientAppointments token={session.accessToken} patient={patient} appointments={appointments} changed={setAppointments} />}
             {!loading && !error && session.role === "PATIENT" && patient && tab === "records" && <PatientMedicalRecords token={session.accessToken} patient={patient} appointments={appointments} records={records} prescriptions={prescriptions} resourceState={patientResourceState} openAppointments={() => setTab("appointments")} recordHidden={id => setRecords(current => current.filter(record => record.id !== id))} />}
             {!loading && !error && session.role === "PATIENT" && patient && tab === "ai" && <PatientAiScreen token={session.accessToken} patient={patient} openBooking={() => setTab("appointments")} />}
-            {!loading && !error && session.role === "DOCTOR" && doctor && tab === "profile" && <DoctorProfile token={session.accessToken} doctor={doctor} work={work} leave={leave} saved={setDoctor} />}
+            {!loading && !error && session.role === "DOCTOR" && doctor && tab === "profile" && <DoctorProfile token={session.accessToken} doctor={doctor} work={work} slotPolicies={slotPolicies} leave={leave} saved={setDoctor} />}
             {!loading && !error && session.role === "DOCTOR" && doctor && tab === "appointments" && <DoctorView token={session.accessToken} doctor={doctor} appointments={appointments} patients={patients} work={work} leave={leave} transition={transition} requireFollowUp={requireFollowUp} />}
             {!loading && !error && session.role === "DOCTOR" && tab === "records" && <RecordList records={records} patients={patients} />}
         </main>

@@ -1,6 +1,7 @@
 package com.dermai.appointment;
 
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
@@ -24,16 +25,20 @@ public class SchedulingRecommendationService {
  private final RestClient doctors;
  private final ClinicClosureRepository closures;
 
- SchedulingRecommendationService(AppointmentRepository appointments,ClinicClosureRepository closures,@Value("${doctor-service.url}") String doctorUrl){
-  this.appointments=appointments;this.closures=closures;this.engine=new SchedulingEngine();this.doctors=RestClient.builder().baseUrl(doctorUrl).build();
+ @Autowired SchedulingRecommendationService(AppointmentRepository appointments,ClinicClosureRepository closures,@Value("${doctor-service.url}") String doctorUrl){
+  this(appointments,closures,RestClient.builder().baseUrl(doctorUrl).build());
+ }
+
+ SchedulingRecommendationService(AppointmentRepository appointments,ClinicClosureRepository closures,RestClient doctors){
+  this.appointments=appointments;this.closures=closures;this.engine=new SchedulingEngine();this.doctors=doctors;
  }
 
  public Result recommend(Request request,String authorization,String role){
   Instant now=Instant.now(),bookingLimit=now.plus(BOOKING_WINDOW_DAYS,java.time.temporal.ChronoUnit.DAYS);
   if(request.preferredStart()==null||request.preferredStart().isBefore(now))throw new IllegalArgumentException("PREFERRED_START_MUST_BE_IN_FUTURE");
   if(request.preferredStart().isAfter(bookingLimit))throw new IllegalArgumentException("BOOKING_TOO_FAR_AHEAD");
-  int duration=request.durationMinutes()==null?30:request.durationMinutes();
-  if(duration<10||duration>120)throw new IllegalArgumentException("INVALID_DURATION");
+  int requestedDuration=request.durationMinutes()==null?30:request.durationMinutes();
+  if(requestedDuration<10||requestedDuration>120)throw new IllegalArgumentException("INVALID_DURATION");
   Instant horizon=request.preferredStart().plus(7,java.time.temporal.ChronoUnit.DAYS);if(horizon.isAfter(bookingLimit))horizon=bookingLimit;
   List<DoctorData> doctorData=loadDoctors(authorization,role);
   var busy=appointments.findActiveOverlapping(request.preferredStart(),horizon);
@@ -51,6 +56,7 @@ public class SchedulingRecommendationService {
      LocalDate date=first.plusDays(day);
      if(closures.existsByClosureDate(date))continue;
      if(date.getDayOfWeek().getValue()!=schedule.weekday())continue;
+     int duration=slotMinutesFor(doctor,schedule,date);
      ZonedDateTime cursor=ZonedDateTime.of(date,schedule.startTime(),CLINIC_ZONE);
      ZonedDateTime workEnd=ZonedDateTime.of(date,schedule.endTime(),CLINIC_ZONE);
      while(!cursor.plusMinutes(duration).isAfter(workEnd)){
@@ -65,7 +71,7 @@ public class SchedulingRecommendationService {
        double preference=doctor.id().equals(request.preferredDoctorId())?1:0;
        candidates.add(new SchedulingEngine.Candidate(doctor.id(),start,end,specialty,earliness,capacity,continuity,preference,true,leave,conflict));
       }
-      cursor=cursor.plusMinutes(schedule.slotMinutes());
+      cursor=cursor.plusMinutes(duration);
      }
     }
    }
@@ -87,10 +93,11 @@ public class SchedulingRecommendationService {
   var items=new ArrayList<AvailabilityItem>();
   for(var schedule:doctor.workSchedules()){
    if(date.getDayOfWeek().getValue()!=schedule.weekday())continue;
+   int slotDuration=slotMinutesFor(doctor,schedule,date);
    ZonedDateTime cursor=ZonedDateTime.of(date,schedule.startTime(),CLINIC_ZONE),workEnd=ZonedDateTime.of(date,schedule.endTime(),CLINIC_ZONE);
-   while(!cursor.plusMinutes(duration).isAfter(workEnd)){
-    Instant start=cursor.toInstant(),end=cursor.plusMinutes(duration).toInstant();
-    if(start.isAfter(Instant.now())&&!overlapsLunch(cursor,cursor.plusMinutes(duration))){
+   while(!cursor.plusMinutes(slotDuration).isAfter(workEnd)){
+    Instant start=cursor.toInstant(),end=cursor.plusMinutes(slotDuration).toInstant();
+    if(start.isAfter(Instant.now())&&!overlapsLunch(cursor,cursor.plusMinutes(slotDuration))){
      boolean onLeave=doctor.leavePeriods().stream().anyMatch(x->start.isBefore(x.endAt())&&end.isAfter(x.startAt()));
      var conflict=busy.stream().filter(x->doctorId.equals(x.doctorId)&&ACTIVE.contains(x.status)&&start.isBefore(x.endAt)&&end.isAfter(x.startAt)).findFirst();
      boolean ownHold=conflict.filter(x->x.status==AppointmentStatus.HELD&&viewerIdentity.equals(x.patientIdentityId)).isPresent();
@@ -98,7 +105,7 @@ public class SchedulingRecommendationService {
      String status=onLeave?"ON_LEAVE":ownHold?"HELD_BY_YOU":otherHold?"HELD_BY_OTHER":conflict.isPresent()?"BOOKED":"AVAILABLE";
      items.add(new AvailabilityItem(doctor.id(),doctor.identityId(),doctor.fullName(),doctor.specialtyCode(),start,end,status,ownHold?conflict.get().id:null,ownHold?conflict.get().holdExpiresAt:null));
     }
-    cursor=cursor.plusMinutes(schedule.slotMinutes());
+    cursor=cursor.plusMinutes(slotDuration);
    }
   }
   items.sort(Comparator.comparing(AvailabilityItem::startAt));
@@ -125,6 +132,11 @@ public class SchedulingRecommendationService {
   return new AvailabilityLookup(available.isEmpty()?"NO_SLOTS":"FOUND",doctor.fullName(),date,available,List.of(),doctorOnLeave,leaveSlots);
  }
 
+ public ClinicClosureLookup lookupClinicClosure(LocalDate date){
+  var closure=closures.findByClosureDate(date);
+  return new ClinicClosureLookup(date,closure.isPresent(),closure.map(item -> item.reason).orElse(null));
+ }
+
  public DoctorProfileLookup lookupDoctorProfiles(String doctorName,String authorization,String role){
   var all=loadDoctors(authorization,role);
   if(doctorName==null||doctorName.isBlank())
@@ -135,6 +147,18 @@ public class SchedulingRecommendationService {
   if(matches.isEmpty())return new DoctorProfileLookup("NOT_FOUND",List.of(),all.stream().map(DoctorData::fullName).toList());
   if(matches.size()>1)return new DoctorProfileLookup("AMBIGUOUS",List.of(),matches.stream().map(DoctorData::fullName).toList());
   return new DoctorProfileLookup("FOUND",List.of(toDoctorProfile(matches.get(0))),List.of());
+ }
+
+ public DoctorLeavePeriodLookup lookupDoctorLeavePeriods(String doctorName,String authorization,String role){
+  var all=loadDoctors(authorization,role);
+  String needle=foldName(doctorName);
+  var exact=all.stream().filter(item->foldName(item.fullName()).equals(needle)).toList();
+  var matches=exact.isEmpty()?all.stream().filter(item->doctorNameMatches(doctorName,item.fullName())).toList():exact;
+  if(matches.isEmpty())return new DoctorLeavePeriodLookup("NOT_FOUND",null,List.of(),all.stream().map(DoctorData::fullName).toList());
+  if(matches.size()>1)return new DoctorLeavePeriodLookup("AMBIGUOUS",null,List.of(),matches.stream().map(DoctorData::fullName).toList());
+  var doctor=matches.get(0);
+  var periods=doctor.leavePeriods().stream().sorted(Comparator.comparing(LeaveData::startAt)).map(item->new DoctorLeavePeriod(item.startAt(),item.endAt())).toList();
+  return new DoctorLeavePeriodLookup("FOUND",doctor.fullName(),periods,List.of());
  }
 
  public DoctorLeaveLookup lookupDoctorLeaveStatuses(String doctorName,LocalDate date,String authorization,String role){
@@ -183,9 +207,11 @@ public class SchedulingRecommendationService {
   if(closures.existsByClosureDate(localStart.toLocalDate()))throw new SlotUnavailableException("CLINIC_CLOSED");
   boolean inWorkSchedule=doctor.workSchedules().stream().anyMatch(x->{
    if(localStart.getDayOfWeek().getValue()!=x.weekday()||!localStart.toLocalDate().equals(localEnd.toLocalDate()))return false;
+   int configuredMinutes=slotMinutesFor(doctor,x,localStart.toLocalDate());
    boolean within=!localStart.toLocalTime().isBefore(x.startTime())&&!localEnd.toLocalTime().isAfter(x.endTime());
    long offset=Duration.between(x.startTime(),localStart.toLocalTime()).toMinutes();
-   return within&&offset>=0&&offset%x.slotMinutes()==0&&!overlapsLunch(localStart,localEnd);
+   boolean configuredDuration=Duration.between(start,end).equals(Duration.ofMinutes(configuredMinutes));
+   return within&&configuredDuration&&offset>=0&&offset%configuredMinutes==0&&!overlapsLunch(localStart,localEnd);
   });
   if(!inWorkSchedule)throw new SlotUnavailableException("OUTSIDE_DOCTOR_WORK_SCHEDULE");
   if(doctor.leavePeriods().stream().anyMatch(x->start.isBefore(x.endAt())&&end.isAfter(x.startAt())))throw new SlotUnavailableException("DOCTOR_ON_LEAVE");
@@ -205,6 +231,11 @@ public class SchedulingRecommendationService {
    throw new ResponseStatusException(HttpStatus.CONFLICT,"Mã bác sĩ và tài khoản bác sĩ không khớp.");
  }
  private boolean overlapsLunch(ZonedDateTime start,ZonedDateTime end){return start.toLocalTime().isBefore(LUNCH_END)&&end.toLocalTime().isAfter(LUNCH_START);}
+ private int slotMinutesFor(DoctorData doctor,ScheduleData schedule,LocalDate date){
+  if(doctor.slotPolicies()==null||doctor.slotPolicies().isEmpty())return schedule.slotMinutes();
+  return doctor.slotPolicies().stream().filter(policy->!policy.effectiveFrom().isAfter(date))
+   .max(Comparator.comparing(SlotPolicyData::effectiveFrom)).map(SlotPolicyData::slotMinutes).orElse(schedule.slotMinutes());
+ }
 
  private List<DoctorData> loadDoctors(String authorization,String role){
   List<DoctorData> data=doctors.get().uri("/api/v1/doctors/scheduling-data")
@@ -225,10 +256,14 @@ public class SchedulingRecommendationService {
  public record AvailabilityItem(UUID doctorId,UUID doctorIdentityId,String doctorName,String specialtyCode,Instant startAt,Instant endAt,String status,UUID holdId,Instant holdExpiresAt){}
  public record DoctorProfile(UUID doctorId,String doctorName,String specialtyCode,int experienceYears,String certificateNo,BigDecimal consultationFee,String bio){}
  public record DoctorProfileLookup(String status,List<DoctorProfile> profiles,List<String> candidates){}
+ public record DoctorLeavePeriodLookup(String status,String doctorName,List<DoctorLeavePeriod> periods,List<String> candidates){}
+ public record DoctorLeavePeriod(Instant startAt,Instant endAt){}
  public record DoctorLeaveLookup(String status,LocalDate date,List<DoctorLeaveStatus> items,List<String> candidates){}
  public record DoctorLeaveStatus(String doctorName,boolean onLeave){}
- record DoctorData(UUID id,UUID identityId,String fullName,String specialtyCode,int experienceYears,String certificateNo,BigDecimal consultationFee,String bio,List<ScheduleData> workSchedules,List<LeaveData> leavePeriods){}
+ public record ClinicClosureLookup(LocalDate date,boolean closed,String reason){}
+ record DoctorData(UUID id,UUID identityId,String fullName,String specialtyCode,int experienceYears,String certificateNo,BigDecimal consultationFee,String bio,List<ScheduleData> workSchedules,List<SlotPolicyData> slotPolicies,List<LeaveData> leavePeriods){}
  record ScheduleData(UUID id,UUID doctorId,short weekday,LocalTime startTime,LocalTime endTime,int slotMinutes){}
+ record SlotPolicyData(UUID id,UUID doctorId,LocalDate effectiveFrom,int slotMinutes){}
  record LeaveData(Instant startAt,Instant endAt){}
  public static class SlotUnavailableException extends RuntimeException{SlotUnavailableException(String message){super(message);}}
 }

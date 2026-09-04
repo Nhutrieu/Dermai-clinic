@@ -174,7 +174,7 @@ export default function ReceptionHotlineBookingView({ session }: { session: Toke
     try {
       const result = await request<AvailabilityResponse>(
         `/appointments/availability?doctorId=${encodeURIComponent(doctorId)}`
-          + `&date=${encodeURIComponent(date)}&durationMinutes=30`,
+          + `&date=${encodeURIComponent(date)}`,
         session.accessToken,
       );
       const nextSlots = result.items || [];

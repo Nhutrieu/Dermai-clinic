@@ -206,7 +206,7 @@ export default function PatientAppointmentsView({
         try {
             const result = await request<AvailabilityResponse>(
                 "/appointments/availability?doctorId=" + encodeURIComponent(doctorId)
-                + "&date=" + encodeURIComponent(date) + "&durationMinutes=30",
+                + "&date=" + encodeURIComponent(date),
                 token
             );
             const clinicClosed = result.status === "CLINIC_CLOSED";
@@ -691,7 +691,7 @@ export default function PatientAppointmentsView({
                                 <span aria-hidden="true">3</span>
                                 <div>
                                     <h3 id="time-step-title">Chọn khung giờ</h3>
-                                    <p>Mỗi lượt khám kéo dài 30 phút.</p>
+                                    <p>Thời lượng theo lịch bác sĩ đã thiết lập.</p>
                                 </div>
                             </div>
                             <div className="booking-slot-legend" aria-label="Chú thích trạng thái">

@@ -335,19 +335,20 @@ export default function PatientDashboard({
         }
     }
 
-    async function rescheduleAppointment(id: string, value: string) {
+    async function rescheduleAppointment(id: string, value: string, endValue?: string) {
         setFeedback(null);
         const appointment = appointments.find(item => item.id === id);
         if (!appointment) return;
         const startAt = new Date(value);
         const duration = Math.max(10 * 60_000, new Date(appointment.endAt).getTime() - new Date(appointment.startAt).getTime());
+        const endAt = endValue ? new Date(endValue) : new Date(startAt.getTime() + duration);
         try {
             await request("/appointments/" + id + "/reschedule", token, {
                 method: "POST",
                 headers: { "Idempotency-Key": crypto.randomUUID() },
                 body: JSON.stringify({
                     startAt: startAt.toISOString(),
-                    endAt: new Date(startAt.getTime() + duration).toISOString(),
+                    endAt: endAt.toISOString(),
                 }),
             });
             await refreshAppointments();
@@ -503,7 +504,7 @@ export default function PatientDashboard({
                             {RESCHEDULABLE_STATUSES.has(nextAppointment.status)
                                 && canSelfManageNextAppointment && (
                                     <>
-                                        <RescheduleAppointmentControl token={token} appointment={nextAppointment} submit={value => rescheduleAppointment(nextAppointment.id, value)} />
+                                        <RescheduleAppointmentControl token={token} appointment={nextAppointment} submit={(value, endAt) => rescheduleAppointment(nextAppointment.id, value, endAt)} />
                                         <CancelAppointmentControl submit={reason => cancelAppointment(nextAppointment.id, reason)} />
                                     </>
                                 )}
