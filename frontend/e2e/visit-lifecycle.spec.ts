@@ -57,6 +57,7 @@ test.describe("complete clinic visit lifecycle", () => {
     let holdId: string | null = null;
     let appointmentId: string | null = null;
     let medicalRecordId: string | null = null;
+    let prescriptionId: string | null = null;
 
     try {
       await Promise.all([
@@ -195,10 +196,29 @@ test.describe("complete clinic visit lifecycle", () => {
       medicalRecordId = record?.id || null;
       expect(medicalRecordId).toBeTruthy();
 
+      await consultation.getByLabel("Tên thuốc", { exact: true }).fill("Hydrocortisone E2E");
+      await consultation.getByLabel("Liều dùng", { exact: true }).fill("Bôi một lớp mỏng");
+      await consultation.getByLabel("Tần suất", { exact: true }).fill("2 lần/ngày");
+      await consultation.getByLabel("Thời gian dùng", { exact: true }).fill("7 ngày");
+      await consultation.getByLabel("Hướng dẫn riêng", { exact: true }).fill("Ngưng dùng nếu kích ứng.");
+      await consultation.getByLabel("Hướng dẫn chung", { exact: true }).fill("Giữ vùng da sạch và tái khám khi triệu chứng tăng.");
+      const prescriptionResponsePromise = doctorPage.waitForResponse(response =>
+        isApiResponse(response, "POST", "/api/v1/prescriptions"),
+      );
+      await consultation.getByRole("button", { name: "Ký đơn thuốc", exact: true }).click();
+      const prescriptionResponse = await prescriptionResponsePromise;
+      const prescription = await responseBody<{ id: string; recordId: string; items: Array<{ drugName: string }> }>(prescriptionResponse);
+      expect(prescriptionResponse.status(), JSON.stringify(prescription)).toBe(201);
+      prescriptionId = prescription?.id || null;
+      expect(prescription).toMatchObject({ recordId: medicalRecordId });
+      expect(prescription?.items).toEqual(expect.arrayContaining([
+        expect.objectContaining({ drugName: "Hydrocortisone E2E" }),
+      ]));
+
       const completeResponsePromise = doctorPage.waitForResponse(response =>
         isApiResponse(response, "POST", `/api/v1/appointments/${appointmentId}/complete`),
       );
-      await consultation.getByRole("button", { name: "Hoàn thành không kê đơn", exact: true }).click();
+      await consultation.getByRole("button", { name: "Hoàn thành ca khám", exact: true }).click();
       const completeResponse = await completeResponsePromise;
       expect(completeResponse.status()).toBe(200);
       expect((await responseBody<Appointment>(completeResponse))?.status).toBe("COMPLETED");
@@ -209,6 +229,17 @@ test.describe("complete clinic visit lifecycle", () => {
 
       await page.reload();
       await expectRoleNavigation(page, "Bệnh nhân");
+      await page.getByRole("navigation", { name: "Điều hướng Bệnh nhân" })
+        .getByRole("button", { name: "Kết quả khám", exact: true }).click();
+      await expect(page.getByRole("heading", { name: "Kết quả khám của bạn" })).toBeVisible();
+      const medicalResult = page.locator(".patient-medical-list li").filter({ hasText: reason });
+      await expect(medicalResult).toBeVisible({ timeout: 15_000 });
+      await medicalResult.getByRole("button", { name: "Xem chi tiết", exact: true }).click();
+      const medicalDetail = page.locator(".patient-medical-detail");
+      await expect(medicalDetail.getByRole("heading", { name: "E2E: đánh giá da liễu đã hoàn tất", exact: true })).toBeVisible();
+      await expect(medicalDetail.getByText("Hydrocortisone E2E", { exact: true })).toBeVisible();
+      await expect(medicalDetail.getByRole("button", { name: "Xem và in đơn thuốc", exact: true })).toBeVisible();
+
       await openBooking(page);
       const patientRow = page.locator(`.patient-appointment-row[data-appointment-id="${appointmentId}"]`);
       await expect(patientRow).toBeVisible({ timeout: 15_000 });
@@ -235,6 +266,7 @@ test.describe("complete clinic visit lifecycle", () => {
           testCase: "E2E-FLOW-001",
           appointmentId,
           medicalRecordId,
+          prescriptionId,
           doctorId: candidate!.doctor.id,
           startAt: candidate!.slot.startAt,
           finalStatus: "COMPLETED",

@@ -25,6 +25,7 @@ export type Doctor = {
   certificateNo?: string;
   avatarUrl?: string;
   bio?: string;
+  phone?: string;
   consultationFee: number;
 };
 

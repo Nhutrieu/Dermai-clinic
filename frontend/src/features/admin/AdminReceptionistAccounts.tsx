@@ -1,5 +1,5 @@
 import { FormEvent, useEffect, useMemo, useState } from "react";
-import { History, KeyRound, LockKeyhole, Search, Unlock, UserRound } from "lucide-react";
+import { History, KeyRound, LockKeyhole, Search, Trash2, Unlock, UserRound } from "lucide-react";
 import AuthenticatedAvatar from "../../components/AuthenticatedAvatar";
 import { EmptyState, StateSkeleton } from "../../components/Ui";
 import { request } from "../../core/api";
@@ -10,6 +10,7 @@ import type { AppointmentActionLog, StaffAccount, StaffAccountEvent } from "../.
 type Props = { token: string; revision: number };
 type AccountFilter = "ALL" | "ACTIVE" | "LOCKED";
 const APPOINTMENT_ACTION_PREVIEW_COUNT = 5;
+const ACCOUNT_EVENT_PREVIEW_COUNT = 5;
 
 const accountEventLabels: Record<string, string> = {
   CREATED: "Tài khoản được tạo",
@@ -47,6 +48,7 @@ export default function AdminReceptionistAccounts({ token, revision }: Props) {
   const [accountEvents, setAccountEvents] = useState<StaffAccountEvent[]>([]);
   const [appointmentActions, setAppointmentActions] = useState<AppointmentActionLog[]>([]);
   const [showAllAppointmentActions, setShowAllAppointmentActions] = useState(false);
+  const [showAllAccountEvents, setShowAllAccountEvents] = useState(false);
   const [password, setPassword] = useState("");
   const [displayName, setDisplayName] = useState("");
   const [loading, setLoading] = useState(true);
@@ -77,6 +79,7 @@ export default function AdminReceptionistAccounts({ token, revision }: Props) {
   useEffect(() => {
     // Each receptionist detail starts with a compact audit preview; the full history remains available on demand.
     setShowAllAppointmentActions(false);
+    setShowAllAccountEvents(false);
     if (!selectedId) {
       setAccountEvents([]);
       setAppointmentActions([]);
@@ -114,6 +117,9 @@ export default function AdminReceptionistAccounts({ token, revision }: Props) {
   const visibleAppointmentActions = showAllAppointmentActions
     ? appointmentActions
     : appointmentActions.slice(0, APPOINTMENT_ACTION_PREVIEW_COUNT);
+  const visibleAccountEvents = showAllAccountEvents
+    ? accountEvents
+    : accountEvents.slice(0, ACCOUNT_EVENT_PREVIEW_COUNT);
 
   useEffect(() => {
     setDisplayName(selected?.displayName?.trim() || "");
@@ -180,6 +186,23 @@ export default function AdminReceptionistAccounts({ token, revision }: Props) {
       setAccountEvents(await request<StaffAccountEvent[]>(`/auth/staff/${selected.identityId}/events`, token));
     } catch (reason) {
       setError(authErrorMessage(reason));
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function deleteAccount() {
+    if (!selected || busy) return;
+    if (!window.confirm(`Xóa vĩnh viễn tài khoản lễ tân ${accountName(selected)}? Nhân viên sẽ không thể đăng nhập lại. Nhật ký thao tác lịch khám vẫn được giữ.`)) return;
+    setBusy(true);
+    setError("");
+    setMessage("");
+    try {
+      await request(`/auth/staff/${selected.identityId}`, token, { method: "DELETE" });
+      await loadAccounts();
+      setMessage("Đã xóa tài khoản nhân viên lễ tân.");
+    } catch (reason) {
+      setError((reason as Error).message);
     } finally {
       setBusy(false);
     }
@@ -255,10 +278,15 @@ export default function AdminReceptionistAccounts({ token, revision }: Props) {
         <section className="admin-staff-security" aria-labelledby="staff-security-heading">
           <header><div><h4 id="staff-security-heading">Bảo mật và truy cập</h4><p>Khóa tài khoản hoặc cấp mật khẩu tạm thời khi cần hỗ trợ nhân viên.</p></div></header>
           <div className="admin-staff-actions">
-            <button type="button" className={selected.status === "LOCKED" ? "secondary" : "danger"} disabled={busy} onClick={toggleAccount}>
-              {selected.status === "LOCKED" ? <Unlock aria-hidden="true" /> : <LockKeyhole aria-hidden="true" />}
-              {selected.status === "LOCKED" ? "Mở khóa tài khoản" : "Khóa tài khoản"}
-            </button>
+            <div className="admin-staff-account-buttons">
+              <button type="button" className={selected.status === "LOCKED" ? "secondary" : "danger"} disabled={busy} onClick={toggleAccount}>
+                {selected.status === "LOCKED" ? <Unlock aria-hidden="true" /> : <LockKeyhole aria-hidden="true" />}
+                {selected.status === "LOCKED" ? "Mở khóa tài khoản" : "Khóa tài khoản"}
+              </button>
+              <button type="button" className="danger admin-staff-delete" disabled={busy} onClick={deleteAccount}>
+                <Trash2 aria-hidden="true" />Xóa nhân viên
+              </button>
+            </div>
             <form onSubmit={resetPassword}>
               <label htmlFor="receptionist-temporary-password">Mật khẩu tạm thời mới</label>
               <div><input id="receptionist-temporary-password" type="password" minLength={PASSWORD_MIN_LENGTH} maxLength={PASSWORD_MAX_LENGTH} required autoComplete="new-password" aria-describedby="receptionist-password-requirements" value={password} onChange={event => setPassword(event.target.value)} onInput={event => event.currentTarget.setCustomValidity("")} onInvalid={event => event.currentTarget.setCustomValidity(passwordValidationMessage(event.currentTarget.value))} placeholder="Từ 10 đến 100 ký tự" /><button type="submit" className="secondary" disabled={busy || !isPasswordValid(password)}><KeyRound aria-hidden="true" />Đặt lại</button></div>
@@ -270,7 +298,18 @@ export default function AdminReceptionistAccounts({ token, revision }: Props) {
         <div className="admin-staff-activity-grid">
           <section className="admin-staff-history" aria-labelledby="staff-history-title">
             <h4 id="staff-history-title"><History aria-hidden="true" />Lịch sử tài khoản</h4>
-            {detailLoading ? <p>Đang tải lịch sử…</p> : accountEvents.length === 0 ? <p>Chưa có thay đổi tài khoản.</p> : <ol>{accountEvents.map(item => <li key={item.id}><span>{accountEventLabels[item.actionType] || item.actionType}</span><time dateTime={item.createdAt}>{formatDateTime(item.createdAt)}</time></li>)}</ol>}
+            {detailLoading ? <p>Đang tải lịch sử…</p> : accountEvents.length === 0 ? <p>Chưa có thay đổi tài khoản.</p> : <>
+              <ol id="receptionist-account-events">{visibleAccountEvents.map(item => <li key={item.id}><span>{accountEventLabels[item.actionType] || item.actionType}</span><time dateTime={item.createdAt}>{formatDateTime(item.createdAt)}</time></li>)}</ol>
+              {accountEvents.length > ACCOUNT_EVENT_PREVIEW_COUNT && <button
+                type="button"
+                className="admin-staff-history-toggle"
+                aria-controls="receptionist-account-events"
+                aria-expanded={showAllAccountEvents}
+                onClick={() => setShowAllAccountEvents(current => !current)}
+              >
+                {showAllAccountEvents ? "Thu gọn" : `Xem tất cả (${accountEvents.length})`}
+              </button>}
+            </>}
           </section>
 
           <section className="admin-staff-history" aria-labelledby="operation-history-title">

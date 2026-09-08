@@ -460,7 +460,10 @@ export default function PatientDashboard({
                         : "Thông tin quan trọng nhất cho lần thăm khám tiếp theo của bạn."}</p>
                 </div>
                 {((isAwaitingClinicUpdate && upcoming.length > 0) || (!isAwaitingClinicUpdate && upcoming.length > 1)) && (
-                    <button type="button" className="patient-dashboard-text-action" onClick={openAppointments}>
+                    <button type="button" className="patient-dashboard-text-action" onClick={() => {
+                        sessionStorage.setItem("patient-appointments-focus", "history");
+                        openAppointments();
+                    }}>
                         Xem {upcoming.length} lịch sắp tới
                     </button>
                 )}
@@ -560,7 +563,6 @@ export default function PatientDashboard({
                         <p>Nhóm hình ảnh tham khảo: <strong>{AI_LABELS[latestAssessment.predictedLabel] || latestAssessment.predictedLabel}</strong>.</p>
                         <p className="patient-dashboard-medical-note">Kết quả này không phải chẩn đoán cuối cùng. Bạn có thể đặt lịch để được bác sĩ đánh giá trực tiếp.</p>
                         <div className="patient-dashboard-inline-actions">
-                            <button type="button" onClick={openAi}>Xem chi tiết</button>
                             <button type="button" onClick={openAppointments}>Đặt lịch khám</button>
                         </div>
                     </div>

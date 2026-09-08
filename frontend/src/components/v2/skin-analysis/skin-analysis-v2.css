@@ -68,3 +68,30 @@
   animation: none !important;
   transition: none;
 }
+/* Improve readability of the AI result summary without changing card layout. */
+.skin-v2-card-title {
+  font-size: 13px;
+}
+
+.skin-v2-card-title small {
+  font-size: 11px;
+}
+
+.skin-v2-prediction-list li {
+  font-size: 14px;
+  line-height: 1.45;
+}
+
+.skin-v2-prediction-list b {
+  font-size: 10px;
+}
+
+.skin-v2-prescription h2 {
+  font-size: 26px;
+}
+
+.skin-v2-prescription > p,
+.skin-v2-prescription li {
+  font-size: 14px;
+  line-height: 1.6;
+}

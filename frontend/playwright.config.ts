@@ -1,11 +1,14 @@
+import { join } from "node:path";
 import { defineConfig, devices } from "@playwright/test";
 
 const baseURL = process.env.E2E_BASE_URL?.trim() || "http://localhost:3000";
 const recordEvidenceVideo = process.env.E2E_VIDEO?.toLowerCase() === "on";
+const artifactRoot = process.env.E2E_ARTIFACT_ROOT?.trim();
+const artifactPath = (relativePath: string) => artifactRoot ? join(artifactRoot, relativePath) : relativePath;
 
 export default defineConfig({
   testDir: "./e2e",
-  outputDir: "test-results/artifacts",
+  outputDir: artifactPath("test-results/artifacts"),
   preserveOutput: "always",
   fullyParallel: false,
   forbidOnly: Boolean(process.env.CI),
@@ -15,9 +18,9 @@ export default defineConfig({
   expect: { timeout: 10_000 },
   reporter: [
     ["line"],
-    ["html", { outputFolder: "playwright-report", open: "never" }],
-    ["junit", { outputFile: "test-results/e2e-junit.xml" }],
-    ["json", { outputFile: "test-results/e2e-results.json" }],
+    ["html", { outputFolder: artifactPath("playwright-report"), open: "never" }],
+    ["junit", { outputFile: artifactPath("test-results/e2e-junit.xml") }],
+    ["json", { outputFile: artifactPath("test-results/e2e-results.json") }],
   ],
   use: {
     baseURL,

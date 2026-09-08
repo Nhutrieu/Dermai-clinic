@@ -19,11 +19,11 @@ public class AppointmentService{
   requireFeeWhenDoctorSelected(doctor,consultationFeeSnapshot);
   try{var x=repo.saveAndFlush(Appointment.held(patient,patientIdentity,doctor,doctorIdentity,start,end,consultationFeeSnapshot));slots.afterCommit();return x;}catch(DataIntegrityViolationException|CannotAcquireLockException e){throw conflict(e);}
  }
- public Appointment propose(UUID patient,UUID patientIdentity,UUID doctor,UUID doctorIdentity,Instant start,Instant end,String reason,BigDecimal consultationFeeSnapshot){
+ public Appointment propose(UUID patient,UUID patientIdentity,UUID doctor,UUID doctorIdentity,String doctorName,Instant start,Instant end,String reason,BigDecimal consultationFeeSnapshot){
   if(patient==null||patientIdentity==null||doctor==null||doctorIdentity==null||reason==null||reason.isBlank()||!start.isBefore(end)||start.isBefore(Instant.now()))throw new IllegalArgumentException("INVALID_PROPOSAL");
   bookingPolicy.validateNewBooking(patientIdentity,doctor,start,true);
   requireFeeWhenDoctorSelected(doctor,consultationFeeSnapshot);
-  try{var x=repo.saveAndFlush(Appointment.proposed(patient,patientIdentity,doctor,doctorIdentity,start,end,reason.trim(),consultationFeeSnapshot));event(x,"AppointmentProposed");notify(x,"BOOKING_PROPOSAL","Lễ tân đề nghị lịch khám","Lễ tân đã chọn lịch "+localTime(start)+". Vui lòng xác nhận trong 10 phút.");slots.afterCommit();return x;}catch(DataIntegrityViolationException|CannotAcquireLockException e){throw conflict(e);}
+  try{var x=repo.saveAndFlush(Appointment.proposed(patient,patientIdentity,doctor,doctorIdentity,start,end,reason.trim(),consultationFeeSnapshot));event(x,"AppointmentProposed");var displayDoctor=doctorName==null||doctorName.isBlank()?"Bác sĩ đã chọn":"BS. "+doctorName.trim();notify(x,"BOOKING_PROPOSAL","Kiểm tra thông tin lịch khám","Thời gian: "+localTime(start)+". Bác sĩ: "+displayDoctor+". Vui lòng kiểm tra và xác nhận trong 10 phút.");slots.afterCommit();return x;}catch(DataIntegrityViolationException|CannotAcquireLockException e){throw conflict(e);}
  }
  public Appointment acceptProposal(UUID id,UUID patientIdentity){
   var x=locked(id);if(x.status!=AppointmentStatus.PROPOSED||!patientIdentity.equals(x.patientIdentityId))throw new IllegalStateException("INVALID_PROPOSAL");
@@ -31,7 +31,7 @@ public class AppointmentService{
   x.holdExpiresAt=null;x.transition(AppointmentStatus.CONFIRMED);event(x,"AppointmentConfirmedByPatient");notify(x,"PROPOSAL_ACCEPTED","Đã xác nhận lịch khám","Lịch khám "+localTime(x.startAt)+" đã được xác nhận.");slots.afterCommit();return x;
  }
  public Appointment declineProposal(UUID id,UUID patientIdentity){
-  var x=locked(id);if(x.status!=AppointmentStatus.PROPOSED||!patientIdentity.equals(x.patientIdentityId))throw new IllegalStateException("INVALID_PROPOSAL");x.transition(AppointmentStatus.CANCELLED);x.cancelReason="PATIENT_DECLINED_PROPOSAL";x.patientHidden=true;event(x,"AppointmentProposalDeclined");notify(x,"PROPOSAL_DECLINED","Đã từ chối lịch đề nghị","Khung giờ đã được trả lại để người khác có thể đặt.");slots.afterCommit();return x;
+  var x=locked(id);if(x.status!=AppointmentStatus.PROPOSED||!patientIdentity.equals(x.patientIdentityId))throw new IllegalStateException("INVALID_PROPOSAL");x.transition(AppointmentStatus.CANCELLED);x.cancelReason="PATIENT_DECLINED_PROPOSAL";x.patientHidden=true;event(x,"AppointmentProposalDeclined");notify(x,"PROPOSAL_DECLINED","Thông tin lịch chưa phù hợp","Yêu cầu đã được chuyển đến lễ tân để hỗ trợ kiểm tra và chọn lại lịch.");slots.afterCommit();return x;
  }
  public Appointment confirmHold(UUID id,UUID patientIdentity,String reason,String key){
   var x=locked(id);if(x.status!=AppointmentStatus.HELD||!patientIdentity.equals(x.patientIdentityId))throw new IllegalStateException("INVALID_HOLD");

@@ -374,7 +374,10 @@ function ReceptionDashboardContainer({
         await Promise.all([loadQueue(), loadReminders()]);
         return;
       }
-      setActionError((cause as Error).message);
+      const issue = toBookingIssue(cause);
+      setActionError(issue.code === "DOCTOR_ON_LEAVE"
+        ? `${issue.title}. ${issue.detail} ${issue.action}`
+        : (cause as Error).message);
       setActionErrorAppointmentId(id);
       throw cause;
     } finally {

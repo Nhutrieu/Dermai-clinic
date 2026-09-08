@@ -18,6 +18,7 @@ import java.util.*;
 public class SchedulingRecommendationService {
  private static final ZoneId CLINIC_ZONE=ZoneId.of("Asia/Ho_Chi_Minh");
  private static final LocalTime LUNCH_START=LocalTime.of(12,0),LUNCH_END=LocalTime.of(13,0);
+ private static final int SLOT_MINUTES=30;
  private static final int BOOKING_WINDOW_DAYS=60;
  private static final Set<AppointmentStatus> ACTIVE=AppointmentStatus.slotBlockingStatuses();
  private final AppointmentRepository appointments;
@@ -37,8 +38,7 @@ public class SchedulingRecommendationService {
   Instant now=Instant.now(),bookingLimit=now.plus(BOOKING_WINDOW_DAYS,java.time.temporal.ChronoUnit.DAYS);
   if(request.preferredStart()==null||request.preferredStart().isBefore(now))throw new IllegalArgumentException("PREFERRED_START_MUST_BE_IN_FUTURE");
   if(request.preferredStart().isAfter(bookingLimit))throw new IllegalArgumentException("BOOKING_TOO_FAR_AHEAD");
-  int requestedDuration=request.durationMinutes()==null?30:request.durationMinutes();
-  if(requestedDuration<10||requestedDuration>120)throw new IllegalArgumentException("INVALID_DURATION");
+  if(request.durationMinutes()!=null&&request.durationMinutes()!=SLOT_MINUTES)throw new IllegalArgumentException("APPOINTMENT_DURATION_FIXED_AT_30_MINUTES");
   Instant horizon=request.preferredStart().plus(7,java.time.temporal.ChronoUnit.DAYS);if(horizon.isAfter(bookingLimit))horizon=bookingLimit;
   List<DoctorData> doctorData=loadDoctors(authorization,role);
   var busy=appointments.findActiveOverlapping(request.preferredStart(),horizon);
@@ -82,7 +82,7 @@ public class SchedulingRecommendationService {
  }
 
  public Availability availability(UUID doctorId,LocalDate date,int duration,UUID viewerIdentity,String authorization,String role){
-  if(duration<10||duration>120)throw new IllegalArgumentException("INVALID_DURATION");
+  if(duration!=SLOT_MINUTES)throw new IllegalArgumentException("APPOINTMENT_DURATION_FIXED_AT_30_MINUTES");
   LocalDate today=LocalDate.now(CLINIC_ZONE);
   if(date.isBefore(today)||date.isAfter(today.plusDays(BOOKING_WINDOW_DAYS)))throw new IllegalArgumentException("DATE_OUTSIDE_BOOKING_WINDOW");
   var doctor=loadDoctors(authorization,role).stream().filter(x->doctorId.equals(x.id())).findFirst().orElseThrow(()->new IllegalArgumentException("DOCTOR_NOT_AVAILABLE"));
@@ -220,21 +220,20 @@ public class SchedulingRecommendationService {
   return doctor.consultationFee();
  }
 
- public void requireDoctorIdentity(UUID doctorId,UUID doctorIdentityId,String authorization,String role){
+ public String requireDoctorIdentity(UUID doctorId,UUID doctorIdentityId,String authorization,String role){
   if(doctorId==null){
    if(doctorIdentityId!=null)throw new ResponseStatusException(HttpStatus.CONFLICT,"Mã bác sĩ và tài khoản bác sĩ không khớp.");
-   return;
+   return null;
   }
   var doctor=loadDoctors(authorization,role).stream().filter(x->doctorId.equals(x.id())).findFirst()
    .orElseThrow(()->new ResponseStatusException(HttpStatus.CONFLICT,"Không tìm thấy bác sĩ đang hoạt động."));
   if(doctorIdentityId==null||!doctorIdentityId.equals(doctor.identityId()))
    throw new ResponseStatusException(HttpStatus.CONFLICT,"Mã bác sĩ và tài khoản bác sĩ không khớp.");
+  return doctor.fullName();
  }
  private boolean overlapsLunch(ZonedDateTime start,ZonedDateTime end){return start.toLocalTime().isBefore(LUNCH_END)&&end.toLocalTime().isAfter(LUNCH_START);}
  private int slotMinutesFor(DoctorData doctor,ScheduleData schedule,LocalDate date){
-  if(doctor.slotPolicies()==null||doctor.slotPolicies().isEmpty())return schedule.slotMinutes();
-  return doctor.slotPolicies().stream().filter(policy->!policy.effectiveFrom().isAfter(date))
-   .max(Comparator.comparing(SlotPolicyData::effectiveFrom)).map(SlotPolicyData::slotMinutes).orElse(schedule.slotMinutes());
+  return SLOT_MINUTES;
  }
 
  private List<DoctorData> loadDoctors(String authorization,String role){

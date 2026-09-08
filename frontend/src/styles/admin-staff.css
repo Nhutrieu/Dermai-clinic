@@ -8,7 +8,7 @@
 
 .admin-staff-create,
 .admin-staff {
-  overflow: hidden;
+  overflow: clip;
   border: 1px solid var(--admin-staff-border);
   border-radius: var(--radius-panel);
   background: var(--admin-staff-surface);
@@ -328,12 +328,16 @@
 
 .admin-staff-list {
   display: block;
-  max-height: 760px;
+  position: sticky;
+  top: 88px;
+  align-self: start;
+  max-height: calc(100vh - 112px);
   padding: var(--space-2);
   margin: 0;
   overflow-y: auto;
   border-right: 1px solid var(--admin-staff-border);
-  background: var(--admin-staff-surface-muted);
+  background: linear-gradient(180deg, var(--admin-staff-surface-muted), #e7f4f0);
+  scrollbar-gutter: stable;
 }
 
 .admin-staff-list > p {
@@ -805,6 +809,7 @@
   }
 
   .admin-staff-list {
+    position: static;
     max-height: 340px;
     border-right: 0;
     border-bottom: 1px solid var(--admin-staff-border);
@@ -923,6 +928,25 @@
   display: grid;
   gap: 10px;
   margin: 16px 0 20px;
+}
+
+.admin-staff-account-buttons {
+  display: grid;
+  gap: var(--space-2);
+}
+
+.admin-staff-account-buttons button {
+  width: 100%;
+}
+
+.admin-staff-delete {
+  color: #fff !important;
+  border-color: var(--color-danger) !important;
+  background: var(--color-danger) !important;
+}
+
+.admin-staff-delete:hover:not(:disabled) {
+  background: var(--color-danger-strong) !important;
 }
 
 .admin-staff-page .clinic-closure-list article {

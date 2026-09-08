@@ -6,4 +6,5 @@ import java.util.UUID;
 
 public interface StaffAccountEventRepository extends JpaRepository<StaffAccountEvent,UUID> {
  List<StaffAccountEvent> findTop50ByStaffIdentityIdOrderByCreatedAtDesc(UUID staffIdentityId);
+ void deleteByStaffIdentityIdOrActorIdentityId(UUID staffIdentityId,UUID actorIdentityId);
 }

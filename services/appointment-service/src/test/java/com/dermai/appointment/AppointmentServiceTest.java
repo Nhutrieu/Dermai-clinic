@@ -19,6 +19,37 @@ import org.springframework.dao.CannotAcquireLockException;
 
 class AppointmentServiceTest {
   @Test
+  void proposalNotificationShowsTimeDateAndDoctorForPatientReview() {
+    var appointments = mock(AppointmentRepository.class);
+    var outbox = mock(OutboxRepository.class);
+    var updates = mock(SlotUpdateBroadcaster.class);
+    var notifications = mock(AppointmentNotificationRepository.class);
+    var bookingPolicy = mock(BookingPolicy.class);
+    var service = new AppointmentService(appointments, outbox, updates, notifications, bookingPolicy);
+    var patientId = UUID.randomUUID();
+    var patientIdentity = UUID.randomUUID();
+    var doctorId = UUID.randomUUID();
+    var doctorIdentity = UUID.randomUUID();
+    var start = Instant.now().plusSeconds(86_400);
+    var end = start.plusSeconds(1_800);
+    var fee = new BigDecimal("150000");
+    when(appointments.saveAndFlush(any(Appointment.class))).thenAnswer(invocation -> invocation.getArgument(0));
+
+    var result = service.propose(
+        patientId, patientIdentity, doctorId, doctorIdentity, "Linh", start, end, "Khám da", fee
+    );
+
+    assertThat(result.status).isEqualTo(AppointmentStatus.PROPOSED);
+    assertThat(result.holdExpiresAt).isNotNull();
+    var notification = ArgumentCaptor.forClass(AppointmentNotification.class);
+    verify(notifications).save(notification.capture());
+    assertThat(notification.getValue().notificationType).isEqualTo("BOOKING_PROPOSAL");
+    assertThat(notification.getValue().title).isEqualTo("Kiểm tra thông tin lịch khám");
+    assertThat(notification.getValue().body).contains("Thời gian:").contains("ngày").contains("Bác sĩ: BS. Linh");
+    verify(updates).afterCommit();
+  }
+
+  @Test
   void checkInRecordsArrivalAndProtectsTheVisitFromNoShow() {
     var appointments = mock(AppointmentRepository.class);
     var outbox = mock(OutboxRepository.class);

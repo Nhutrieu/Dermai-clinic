@@ -221,6 +221,10 @@
   padding: 0 var(--space-5) var(--space-3);
 }
 
+.accepted-reminder-list > li {
+  position: relative;
+}
+
 .accepted-reminder-list > li + li {
   border-top: 1px solid var(--color-border);
 }
@@ -373,7 +377,7 @@
 
 .accepted-row-actions {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   justify-content: flex-end;
   gap: var(--space-2);
 }
@@ -415,6 +419,8 @@
 }
 
 .accepted-action-menu[open] {
+  display: grid;
+  gap: 6px;
   z-index: 90;
 }
 
@@ -460,9 +466,9 @@
 
 .accepted-action-popover {
   position: absolute;
-  z-index: 8;
   top: calc(100% + 6px);
   right: 0;
+  z-index: 8;
   display: grid;
   width: max-content;
   min-width: 210px;
@@ -636,6 +642,7 @@
   position: relative;
 }
 
+.accepted-reminder-list > li:has(.accepted-action-menu[open]),
 .accepted-appointment-list > li:has(.accepted-action-menu[open]),
 .accepted-appointment-item:has(.accepted-action-menu[open]) {
   z-index: 90;
@@ -1045,8 +1052,6 @@
   }
 
   .accepted-action-popover {
-    right: auto;
-    left: 0;
     width: min(280px, calc(100vw - 64px));
   }
 

@@ -48,8 +48,9 @@ class BookingSupportControllerSecurityTest {
     var start = Instant.now().plusSeconds(86_400);
     var end = start.plusSeconds(1_800);
     var fee = new BigDecimal("150000");
+    when(scheduling.requireDoctorIdentity(doctorId, doctorIdentity, null, "RECEPTIONIST")).thenReturn("Linh");
     when(scheduling.assertAvailable(doctorId, start, end, null, null, "RECEPTIONIST")).thenReturn(fee);
-    when(service.propose(patientId, patientIdentity, doctorId, doctorIdentity, start, end, "Khám da", fee))
+    when(service.propose(patientId, patientIdentity, doctorId, doctorIdentity, "Linh", start, end, "Khám da", fee))
         .thenReturn(Appointment.proposed(patientId, patientIdentity, doctorId, doctorIdentity, start, end, "Khám da", fee));
 
     controller.propose(receptionist, "RECEPTIONIST", null,
@@ -57,6 +58,7 @@ class BookingSupportControllerSecurityTest {
 
     verify(patients).requireIdentity(patientId, patientIdentity, receptionist, "RECEPTIONIST");
     verify(scheduling).requireDoctorIdentity(doctorId, doctorIdentity, null, "RECEPTIONIST");
+    verify(service).propose(patientId, patientIdentity, doctorId, doctorIdentity, "Linh", start, end, "Khám da", fee);
   }
 
   private BookingSupportController controller(

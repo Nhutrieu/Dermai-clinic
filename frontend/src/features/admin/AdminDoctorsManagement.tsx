@@ -5,6 +5,7 @@ import { request } from "../../core/api";
 import { authErrorMessage, isPasswordValid, passwordValidationMessage, PASSWORD_MAX_LENGTH, PASSWORD_MIN_LENGTH } from "../../core/passwordPolicy";
 import type { Doctor } from "../../core/types";
 import AdminDoctorFeeEditor from "./AdminDoctorFeeEditor";
+import AdminDoctorScheduleEditor from "./AdminDoctorScheduleEditor";
 import AdminLeaveRequests from "./AdminLeaveRequests";
 import PasswordRequirements from "../../components/PasswordRequirements";
 
@@ -110,6 +111,7 @@ export default function AdminDoctorsManagement({ token, doctors, selectedDoctorI
           <p>{selectedDoctor.bio?.trim() || "Bác sĩ chưa cập nhật phần giới thiệu chuyên môn."}</p>
         </section>
 
+        <AdminDoctorScheduleEditor doctorId={selectedDoctor.id} doctorName={selectedDoctor.fullName} token={token} />
         <AdminDoctorFeeEditor doctor={selectedDoctor} token={token} onSaved={onSaved} />
         <section className="admin-doctor-security" aria-labelledby={`admin-doctor-security-${selectedDoctor.id}`}>
           <header>

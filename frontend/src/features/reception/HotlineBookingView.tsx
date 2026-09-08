@@ -396,6 +396,10 @@ export default function ReceptionHotlineBookingView({ session }: { session: Toke
   }
 
   function finishBooking(confirmed: Appointment, slot: AvailabilitySlot, patient: Patient, selectedDoctor: Doctor) {
+    // Availability updates caused by this booking can arrive before the confirm
+    // response. They are not a conflict once this appointment is ours.
+    selectedSlotRef.current = null;
+    setConflict(null);
     setSuccess({ appointment: confirmed, patient, doctor: selectedDoctor, slot });
     setPartialAppointment(null);
     setBookingError("");
@@ -461,6 +465,10 @@ export default function ReceptionHotlineBookingView({ session }: { session: Toke
         });
         attempt.appointment = appointment;
       }
+      // Creating the appointment consumes the slot. Keep the selectedSlot state
+      // for confirmation/retry details, but stop realtime availability refreshes
+      // from treating our own reservation as a competing booking.
+      selectedSlotRef.current = null;
       await confirmCreatedAppointment(appointment, slot, patient, selectedDoctor);
     } catch (cause) {
       const issue = toBookingIssue(cause);
@@ -565,7 +573,6 @@ export default function ReceptionHotlineBookingView({ session }: { session: Toke
               <h3>Đã xác nhận lịch khám</h3>
               <p>Thông tin bên dưới là kết quả trả về sau khi thao tác hoàn tất.</p>
               <dl>
-                <div><dt>Mã lịch</dt><dd>{success.appointment.id}</dd></div>
                 <div><dt>Bệnh nhân</dt><dd>{success.patient.fullName}</dd></div>
                 <div><dt>Số điện thoại</dt><dd>{success.patient.phone || "Chưa có"}</dd></div>
                 <div><dt>Bác sĩ</dt><dd>BS. {success.doctor.fullName}</dd></div>

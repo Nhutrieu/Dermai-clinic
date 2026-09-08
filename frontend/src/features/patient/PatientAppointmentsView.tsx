@@ -132,6 +132,17 @@ export default function PatientAppointmentsView({
         : 0;
     const holdCountdown = Math.floor(holdSeconds / 60) + ":" + String(holdSeconds % 60).padStart(2, "0");
 
+    useEffect(() => {
+        if (sessionStorage.getItem("patient-appointments-focus") !== "history") return;
+        sessionStorage.removeItem("patient-appointments-focus");
+        const frame = window.requestAnimationFrame(() => {
+            const target = document.getElementById("appointment-history-title");
+            const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+            target?.scrollIntoView({ behavior: reducedMotion ? "auto" : "smooth", block: "start" });
+        });
+        return () => window.cancelAnimationFrame(frame);
+    }, []);
+
     async function loadDoctors() {
         const list = await request<Doctor[]>("/doctors", token);
         setDoctors(list);
@@ -152,26 +163,22 @@ export default function PatientAppointmentsView({
         request<AiAssessment[]>("/patients/me/ai-assessments", token).then(list => {
             const draft = sessionStorage.getItem("dermai-ai-booking");
             let draftId = "";
-            let draftSummary = "";
             try {
                 const parsed = JSON.parse(draft || "{}");
                 draftId = parsed.assessmentId || "";
-                draftSummary = parsed.summary || "";
             } catch {
                 /* Bỏ qua draft lỗi để luồng đặt lịch vẫn hoạt động. */
             }
-            const assessment = list.find(item => item.id === draftId && item.sharedWithDoctor)
-                || list.find(item => item.sharedWithDoctor);
+            const requestedAssessment = draftId
+                ? list.find(item => item.id === draftId && item.sharedWithDoctor)
+                : undefined;
+            const latestAssessment = list[0];
+            const assessment = requestedAssessment
+                || (latestAssessment?.sharedWithDoctor && !latestAssessment.appointmentId
+                    ? latestAssessment
+                    : undefined);
             if (!assessment) return;
             setSharedAi(assessment);
-            const top = assessment.top3
-                .map(item => patientAiLabel(item.label) + " " + formatAiPercentage(item.probability))
-                .join("; ");
-            const summary = draftSummary
-                || "Kết quả kiểm tra da bằng AI (tham khảo): " + top + ". Phiên bản mô hình "
-                + assessment.modelVersion + "."
-                + (assessment.uncertain ? " AI đánh dấu kết quả chưa chắc chắn." : "");
-            setReason(value => value.trim() ? value : summary);
             sessionStorage.removeItem("dermai-ai-booking");
         }).catch(() => undefined);
     }, [token]);
@@ -490,12 +497,16 @@ export default function PatientAppointmentsView({
 
     async function clearSharedAi() {
         if (!sharedAi) return;
-        await request("/patients/me/ai-assessments/" + sharedAi.id + "/sharing", token, {
-            method: "PATCH", body: JSON.stringify({ sharedWithDoctor: false })
-        }).catch(() => undefined);
-        setSharedAi(null);
+        try {
+            await request("/patients/me/ai-assessments/" + sharedAi.id + "/sharing", token, {
+                method: "PATCH", body: JSON.stringify({ sharedWithDoctor: false })
+            });
+            setSharedAi(null);
         setReason(value => value.startsWith("Kết quả kiểm tra da bằng AI") ? "" : value);
         setFeedback({ tone: "info", text: "Đã bỏ kết quả AI khỏi yêu cầu đặt lịch." });
+        } catch (error) {
+            setFeedback({ tone: "error", text: (error as Error).message });
+        }
     }
 
     async function cancel(id: string, cancelReason: string) {
@@ -691,7 +702,7 @@ export default function PatientAppointmentsView({
                                 <span aria-hidden="true">3</span>
                                 <div>
                                     <h3 id="time-step-title">Chọn khung giờ</h3>
-                                    <p>Thời lượng theo lịch bác sĩ đã thiết lập.</p>
+                                    <p>Mỗi lượt khám kéo dài 30 phút.</p>
                                 </div>
                             </div>
                             <div className="booking-slot-legend" aria-label="Chú thích trạng thái">
@@ -777,7 +788,7 @@ export default function PatientAppointmentsView({
                                     <div>
                                         <strong>Đính kèm kết quả AI tham khảo</strong>
                                         <small>
-                                            {patientAiLabel(sharedAi.predictedLabel)} · {formatAiPercentage(sharedAi.confidence)} · phiên bản {sharedAi.modelVersion}
+                                            {patientAiLabel(sharedAi.predictedLabel)} · {formatAiPercentage(sharedAi.confidence)}
                                         </small>
                                     </div>
                                     <button type="button" onClick={() => void clearSharedAi()}>Bỏ đính kèm</button>

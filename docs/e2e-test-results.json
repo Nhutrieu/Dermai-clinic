@@ -1,0 +1,71 @@
+{
+  "metadata": {
+    "project": "DermAI Clinic",
+    "framework": "Playwright",
+    "browser": "Chromium",
+    "executedAt": "2026-09-06T09:32:06+07:00",
+    "durationMs": 55774.77,
+    "baseCommit": "d63572d9cce358c90e0d4325d1e2d947230cf0b0",
+    "workingTreeDirty": true,
+    "environment": {
+      "stack": "Docker Compose cô lập",
+      "frontend": "http://localhost:13000",
+      "gateway": "http://localhost:18080",
+      "aiService": "http://localhost:18000",
+      "database": "PostgreSQL 16 - database dermai_e2e, volume riêng",
+      "doctorFixture": "Bác sĩ Vương",
+      "imageFixture": "frontend/e2e/fixtures/synthetic-eczema-e2e.png"
+    },
+    "artifacts": {
+      "junit": "frontend/e2e-artifacts/final-2026-09-06/test-results/e2e-junit.xml",
+      "json": "frontend/e2e-artifacts/final-2026-09-06/test-results/e2e-results.json",
+      "html": "frontend/e2e-artifacts/final-2026-09-06/playwright-report/index.html"
+    }
+  },
+  "summary": {
+    "total": 6,
+    "passed": 6,
+    "failed": 0,
+    "flaky": 0,
+    "skipped": 0,
+    "status": "PASS"
+  },
+  "scenarios": [
+    {
+      "id": "E2E-AI-001",
+      "status": "PASS",
+      "durationSeconds": 11.169,
+      "evidence": "AI trả HTTP 200 với disease, confidence, Top-3 và Grad-CAM; kết quả được lưu, chia sẻ và chuyển sang biểu mẫu đặt lịch có ngữ cảnh AI."
+    },
+    {
+      "id": "E2E-CHAT-001",
+      "status": "PASS",
+      "durationSeconds": 6.915,
+      "evidence": "Trợ lý tạo handoff; lễ tân nhận xử lý và trả lời; Patient nhận badge/tin nhắn qua WebSocket mà không cần F5."
+    },
+    {
+      "id": "E2E-BOOK-001",
+      "status": "PASS",
+      "durationSeconds": 6.231,
+      "evidence": "Patient giữ slot thật, API trả 201; xác nhận thành công và lịch chuyển sang ASSIGNED."
+    },
+    {
+      "id": "E2E-BOOK-002",
+      "status": "PASS",
+      "durationSeconds": 7.176,
+      "evidence": "Hai Patient cạnh tranh cùng slot; đúng một request nhận 201, request còn lại nhận 409 và chỉ một lịch được tạo."
+    },
+    {
+      "id": "E2E-PROPOSAL-001",
+      "status": "PASS",
+      "durationSeconds": 6.418,
+      "evidence": "Lễ tân tạo hai proposal độc lập; Patient chấp nhận proposal thứ nhất thành CONFIRMED và từ chối proposal thứ hai thành CANCELLED."
+    },
+    {
+      "id": "E2E-FLOW-001",
+      "status": "PASS",
+      "durationSeconds": 14.814,
+      "evidence": "Luồng xuyên suốt hoàn tất từ đặt lịch, xác nhận, check-in, khám, hồ sơ y khoa, đơn thuốc đến Patient xem kết quả và gửi review."
+    }
+  ]
+}

@@ -64,6 +64,12 @@ public class AuthService {
   var staff=receptionist(id);staff.displayName=displayName.trim();
   staffEvents.save(new StaffAccountEvent(id,actorIdentityId,"PROFILE_UPDATED"));return staff;
  }
+ public void deleteReceptionist(UUID id){
+  var staff=receptionist(id);
+  revokeSessions(id);
+  staffEvents.deleteByStaffIdentityIdOrActorIdentityId(id,id);
+  users.delete(staff);
+ }
  public Identity updateOwnReceptionistProfile(UUID id,String displayName){
   var staff=receptionist(id);staff.displayName=displayName.trim();
   staffEvents.save(new StaffAccountEvent(id,id,"PROFILE_UPDATED"));return staff;

@@ -58,8 +58,8 @@ const CONFLICT_MESSAGES: Record<string, Omit<BookingIssue, "code" | "conflict">>
   },
   DOCTOR_ON_LEAVE: {
     title: "Bác sĩ nghỉ trong thời gian này",
-    detail: "Khung giờ đã chọn trùng với lịch nghỉ của bác sĩ.",
-    action: "Chọn một ngày hoặc khung giờ khác.",
+    detail: "Admin đã duyệt lịch nghỉ của bác sĩ trong thời gian này nên không thể xác nhận lịch cho bệnh nhân.",
+    action: "Chọn giờ khác hoặc phân công bác sĩ khác trước khi xác nhận.",
   },
   BOOKING_TOO_FAR_AHEAD: {
     title: "Ngày khám nằm ngoài thời gian cho phép",

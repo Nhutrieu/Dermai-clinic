@@ -27,7 +27,7 @@ class SchedulingRecommendationServiceTest {
   private static final ZoneId CLINIC_ZONE = ZoneId.of("Asia/Ho_Chi_Minh");
 
   @Test
-  void usesConfiguredSixtyMinuteSlotsAndBlocksOneThatOverlapsAnOldThirtyMinuteAppointment() {
+  void alwaysUsesThirtyMinuteSlotsEvenWhenLegacyDoctorPolicySaysSixtyMinutes() {
     var appointments = mock(AppointmentRepository.class);
     var closures = mock(ClinicClosureRepository.class);
     var doctorId = UUID.randomUUID();
@@ -53,7 +53,7 @@ class SchedulingRecommendationServiceTest {
 
     var builder = RestClient.builder().baseUrl("http://doctor-service");
     var server = MockRestServiceServer.bindTo(builder).build();
-    server.expect(ExpectedCount.times(4), requestTo("http://doctor-service/api/v1/doctors/scheduling-data"))
+    server.expect(ExpectedCount.times(3), requestTo("http://doctor-service/api/v1/doctors/scheduling-data"))
         .andRespond(withSuccess(doctorJson(doctorId, identityId, date), MediaType.APPLICATION_JSON));
     var service = new SchedulingRecommendationService(appointments, closures, builder.build());
 
@@ -63,20 +63,21 @@ class SchedulingRecommendationServiceTest {
     assertThat(previous.items()).hasSize(6);
     assertThat(previous.items()).allSatisfy(slot ->
         assertThat(Duration.between(slot.startAt(), slot.endAt())).isEqualTo(Duration.ofMinutes(30)));
-    assertThat(result.items()).hasSize(3);
+    assertThat(result.items()).hasSize(6);
     assertThat(result.items()).allSatisfy(slot ->
-        assertThat(Duration.between(slot.startAt(), slot.endAt())).isEqualTo(Duration.ofMinutes(60)));
+        assertThat(Duration.between(slot.startAt(), slot.endAt())).isEqualTo(Duration.ofMinutes(30)));
     assertThat(result.items()).extracting(SchedulingRecommendationService.AvailabilityItem::status)
-        .containsExactly("BOOKED", "AVAILABLE", "AVAILABLE");
+        .containsExactly("AVAILABLE", "BOOKED", "AVAILABLE", "AVAILABLE", "AVAILABLE", "AVAILABLE");
     assertThat(oldAppointment.endAt).isEqualTo(oldAppointment.startAt.plus(Duration.ofMinutes(30)));
 
     var newStart = date.atTime(9, 0).atZone(CLINIC_ZONE).toInstant();
-    assertThatThrownBy(() -> service.assertAvailable(
-        doctorId, newStart, newStart.plus(Duration.ofMinutes(30)), null, "Bearer token", "PATIENT"))
-        .isInstanceOf(SchedulingRecommendationService.SlotUnavailableException.class);
     assertThat(service.assertAvailable(
-        doctorId, newStart, newStart.plus(Duration.ofMinutes(60)), null, "Bearer token", "PATIENT"))
+        doctorId, newStart, newStart.plus(Duration.ofMinutes(30)), null, "Bearer token", "PATIENT"))
         .isEqualByComparingTo("150000");
+    assertThatThrownBy(() -> service.availability(
+        doctorId, date, 60, UUID.randomUUID(), "Bearer token", "PATIENT"))
+        .isInstanceOf(IllegalArgumentException.class)
+        .hasMessage("APPOINTMENT_DURATION_FIXED_AT_30_MINUTES");
     server.verify();
   }
 

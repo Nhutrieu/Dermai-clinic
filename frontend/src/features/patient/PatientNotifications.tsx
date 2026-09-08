@@ -87,7 +87,15 @@ export default function PatientNotifications({ session }: { session: Tokens }) {
         setMessage("");
         try {
             await request(`/appointments/proposals/${id}/${action}`, session.accessToken, { method: "POST" });
-            setMessage(action === "accept" ? "Đã xác nhận lịch khám với lễ tân." : "Đã từ chối và trả lại khung giờ.");
+            if (action === "decline") {
+                await request("/appointments/support", session.accessToken, {
+                    method: "POST",
+                    body: JSON.stringify({ body: "Thông tin lịch hẹn chưa phù hợp. Tôi cần lễ tân hỗ trợ kiểm tra và chọn lại lịch." }),
+                });
+            }
+            setMessage(action === "accept"
+                ? "Đã xác nhận thông tin lịch khám."
+                : "Đã báo thông tin chưa đúng và chuyển yêu cầu đến lễ tân.");
             await load();
             window.dispatchEvent(new Event("appointments-changed"));
         } catch (x) {
@@ -137,10 +145,10 @@ export default function PatientNotifications({ session }: { session: Tokens }) {
                                         activeIds.has(x.appointmentId) ? (
                                             <div className="proposal-actions">
                                                 <button disabled={busyId === x.appointmentId} onClick={() => respond(x.appointmentId!, "accept")}>
-                                                    Đồng ý lịch này
+                                                    Xác nhận thông tin
                                                 </button>
                                                 <button disabled={busyId === x.appointmentId} onClick={() => respond(x.appointmentId!, "decline")}>
-                                                    Từ chối
+                                                    Thông tin chưa đúng
                                                 </button>
                                             </div>
                                         ) : (

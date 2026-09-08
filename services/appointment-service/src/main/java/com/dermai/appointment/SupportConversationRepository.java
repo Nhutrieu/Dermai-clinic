@@ -17,8 +17,7 @@ interface SupportConversationRepository extends JpaRepository<SupportConversatio
   ON CONFLICT (patient_identity_id) DO UPDATE
   SET assigned_receptionist_identity_id=EXCLUDED.assigned_receptionist_identity_id,
       assigned_at=now(),channel_status='ASSIGNED',updated_at=now()
-  WHERE support_conversations.channel_status<>'AI_ACTIVE'
-    AND (support_conversations.assigned_receptionist_identity_id IS NULL
+  WHERE (support_conversations.assigned_receptionist_identity_id IS NULL
       OR support_conversations.assigned_receptionist_identity_id=EXCLUDED.assigned_receptionist_identity_id)
   """,nativeQuery=true)
  int claim(@Param("patient") UUID patientIdentityId,@Param("receptionist") UUID receptionistIdentityId);

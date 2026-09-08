@@ -3,6 +3,7 @@ import jakarta.validation.Valid;import jakarta.validation.constraints.*;import o
 @RestController @RequestMapping("/api/v1/doctors")
 public class DoctorController{
  private static final ZoneId CLINIC_ZONE=ZoneId.of("Asia/Ho_Chi_Minh");
+ private static final int SLOT_MINUTES=30;
  private final DoctorRepository doctors;private final ScheduleRepository schedules;private final SlotDurationPolicyRepository slotPolicies;private final LeaveRepository leaves;private final LeaveApprovalViewRepository approvalViews;private final DoctorProfileWebSocketHandler profileUpdates;private final AppointmentScheduleClient appointments;
  @Autowired DoctorController(DoctorRepository d,ScheduleRepository s,LeaveRepository l,DoctorProfileWebSocketHandler p,AppointmentScheduleClient appointments,LeaveApprovalViewRepository v,SlotDurationPolicyRepository policies){doctors=d;schedules=s;leaves=l;approvalViews=v;slotPolicies=policies;profileUpdates=p;this.appointments=appointments;}
  DoctorController(DoctorRepository d,ScheduleRepository s,LeaveRepository l,DoctorProfileWebSocketHandler p,AppointmentScheduleClient appointments){this(d,s,l,p,appointments,null,null);}
@@ -16,6 +17,7 @@ public class DoctorController{
  record LeaveRequest(UUID id,UUID doctorId,String doctorName,Instant startAt,Instant endAt,String reason,String status,UUID requestedBy,Instant reviewedAt,String reviewNote){}
  record LeaveApproval(UUID id,UUID doctorId,Instant startAt,Instant endAt,Instant reviewedAt){}
  record BioBody(@Size(max=1200) String bio){}
+ record PersonalProfileBody(@Pattern(regexp="^$|^[0-9+() .-]{8,20}$") String phone,@Size(max=1200) String bio){}
  record SchedulingDoctor(UUID id,UUID identityId,String fullName,String specialtyCode,int experienceYears,String certificateNo,BigDecimal consultationFee,String bio,List<WorkSchedule> workSchedules,List<SlotDurationPolicy> slotPolicies,List<SchedulingLeave> leavePeriods){}
  record SchedulingLeave(Instant startAt,Instant endAt){}
  @GetMapping List<Doctor> list(@RequestParam(required=false) String specialty){return specialty==null?doctors.findAll():doctors.findBySpecialtyCodeAndActiveTrue(specialty);}
@@ -32,6 +34,7 @@ public class DoctorController{
   doctor.avatarData=image.getBytes();doctor.avatarMime=mime;doctor.avatarUrl="/api/v1/doctors/"+doctor.id+"/avatar?v="+System.currentTimeMillis();var saved=doctors.save(doctor);profileUpdates.broadcastUpdated(saved.id);return saved;
  }
  @PatchMapping("/me/bio") Doctor updateBio(@RequestHeader("X-User-Id") UUID identity,@RequestHeader("X-User-Role") String role,@Valid @RequestBody BioBody body){require(role,"DOCTOR");var doctor=doctors.findByIdentityId(identity).orElseThrow(()->new ResponseStatusException(HttpStatus.NOT_FOUND));doctor.bio=body.bio()==null||body.bio().isBlank()?null:body.bio().trim();var saved=doctors.save(doctor);profileUpdates.broadcastUpdated(saved.id);return saved;}
+ @PatchMapping("/me/personal") Doctor updatePersonal(@RequestHeader("X-User-Id") UUID identity,@RequestHeader("X-User-Role") String role,@Valid @RequestBody PersonalProfileBody body){require(role,"DOCTOR");var doctor=doctors.findByIdentityId(identity).orElseThrow(()->new ResponseStatusException(HttpStatus.NOT_FOUND));doctor.phone=body.phone()==null||body.phone().isBlank()?null:body.phone().trim();doctor.bio=body.bio()==null||body.bio().isBlank()?null:body.bio().trim();var saved=doctors.save(doctor);profileUpdates.broadcastUpdated(saved.id);return saved;}
  @GetMapping("/{id}/avatar") ResponseEntity<byte[]> avatar(@PathVariable UUID id){var doctor=doctors.findById(id).orElseThrow(()->new ResponseStatusException(HttpStatus.NOT_FOUND));if(doctor.avatarData==null)throw new ResponseStatusException(HttpStatus.NOT_FOUND);return ResponseEntity.ok().contentType(MediaType.parseMediaType(doctor.avatarMime)).cacheControl(CacheControl.noCache()).body(doctor.avatarData);}
  @GetMapping("/me/schedule") Map<String,Object> mySchedule(@RequestHeader("X-User-Id") UUID identity,@RequestHeader("X-User-Role") String role){require(role,"DOCTOR");var d=doctors.findByIdentityId(identity).orElseThrow(()->new ResponseStatusException(HttpStatus.NOT_FOUND));return Map.of("workSchedules",schedules.findByDoctorId(d.id),"slotPolicies",slotPolicies==null?List.of():slotPolicies.findByDoctorIdOrderByEffectiveFromAsc(d.id),"leavePeriods",leaves.findByDoctorId(d.id));}
  @GetMapping("/scheduling-data") List<SchedulingDoctor> schedulingData(@RequestHeader("X-User-Role") String role){
@@ -80,19 +83,20 @@ public class DoctorController{
   require(role,"ADMIN");var doctor=doctors.findById(id).orElseThrow(()->new ResponseStatusException(HttpStatus.NOT_FOUND,"Không tìm thấy bác sĩ"));doctor.consultationFee=normalizeFee(body.consultationFee());var saved=doctors.save(doctor);profileUpdates.broadcastUpdated(saved.id);return saved;
  }
  @Transactional @PutMapping("/{id}/schedule") List<WorkSchedule> schedule(@PathVariable UUID id,@RequestHeader("X-User-Id") UUID identity,@RequestHeader("X-User-Role") String role,@Valid @RequestBody List<ScheduleBody> body){
-  requireOwner(id,role,identity);if(doctors.findById(id).isEmpty())throw new ResponseStatusException(HttpStatus.NOT_FOUND);
-  for(var x:body)if(!x.startTime().isBefore(x.endTime())||Duration.between(x.startTime(),x.endTime()).toMinutes()<x.slotMinutes())throw new ResponseStatusException(HttpStatus.BAD_REQUEST,"Khoảng giờ phải chứa ít nhất một slot");
+  require(role,"ADMIN");if(doctors.findById(id).isEmpty())throw new ResponseStatusException(HttpStatus.NOT_FOUND);
+  for(var x:body)if(!x.startTime().isBefore(x.endTime())||Duration.between(x.startTime(),x.endTime()).toMinutes()<SLOT_MINUTES)throw new ResponseStatusException(HttpStatus.BAD_REQUEST,"Khoảng giờ phải chứa ít nhất một lượt khám 30 phút");
   for(int i=0;i<body.size();i++)for(int j=i+1;j<body.size();j++){var a=body.get(i);var b=body.get(j);if(a.weekday()==b.weekday()&&a.startTime().isBefore(b.endTime())&&b.startTime().isBefore(a.endTime()))throw new ResponseStatusException(HttpStatus.CONFLICT,"Các ca làm cùng ngày không được chồng lấn");}
   var conflicts=appointments.upcomingBlocking(id).stream().filter(slot->body.stream().noneMatch(schedule->covers(schedule,slot))).toList();
   rejectAppointmentConflicts(conflicts,"thay đổi lịch làm việc");
-  var next=body.stream().map(x->{var s=new WorkSchedule();s.id=UUID.randomUUID();s.doctorId=id;s.weekday=x.weekday();s.startTime=x.startTime();s.endTime=x.endTime();s.slotMinutes=x.slotMinutes();return s;}).toList();
-  schedules.deleteAll(schedules.findByDoctorId(id));schedules.flush();return schedules.saveAll(next);
+  var next=body.stream().map(x->{var s=new WorkSchedule();s.id=UUID.randomUUID();s.doctorId=id;s.weekday=x.weekday();s.startTime=x.startTime();s.endTime=x.endTime();s.slotMinutes=SLOT_MINUTES;return s;}).toList();
+  schedules.deleteAll(schedules.findByDoctorId(id));schedules.flush();var saved=schedules.saveAll(next);profileUpdates.broadcastUpdated(id);return saved;
  }
  @PutMapping("/{id}/slot-duration") SlotDurationPolicy slotDuration(@PathVariable UUID id,@RequestHeader("X-User-Id") UUID identity,@RequestHeader("X-User-Role") String role,@Valid @RequestBody SlotDurationBody body){
-  requireOwner(id,role,identity);if(doctors.findById(id).isEmpty())throw new ResponseStatusException(HttpStatus.NOT_FOUND);
+  require(role,"ADMIN");if(doctors.findById(id).isEmpty())throw new ResponseStatusException(HttpStatus.NOT_FOUND);
+  if(body.slotMinutes()!=SLOT_MINUTES)throw new ResponseStatusException(HttpStatus.BAD_REQUEST,"Thời lượng mỗi lượt khám được cố định 30 phút");
   if(body.effectiveFrom().isBefore(LocalDate.now(CLINIC_ZONE)))throw new ResponseStatusException(HttpStatus.BAD_REQUEST,"Ngày áp dụng không được ở trong quá khứ");
   var policy=slotPolicies.findByDoctorIdAndEffectiveFrom(id,body.effectiveFrom()).orElseGet(()->{var created=new SlotDurationPolicy();created.id=UUID.randomUUID();created.doctorId=id;created.effectiveFrom=body.effectiveFrom();return created;});
-  policy.slotMinutes=body.slotMinutes();var saved=slotPolicies.save(policy);profileUpdates.broadcastUpdated(id);return saved;
+  policy.slotMinutes=SLOT_MINUTES;var saved=slotPolicies.save(policy);profileUpdates.broadcastUpdated(id);return saved;
  }
  @PostMapping("/{id}/leave") ResponseEntity<LeavePeriod> leave(@PathVariable UUID id,@RequestHeader("X-User-Id") UUID identity,@RequestHeader("X-User-Role") String role,@Valid @RequestBody LeaveBody b){
   requireOwner(id,role,identity);if(doctors.findById(id).isEmpty())throw new ResponseStatusException(HttpStatus.NOT_FOUND);if(!b.startAt().isBefore(b.endAt()))throw new ResponseStatusException(HttpStatus.BAD_REQUEST,"Khoảng nghỉ sai");

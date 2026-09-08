@@ -836,3 +836,20 @@
 }
 .doctor-profile-leave-list .doctor-profile-leave-status.is-approved { background: var(--color-success-surface); color: var(--color-success); }
 .doctor-profile-leave-list .doctor-profile-leave-status.is-rejected { background: var(--color-danger-surface); color: var(--color-danger); }
+
+/* Doctor profile: professional data is view-only; only personal data enters edit mode. */
+.doctor-profile-avatar-picker.is-readonly { cursor: default; }
+.doctor-profile-readonly-grid,.doctor-profile-personal-view{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:0;margin:0;overflow:hidden;border:1px solid var(--doctor-profile-border);border-radius:var(--radius-control);background:var(--doctor-profile-surface-muted)}
+.doctor-profile-readonly-grid>div,.doctor-profile-personal-view>div{min-width:0;padding:15px 16px;border-bottom:1px solid var(--doctor-profile-border)}
+.doctor-profile-readonly-grid>div:nth-child(odd),.doctor-profile-personal-view>div:nth-child(odd){border-right:1px solid var(--doctor-profile-border)}
+.doctor-profile-readonly-grid>div:nth-last-child(-n+2),.doctor-profile-personal-view>div:nth-last-child(-n+2){border-bottom:0}
+.doctor-profile-readonly-grid dt,.doctor-profile-personal-view dt{margin-bottom:6px;color:var(--color-text-secondary);font-size:12px;font-weight:700}
+.doctor-profile-readonly-grid dd,.doctor-profile-personal-view dd{margin:0;overflow-wrap:anywhere;color:var(--color-ink);font-size:15px;font-weight:650;line-height:1.5}
+.doctor-profile-personal-view{grid-template-columns:minmax(180px,.65fr) minmax(0,1.35fr)}
+.doctor-profile-edit-actions{display:flex;justify-content:flex-end;gap:var(--space-2)}
+.doctor-profile-professional-actions{grid-column:1/-1}
+.doctor-profile-readonly-grid>div:nth-last-child(-n+2){border-bottom:1px solid var(--doctor-profile-border)}
+.doctor-profile-readonly-grid>div:last-child,.doctor-profile-readonly-grid>div:nth-last-child(2):nth-child(odd){border-bottom:0}
+.doctor-profile-readonly-grid>div:last-child:nth-child(odd){grid-column:1/-1;border-right:0}
+@media(max-width:760px){.doctor-profile-readonly-grid,.doctor-profile-personal-view{grid-template-columns:1fr}.doctor-profile-readonly-grid>div,.doctor-profile-personal-view>div,.doctor-profile-readonly-grid>div:nth-child(odd),.doctor-profile-personal-view>div:nth-child(odd),.doctor-profile-readonly-grid>div:nth-last-child(-n+2),.doctor-profile-personal-view>div:nth-last-child(-n+2){border-right:0;border-bottom:1px solid var(--doctor-profile-border)}.doctor-profile-readonly-grid>div:last-child,.doctor-profile-personal-view>div:last-child{border-bottom:0}}
+@media(max-width:520px){.doctor-profile-edit-actions,.doctor-profile-edit-actions button{width:100%}}

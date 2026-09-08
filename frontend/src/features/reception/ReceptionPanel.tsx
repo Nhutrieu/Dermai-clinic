@@ -242,7 +242,7 @@ export default function ReceptionPanel({ token, tab }: { token: string; tab: str
         setMessage("");
         setMessageError(false);
         try {
-            const result = await request<RecommendationResult>("/appointments/recommendations", token, { method: "POST", body: JSON.stringify({ patientId: x.patientId, preferredStart: x.startAt, durationMinutes: Math.round((new Date(x.endAt).getTime() - new Date(x.startAt).getTime()) / 60000), limit: 5 }) });
+            const result = await request<RecommendationResult>("/appointments/recommendations", token, { method: "POST", body: JSON.stringify({ patientId: x.patientId, preferredStart: x.startAt, durationMinutes: 30, limit: 5 }) });
             setRecommendFor(x.id);
             setRecommendations(result.items);
             setMessage(result.items.length ? "Đã tìm thấy các lịch có thể phân công." : "Không có khung giờ phù hợp trong 7 ngày.");

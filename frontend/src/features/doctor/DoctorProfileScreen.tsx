@@ -1,32 +1,23 @@
-import { FormEvent, useEffect, useMemo, useState } from "react";
-import { BadgeCheck, CalendarOff, Camera, Clock3, Save, Trash2 } from "lucide-react";
+import { FormEvent, useMemo, useState } from "react";
+import { BadgeCheck, CalendarOff, Camera, Clock3, Pencil, Save, Trash2, X } from "lucide-react";
 import { request } from "../../core/api";
-import type { Doctor, LeavePeriod, SlotDurationPolicy, WorkSchedule } from "../../core/types";
+import type { Doctor, LeavePeriod, WorkSchedule } from "../../core/types";
 
 type Props = {
   token: string;
   doctor: Doctor;
   work: WorkSchedule[];
-  slotPolicies: SlotDurationPolicy[];
   leave: LeavePeriod[];
   saved: (doctor: Doctor) => void;
 };
 
-type FeedbackScope = "overview" | "professional" | "bio" | "schedule" | "leave";
+type FeedbackScope = "overview" | "professional" | "bio" | "leave";
 type Feedback = { text: string; error: boolean };
 const CLINIC_WORKDAYS = [1, 2, 3, 4, 5];
 
 function localDateValue(date = new Date()) {
   const offset = date.getTimezoneOffset() * 60_000;
   return new Date(date.getTime() - offset).toISOString().slice(0, 10);
-}
-
-export function slotMinutesOn(date: string, schedules: WorkSchedule[], policies: SlotDurationPolicy[]) {
-  const latest = policies
-    .filter(policy => policy.effectiveFrom <= date)
-    .sort((left, right) => left.effectiveFrom.localeCompare(right.effectiveFrom))
-    .at(-1);
-  return latest?.slotMinutes ?? schedules.find(item => item.weekday === 1)?.slotMinutes ?? schedules[0]?.slotMinutes ?? 30;
 }
 
 function initials(name: string) {
@@ -54,64 +45,21 @@ function leaveStatusLabel(status: LeavePeriod["status"]) {
   return "Đã duyệt";
 }
 
-export default function DoctorProfileScreen({ token, doctor, work, slotPolicies, leave, saved }: Props) {
-  const savedWeekday = work.find(item => item.weekday === 1) || work[0];
+export default function DoctorProfileScreen({ token, doctor, work, leave, saved }: Props) {
   const [profile, setProfile] = useState(doctor);
-  const [schedules, setSchedules] = useState(work);
+  const schedules = work;
   const [leaves, setLeaves] = useState(leave);
-  const [durationPolicies, setDurationPolicies] = useState(slotPolicies);
   const [bio, setBio] = useState(doctor.bio || "");
-  const [startTime, setStartTime] = useState(savedWeekday?.startTime.slice(0, 5) || "08:00");
-  const [endTime, setEndTime] = useState(savedWeekday?.endTime.slice(0, 5) || "17:00");
-  const [effectiveFrom, setEffectiveFrom] = useState(localDateValue);
-  const [slotMinutes, setSlotMinutes] = useState(() => slotMinutesOn(localDateValue(), work, slotPolicies));
+  const [phone, setPhone] = useState(doctor.phone || "");
+  const [editingProfessional, setEditingProfessional] = useState(false);
+  const [editingPersonal, setEditingPersonal] = useState(false);
+  const [pendingAvatar, setPendingAvatar] = useState<File | null>(null);
+  const [avatarPreview, setAvatarPreview] = useState("");
   const [leaveStart, setLeaveStart] = useState("");
   const [leaveEnd, setLeaveEnd] = useState("");
   const [leaveReason, setLeaveReason] = useState("");
   const [feedback, setFeedback] = useState<Feedback | null>(null);
   const [feedbackScope, setFeedbackScope] = useState<FeedbackScope>("professional");
-
-  // Preserve the existing delayed save so profile data remains synced across patient views.
-  useEffect(() => {
-    if (
-      profile.fullName === doctor.fullName
-      && profile.specialtyCode === doctor.specialtyCode
-      && profile.experienceYears === doctor.experienceYears
-      && profile.certificateNo === doctor.certificateNo
-    ) return;
-
-    const timer = window.setTimeout(async () => {
-      setFeedbackScope("professional");
-      try {
-        const updated = await request<Doctor>("/doctors/me", token, {
-          method: "PATCH",
-          body: JSON.stringify({
-            fullName: profile.fullName,
-            specialtyCode: profile.specialtyCode,
-            experienceYears: profile.experienceYears,
-            certificateNo: profile.certificateNo || null,
-          }),
-        });
-        setProfile(updated);
-        saved(updated);
-        setFeedback({ text: "Đã tự động lưu thông tin chuyên môn.", error: false });
-      } catch (cause) {
-        setFeedback({ text: (cause as Error).message, error: true });
-      }
-    }, 900);
-    return () => window.clearTimeout(timer);
-  }, [
-    doctor.certificateNo,
-    doctor.experienceYears,
-    doctor.fullName,
-    doctor.specialtyCode,
-    profile.certificateNo,
-    profile.experienceYears,
-    profile.fullName,
-    profile.specialtyCode,
-    saved,
-    token,
-  ]);
 
   const weekdaySchedule = useMemo(
     () => schedules.find(item => item.weekday === 1) || schedules[0],
@@ -121,16 +69,12 @@ export default function DoctorProfileScreen({ token, doctor, work, slotPolicies,
     () => CLINIC_WORKDAYS.filter(day => schedules.some(item => item.weekday === day)).length,
     [schedules],
   );
-  const currentSlotMinutes = useMemo(
-    () => slotMinutesOn(localDateValue(), schedules, durationPolicies),
-    [durationPolicies, schedules],
-  );
   const sortedLeaves = useMemo(
     () => [...leaves].sort((left, right) => new Date(left.startAt).getTime() - new Date(right.startAt).getTime()),
     [leaves],
   );
 
-  async function saveProfile(event: FormEvent) {
+  async function saveProfessional(event: FormEvent) {
     event.preventDefault();
     setFeedbackScope("professional");
     try {
@@ -145,75 +89,72 @@ export default function DoctorProfileScreen({ token, doctor, work, slotPolicies,
       });
       setProfile(updated);
       saved(updated);
+      setEditingProfessional(false);
       setFeedback({ text: "Đã lưu thông tin chuyên môn.", error: false });
     } catch (cause) {
       setFeedback({ text: (cause as Error).message, error: true });
     }
   }
 
-  async function chooseAvatar(file?: File) {
+  function cancelProfessionalEdit() {
+    setProfile(current => ({
+      ...current,
+      fullName: doctor.fullName,
+      specialtyCode: doctor.specialtyCode,
+      experienceYears: doctor.experienceYears,
+      certificateNo: doctor.certificateNo,
+    }));
+    setEditingProfessional(false);
+    setFeedback(null);
+  }
+
+  async function savePersonal(event: FormEvent) {
+    event.preventDefault();
+    setFeedbackScope("bio");
+    try {
+      let updated = await request<Doctor>("/doctors/me/personal", token, {
+        method: "PATCH",
+        body: JSON.stringify({ phone: phone.trim(), bio }),
+      });
+      if (pendingAvatar) {
+        const form = new FormData();
+        form.append("image", pendingAvatar);
+        updated = await request<Doctor>("/doctors/me/avatar", token, { method: "POST", body: form });
+      }
+      setProfile(updated);
+      setPhone(updated.phone || "");
+      setBio(updated.bio || "");
+      saved(updated);
+      setEditingPersonal(false);
+      setPendingAvatar(null);
+      setAvatarPreview("");
+      setFeedback({ text: "Đã lưu thông tin cá nhân.", error: false });
+    } catch (cause) {
+      setFeedback({ text: (cause as Error).message, error: true });
+    }
+  }
+
+  function cancelPersonalEdit() {
+    setPhone(profile.phone || "");
+    setBio(profile.bio || "");
+    setPendingAvatar(null);
+    setAvatarPreview("");
+    setEditingPersonal(false);
+    setFeedback(null);
+  }
+
+  function chooseAvatar(file?: File) {
     if (!file) return;
     setFeedbackScope("overview");
     if (file.size > 2 * 1024 * 1024) {
       setFeedback({ text: "Ảnh đại diện tối đa 2 MB.", error: true });
       return;
     }
-    const form = new FormData();
-    form.append("image", file);
-    try {
-      const updated = await request<Doctor>("/doctors/me/avatar", token, { method: "POST", body: form });
-      setProfile(updated);
-      saved(updated);
-      setFeedback({ text: "Đã cập nhật ảnh đại diện.", error: false });
-    } catch (cause) {
-      setFeedback({ text: (cause as Error).message, error: true });
-    }
-  }
-
-  async function saveBio(event: FormEvent) {
-    event.preventDefault();
-    setFeedbackScope("bio");
-    try {
-      const updated = await request<Doctor>("/doctors/me/bio", token, {
-        method: "PATCH",
-        body: JSON.stringify({ bio }),
-      });
-      setProfile(updated);
-      saved(updated);
-      setFeedback({ text: "Đã lưu phần giới thiệu bác sĩ.", error: false });
-    } catch (cause) {
-      setFeedback({ text: (cause as Error).message, error: true });
-    }
-  }
-
-  async function saveWeeklySchedule(event: FormEvent) {
-    event.preventDefault();
-    setFeedbackScope("schedule");
-    try {
-      const fallbackMinutes = savedWeekday?.slotMinutes || 30;
-      const body = CLINIC_WORKDAYS.map(day => ({
-        weekday: day,
-        startTime,
-        endTime,
-        slotMinutes: schedules.find(item => item.weekday === day)?.slotMinutes || fallbackMinutes,
-      }));
-      const updated = await request<WorkSchedule[]>(`/doctors/${doctor.id}/schedule`, token, {
-        method: "PUT",
-        body: JSON.stringify(body),
-      });
-      const policy = await request<SlotDurationPolicy>(`/doctors/${doctor.id}/slot-duration`, token, {
-        method: "PUT",
-        body: JSON.stringify({ effectiveFrom, slotMinutes }),
-      });
-      setSchedules(updated);
-      setDurationPolicies(current => [...current.filter(item => item.effectiveFrom !== policy.effectiveFrom), policy]);
-      setFeedback({
-        text: `Đã lưu: mỗi lượt ${slotMinutes} phút từ ngày ${new Date(effectiveFrom + "T00:00:00").toLocaleDateString("vi-VN")} trở đi.`,
-        error: false,
-      });
-    } catch (cause) {
-      setFeedback({ text: (cause as Error).message, error: true });
-    }
+    const reader = new FileReader();
+    reader.onload = () => setAvatarPreview(String(reader.result || ""));
+    reader.readAsDataURL(file);
+    setPendingAvatar(file);
+    setFeedback(null);
   }
 
   async function addLeave(event: FormEvent) {
@@ -261,18 +202,18 @@ export default function DoctorProfileScreen({ token, doctor, work, slotPolicies,
     <main className="doctor-profile-page" aria-labelledby="doctor-profile-title">
       <section className="doctor-profile-overview" aria-label="Tóm tắt hồ sơ công khai">
         <div className="doctor-profile-identity">
-          <label className="doctor-profile-avatar-picker" aria-label="Chọn ảnh đại diện mới">
-            {profile.avatarUrl
-              ? <img src={profile.avatarUrl} alt={`Ảnh đại diện của ${profile.fullName}`} />
+          <label className={`doctor-profile-avatar-picker ${editingPersonal ? "is-editable" : "is-readonly"}`} aria-label={editingPersonal ? "Chọn ảnh đại diện mới" : "Ảnh đại diện bác sĩ"}>
+            {avatarPreview || profile.avatarUrl
+              ? <img src={avatarPreview || profile.avatarUrl} alt={`Ảnh đại diện của ${profile.fullName}`} />
               : <span aria-hidden="true">{initials(profile.fullName)}</span>}
-            <b aria-hidden="true"><Camera /></b>
-            <input type="file" accept="image/jpeg,image/png,image/webp" onChange={event => void chooseAvatar(event.target.files?.[0])} />
+            {editingPersonal && <b aria-hidden="true"><Camera /></b>}
+            <input disabled={!editingPersonal} type="file" accept="image/jpeg,image/png,image/webp" onChange={event => chooseAvatar(event.target.files?.[0])} />
           </label>
           <div>
             <span className="doctor-profile-visibility"><BadgeCheck aria-hidden="true" /> Hồ sơ hiển thị với bệnh nhân</span>
             <h2 id="doctor-profile-title">{displayName}</h2>
             <p>{profile.specialtyCode || "Chưa cập nhật chuyên môn"}</p>
-            <small>Chọn ảnh để thay đổi. JPG, PNG hoặc WebP, tối đa 2 MB.</small>
+            <small>{editingPersonal ? "Chọn ảnh để thay đổi. JPG, PNG hoặc WebP, tối đa 2 MB." : "Thông tin hồ sơ bác sĩ tại DermAI Clinic."}</small>
           </div>
         </div>
         <dl className="doctor-profile-facts">
@@ -287,57 +228,55 @@ export default function DoctorProfileScreen({ token, doctor, work, slotPolicies,
         <div className="doctor-profile-primary">
           <section className="doctor-profile-section" aria-labelledby="doctor-professional-title">
             <header className="doctor-profile-section-heading">
-              <div><h2 id="doctor-professional-title">Thông tin chuyên môn</h2><p>Nội dung này xuất hiện trong danh sách bác sĩ và khi bệnh nhân đặt lịch.</p></div>
-              <span>Đang bật tự động lưu</span>
+              <div><h2 id="doctor-professional-title">Thông tin chuyên môn và tài khoản</h2><p>Bác sĩ có thể cập nhật thông tin chuyên môn. Thông tin tài khoản vẫn được hệ thống quản lý.</p></div>
+              {!editingProfessional && <button type="button" className="doctor-profile-secondary-button" onClick={() => { setFeedback(null); setEditingProfessional(true); }}><Pencil aria-hidden="true" /> Chỉnh sửa</button>}
             </header>
             {renderFeedback("professional")}
-            <form className="doctor-profile-form" onSubmit={saveProfile}>
+            {editingProfessional ? <form className="doctor-profile-form" onSubmit={saveProfessional}>
               <label>Họ và tên<input required maxLength={160} autoComplete="name" value={profile.fullName} onChange={event => setProfile({ ...profile, fullName: event.target.value })} /></label>
-              <label>Chuyên môn<input required maxLength={80} value={profile.specialtyCode} onChange={event => setProfile({ ...profile, specialtyCode: event.target.value })} /></label>
+              <label>Chuyên khoa<input required maxLength={80} value={profile.specialtyCode} onChange={event => setProfile({ ...profile, specialtyCode: event.target.value })} /></label>
               <label>Số năm kinh nghiệm<input type="number" min="0" max="80" required value={profile.experienceYears} onChange={event => setProfile({ ...profile, experienceYears: Number(event.target.value) })} /></label>
               <label>Số chứng chỉ hành nghề<input maxLength={120} value={profile.certificateNo || ""} onChange={event => setProfile({ ...profile, certificateNo: event.target.value })} /></label>
-              <div className="doctor-profile-form-actions">
-                <small>Nhấn lưu để cập nhật ngay thay vì chờ tự động lưu.</small>
-                <button type="submit" className="doctor-profile-primary-button"><Save aria-hidden="true" /> Lưu thay đổi</button>
+              <div className="doctor-profile-form-actions doctor-profile-professional-actions">
+                <small>Nhấn Lưu để cập nhật thông tin hiển thị với bệnh nhân.</small>
+                <div className="doctor-profile-edit-actions"><button type="button" className="doctor-profile-secondary-button" onClick={cancelProfessionalEdit}><X aria-hidden="true" /> Hủy</button><button type="submit" className="doctor-profile-primary-button"><Save aria-hidden="true" /> Lưu</button></div>
               </div>
-            </form>
+            </form> : <dl className="doctor-profile-readonly-grid">
+              <div><dt>Họ và tên</dt><dd>{profile.fullName}</dd></div>
+              <div><dt>Chuyên khoa</dt><dd>{profile.specialtyCode}</dd></div>
+              <div><dt>Chức danh</dt><dd>Bác sĩ</dd></div>
+              <div><dt>Kinh nghiệm</dt><dd>{profile.experienceYears} năm</dd></div>
+              <div><dt>Số chứng chỉ hành nghề</dt><dd>{profile.certificateNo || "Chưa cập nhật"}</dd></div>
+            </dl>}
           </section>
 
           <section className="doctor-profile-section" aria-labelledby="doctor-bio-title">
             <header className="doctor-profile-section-heading">
-              <div><h2 id="doctor-bio-title">Giới thiệu với bệnh nhân</h2><p>Nêu kinh nghiệm, thế mạnh điều trị và cách tiếp cận chuyên môn.</p></div>
+              <div><h2 id="doctor-bio-title">Thông tin cá nhân</h2><p>Bác sĩ có thể cập nhật ảnh đại diện, số điện thoại và phần giới thiệu ngắn.</p></div>
+              {!editingPersonal && <button type="button" className="doctor-profile-secondary-button" onClick={() => { setFeedback(null); setEditingPersonal(true); }}><Pencil aria-hidden="true" /> Chỉnh sửa thông tin cá nhân</button>}
             </header>
             {renderFeedback("bio")}
-            <form className="doctor-profile-bio-form" onSubmit={saveBio}>
-              <label htmlFor="doctor-profile-bio">Mô tả bác sĩ</label>
+            {editingPersonal ? <form className="doctor-profile-bio-form" onSubmit={savePersonal}>
+              <label>Số điện thoại<input type="tel" minLength={8} maxLength={20} value={phone} onChange={event => setPhone(event.target.value)} placeholder="Ví dụ: 0352 790 904" /></label>
+              <label htmlFor="doctor-profile-bio">Phần giới thiệu ngắn</label>
               <textarea id="doctor-profile-bio" maxLength={1200} value={bio} onChange={event => setBio(event.target.value)} placeholder="Ví dụ: Bác sĩ chuyên điều trị mụn, viêm da và các bệnh lý da liễu thường gặp." />
               <div className="doctor-profile-form-actions">
                 <small>{bio.length}/1200 ký tự</small>
-                <button type="submit" className="doctor-profile-primary-button"><Save aria-hidden="true" /> Lưu giới thiệu</button>
+                <div className="doctor-profile-edit-actions"><button type="button" className="doctor-profile-secondary-button" onClick={cancelPersonalEdit}><X aria-hidden="true" /> Hủy</button><button type="submit" className="doctor-profile-primary-button"><Save aria-hidden="true" /> Lưu</button></div>
               </div>
-            </form>
+            </form> : <dl className="doctor-profile-personal-view"><div><dt>Số điện thoại</dt><dd>{profile.phone || "Chưa cập nhật"}</dd></div><div><dt>Giới thiệu ngắn</dt><dd>{profile.bio || "Chưa có phần giới thiệu."}</dd></div></dl>}
           </section>
         </div>
 
         <aside className="doctor-profile-secondary" aria-label="Lịch làm việc và nghỉ phép">
           <section className="doctor-profile-section doctor-profile-schedule" aria-labelledby="doctor-schedule-title">
             <header className="doctor-profile-section-heading">
-              <div><h2 id="doctor-schedule-title"><Clock3 aria-hidden="true" /> Lịch làm việc</h2><p>Thiết lập khung giờ chung và chọn ngày bắt đầu áp dụng thời lượng slot mới.</p></div>
+              <div><h2 id="doctor-schedule-title"><Clock3 aria-hidden="true" /> Lịch làm việc</h2><p>Giờ làm việc do quản trị viên thiết lập. Bác sĩ không thể tự thay đổi tại đây.</p></div>
             </header>
-            {renderFeedback("schedule")}
             <div className="doctor-profile-schedule-summary" role="status">
               <div><span>Ngày làm việc</span><strong>{configuredWorkdays === 5 ? "Thứ Hai - Thứ Sáu" : `${configuredWorkdays}/5 ngày đã cấu hình`}</strong></div>
               <div><span>Khung giờ hiện tại</span><strong>{weekdaySchedule ? `${weekdaySchedule.startTime.slice(0, 5)} - ${weekdaySchedule.endTime.slice(0, 5)}` : "Chưa thiết lập"}</strong></div>
-              <div><span>Thời lượng hiện tại</span><strong>{currentSlotMinutes} phút</strong></div>
             </div>
-            <form className="doctor-profile-schedule-form" onSubmit={saveWeeklySchedule}>
-              <label>Bắt đầu<input type="time" required value={startTime} onChange={event => setStartTime(event.target.value)} /></label>
-              <label>Kết thúc<input type="time" required value={endTime} onChange={event => setEndTime(event.target.value)} /></label>
-              <label className="doctor-profile-effective-date-field">Áp dụng slot từ ngày<input type="date" min={localDateValue()} required value={effectiveFrom} onChange={event => setEffectiveFrom(event.target.value)} /></label>
-              <label className="doctor-profile-slot-field">Thời lượng mỗi lượt khám<div className="doctor-profile-number-control"><input type="number" min="10" max="120" required value={slotMinutes} onChange={event => setSlotMinutes(Number(event.target.value))} /><span>phút</span></div></label>
-              <p className="doctor-profile-helper">Slot mới áp dụng cho mọi ngày làm việc kể từ ngày đã chọn. Các lịch hẹn cũ vẫn giữ nguyên thời lượng. Giờ nghỉ trưa 12:00 - 13:00 được áp dụng tự động.</p>
-              <button type="submit" className="doctor-profile-primary-button">Lưu giờ làm việc</button>
-            </form>
           </section>
 
           <section className="doctor-profile-section doctor-profile-leave" aria-labelledby="doctor-leave-title">

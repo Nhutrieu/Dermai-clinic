@@ -3,6 +3,7 @@ package com.dermai.doctor;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
@@ -22,6 +23,17 @@ import org.springframework.web.server.ResponseStatusException;
 
 class DoctorScheduleConflictTest {
   private static final ZoneId CLINIC_ZONE = ZoneId.of("Asia/Ho_Chi_Minh");
+
+  @Test
+  void forbidsDoctorFromChangingTheirOwnWorkSchedule() {
+    var controller = new DoctorController(mock(DoctorRepository.class), mock(ScheduleRepository.class),
+        mock(LeaveRepository.class), mock(DoctorProfileWebSocketHandler.class),
+        mock(AppointmentScheduleClient.class));
+
+    assertThatThrownBy(() -> controller.schedule(UUID.randomUUID(), UUID.randomUUID(), "DOCTOR", List.of()))
+        .isInstanceOfSatisfying(ResponseStatusException.class, error ->
+            assertThat(error.getStatusCode()).isEqualTo(HttpStatus.FORBIDDEN));
+  }
 
   @Test
   void conflictResponseHasAStableCodeAndHumanReadableDetail() {
@@ -82,7 +94,7 @@ class DoctorScheduleConflictTest {
   }
 
   @Test
-  void permitsChangingToSixtyMinuteSlotsWithoutChangingAnExistingThirtyMinuteAppointment() {
+  void normalizesLegacySixtyMinuteScheduleRequestsToThirtyMinutes() {
     var doctors = mock(DoctorRepository.class);
     var schedules = mock(ScheduleRepository.class);
     var leaves = mock(LeaveRepository.class);
@@ -101,7 +113,9 @@ class DoctorScheduleConflictTest {
 
     assertThat(visit.endAt()).isEqualTo(visit.startAt().plusSeconds(1_800));
     verify(schedules).deleteAll(List.of());
-    verify(schedules).saveAll(any());
+    verify(schedules).saveAll(argThat(items ->
+        java.util.stream.StreamSupport.stream(items.spliterator(), false)
+            .allMatch(item -> item.slotMinutes == 30)));
   }
 
   @Test

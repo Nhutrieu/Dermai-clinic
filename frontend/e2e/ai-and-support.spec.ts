@@ -39,10 +39,8 @@ const patient = credentialsFromEnvironment(1);
 const receptionist = roleCredentialsFromEnvironment("RECEPTIONIST");
 const baseURL = process.env.E2E_BASE_URL?.trim() || "http://localhost:3000";
 const configuredImagePath = process.env.E2E_AI_IMAGE_PATH?.trim();
-const imagePath = configuredImagePath ? resolve(configuredImagePath) : null;
-const imageProblem = !imagePath
-  ? "Thiếu biến môi trường E2E_AI_IMAGE_PATH."
-  : !existsSync(imagePath)
+const imagePath = resolve(configuredImagePath || "e2e/fixtures/synthetic-eczema-e2e.png");
+const imageProblem = !existsSync(imagePath)
     ? `Không tìm thấy ảnh E2E tại ${imagePath}.`
     : statSync(imagePath).size > 3 * 1024 * 1024
       ? "Ảnh E2E vượt 3 MB (giới hạn upload hiện tại của Nginx)."
@@ -82,12 +80,8 @@ test.describe("AI assessment persistence and sharing consent", () => {
     try {
       await page.getByRole("navigation", { name: "Điều hướng Bệnh nhân" })
         .getByRole("button", { name: "Kiểm tra da AI", exact: true }).click();
-      await page.getByLabel("Chọn ảnh vùng da để phân tích", { exact: true }).setInputFiles(imagePath!);
-      await page.getByRole("button", {
-        name: "Không, gửi ảnh để hệ thống xác minh",
-        exact: true,
-      }).click();
-      await page.getByRole("checkbox", { name: /Chia sẻ ảnh và kết quả khi đặt lịch/ }).check();
+      await page.locator('input[type="file"]').setInputFiles(imagePath!);
+      await page.getByRole("checkbox", { name: /Cho phép chia sẻ với bác sĩ khi đặt lịch/ }).check();
 
       const predictPromise = page.waitForResponse(response => isApiResponse(response, "POST", "/ai/predict"), { timeout: 120_000 });
       const savePromise = page.waitForResponse(response => isApiResponse(response, "POST", "/api/v1/patients/me/ai-assessments"), { timeout: 120_000 });
@@ -95,7 +89,7 @@ test.describe("AI assessment persistence and sharing consent", () => {
         response.request().method() === "PUT"
         && /\/api\/v1\/patients\/me\/ai-assessments\/[^/]+\/image$/.test(new URL(response.url()).pathname)
       ), { timeout: 120_000 });
-      await page.getByRole("button", { name: "Bắt đầu phân tích", exact: true }).click();
+      await page.getByRole("button", { name: /KHỞI TẠO PHÂN TÍCH AI/i }).click();
 
       const predictResponse = await predictPromise;
       const prediction = await responseBody<AiPrediction>(predictResponse);
@@ -120,20 +114,21 @@ test.describe("AI assessment persistence and sharing consent", () => {
       const imageResponse = await imagePromise;
       expect(imageResponse.status()).toBe(204);
 
-      await expect(page.getByText(/Phân tích đã hoàn tất|Kết quả chưa có đủ độ tin cậy/)).toBeVisible({ timeout: 15_000 });
-      await expect(page.getByRole("heading", { name: "Kết quả phân tích tham khảo" })).toBeVisible();
-      const displayedConfidence = `${(prediction!.confidence * 100).toFixed(1).replace(".", ",")}%`;
-      await expect(page.locator(".patient-ai-confidence-value strong")).toHaveText(displayedConfidence);
-      await expect(page.locator(".patient-ai-observation-grid ol > li")).toHaveCount(3);
-      await expect(page.getByAltText("Ảnh Grad-CAM thể hiện các vùng mô hình tập trung khi phân tích")).toBeVisible();
+      await expect(page.getByRole("heading", { name: "Đặt lịch với bác sĩ da liễu" })).toBeVisible({ timeout: 15_000 });
+      await expect(page.locator(".skin-v2-score-ring strong")).toHaveText(String(Math.round(prediction!.confidence * 100)));
+      await expect(page.locator(".skin-v2-prediction-list > li")).toHaveCount(3);
+      await expect(page.getByAltText("Ảnh Grad-CAM từ mô hình")).toBeVisible();
       const after = await browserApi<AiAssessment[]>(page, "/api/v1/patients/me/ai-assessments");
       expect(after.ok).toBeTruthy();
       const persisted = after.body.find(item => item.id === assessmentId);
       expect(persisted).toMatchObject({ sharedWithDoctor: true, imageAvailable: true });
       expect(before.body.some(item => item.id === assessmentId)).toBe(false);
-      // The newest persisted assessment is prepended; its displayed disease label may be localized.
-      await expect(page.locator(".ai-history-list article").first()
-        .getByRole("button", { name: "Đang chia sẻ", exact: true })).toBeVisible();
+      await page.getByRole("button", { name: "Đặt lịch khám ngay", exact: true }).click();
+      await expect(page.getByRole("heading", { name: "Đặt lịch khám da liễu" })).toBeVisible();
+      await expect(page.locator(".ai-booking-context")
+        .getByText("Đính kèm kết quả AI tham khảo", { exact: true })).toBeVisible();
+      await expect(page.getByLabel("Triệu chứng hoặc nhu cầu thăm khám", { exact: true }))
+        .toHaveValue(/Kết quả kiểm tra da bằng AI \(tham khảo\)/);
 
       await test.info().attach("ai-assessment-result.json", {
         body: Buffer.from(JSON.stringify({
@@ -145,6 +140,7 @@ test.describe("AI assessment persistence and sharing consent", () => {
           gradcamImageReturned: prediction!.gradcam_image.startsWith("data:image/png;base64,"),
           sharedWithDoctor: persisted!.sharedWithDoctor,
           imageAvailable: persisted!.imageAvailable,
+          bookingFlowOpenedWithAssessment: true,
         }, null, 2)),
         contentType: "application/json",
       });

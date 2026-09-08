@@ -218,7 +218,7 @@ function LegacyPatientAiScreen({ token, patient, openBooking }: { token: string;
         if (current?.id === selected.id) setCurrent(selected);
       }
       // Keep the existing booking handoff so the selected AI result is attached after confirmation.
-      sessionStorage.setItem("dermai-ai-booking", JSON.stringify({ assessmentId: selected.id, summary: bookingSummary(selected) }));
+      sessionStorage.setItem("dermai-ai-booking", JSON.stringify({ assessmentId: selected.id }));
       openBooking();
     } catch (value) {
       setActionError((value as Error).message || "Chưa thể mở luồng đặt lịch với kết quả này.");

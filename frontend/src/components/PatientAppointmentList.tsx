@@ -136,7 +136,7 @@ export function RescheduleAppointmentControl({
                     patientId: appointment.patientId,
                     preferredDoctorId: appointment.doctorId,
                     preferredStart: new Date(value).toISOString(),
-                    durationMinutes: Math.round((new Date(appointment.endAt).getTime() - new Date(appointment.startAt).getTime()) / 60000),
+                    durationMinutes: 30,
                     limit: 5
                 })
             });

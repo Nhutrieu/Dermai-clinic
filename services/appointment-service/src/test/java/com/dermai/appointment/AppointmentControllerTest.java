@@ -22,6 +22,36 @@ import org.springframework.web.server.ResponseStatusException;
 
 class AppointmentControllerTest {
   @Test
+  void receptionistCannotConfirmAnAppointmentThatNowOverlapsApprovedDoctorLeave() {
+    var service = mock(AppointmentService.class);
+    var repository = mock(AppointmentRepository.class);
+    var recommendations = mock(SchedulingRecommendationService.class);
+    var audit = mock(AppointmentActionAuditService.class);
+    var controller = new AppointmentController(service, repository, recommendations, audit,
+        mock(PatientDirectoryClient.class));
+    var appointmentId = UUID.randomUUID();
+    var receptionistId = UUID.randomUUID();
+    var doctorId = UUID.randomUUID();
+    var doctorIdentity = UUID.randomUUID();
+    var patientId = UUID.randomUUID();
+    var patientIdentity = UUID.randomUUID();
+    var start = Instant.now().plusSeconds(86_400);
+    var end = start.plusSeconds(1_800);
+    var appointment = Appointment.pending(patientId, patientIdentity, doctorId, doctorIdentity,
+        start, end, "Khám da", "key", new BigDecimal("150000"));
+    appointment.id = appointmentId;
+    when(repository.findById(appointmentId)).thenReturn(Optional.of(appointment));
+    doThrow(new SchedulingRecommendationService.SlotUnavailableException("DOCTOR_ON_LEAVE"))
+        .when(recommendations).assertAvailable(doctorId, start, end, appointmentId, "Bearer token", "RECEPTIONIST");
+
+    assertThatThrownBy(() -> controller.confirm(appointmentId, receptionistId, "RECEPTIONIST", "Bearer token"))
+        .isInstanceOfSatisfying(SchedulingRecommendationService.SlotUnavailableException.class,
+            error -> assertThat(error.getMessage()).isEqualTo("DOCTOR_ON_LEAVE"));
+    verify(service, never()).transition(any(), any());
+    verifyNoInteractions(audit);
+  }
+
+  @Test
   void bookingValidatesCanonicalPatientAndDoctorRelationshipsBeforePersisting() {
     var service = mock(AppointmentService.class);
     var repository = mock(AppointmentRepository.class);

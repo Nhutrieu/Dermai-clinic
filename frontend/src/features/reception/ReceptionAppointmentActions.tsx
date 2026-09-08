@@ -15,12 +15,6 @@ type AppointmentContext = {
   doctorName: string;
 };
 
-function appointmentDurationMinutes(appointment: Appointment) {
-  return Math.max(1, Math.round(
-    (new Date(appointment.endAt).getTime() - new Date(appointment.startAt).getTime()) / 60_000,
-  ));
-}
-
 function localDateTimeInput(value: string) {
   const date = new Date(value);
   const offset = date.getTimezoneOffset() * 60_000;
@@ -134,7 +128,7 @@ export function ReceptionRescheduleControl({
           patientId: appointment.patientId,
           preferredDoctorId: appointment.doctorId,
           preferredStart: new Date(preferredAt).toISOString(),
-          durationMinutes: appointmentDurationMinutes(appointment),
+          durationMinutes: 30,
           limit: 5,
         }),
       });

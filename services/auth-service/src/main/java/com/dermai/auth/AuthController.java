@@ -101,6 +101,10 @@ public class AuthController {
   if(!"ADMIN".equals(caller))return ResponseEntity.status(403).body(Map.of("code","FORBIDDEN"));
   return ResponseEntity.ok(service.staffEvents(id));
  }
+ @DeleteMapping("/staff/{id}") ResponseEntity<?> deleteStaff(@RequestHeader("X-User-Role") String caller,@PathVariable UUID id){
+  if(!"ADMIN".equals(caller))return ResponseEntity.status(403).body(Map.of("code","FORBIDDEN"));
+  service.deleteReceptionist(id);return ResponseEntity.noContent().build();
+ }
  @GetMapping("/patients/{id}/account") ResponseEntity<?> patientAccount(@RequestHeader("X-User-Role") String caller,@PathVariable java.util.UUID id){
   if(!"ADMIN".equals(caller))return ResponseEntity.status(403).body(Map.of("code","FORBIDDEN"));
   var u=service.patientAccount(id);return ResponseEntity.ok(Map.of("identityId",u.id,"email",u.email,"status",u.status));

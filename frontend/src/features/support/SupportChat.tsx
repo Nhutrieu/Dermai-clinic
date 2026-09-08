@@ -17,7 +17,38 @@ function tokenSubject(token: string) {
     }
 }
 
+type DismissedConversationSnapshots = Record<string, string>;
+
+function readDismissedConversationSnapshots(storageKey: string): DismissedConversationSnapshots {
+    if (typeof window === "undefined") return {};
+    try {
+        const parsed = JSON.parse(window.localStorage.getItem(storageKey) || "{}");
+        if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) return {};
+        return Object.fromEntries(Object.entries(parsed).filter((entry): entry is [string, string] => typeof entry[1] === "string"));
+    } catch {
+        return {};
+    }
+}
+
+function latestConversationMessageSnapshot(messages: SupportMessage[], patientIdentityId: string) {
+    return messages
+        .filter(item => item.patientIdentityId === patientIdentityId)
+        .reduce((latest, item) => {
+            const snapshot = `${item.sentAt}|${item.id}`;
+            return snapshot > latest ? snapshot : latest;
+        }, "");
+}
+
 export default function SupportChat({ session }: { session: Tokens }) {
+    const receptionist = session.role === "RECEPTIONIST";
+    const admin = session.role === "ADMIN";
+    const staffViewer = receptionist || admin;
+    const currentIdentityId = tokenSubject(session.accessToken);
+    const dismissedStorageKey = `dermai-support-dismissed-conversations:${currentIdentityId || session.role}`;
+    const initialDismissedSnapshotsRef = useRef<DismissedConversationSnapshots | null>(null);
+    if (initialDismissedSnapshotsRef.current === null) {
+        initialDismissedSnapshotsRef.current = readDismissedConversationSnapshots(dismissedStorageKey);
+    }
     const [open, setOpen] = useState(false);
     const [messages, setMessages] = useState<SupportMessage[]>([]);
     const [conversationStates, setConversationStates] = useState<SupportConversation[]>([]);
@@ -39,17 +70,16 @@ export default function SupportChat({ session }: { session: Tokens }) {
     const [notice, setNotice] = useState("");
     const [handoffNotice, setHandoffNotice] = useState(false);
     const [patientChannel, setPatientChannel] = useState<"assistant" | "receptionist">("assistant");
-    const [dismissedConversationIds, setDismissedConversationIds] = useState<Set<string>>(new Set());
+    const [dismissedConversationIds, setDismissedConversationIds] = useState<Set<string>>(
+        () => new Set(Object.keys(initialDismissedSnapshotsRef.current || {})),
+    );
 
     const knownMessageIdsRef = useRef<Set<string>>(new Set());
     const messagesInitializedRef = useRef(false);
     const messageListRef = useRef<HTMLDivElement>(null);
     const requestedConversationRef = useRef("");
-    const dismissedConversationIdsRef = useRef<Set<string>>(new Set());
-    const receptionist = session.role === "RECEPTIONIST";
-    const admin = session.role === "ADMIN";
-    const staffViewer = receptionist || admin;
-    const currentIdentityId = tokenSubject(session.accessToken);
+    const dismissedConversationIdsRef = useRef<Set<string>>(new Set(Object.keys(initialDismissedSnapshotsRef.current || {})));
+    const dismissedConversationSnapshotsRef = useRef<DismissedConversationSnapshots>({ ...(initialDismissedSnapshotsRef.current || {}) });
     const allConversationIds = [...new Set([...conversationStates.map(item => item.patientIdentityId), ...messages.map(item => item.patientIdentityId), ...(requestedConversationRef.current ? [requestedConversationRef.current] : [])])];
     const ids = allConversationIds.filter(id => !dismissedConversationIds.has(id));
     const visible = staffViewer ? messages.filter(item => item.patientIdentityId === conversation) : messages;
@@ -58,6 +88,33 @@ export default function SupportChat({ session }: { session: Tokens }) {
     const resolvedConversation = receptionist && activeConversation?.channelStatus === "AI_ACTIVE" && !!activeConversation.resolvedAt;
     const unread = admin ? [] : messages.filter(item => !item.readAt && (receptionist ? item.senderRole === "PATIENT" : item.senderRole !== "PATIENT"));
     const showAssistant = !staffViewer && patientChannel === "assistant";
+
+    function persistDismissedConversationSnapshots(snapshots: DismissedConversationSnapshots) {
+        if (typeof window === "undefined") return;
+        try {
+            if (Object.keys(snapshots).length) window.localStorage.setItem(dismissedStorageKey, JSON.stringify(snapshots));
+            else window.localStorage.removeItem(dismissedStorageKey);
+        } catch {
+            // Storage can be unavailable in private browsing or restricted webviews.
+        }
+    }
+
+    function restoreConversationCards(patientIdentityIds: string[]) {
+        if (!patientIdentityIds.length) return;
+        const restoredIds = new Set(dismissedConversationIdsRef.current);
+        const restoredSnapshots = { ...dismissedConversationSnapshotsRef.current };
+        let changed = false;
+        patientIdentityIds.forEach(patientIdentityId => {
+            if (!restoredIds.delete(patientIdentityId)) return;
+            delete restoredSnapshots[patientIdentityId];
+            changed = true;
+        });
+        if (!changed) return;
+        dismissedConversationIdsRef.current = restoredIds;
+        dismissedConversationSnapshotsRef.current = restoredSnapshots;
+        setDismissedConversationIds(restoredIds);
+        persistDismissedConversationSnapshots(restoredSnapshots);
+    }
 
     const staffName = (identityId?: string | null) => {
         if (!identityId) return "Chưa có người phụ trách";
@@ -72,15 +129,19 @@ export default function SupportChat({ session }: { session: Tokens }) {
                 request<StaffDirectoryEntry[]>("/auth/staff/directory", session.accessToken),
             ]);
 
+            // A dismissed card stays hidden across reloads. Reopen it only when
+            // the conversation has changed since the user dismissed it.
+            const conversationsWithNewActivity = Object.entries(dismissedConversationSnapshotsRef.current)
+                .filter(([patientIdentityId, snapshot]) => latestConversationMessageSnapshot(list, patientIdentityId) !== snapshot)
+                .map(([patientIdentityId]) => patientIdentityId);
+            restoreConversationCards(conversationsWithNewActivity);
+
             // Compare message IDs so the first message after an empty inbox is not missed.
             if (messagesInitializedRef.current && !admin) {
                 const incoming = newIncomingSupportMessages(knownMessageIdsRef.current, list, receptionist);
                 if (incoming.length) {
                     playChimeNotification();
-                    const restored = new Set(dismissedConversationIdsRef.current);
-                    incoming.forEach(item => restored.delete(item.patientIdentityId));
-                    dismissedConversationIdsRef.current = restored;
-                    setDismissedConversationIds(restored);
+                    restoreConversationCards(incoming.map(item => item.patientIdentityId));
                 }
             }
             knownMessageIdsRef.current = new Set(list.map(message => message.id));
@@ -152,7 +213,9 @@ export default function SupportChat({ session }: { session: Tokens }) {
     }, []);
 
     useEffect(() => subscribeRealtime(event => {
-        if (event.type === "CHAT_CHANGED" && open && !document.hidden) void load();
+        // Event-driven refresh also runs while the panel is closed so the launcher
+        // can show a new unread badge without bringing back background polling.
+        if (event.type === "CHAT_CHANGED" && !document.hidden) void load();
     }), [conversation, open]);
 
     useEffect(() => {
@@ -160,18 +223,27 @@ export default function SupportChat({ session }: { session: Tokens }) {
             const detail = (event as CustomEvent<{ patientIdentityId?: string }>).detail;
             const patientIdentityId = detail?.patientIdentityId || sessionStorage.getItem("reception-support-patient");
             if (receptionist && patientIdentityId) {
-                const restored = new Set(dismissedConversationIdsRef.current);
-                restored.delete(patientIdentityId);
-                dismissedConversationIdsRef.current = restored;
-                setDismissedConversationIds(restored);
+                restoreConversationCards([patientIdentityId]);
                 requestedConversationRef.current = patientIdentityId;
                 setConversation(patientIdentityId);
+                setAssignmentBusy(true);
+                setError("");
+                void request(`/appointments/support/conversations/${patientIdentityId}/claim`, session.accessToken, { method: "POST" })
+                    .then(async () => {
+                        setNotice("Bạn đang trao đổi trực tiếp với bệnh nhân. AI đã tạm dừng trong cuộc trò chuyện này.");
+                        await load();
+                    })
+                    .catch(async reason => {
+                        setError((reason as Error).message);
+                        await load();
+                    })
+                    .finally(() => setAssignmentBusy(false));
             }
             setOpen(true);
         };
         window.addEventListener("open-support-chat", openChat);
         return () => window.removeEventListener("open-support-chat", openChat);
-    }, [receptionist]);
+    }, [receptionist, session.accessToken]);
 
     useEffect(() => {
         if (!open || admin || (receptionist && (!conversation || !assignedToMe))) return;
@@ -201,9 +273,15 @@ export default function SupportChat({ session }: { session: Tokens }) {
 
     function dismissConversationCard(patientIdentityId: string) {
         const dismissed = new Set(dismissedConversationIdsRef.current);
+        const dismissedSnapshots = {
+            ...dismissedConversationSnapshotsRef.current,
+            [patientIdentityId]: latestConversationMessageSnapshot(messages, patientIdentityId),
+        };
         dismissed.add(patientIdentityId);
         dismissedConversationIdsRef.current = dismissed;
+        dismissedConversationSnapshotsRef.current = dismissedSnapshots;
         setDismissedConversationIds(dismissed);
+        persistDismissedConversationSnapshots(dismissedSnapshots);
         if (requestedConversationRef.current === patientIdentityId) requestedConversationRef.current = "";
         if (conversation === patientIdentityId) setConversation(ids.find(id => id !== patientIdentityId) || "");
     }
@@ -349,12 +427,12 @@ export default function SupportChat({ session }: { session: Tokens }) {
             const time = new Date(bookingSlot.startAt).toLocaleString("vi-VN");
             await request("/appointments/support", session.accessToken, {
                 method: "POST",
-                body: JSON.stringify({ patientIdentityId: conversation, body: `Lễ tân đã gửi đề nghị lịch ${time} với BS. ${bookingSlot.doctorName}. Bạn vui lòng mở Thông báo và xác nhận trong 10 phút.` }),
+                body: JSON.stringify({ patientIdentityId: conversation, body: `Lễ tân đã gửi thông tin lịch ${time} với BS. ${bookingSlot.doctorName}. Bạn vui lòng mở Thông báo để kiểm tra và xác nhận trong 10 phút.` }),
             });
             setBookingOpen(false);
             setBookingSlot(null);
             setBookingReason("");
-            setNotice("Đã gửi đề nghị. Đang chờ bệnh nhân xác nhận trong 10 phút.");
+            setNotice("Đã gửi thông tin lịch. Đang chờ bệnh nhân kiểm tra và xác nhận.");
             await load();
         } catch (reason) {
             setError((reason as Error).message);
@@ -438,8 +516,8 @@ export default function SupportChat({ session }: { session: Tokens }) {
                 <label>Ngày khám<input type="date" min={new Date().toLocaleDateString("en-CA")} value={bookingDate} onChange={event => setBookingDate(event.target.value)} /></label>
                 <div className="support-slot-list">{bookingBusy && !bookingSlots.length ? <small>Đang tải giờ trống…</small> : bookingClosureReason !== null ? <small>Phòng khám nghỉ trong ngày này. Lý do: {bookingClosureReason} Vui lòng chọn ngày khác.</small> : bookingSlots.length ? bookingSlots.map(slot => <button type="button" className={bookingSlot?.startAt === slot.startAt ? "selected" : ""} key={slot.startAt} onClick={() => setBookingSlot(slot)}>{new Date(slot.startAt).toLocaleTimeString("vi-VN", { hour: "2-digit", minute: "2-digit" })}</button>) : <small>Không có giờ trống trong ngày này.</small>}</div>
                 <label>Lý do khám<textarea required maxLength={500} value={bookingReason} onChange={event => setBookingReason(event.target.value)} placeholder="Nhập triệu chứng hoặc nhu cầu bệnh nhân đã trao đổi…" /></label>
-                {bookingSlot && <p className="support-proposal-summary"><b>{new Date(bookingSlot.startAt).toLocaleString("vi-VN")}</b><span>BS. {bookingSlot.doctorName} · bệnh nhân có 10 phút xác nhận</span></p>}
-                <button className="support-proposal-submit" disabled={bookingBusy || !bookingSlot || !bookingReason.trim()}>{bookingBusy ? "Đang gửi…" : "Gửi bệnh nhân xác nhận"}</button>
+                {bookingSlot && <p className="support-proposal-summary"><b>{new Date(bookingSlot.startAt).toLocaleString("vi-VN")}</b><span>BS. {bookingSlot.doctorName} · bệnh nhân kiểm tra và xác nhận trong 10 phút</span></p>}
+                <button className="support-proposal-submit" disabled={bookingBusy || !bookingSlot || !bookingReason.trim()}>{bookingBusy ? "Đang gửi…" : "Gửi thông tin để xác nhận"}</button>
             </form> : <>
                 <div ref={messageListRef} className="support-messages" role="log" aria-live="polite" aria-label="Nội dung trao đổi hỗ trợ">{visible.length === 0 ? <p>{staffViewer ? "Cuộc trò chuyện chưa có tin nhắn." : "Lễ tân chưa gửi tin nhắn mới. Bạn có thể bổ sung nội dung bên dưới."}</p> : visible.map(message => {
                     const mine=staffViewer ? message.senderIdentityId === currentIdentityId && message.senderRole === "RECEPTIONIST" : message.senderRole === "PATIENT";

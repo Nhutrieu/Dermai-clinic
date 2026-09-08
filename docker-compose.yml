@@ -4,7 +4,7 @@ services:
     image: postgres:16-alpine
     restart: unless-stopped
     mem_limit: 512m
-    ports: ["5432:5432"]
+    ports: ["${POSTGRES_HOST_PORT:-5432}:5432"]
     environment:
       POSTGRES_DB: ${POSTGRES_DB:-dermai}
       POSTGRES_USER: ${POSTGRES_USER:-dermai}
@@ -15,7 +15,7 @@ services:
     image: rabbitmq:3.13-management-alpine
     restart: unless-stopped
     mem_limit: 384m
-    ports: ["15672:15672"]
+    ports: ["${RABBITMQ_MANAGEMENT_HOST_PORT:-15672}:15672"]
     healthcheck: {test: ["CMD", "rabbitmq-diagnostics", "-q", "ping"], interval: 15s, timeout: 5s, retries: 5}
   redis:
     image: redis:7-alpine
@@ -121,7 +121,7 @@ services:
     build: ./ai-service
     restart: unless-stopped
     mem_limit: 768m
-    ports: ["8000:8000"]
+    ports: ["${AI_HOST_PORT:-8000}:8000"]
     environment:
       MODEL_PATH: /models/best_model.pth
       OOD_PROFILE_PATH: /models/ood_profile.json
@@ -146,8 +146,9 @@ services:
       PRESCRIPTION_URL: http://prescription-service:8087
       AI_URL: http://ai-service:8000
       JWT_SECRET: ${JWT_SECRET:-replace-with-at-least-32-random-characters}
+      CORS_ORIGIN: ${CORS_ORIGIN:-http://localhost:3000}
     healthcheck: {test: ["CMD", "curl", "-fsS", "http://localhost:8080/actuator/health"], interval: 20s, timeout: 5s, retries: 10, start_period: 50s}
-    ports: ["8080:8080"]
+    ports: ["${GATEWAY_HOST_PORT:-8080}:8080"]
     depends_on:
       auth-service: {condition: service_healthy}
       patient-service: {condition: service_healthy}
@@ -161,14 +162,14 @@ services:
     build: ./frontend
     restart: unless-stopped
     mem_limit: 96m
-    ports: ["3000:80"]
+    ports: ["${FRONTEND_HOST_PORT:-3000}:80"]
     depends_on: {gateway: {condition: service_healthy}}
     healthcheck: {test: ["CMD", "wget", "-q", "--spider", "http://127.0.0.1/health"], interval: 20s, timeout: 5s, retries: 5, start_period: 10s}
   adminer:
     image: adminer:latest
     restart: unless-stopped
     mem_limit: 64m
-    ports: ["8081:8080"]
+    ports: ["${ADMINER_HOST_PORT:-8081}:8080"]
     depends_on: {postgres: {condition: service_healthy}}
 volumes:
   postgres_data:

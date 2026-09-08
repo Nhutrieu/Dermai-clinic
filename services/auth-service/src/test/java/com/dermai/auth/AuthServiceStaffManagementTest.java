@@ -65,6 +65,18 @@ class AuthServiceStaffManagementTest {
   }
 
   @Test
+  void deletesReceptionistAccountAndItsAuthAuditRows() {
+    var staff = Identity.staff("remove@dermai.vn", "hash", Identity.Role.RECEPTIONIST, "Nhân viên cũ");
+    when(identities.findById(staff.id)).thenReturn(Optional.of(staff));
+    when(refreshTokens.findAllByIdentityId(staff.id)).thenReturn(List.of());
+
+    service.deleteReceptionist(staff.id);
+
+    verify(events).deleteByStaffIdentityIdOrActorIdentityId(staff.id, staff.id);
+    verify(identities).delete(staff);
+  }
+
+  @Test
   void updatesLegacyReceptionistNameAndWritesAnAuditEvent() {
     var actor = UUID.randomUUID();
     var staff = Identity.staff("legacy@dermai.local", "hash", Identity.Role.RECEPTIONIST, null);

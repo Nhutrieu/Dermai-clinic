@@ -6,6 +6,6 @@ public class Doctor{
  @Column(name="specialty_code",nullable=false) public String specialtyCode;@Column(name="experience_years") public int experienceYears;
  @Column(name="certificate_no") public String certificateNo;
  @Column(name="consultation_fee",nullable=false,precision=12,scale=0) public BigDecimal consultationFee;
- @Column(name="bio",length=1200) public String bio;@Column(name="avatar_url") public String avatarUrl;@JsonIgnore @Column(name="avatar_data") public byte[] avatarData;@JsonIgnore @Column(name="avatar_mime") public String avatarMime;public boolean active=true;protected Doctor(){}
+ @Column(name="bio",length=1200) public String bio;@Column(name="phone",length=20) public String phone;@Column(name="avatar_url") public String avatarUrl;@JsonIgnore @Column(name="avatar_data") public byte[] avatarData;@JsonIgnore @Column(name="avatar_mime") public String avatarMime;public boolean active=true;protected Doctor(){}
  public Doctor(UUID identity,String name,String specialty){id=UUID.randomUUID();identityId=identity;fullName=name;specialtyCode=specialty;}
 }

@@ -269,7 +269,7 @@ export default function DoctorDashboard({
           <h2 id="doctor-dashboard-title">Lịch khám hôm nay</h2>
           <p>
             {todayShift
-              ? `Ca làm ${todayShift.startTime.slice(0, 5)} đến ${todayShift.endTime.slice(0, 5)}, mỗi lịch ${todayShift.slotMinutes} phút.`
+              ? `Ca làm ${todayShift.startTime.slice(0, 5)} đến ${todayShift.endTime.slice(0, 5)}, mỗi lịch 30 phút.`
               : "Hôm nay chưa có ca làm việc được cấu hình."}
           </p>
         </div>

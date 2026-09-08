@@ -140,8 +140,8 @@ export async function browserApi<T>(
   options: { method?: string; body?: unknown } = {},
 ): Promise<BrowserApiResult<T>> {
   return page.evaluate(async ({ apiPath, method, requestBody }) => {
-    const rawSession = sessionStorage.getItem("dermai-session");
-    if (!rawSession) throw new Error("Không tìm thấy phiên đăng nhập E2E trong sessionStorage.");
+    const rawSession = localStorage.getItem("dermai-session") || sessionStorage.getItem("dermai-session");
+    if (!rawSession) throw new Error("Không tìm thấy phiên đăng nhập E2E trong browser storage.");
     const session = JSON.parse(rawSession) as { accessToken?: string };
     if (!session.accessToken) throw new Error("Phiên E2E không có access token.");
 
