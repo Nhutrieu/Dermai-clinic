@@ -113,6 +113,10 @@ public class AuthController {
   if(!"ADMIN".equals(caller))return ResponseEntity.status(403).body(Map.of("code","FORBIDDEN"));
   var u=service.setPatientBlocked(id,x.blocked());accountStatus.publish(u.id,u.status.name());return ResponseEntity.ok(Map.of("identityId",u.id,"email",u.email,"status",u.status));
  }
+ @DeleteMapping("/patients/{id}/account") ResponseEntity<?> deletePatientAccount(@RequestHeader("X-User-Role") String caller,@PathVariable java.util.UUID id){
+  if(!"ADMIN".equals(caller))return ResponseEntity.status(403).body(Map.of("code","FORBIDDEN"));
+  service.deletePatientAccount(id);accountStatus.publish(id,"DELETED");return ResponseEntity.noContent().build();
+ }
  @PostMapping("/bootstrap-admin") ResponseEntity<?> bootstrap(@RequestHeader("X-Bootstrap-Token") String token,@Valid @RequestBody Credentials x){
   if(bootstrapToken.isBlank()||!java.security.MessageDigest.isEqual(bootstrapToken.getBytes(java.nio.charset.StandardCharsets.UTF_8),token.getBytes(java.nio.charset.StandardCharsets.UTF_8)))return ResponseEntity.status(403).body(Map.of("code","FORBIDDEN"));
   var u=service.bootstrapAdmin(x.email(),x.password());return ResponseEntity.status(201).body(Map.of("identityId",u.id,"email",u.email,"role",u.role));

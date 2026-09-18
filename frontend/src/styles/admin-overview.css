@@ -1007,5 +1007,8 @@
 .admin-patient-detail .patient-account-actions button { width: auto; min-width: 176px; min-height: 44px; padding: 0 20px; border-radius: 12px; font-size: 14px; font-weight: 750; cursor: pointer; transition: transform 160ms ease, box-shadow 160ms ease, background 160ms ease; }
 .admin-patient-detail .patient-account-actions button:hover:not(:disabled) { transform: translateY(-2px); box-shadow: 0 8px 18px rgba(180, 35, 24, 0.12); }
 .admin-patient-detail .patient-account-actions .danger { color: #b42318; border-color: #f2b8b2; background: #fff7f6; }
+.admin-patient-detail .patient-account-actions .delete { color: #fff; border: 1px solid #b42318; background: #b42318; }
+.admin-patient-detail .patient-account-actions .delete:hover:not(:disabled) { background: #8f1c13; }
+.admin-patient-detail .patient-account-actions button:disabled { cursor: wait; opacity: 0.62; transform: none; }
 @media (max-width: 900px) { .admin-patient-directory { grid-template-columns: 1fr; } .admin-patient-directory > nav { grid-template-columns: repeat(2, minmax(0, 1fr)); max-height: 260px; } }
 @media (max-width: 620px) { .admin-patient-directory > nav, .admin-patient-detail dl { grid-template-columns: 1fr; } .admin-patient-detail { padding: 18px; } .admin-patient-detail .patient-account-actions button { width: 100%; } }

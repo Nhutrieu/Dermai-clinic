@@ -231,33 +231,6 @@ function PrescriptionContent({ prescription }: { prescription: Prescription }) {
     </>;
 }
 
-function StandalonePrescriptions({
-    prescriptions,
-    token,
-    patient,
-}: {
-    prescriptions: Prescription[];
-    token: string;
-    patient: Patient;
-}) {
-    const [selected, setSelected] = useState<Prescription | null>(null);
-
-    if (prescriptions.length === 0) return null;
-    return <section className="patient-medical-orphans" aria-labelledby="patient-orphan-prescriptions-title">
-        <div>
-            <h2 id="patient-orphan-prescriptions-title">Đơn thuốc đã ký</h2>
-            <p>Nội dung đơn thuốc vẫn được hiển thị ngay cả khi kết quả khám chưa tải được.</p>
-        </div>
-        <ul>
-            {prescriptions.map(prescription => <li key={prescription.id}>
-                <div><Pill aria-hidden="true" /><span><strong>{prescription.items.length} thuốc</strong><time dateTime={prescription.signedAt}>Ký ngày {formatDate(prescription.signedAt)}</time></span></div>
-                <button type="button" onClick={() => setSelected(prescription)}>Xem đơn thuốc<ChevronRight aria-hidden="true" /></button>
-            </li>)}
-        </ul>
-        {selected && <PrescriptionPdfModal prescription={selected} patient={patient} token={token} onClose={() => setSelected(null)} />}
-    </section>;
-}
-
 export default function PatientMedicalRecords({
     token,
     patient,
@@ -333,8 +306,6 @@ export default function PatientMedicalRecords({
     }, [filteredEntries, selectedRecordId]);
 
     const selectedEntry = filteredEntries.find(entry => entry.record.id === selectedRecordId);
-    const unmatchedPrescriptions = prescriptions.filter(item => !records.some(record => record.id === item.recordId));
-
     function selectRecord(id: string) {
         setSelectedRecordId(id);
         if (window.matchMedia("(max-width: 768px)").matches) {
@@ -508,9 +479,6 @@ export default function PatientMedicalRecords({
                 </footer>
             </article>}
         </div>
-
-        {resourceState.records.error && <StandalonePrescriptions prescriptions={prescriptions} token={token} patient={patient} />}
-        {!resourceState.records.error && unmatchedPrescriptions.length > 0 && <StandalonePrescriptions prescriptions={unmatchedPrescriptions} token={token} patient={patient} />}
 
         <div className="patient-medical-live" role="status" aria-live="polite">
             {selectedEntry ? `Đang xem kết quả ngày ${formatDate(selectedDate)}` : ""}

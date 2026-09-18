@@ -13,7 +13,7 @@ type Props = {
 
 type FeedbackScope = "overview" | "professional" | "bio" | "leave";
 type Feedback = { text: string; error: boolean };
-const CLINIC_WORKDAYS = [1, 2, 3, 4, 5];
+const CLINIC_WORKDAYS = [1, 2, 3, 4, 5, 6];
 
 function localDateValue(date = new Date()) {
   const offset = date.getTimezoneOffset() * 60_000;
@@ -271,10 +271,10 @@ export default function DoctorProfileScreen({ token, doctor, work, leave, saved 
         <aside className="doctor-profile-secondary" aria-label="Lịch làm việc và nghỉ phép">
           <section className="doctor-profile-section doctor-profile-schedule" aria-labelledby="doctor-schedule-title">
             <header className="doctor-profile-section-heading">
-              <div><h2 id="doctor-schedule-title"><Clock3 aria-hidden="true" /> Lịch làm việc</h2><p>Giờ làm việc do quản trị viên thiết lập. Bác sĩ không thể tự thay đổi tại đây.</p></div>
+              <div><h2 id="doctor-schedule-title"><Clock3 aria-hidden="true" /> Lịch làm việc</h2></div>
             </header>
             <div className="doctor-profile-schedule-summary" role="status">
-              <div><span>Ngày làm việc</span><strong>{configuredWorkdays === 5 ? "Thứ Hai - Thứ Sáu" : `${configuredWorkdays}/5 ngày đã cấu hình`}</strong></div>
+              <div><span>Ngày làm việc</span><strong>{configuredWorkdays === 6 ? "Thứ Hai - Thứ Bảy" : `${configuredWorkdays}/6 ngày đã cấu hình`}</strong></div>
               <div><span>Khung giờ hiện tại</span><strong>{weekdaySchedule ? `${weekdaySchedule.startTime.slice(0, 5)} - ${weekdaySchedule.endTime.slice(0, 5)}` : "Chưa thiết lập"}</strong></div>
             </div>
           </section>

@@ -54,6 +54,16 @@ class PatientControllerTest {
 
   assertThatThrownBy(()->controller.search("",0,20,"DOCTOR"))
    .isInstanceOfSatisfying(ResponseStatusException.class,error->
-    assertThat(error.getStatusCode()).isEqualTo(HttpStatus.FORBIDDEN));
+   assertThat(error.getStatusCode()).isEqualTo(HttpStatus.FORBIDDEN));
+ }
+
+ @Test void adminCanUnlinkAnAccountWithoutDeletingTheMedicalProfile(){
+  var repository=mock(PatientRepository.class);var controller=new PatientController(repository,mock(AppointmentIdentityClient.class));
+  var patient=new Patient(UUID.randomUUID(),"Bệnh nhân giữ hồ sơ");
+  when(repository.findById(patient.id)).thenReturn(Optional.of(patient));when(repository.save(patient)).thenReturn(patient);
+
+  var result=controller.unlinkAccount(patient.id,"ADMIN");
+
+  assertThat(result).isSameAs(patient);assertThat(patient.accountLinked).isFalse();verify(repository).save(patient);verify(repository,never()).delete(any());
  }
 }

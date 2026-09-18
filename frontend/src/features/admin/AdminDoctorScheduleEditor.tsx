@@ -14,7 +14,7 @@ type Props = {
   token: string;
 };
 
-const WORKDAYS = [1, 2, 3, 4, 5];
+const WORKDAYS = [1, 2, 3, 4, 5, 6];
 
 export default function AdminDoctorScheduleEditor({ doctorId, doctorName, token }: Props) {
   const [startTime, setStartTime] = useState("08:00");
@@ -77,7 +77,7 @@ export default function AdminDoctorScheduleEditor({ doctorId, doctorName, token 
         <span><Clock3 aria-hidden="true" /></span>
         <div>
           <h4 id={`doctor-schedule-${doctorId}`}>Lịch làm việc</h4>
-          <p>Áp dụng từ Thứ Hai đến Thứ Sáu. Hệ thống tự chia thành các lượt 30 phút.</p>
+          <p>Áp dụng từ Thứ Hai đến Thứ Bảy. Hệ thống tự chia thành các lượt 30 phút.</p>
         </div>
       </header>
       {loading ? <p className="admin-doctor-schedule-loading" role="status">Đang tải lịch làm việc…</p> : (

@@ -13,6 +13,7 @@ import {
     MessageCircle,
     Pill,
     Stethoscope,
+    Trash2,
     TriangleAlert,
     UserRound,
 } from "lucide-react";
@@ -188,6 +189,9 @@ export default function PatientDashboard({
     const [aiState, setAiState] = useState<PatientDashboardResourceState>({ loading: true, error: "" });
     const [notifications, setNotifications] = useState<PatientNotification[]>([]);
     const [notificationState, setNotificationState] = useState<PatientDashboardResourceState>({ loading: true, error: "" });
+    const [confirmDeleteAssessmentId, setConfirmDeleteAssessmentId] = useState("");
+    const [deletingAssessmentId, setDeletingAssessmentId] = useState("");
+    const [aiActionFeedback, setAiActionFeedback] = useState<{ tone: "success" | "error"; text: string } | null>(null);
     const [feedback, setFeedback] = useState<{ tone: "success" | "error"; text: string } | null>(null);
     const [appointmentRefreshed, setAppointmentRefreshed] = useState(false);
     const [selfServiceNow, setSelfServiceNow] = useState(Date.now());
@@ -356,6 +360,27 @@ export default function PatientDashboard({
         } catch (cause) {
             setFeedback({ tone: "error", text: (cause as Error).message });
             throw cause;
+        }
+    }
+
+    async function deleteAssessment(assessment: AiAssessment) {
+        if (confirmDeleteAssessmentId !== assessment.id) {
+            setConfirmDeleteAssessmentId(assessment.id);
+            setAiActionFeedback(null);
+            return;
+        }
+
+        setDeletingAssessmentId(assessment.id);
+        setAiActionFeedback(null);
+        try {
+            await request(`/patients/me/ai-assessments/${assessment.id}`, token, { method: "DELETE" });
+            setAssessments(items => items.filter(item => item.id !== assessment.id));
+            setConfirmDeleteAssessmentId("");
+            setAiActionFeedback({ tone: "success", text: "Đã xóa kết quả phân tích khỏi tài khoản." });
+        } catch (cause) {
+            setAiActionFeedback({ tone: "error", text: (cause as Error).message });
+        } finally {
+            setDeletingAssessmentId("");
         }
     }
 
@@ -564,9 +589,40 @@ export default function PatientDashboard({
                         <p className="patient-dashboard-medical-note">Kết quả này không phải chẩn đoán cuối cùng. Bạn có thể đặt lịch để được bác sĩ đánh giá trực tiếp.</p>
                         <div className="patient-dashboard-inline-actions">
                             <button type="button" onClick={openAppointments}>Đặt lịch khám</button>
+                            {confirmDeleteAssessmentId === latestAssessment.id ? (
+                                <div className="patient-dashboard-delete-confirm" role="group" aria-label="Xác nhận xóa kết quả phân tích">
+                                    <span>Xóa kết quả này?</span>
+                                    <button
+                                        type="button"
+                                        className="patient-dashboard-delete-action is-confirm"
+                                        disabled={deletingAssessmentId === latestAssessment.id}
+                                        onClick={() => void deleteAssessment(latestAssessment)}
+                                    >
+                                        <Trash2 aria-hidden="true" />
+                                        {deletingAssessmentId === latestAssessment.id ? "Đang xóa..." : "Xác nhận xóa"}
+                                    </button>
+                                    <button
+                                        type="button"
+                                        className="patient-dashboard-delete-cancel"
+                                        disabled={deletingAssessmentId === latestAssessment.id}
+                                        onClick={() => setConfirmDeleteAssessmentId("")}
+                                    >
+                                        Hủy
+                                    </button>
+                                </div>
+                            ) : (
+                                <button
+                                    type="button"
+                                    className="patient-dashboard-delete-action"
+                                    onClick={() => void deleteAssessment(latestAssessment)}
+                                >
+                                    <Trash2 aria-hidden="true" /> Xóa kết quả
+                                </button>
+                            )}
                         </div>
                     </div>
                 </div>}
+                {aiActionFeedback && <p className={"patient-dashboard-ai-feedback is-" + aiActionFeedback.tone} role={aiActionFeedback.tone === "error" ? "alert" : "status"} aria-live="polite">{aiActionFeedback.text}</p>}
             </section>
 
             <section className="patient-dashboard-notifications patient-dashboard-reveal" aria-labelledby="patient-notifications-title">

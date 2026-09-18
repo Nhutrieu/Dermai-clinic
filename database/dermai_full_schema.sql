@@ -215,6 +215,75 @@ INSERT INTO clinic_services(id, code, name, description, price_from, duration_mi
 ('664ca75a-9286-4ef9-b798-7bf20a15c18c', 'PIGMENT', 'Nám & sắc tố', 'Phân tích sắc tố và tư vấn liệu trình cá nhân hóa dưới sự theo dõi của bác sĩ.', 500000, 45, 3),
 ('a1fe780d-83e4-4bd7-b36a-77fd83b85ff9', 'REJUVENATION', 'Trẻ hóa làn da', 'Đánh giá cấu trúc da và tư vấn giải pháp cải thiện độ đàn hồi, bề mặt da.', 700000, 45, 4);
 
+-- Source: services/doctor-service/src/main/resources/db/migration/V7__doctor_leave_approval.sql
+ALTER TABLE leave_periods
+  ADD COLUMN status varchar(20) NOT NULL DEFAULT 'APPROVED',
+  ADD COLUMN requested_by uuid,
+  ADD COLUMN reviewed_by uuid,
+  ADD COLUMN reviewed_at timestamptz,
+  ADD COLUMN review_note varchar(250);
+
+ALTER TABLE leave_periods
+  ADD CONSTRAINT ck_leave_period_status CHECK (status IN ('PENDING', 'APPROVED', 'REJECTED'));
+
+CREATE INDEX ix_leave_status_time ON leave_periods(status, start_at, end_at);
+
+-- Source: services/doctor-service/src/main/resources/db/migration/V8__receptionist_leave_approval_views.sql
+CREATE TABLE leave_approval_views (
+  id UUID PRIMARY KEY,
+  leave_id UUID NOT NULL REFERENCES leave_periods(id) ON DELETE CASCADE,
+  receptionist_identity_id UUID NOT NULL,
+  viewed_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+  CONSTRAINT uq_leave_approval_view UNIQUE (leave_id, receptionist_identity_id)
+);
+
+CREATE INDEX ix_leave_approval_view_receptionist
+  ON leave_approval_views (receptionist_identity_id, viewed_at);
+
+-- Source: services/doctor-service/src/main/resources/db/migration/V9__slot_duration_policies.sql
+CREATE TABLE slot_duration_policies(
+ id uuid PRIMARY KEY,
+ doctor_id uuid NOT NULL REFERENCES doctors(id) ON DELETE CASCADE,
+ effective_from date NOT NULL,
+ slot_minutes int NOT NULL CHECK(slot_minutes BETWEEN 10 AND 120),
+ UNIQUE(doctor_id,effective_from)
+);
+CREATE INDEX ix_slot_duration_policy_doctor_date ON slot_duration_policies(doctor_id,effective_from DESC);
+
+-- Source: services/doctor-service/src/main/resources/db/migration/V10__fix_appointment_duration_to_30_minutes.sql
+UPDATE work_schedules
+SET slot_minutes = 30
+WHERE slot_minutes <> 30;
+
+UPDATE slot_duration_policies
+SET slot_minutes = 30
+WHERE slot_minutes <> 30;
+
+-- Source: services/doctor-service/src/main/resources/db/migration/V11__doctor_personal_phone.sql
+ALTER TABLE doctors ADD COLUMN IF NOT EXISTS phone VARCHAR(20);
+
+-- Source: services/doctor-service/src/main/resources/db/migration/V12__add_saturday_work_schedules.sql
+WITH weekday_template AS (
+    SELECT DISTINCT ON (doctor_id)
+           doctor_id,
+           start_time,
+           end_time,
+           slot_minutes
+    FROM work_schedules
+    WHERE weekday BETWEEN 1 AND 5
+    ORDER BY doctor_id, weekday, start_time
+)
+INSERT INTO work_schedules (id, doctor_id, weekday, start_time, end_time, slot_minutes)
+SELECT gen_random_uuid(), template.doctor_id, 6,
+       template.start_time, template.end_time, template.slot_minutes
+FROM weekday_template template
+WHERE NOT EXISTS (
+    SELECT 1
+    FROM work_schedules saturday
+    WHERE saturday.doctor_id = template.doctor_id
+      AND saturday.weekday = 6
+);
+
 -- ============================================================================
 -- appointment-service
 -- ============================================================================

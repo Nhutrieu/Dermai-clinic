@@ -77,6 +77,20 @@ class AuthServiceStaffManagementTest {
   }
 
   @Test
+  void deletesPatientAccountAndRevokesItsSessions() {
+    var patient = new Identity("patient-remove@example.com", "hash");
+    var refresh = mock(RefreshToken.class);
+    when(identities.findById(patient.id)).thenReturn(Optional.of(patient));
+    when(refreshTokens.findAllByIdentityId(patient.id)).thenReturn(List.of(refresh));
+
+    service.deletePatientAccount(patient.id);
+
+    verify(refreshTokens).findAllByIdentityId(patient.id);
+    verify(identities).delete(patient);
+    verifyNoInteractions(events);
+  }
+
+  @Test
   void updatesLegacyReceptionistNameAndWritesAnAuditEvent() {
     var actor = UUID.randomUUID();
     var staff = Identity.staff("legacy@dermai.local", "hash", Identity.Role.RECEPTIONIST, null);

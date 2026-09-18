@@ -154,6 +154,11 @@ public class AuthService {
   }
   return user;
  }
+ public void deletePatientAccount(UUID id){
+  var user=patientAccount(id);
+  revokeSessions(id);
+  users.delete(user);
+ }
  private Identity receptionist(UUID id){
   var user=users.findById(id).orElseThrow(()->new StaffManagementException("STAFF_NOT_FOUND"));
   if(user.role!=Identity.Role.RECEPTIONIST)throw new StaffManagementException("NOT_RECEPTIONIST");return user;

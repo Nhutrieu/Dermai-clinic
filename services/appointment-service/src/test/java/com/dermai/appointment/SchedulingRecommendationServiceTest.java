@@ -81,6 +81,36 @@ class SchedulingRecommendationServiceTest {
     server.verify();
   }
 
+  @Test
+  void sundayIsAlwaysAClinicClosure() {
+    var appointments = mock(AppointmentRepository.class);
+    var closures = mock(ClinicClosureRepository.class);
+    var doctorId = UUID.randomUUID();
+    var identityId = UUID.randomUUID();
+    var sunday = LocalDate.now(CLINIC_ZONE).plusDays(1);
+    while (sunday.getDayOfWeek() != DayOfWeek.SUNDAY) sunday = sunday.plusDays(1);
+
+    var builder = RestClient.builder().baseUrl("http://doctor-service");
+    var server = MockRestServiceServer.bindTo(builder).build();
+    server.expect(ExpectedCount.times(2), requestTo("http://doctor-service/api/v1/doctors/scheduling-data"))
+        .andRespond(withSuccess(doctorJson(doctorId, identityId, sunday), MediaType.APPLICATION_JSON));
+    var service = new SchedulingRecommendationService(appointments, closures, builder.build());
+
+    var availability = service.availability(doctorId, sunday, 30, UUID.randomUUID(), "Bearer token", "PATIENT");
+    assertThat(availability.status()).isEqualTo("CLINIC_CLOSED");
+    assertThat(availability.closureReason()).isEqualTo("Phòng khám nghỉ Chủ nhật.");
+    assertThat(availability.items()).isEmpty();
+    assertThat(service.lookupClinicClosure(sunday)).isEqualTo(
+        new SchedulingRecommendationService.ClinicClosureLookup(sunday, true, "Phòng khám nghỉ Chủ nhật."));
+
+    var start = sunday.atTime(9, 0).atZone(CLINIC_ZONE).toInstant();
+    assertThatThrownBy(() -> service.assertAvailable(
+        doctorId, start, start.plus(Duration.ofMinutes(30)), null, "Bearer token", "PATIENT"))
+        .isInstanceOf(SchedulingRecommendationService.SlotUnavailableException.class)
+        .hasMessage("CLINIC_CLOSED");
+    server.verify();
+  }
+
   private LocalDate futureWeekday() {
     var date = LocalDate.now(CLINIC_ZONE).plusDays(7);
     while (date.getDayOfWeek() == DayOfWeek.SATURDAY || date.getDayOfWeek() == DayOfWeek.SUNDAY) {

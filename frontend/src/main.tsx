@@ -58,6 +58,7 @@ function sessionIdentityId(token: string) {
 }
 const SESSION_STORAGE_KEY = "dermai-session";
 const ACCOUNT_LOCKED_STORAGE_KEY = "dermai-account-locked";
+const ACCOUNT_DELETED_NOTICE = "Tài khoản của bạn đã bị quản trị viên xoá.";
 
 function parseStoredSession(raw: string | null): Tokens | null {
     if (!raw) return null;
@@ -145,12 +146,23 @@ function App() {
         setAccountLocked(true);
         if (notifyOtherTabs) sessionChannelRef.current?.postMessage({ type: "ACCOUNT_LOCKED" });
     }
+    function handleDeletedAccount(notifyOtherTabs = false) {
+        localStorage.removeItem(ACCOUNT_LOCKED_STORAGE_KEY);
+        sessionStorage.removeItem(ACCOUNT_LOCKED_STORAGE_KEY);
+        applySession(null, false);
+        setAccountLocked(false);
+        setForgotOpen(false);
+        setAuthOpen(true);
+        setAuthNotice(ACCOUNT_DELETED_NOTICE);
+        if (notifyOtherTabs) sessionChannelRef.current?.postMessage({ type: "ACCOUNT_DELETED" });
+    }
     useEffect(() => {
         if (!("BroadcastChannel" in window)) return;
         const channel = new BroadcastChannel("dermai-session-sync");
         sessionChannelRef.current = channel;
         channel.onmessage = (event: MessageEvent<{ type?: string }>) => {
             if (event.data?.type === "ACCOUNT_LOCKED") { lockAccount(false); return; }
+            if (event.data?.type === "ACCOUNT_DELETED") { handleDeletedAccount(false); return; }
             if (event.data?.type === "SESSION_CLEARED") applySession(null, false);
         };
         return () => {
@@ -254,6 +266,7 @@ function App() {
                 if (active && account.status === "LOCKED") lockAccount(true);
             } catch (error) {
                 if (active && error instanceof ApiError && error.code === "ACCOUNT_BLOCKED") lockAccount(true);
+                else if (active && error instanceof ApiError && error.status === 404) handleDeletedAccount(true);
             }
         };
         void checkAccount();
@@ -266,15 +279,18 @@ function App() {
         const identityId = sessionIdentityId(session.accessToken);
         if (!identityId) return;
         return subscribeAccountStatus(session.accessToken, event => {
-            if (event.identityId === identityId && event.status === "LOCKED") lockAccount(true);
+            if (event.identityId !== identityId) return;
+            if (event.status === "LOCKED") lockAccount(true);
+            else if (event.status === "DELETED") handleDeletedAccount(true);
         });
     }, [session?.accessToken, session?.role]);
     useEffect(() => subscribeRealtime(event => {
         if (event.type === "DOCTOR_PROFILE_UPDATED" || event.type === "DOCTOR_LEAVE_APPROVED") window.dispatchEvent(new CustomEvent("doctor-profiles-changed", { detail: event }));
         if (event.type === "DOCTOR_LEAVE_APPROVED") window.dispatchEvent(new CustomEvent("doctor-leave-approved", { detail: event }));
     }, { path: "/api/v1/doctors/ws/profile" }), []);
-    function openHomeAuth(destination: "appointments" | "ai" = "appointments") {
-        sessionStorage.setItem("derm-home-intent", destination);
+    function openHomeAuth(destination?: "appointments" | "ai") {
+        if (destination) sessionStorage.setItem("derm-home-intent", destination);
+        else sessionStorage.removeItem("derm-home-intent");
         setAuthNotice("");
         setAuthOpen(true);
     }
