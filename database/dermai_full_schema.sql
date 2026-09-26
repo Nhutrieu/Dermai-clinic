@@ -81,6 +81,9 @@ ALTER TABLE identities
     ADD COLUMN IF NOT EXISTS avatar_data BYTEA,
     ADD COLUMN IF NOT EXISTS avatar_mime VARCHAR(50);
 
+-- Source: services/auth-service/src/main/resources/db/migration/V7__merge_cashier_into_receptionist.sql
+UPDATE auth.identities SET role = 'RECEPTIONIST' WHERE role = 'CASHIER';
+
 -- ============================================================================
 -- patient-service
 -- ============================================================================
@@ -683,6 +686,185 @@ UPDATE support_messages
 SET body = REPLACE(body, 'AI Assistant', 'Trợ lý DermAI')
 WHERE body LIKE '%AI Assistant%';
 
+-- Source: services/appointment-service/src/main/resources/db/migration/V23__payment_booking_statuses.sql
+ALTER TABLE appointments DROP CONSTRAINT IF EXISTS no_doctor_overlap;
+ALTER TABLE appointments ADD CONSTRAINT no_doctor_overlap
+  EXCLUDE USING gist (
+    doctor_id WITH =,
+    tstzrange(start_at, end_at, '[)') WITH &&
+  ) WHERE (doctor_id IS NOT NULL AND status IN
+    ('HELD','PROPOSED','PENDING','ASSIGNED','PENDING_PAYMENT','CONFIRMED','CHECKED_IN','IN_PROGRESS'));
+
+ALTER TABLE appointments DROP CONSTRAINT IF EXISTS no_patient_overlap;
+ALTER TABLE appointments ADD CONSTRAINT no_patient_overlap
+  EXCLUDE USING gist (
+    patient_identity_id WITH =,
+    tstzrange(start_at, end_at, '[)') WITH &&
+  ) WHERE (status IN
+    ('HELD','PROPOSED','PENDING','ASSIGNED','PENDING_PAYMENT','CONFIRMED','CHECKED_IN','IN_PROGRESS'));
+
+-- Source: services/appointment-service/src/main/resources/db/migration/V24__appointment_payment_method.sql
+ALTER TABLE appointments
+  ADD COLUMN payment_method varchar(30),
+  ADD COLUMN payment_override_reason varchar(500);
+
+UPDATE appointments
+SET payment_method = 'ONLINE_DEPOSIT'
+WHERE status = 'PENDING_PAYMENT';
+
+-- Source: services/appointment-service/src/main/resources/db/migration/V25__reception_notifications.sql
+CREATE TABLE reception_notifications (
+  id uuid PRIMARY KEY,
+  appointment_id uuid NOT NULL REFERENCES appointments(id) ON DELETE CASCADE,
+  patient_identity_id uuid NOT NULL,
+  notification_type varchar(100) NOT NULL,
+  title varchar(160) NOT NULL,
+  body varchar(500) NOT NULL,
+  created_at timestamptz NOT NULL DEFAULT now(),
+  read_at timestamptz,
+  UNIQUE (appointment_id, notification_type)
+);
+
+CREATE INDEX ix_reception_notification_created
+  ON reception_notifications(created_at DESC);
+
+-- Source: services/appointment-service/src/main/resources/db/migration/V26__backfill_reception_payment_cancellations.sql
+INSERT INTO reception_notifications (
+  id,
+  appointment_id,
+  patient_identity_id,
+  notification_type,
+  title,
+  body,
+  created_at
+)
+SELECT
+  gen_random_uuid(),
+  id,
+  patient_identity_id,
+  'PAYMENT_CANCELLED_BY_PATIENT',
+  'Bệnh nhân đã hủy trước khi thanh toán',
+  'Lịch ' || to_char(start_at AT TIME ZONE 'Asia/Ho_Chi_Minh', 'HH24:MI "ngày" DD/MM/YYYY') || ' đã được hủy. Không phát sinh hoàn tiền và khung giờ đã được trả lại.',
+  COALESCE(updated_at, now())
+FROM appointments
+WHERE cancel_reason = 'PAYMENT_CANCELLED_BY_PATIENT'
+ON CONFLICT (appointment_id, notification_type) DO NOTHING;
+
+-- Source: services/appointment-service/src/main/resources/db/migration/V27__private_support_image_attachments.sql
+ALTER TABLE support_messages
+  ADD COLUMN attachment_content_type varchar(50),
+  ADD COLUMN attachment_original_name varchar(255),
+  ADD COLUMN attachment_size_bytes bigint,
+  ADD COLUMN attachment_data bytea;
+
+-- Source: services/appointment-service/src/main/resources/db/migration/V28__appointment_cancellation_initiator.sql
+ALTER TABLE appointments ADD COLUMN cancellation_initiator varchar(30);
+
+-- Source: services/appointment-service/src/main/resources/db/migration/V29__paid_appointments_require_reception_confirmation.sql
+ALTER TABLE appointments DROP CONSTRAINT IF EXISTS no_doctor_overlap;
+ALTER TABLE appointments ADD CONSTRAINT no_doctor_overlap
+  EXCLUDE USING gist (
+    doctor_id WITH =,
+    tstzrange(start_at, end_at, '[)') WITH &&
+  ) WHERE (doctor_id IS NOT NULL AND status IN
+    ('HELD','PROPOSED','PENDING','ASSIGNED','PENDING_PAYMENT','PENDING_CONFIRMATION','CONFIRMED','CHECKED_IN','IN_PROGRESS'));
+
+ALTER TABLE appointments DROP CONSTRAINT IF EXISTS no_patient_overlap;
+ALTER TABLE appointments ADD CONSTRAINT no_patient_overlap
+  EXCLUDE USING gist (
+    patient_identity_id WITH =,
+    tstzrange(start_at, end_at, '[)') WITH &&
+  ) WHERE (status IN
+    ('HELD','PROPOSED','PENDING','ASSIGNED','PENDING_PAYMENT','PENDING_CONFIRMATION','CONFIRMED','CHECKED_IN','IN_PROGRESS'));
+
+-- ============================================================================
+-- payment-service
+-- ============================================================================
+CREATE SCHEMA IF NOT EXISTS payment;
+SET search_path TO payment, public;
+
+-- Source: services/payment-service/src/main/resources/db/migration/V1__payment_schema.sql
+CREATE SEQUENCE payment_order_code_seq START WITH 1000000000 INCREMENT BY 1;
+
+CREATE TABLE payments (
+  id uuid PRIMARY KEY,
+  booking_id uuid NOT NULL UNIQUE,
+  patient_identity_id uuid NOT NULL,
+  amount numeric(12,0) NOT NULL CHECK (amount > 0),
+  order_code bigint NOT NULL UNIQUE,
+  status varchar(30) NOT NULL,
+  payos_trans_id varchar(100) UNIQUE,
+  payment_link_id varchar(100) UNIQUE,
+  checkout_url text,
+  qr_code text,
+  appointment_start_at timestamptz NOT NULL,
+  expires_at timestamptz NOT NULL,
+  created_at timestamptz NOT NULL DEFAULT now(),
+  updated_at timestamptz NOT NULL DEFAULT now(),
+  version bigint NOT NULL DEFAULT 0
+);
+CREATE INDEX ix_payments_expiry ON payments(expires_at) WHERE status = 'PENDING';
+
+CREATE TABLE payment_outbox_events (
+  id uuid PRIMARY KEY,
+  aggregate_id uuid NOT NULL,
+  routing_key varchar(100) NOT NULL,
+  payload jsonb NOT NULL,
+  created_at timestamptz NOT NULL DEFAULT now(),
+  published_at timestamptz,
+  UNIQUE(aggregate_id, routing_key)
+);
+CREATE INDEX ix_payment_outbox_pending ON payment_outbox_events(created_at) WHERE published_at IS NULL;
+
+-- Source: services/payment-service/src/main/resources/db/migration/V2__refund_workflow.sql
+ALTER TABLE payments
+  ADD COLUMN recipient_email varchar(320),
+  ADD COLUMN refund_reason varchar(500),
+  ADD COLUMN refund_requested_by_role varchar(30),
+  ADD COLUMN refund_requested_at timestamptz,
+  ADD COLUMN refunded_at timestamptz,
+  ADD COLUMN refund_reference varchar(200);
+
+CREATE INDEX ix_payments_refund_requested
+  ON payments(updated_at)
+  WHERE status = 'REFUND_REQUESTED';
+
+-- Source: services/payment-service/src/main/resources/db/migration/V3__refund_audit_details.sql
+ALTER TABLE payments
+  ADD COLUMN refund_requested_by_identity uuid,
+  ADD COLUMN refund_initiator varchar(30),
+  ADD COLUMN refund_amount numeric(12,0),
+  ADD COLUMN refund_completed_by_identity uuid,
+  ADD COLUMN refund_completed_by_role varchar(30);
+
+-- Source: services/payment-service/src/main/resources/db/migration/V4__invoice_payments.sql
+CREATE TABLE IF NOT EXISTS payment.invoice_payments (
+ id UUID PRIMARY KEY, invoice_id UUID NOT NULL UNIQUE, patient_identity_id UUID NOT NULL,
+ amount NUMERIC(12,0) NOT NULL CHECK (amount > 0), order_code BIGINT NOT NULL UNIQUE,
+ status VARCHAR(30) NOT NULL, payos_trans_id VARCHAR(255) UNIQUE, payment_link_id VARCHAR(255) UNIQUE,
+ checkout_url TEXT, qr_code TEXT, expires_at TIMESTAMPTZ NOT NULL,
+ created_at TIMESTAMPTZ NOT NULL, updated_at TIMESTAMPTZ NOT NULL, version BIGINT NOT NULL DEFAULT 0
+);
+CREATE INDEX IF NOT EXISTS idx_invoice_payments_patient ON payment.invoice_payments(patient_identity_id,created_at DESC);
+
+-- Source: services/payment-service/src/main/resources/db/migration/V5__refund_completion_proof.sql
+ALTER TABLE payments
+  ADD COLUMN refund_method varchar(30),
+  ADD COLUMN refund_receipt_number varchar(100),
+  ADD COLUMN refund_recipient_name varchar(200),
+  ADD COLUMN refund_evidence_content_type varchar(50),
+  ADD COLUMN refund_evidence_original_name varchar(255),
+  ADD COLUMN refund_evidence_size_bytes bigint,
+  ADD COLUMN refund_evidence_data bytea;
+
+CREATE UNIQUE INDEX ux_payments_refund_receipt_number
+  ON payments(refund_receipt_number)
+  WHERE refund_receipt_number IS NOT NULL;
+
+ALTER TABLE payments
+  ADD CONSTRAINT ck_payments_refund_method
+  CHECK (refund_method IS NULL OR refund_method IN ('BANK_TRANSFER', 'CASH'));
+
 -- ============================================================================
 -- medical-record-service
 -- ============================================================================
@@ -726,6 +908,82 @@ CREATE INDEX IF NOT EXISTS ix_prescription_patient_identity ON prescriptions(pat
 create unique index if not exists uq_prescription_record
     on prescription.prescriptions(record_id);
 
+-- Source: services/prescription-service/src/main/resources/db/migration/V4__billing_and_inventory.sql
+ALTER TABLE prescription.prescriptions ADD COLUMN IF NOT EXISTS appointment_id UUID;
+ALTER TABLE prescription.prescription_items ADD COLUMN IF NOT EXISTS medicine_id UUID;
+ALTER TABLE prescription.prescription_items ADD COLUMN IF NOT EXISTS quantity_requested INTEGER NOT NULL DEFAULT 1;
+
+CREATE TABLE IF NOT EXISTS prescription.medicines (
+ id UUID PRIMARY KEY, sku VARCHAR(60) NOT NULL UNIQUE, name VARCHAR(200) NOT NULL,
+ unit VARCHAR(40) NOT NULL, sale_price NUMERIC(12,0) NOT NULL CHECK (sale_price >= 0),
+ stock_quantity INTEGER NOT NULL DEFAULT 0 CHECK (stock_quantity >= 0), active BOOLEAN NOT NULL DEFAULT TRUE,
+ updated_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP, version BIGINT NOT NULL DEFAULT 0
+);
+CREATE TABLE IF NOT EXISTS prescription.invoices (
+ id UUID PRIMARY KEY, appointment_id UUID NOT NULL UNIQUE, patient_id UUID NOT NULL, patient_identity_id UUID NOT NULL,
+ prescription_id UUID, consultation_fee NUMERIC(12,0) NOT NULL, service_fee NUMERIC(12,0) NOT NULL DEFAULT 0,
+ medicine_total NUMERIC(12,0) NOT NULL DEFAULT 0, deposit_applied NUMERIC(12,0) NOT NULL DEFAULT 0,
+ total_amount NUMERIC(12,0) NOT NULL, remaining_amount NUMERIC(12,0) NOT NULL,
+ status VARCHAR(30) NOT NULL, created_by UUID NOT NULL, created_at TIMESTAMPTZ NOT NULL,
+ paid_at TIMESTAMPTZ, dispensed_at TIMESTAMPTZ, dispensed_by UUID, version BIGINT NOT NULL DEFAULT 0
+);
+CREATE INDEX IF NOT EXISTS idx_invoices_patient_identity ON prescription.invoices(patient_identity_id,created_at DESC);
+CREATE TABLE IF NOT EXISTS prescription.invoice_items (
+ invoice_id UUID NOT NULL REFERENCES prescription.invoices(id) ON DELETE RESTRICT,
+ medicine_id UUID NOT NULL, medicine_name VARCHAR(200) NOT NULL, unit VARCHAR(40) NOT NULL,
+ unit_price NUMERIC(12,0) NOT NULL, prescribed_quantity INTEGER NOT NULL,
+ dispensed_quantity INTEGER NOT NULL DEFAULT 0, line_total NUMERIC(12,0) NOT NULL
+);
+CREATE TABLE IF NOT EXISTS prescription.invoice_cash_payments (
+ id UUID PRIMARY KEY, invoice_id UUID NOT NULL UNIQUE REFERENCES prescription.invoices(id) ON DELETE RESTRICT,
+ amount_due NUMERIC(12,0) NOT NULL, amount_received NUMERIC(12,0) NOT NULL,
+ change_amount NUMERIC(12,0) NOT NULL, collected_by UUID NOT NULL, collected_at TIMESTAMPTZ NOT NULL,
+ cashier_station VARCHAR(120) NOT NULL
+);
+CREATE TABLE IF NOT EXISTS prescription.inventory_movements (
+ id UUID PRIMARY KEY, invoice_id UUID NOT NULL REFERENCES prescription.invoices(id) ON DELETE RESTRICT,
+ medicine_id UUID NOT NULL, quantity_delta INTEGER NOT NULL, performed_by UUID NOT NULL,
+ created_at TIMESTAMPTZ NOT NULL, reason VARCHAR(40) NOT NULL
+);
+CREATE UNIQUE INDEX IF NOT EXISTS uq_inventory_invoice_medicine ON prescription.inventory_movements(invoice_id,medicine_id);
+CREATE TABLE IF NOT EXISTS prescription.invoice_adjustments (
+ id UUID PRIMARY KEY, invoice_id UUID NOT NULL REFERENCES prescription.invoices(id) ON DELETE RESTRICT,
+ amount_delta NUMERIC(12,0) NOT NULL, reason VARCHAR(500) NOT NULL,
+ created_by UUID NOT NULL, created_at TIMESTAMPTZ NOT NULL
+);
+
+-- Source: services/prescription-service/src/main/resources/db/migration/V5__invoice_service_items.sql
+CREATE TABLE IF NOT EXISTS prescription.invoice_service_items (
+ invoice_id UUID NOT NULL REFERENCES prescription.invoices(id) ON DELETE RESTRICT,
+ service_id UUID NOT NULL, service_code VARCHAR(80) NOT NULL,
+ service_name VARCHAR(160) NOT NULL, unit_price NUMERIC(12,0) NOT NULL
+);
+CREATE UNIQUE INDEX IF NOT EXISTS uq_invoice_service ON prescription.invoice_service_items(invoice_id,service_id);
+
+-- Source: services/prescription-service/src/main/resources/db/migration/V6__invoice_medicine_fulfillment.sql
+ALTER TABLE prescription.invoices
+    ADD COLUMN IF NOT EXISTS medicine_fulfillment VARCHAR(30);
+
+UPDATE prescription.invoices AS invoice
+SET medicine_fulfillment = CASE
+    WHEN invoice.prescription_id IS NULL THEN 'NO_PRESCRIPTION'
+    WHEN EXISTS (
+        SELECT 1
+        FROM prescription.invoice_items AS item
+        WHERE item.invoice_id = invoice.id
+          AND item.prescribed_quantity > 0
+    ) THEN 'CLINIC_PHARMACY'
+    ELSE 'OUTSIDE_PHARMACY'
+END
+WHERE medicine_fulfillment IS NULL;
+
+ALTER TABLE prescription.invoices
+    ALTER COLUMN medicine_fulfillment SET NOT NULL;
+
+ALTER TABLE prescription.invoices
+    ADD CONSTRAINT ck_invoice_medicine_fulfillment
+    CHECK (medicine_fulfillment IN ('CLINIC_PHARMACY', 'OUTSIDE_PHARMACY', 'NO_PRESCRIPTION'));
+
 -- ============================================================================
 -- inventory-service
 -- ============================================================================
@@ -768,12 +1026,12 @@ CREATE TABLE IF NOT EXISTS prescriptions (
     patient_id UUID NOT NULL,
     patient_name VARCHAR(200) NOT NULL,
     doctor_id UUID NOT NULL,
-    status VARCHAR(30) NOT NULL DEFAULT ''PENDING_PAYMENT'',
+    status VARCHAR(30) NOT NULL DEFAULT 'PENDING_PAYMENT',
     paid_at TIMESTAMPTZ,
     dispensed_at TIMESTAMPTZ,
     dispensed_by UUID,
     CONSTRAINT ck_pharmacy_prescriptions_status
-        CHECK (status IN (''PENDING_PAYMENT'', ''PAID'', ''DISPENSED'', ''CANCELLED''))
+        CHECK (status IN ('PENDING_PAYMENT', 'PAID', 'DISPENSED', 'CANCELLED'))
 );
 
 CREATE INDEX IF NOT EXISTS ix_prescriptions_patient_id
@@ -801,7 +1059,7 @@ CREATE TABLE IF NOT EXISTS inventory_logs (
     quantity_changed INTEGER NOT NULL,
     created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
     CONSTRAINT ck_inventory_logs_action_type
-        CHECK (action_type IN (''IMPORT'', ''DISPENSE''))
+        CHECK (action_type IN ('IMPORT', 'DISPENSE'))
 );
 
 CREATE INDEX IF NOT EXISTS ix_inventory_logs_product_created

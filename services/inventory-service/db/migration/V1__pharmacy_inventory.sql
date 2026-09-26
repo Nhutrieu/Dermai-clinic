@@ -36,12 +36,12 @@ CREATE TABLE IF NOT EXISTS prescriptions (
     patient_id UUID NOT NULL,
     patient_name VARCHAR(200) NOT NULL,
     doctor_id UUID NOT NULL,
-    status VARCHAR(30) NOT NULL DEFAULT ''PENDING_PAYMENT'',
+    status VARCHAR(30) NOT NULL DEFAULT 'PENDING_PAYMENT',
     paid_at TIMESTAMPTZ,
     dispensed_at TIMESTAMPTZ,
     dispensed_by UUID,
     CONSTRAINT ck_pharmacy_prescriptions_status
-        CHECK (status IN (''PENDING_PAYMENT'', ''PAID'', ''DISPENSED'', ''CANCELLED''))
+        CHECK (status IN ('PENDING_PAYMENT', 'PAID', 'DISPENSED', 'CANCELLED'))
 );
 
 CREATE INDEX IF NOT EXISTS ix_prescriptions_patient_id
@@ -69,7 +69,7 @@ CREATE TABLE IF NOT EXISTS inventory_logs (
     quantity_changed INTEGER NOT NULL,
     created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
     CONSTRAINT ck_inventory_logs_action_type
-        CHECK (action_type IN (''IMPORT'', ''DISPENSE''))
+        CHECK (action_type IN ('IMPORT', 'DISPENSE'))
 );
 
 CREATE INDEX IF NOT EXISTS ix_inventory_logs_product_created
