@@ -1,0 +1,617 @@
+{
+  "generatedAt": "2026-09-25T07:33:54.582520+00:00",
+  "simulationDate": "2026-09-25",
+  "note": "Dữ liệu lô mô phỏng cho FEFO, cảnh báo cận hạn và cảnh báo tồn thấp; nhận diện bằng tiền tố SIM-.",
+  "batches": [
+    {
+      "productId": "4ff5a4da-ad0b-4844-a824-ac841c48f4d6",
+      "sku": "DERM-ACNE-AZELAIC20",
+      "productName": "Acid azelaic cream 20%",
+      "unit": "TuÃ½p",
+      "batchNumber": "SIM-DEMO-DERM-ACNE-AZELAIC20-A",
+      "expiryDate": "2027-04-23",
+      "quantity": 1,
+      "scenario": "NORMAL"
+    },
+    {
+      "productId": "8c471001-a4f1-4a91-baf1-051cebe78b7c",
+      "sku": "DERM-ACNE-BPO25-GEL",
+      "productName": "Benzoyl peroxide gel 2,5%",
+      "unit": "TuÃ½p",
+      "batchNumber": "SIM-DEMO-DERM-ACNE-BPO25-GEL-A",
+      "expiryDate": "2027-05-23",
+      "quantity": 9,
+      "scenario": "LOW_STOCK"
+    },
+    {
+      "productId": "c16f7e05-db70-4ab4-a909-4412ff51cba1",
+      "sku": "DERM-ACNE-BPO5-GEL",
+      "productName": "Benzoyl peroxide gel 5%",
+      "unit": "TuÃ½p",
+      "batchNumber": "SIM-DEMO-DERM-ACNE-BPO5-GEL-A",
+      "expiryDate": "2027-06-22",
+      "quantity": 20,
+      "scenario": "NORMAL"
+    },
+    {
+      "productId": "205164ec-d640-4294-8112-6aa7938a1d38",
+      "sku": "DERM-ACNE-CLINDA1-GEL",
+      "productName": "Clindamycin gel 1%",
+      "unit": "TuÃ½p",
+      "batchNumber": "SIM-DEMO-DERM-ACNE-CLINDA1-GEL-A",
+      "expiryDate": "2027-07-22",
+      "quantity": 20,
+      "scenario": "NORMAL"
+    },
+    {
+      "productId": "205164ec-d640-4294-8112-6aa7938a1d38",
+      "sku": "DERM-ACNE-CLINDA1-GEL",
+      "productName": "Clindamycin gel 1%",
+      "unit": "TuÃ½p",
+      "batchNumber": "SIM-DEMO-DERM-ACNE-CLINDA1-GEL-B",
+      "expiryDate": "2027-11-19",
+      "quantity": 20,
+      "scenario": "FEFO_SECOND_BATCH"
+    },
+    {
+      "productId": "e0e96548-e1d5-48e0-8dd9-192187cc4bf3",
+      "sku": "DERM-ACNE-DOXY100",
+      "productName": "Doxycyclin capsule 100 mg",
+      "unit": "ViÃªn",
+      "batchNumber": "SIM-DEMO-DERM-ACNE-DOXY100-A",
+      "expiryDate": "2026-10-15",
+      "quantity": 200,
+      "scenario": "EXPIRING_30_DAYS"
+    },
+    {
+      "productId": "89c8fa87-82f3-4637-803f-24610538ab2e",
+      "sku": "DERM-ACNE-ISO10",
+      "productName": "Isotretinoin capsule 10 mg",
+      "unit": "ViÃªn",
+      "batchNumber": "SIM-DEMO-DERM-ACNE-ISO10-A",
+      "expiryDate": "2027-03-24",
+      "quantity": 100,
+      "scenario": "NORMAL"
+    },
+    {
+      "productId": "ad998639-a044-4082-9f43-ef656f9424a2",
+      "sku": "DERM-ACNE-ISO20",
+      "productName": "Isotretinoin capsule 20 mg",
+      "unit": "ViÃªn",
+      "batchNumber": "SIM-DEMO-DERM-ACNE-ISO20-A",
+      "expiryDate": "2027-04-23",
+      "quantity": 100,
+      "scenario": "NORMAL"
+    },
+    {
+      "productId": "9fb3ebfd-a467-40c6-9eae-26a02b8e3182",
+      "sku": "DERM-ACNE-TRET005",
+      "productName": "Tretinoin cream 0,05%",
+      "unit": "TuÃ½p",
+      "batchNumber": "SIM-DEMO-DERM-ACNE-TRET005-A",
+      "expiryDate": "2027-05-23",
+      "quantity": 20,
+      "scenario": "NORMAL"
+    },
+    {
+      "productId": "9fb3ebfd-a467-40c6-9eae-26a02b8e3182",
+      "sku": "DERM-ACNE-TRET005",
+      "productName": "Tretinoin cream 0,05%",
+      "unit": "TuÃ½p",
+      "batchNumber": "SIM-DEMO-DERM-ACNE-TRET005-B",
+      "expiryDate": "2027-11-19",
+      "quantity": 16,
+      "scenario": "FEFO_SECOND_BATCH"
+    },
+    {
+      "productId": "1063e98e-0d69-4eea-92f5-0905c66a3268",
+      "sku": "DERM-ALL-CET10",
+      "productName": "Cetirizin tablet 10 mg",
+      "unit": "ViÃªn",
+      "batchNumber": "SIM-DEMO-DERM-ALL-CET10-A",
+      "expiryDate": "2027-06-22",
+      "quantity": 99,
+      "scenario": "LOW_STOCK"
+    },
+    {
+      "productId": "ca2cb0a7-2019-4063-941d-137e413f7208",
+      "sku": "DERM-ALL-CPM4",
+      "productName": "Clorpheniramin tablet 4 mg",
+      "unit": "ViÃªn",
+      "batchNumber": "SIM-DEMO-DERM-ALL-CPM4-A",
+      "expiryDate": "2026-10-15",
+      "quantity": 200,
+      "scenario": "EXPIRING_30_DAYS"
+    },
+    {
+      "productId": "cbbe1629-4836-4fe6-81b9-9f4f6bb2af9e",
+      "sku": "DERM-ALL-FEXO180",
+      "productName": "Fexofenadin tablet 180 mg",
+      "unit": "ViÃªn",
+      "batchNumber": "SIM-DEMO-DERM-ALL-FEXO180-A",
+      "expiryDate": "2027-08-21",
+      "quantity": 200,
+      "scenario": "NORMAL"
+    },
+    {
+      "productId": "ebb60327-7e90-4289-9c55-c224c599e86b",
+      "sku": "DERM-ALL-HYDROX25",
+      "productName": "Hydroxyzin tablet 25 mg",
+      "unit": "ViÃªn",
+      "batchNumber": "SIM-DEMO-DERM-ALL-HYDROX25-A",
+      "expiryDate": "2027-03-24",
+      "quantity": 100,
+      "scenario": "NORMAL"
+    },
+    {
+      "productId": "ebb60327-7e90-4289-9c55-c224c599e86b",
+      "sku": "DERM-ALL-HYDROX25",
+      "productName": "Hydroxyzin tablet 25 mg",
+      "unit": "ViÃªn",
+      "batchNumber": "SIM-DEMO-DERM-ALL-HYDROX25-B",
+      "expiryDate": "2027-11-19",
+      "quantity": 100,
+      "scenario": "FEFO_SECOND_BATCH"
+    },
+    {
+      "productId": "c2a9eec7-7cb5-4d52-b847-b0f9c90775af",
+      "sku": "DERM-ALL-LORA10",
+      "productName": "Loratadin tablet 10 mg",
+      "unit": "ViÃªn",
+      "batchNumber": "SIM-DEMO-DERM-ALL-LORA10-A",
+      "expiryDate": "2027-04-23",
+      "quantity": 200,
+      "scenario": "NORMAL"
+    },
+    {
+      "productId": "5296bd7a-652b-423b-b4a2-4f2bc205d289",
+      "sku": "DERM-BACT-ERY2-SOL",
+      "productName": "Erythromycin solution 2%",
+      "unit": "Chai",
+      "batchNumber": "SIM-DEMO-DERM-BACT-ERY2-SOL-A",
+      "expiryDate": "2027-05-23",
+      "quantity": 20,
+      "scenario": "NORMAL"
+    },
+    {
+      "productId": "aadd5a0a-4efd-421e-9f31-2a1a2c79e13f",
+      "sku": "DERM-BACT-FUSI2",
+      "productName": "Acid fusidic cream 2%",
+      "unit": "TuÃ½p",
+      "batchNumber": "SIM-DEMO-DERM-BACT-FUSI2-A",
+      "expiryDate": "2026-10-15",
+      "quantity": 20,
+      "scenario": "EXPIRING_30_DAYS"
+    },
+    {
+      "productId": "b5d8cd1c-bb70-467f-a415-b85f424a5277",
+      "sku": "DERM-BACT-MUPI2",
+      "productName": "Mupirocin ointment 2%",
+      "unit": "TuÃ½p",
+      "batchNumber": "SIM-DEMO-DERM-BACT-MUPI2-A",
+      "expiryDate": "2027-07-22",
+      "quantity": 9,
+      "scenario": "LOW_STOCK"
+    },
+    {
+      "productId": "73a4e947-9b9a-47d6-95ae-4b371d6bfd88",
+      "sku": "DERM-BACT-SSD1",
+      "productName": "Silver sulfadiazin cream 1%",
+      "unit": "TuÃ½p",
+      "batchNumber": "SIM-DEMO-DERM-BACT-SSD1-A",
+      "expiryDate": "2027-08-21",
+      "quantity": 20,
+      "scenario": "NORMAL"
+    },
+    {
+      "productId": "b0735582-0589-4453-8c63-685bf25b4b49",
+      "sku": "DERM-EMOL-UREA10",
+      "productName": "Urea cream 10%",
+      "unit": "TuÃ½p",
+      "batchNumber": "SIM-DEMO-DERM-EMOL-UREA10-A",
+      "expiryDate": "2027-03-24",
+      "quantity": 20,
+      "scenario": "NORMAL"
+    },
+    {
+      "productId": "2d4847fb-63cd-46d2-8a07-3b5c965d130a",
+      "sku": "DERM-FUNG-CICLO1",
+      "productName": "Ciclopirox olamin cream 1%",
+      "unit": "TuÃ½p",
+      "batchNumber": "SIM-DEMO-DERM-FUNG-CICLO1-A",
+      "expiryDate": "2027-04-23",
+      "quantity": 20,
+      "scenario": "NORMAL"
+    },
+    {
+      "productId": "d60d2c4c-77a6-46bf-816e-21257dc43986",
+      "sku": "DERM-FUNG-CLOTRI1",
+      "productName": "Clotrimazol cream 1%",
+      "unit": "TuÃ½p",
+      "batchNumber": "SIM-DEMO-DERM-FUNG-CLOTRI1-A",
+      "expiryDate": "2026-10-15",
+      "quantity": 30,
+      "scenario": "EXPIRING_30_DAYS"
+    },
+    {
+      "productId": "d60d2c4c-77a6-46bf-816e-21257dc43986",
+      "sku": "DERM-FUNG-CLOTRI1",
+      "productName": "Clotrimazol cream 1%",
+      "unit": "TuÃ½p",
+      "batchNumber": "SIM-DEMO-DERM-FUNG-CLOTRI1-B",
+      "expiryDate": "2027-11-19",
+      "quantity": 30,
+      "scenario": "FEFO_SECOND_BATCH"
+    },
+    {
+      "productId": "65da83da-1127-42a2-82be-7e59d627fb9f",
+      "sku": "DERM-FUNG-FLU150",
+      "productName": "Fluconazol capsule 150 mg",
+      "unit": "ViÃªn",
+      "batchNumber": "SIM-DEMO-DERM-FUNG-FLU150-A",
+      "expiryDate": "2027-06-22",
+      "quantity": 60,
+      "scenario": "NORMAL"
+    },
+    {
+      "productId": "6fb3bfcc-bd8d-4434-a996-5bb0db128843",
+      "sku": "DERM-FUNG-GRIS500",
+      "productName": "Griseofulvin tablet 500 mg",
+      "unit": "ViÃªn",
+      "batchNumber": "SIM-DEMO-DERM-FUNG-GRIS500-A",
+      "expiryDate": "2027-07-22",
+      "quantity": 100,
+      "scenario": "NORMAL"
+    },
+    {
+      "productId": "ee36a928-71e1-4ea6-b43a-deb27bff77f6",
+      "sku": "DERM-FUNG-ITRA100",
+      "productName": "Itraconazol capsule 100 mg",
+      "unit": "ViÃªn",
+      "batchNumber": "SIM-DEMO-DERM-FUNG-ITRA100-A",
+      "expiryDate": "2027-08-21",
+      "quantity": 49,
+      "scenario": "LOW_STOCK"
+    },
+    {
+      "productId": "a2046c13-bd2d-4396-954a-0ed7ec823592",
+      "sku": "DERM-FUNG-KETO2-CRM",
+      "productName": "Ketoconazol cream 2%",
+      "unit": "TuÃ½p",
+      "batchNumber": "SIM-DEMO-DERM-FUNG-KETO2-CRM-A",
+      "expiryDate": "2027-03-24",
+      "quantity": 24,
+      "scenario": "NORMAL"
+    },
+    {
+      "productId": "a2046c13-bd2d-4396-954a-0ed7ec823592",
+      "sku": "DERM-FUNG-KETO2-CRM",
+      "productName": "Ketoconazol cream 2%",
+      "unit": "TuÃ½p",
+      "batchNumber": "SIM-DEMO-DERM-FUNG-KETO2-CRM-B",
+      "expiryDate": "2027-11-19",
+      "quantity": 24,
+      "scenario": "FEFO_SECOND_BATCH"
+    },
+    {
+      "productId": "d94f1166-4384-4ed4-9561-3a22263ddd7b",
+      "sku": "DERM-FUNG-KETO2-SHA",
+      "productName": "Ketoconazol shampoo 2%",
+      "unit": "Chai",
+      "batchNumber": "SIM-DEMO-DERM-FUNG-KETO2-SHA-A",
+      "expiryDate": "2026-10-15",
+      "quantity": 20,
+      "scenario": "EXPIRING_30_DAYS"
+    },
+    {
+      "productId": "e2ba4ae3-0d43-4249-affe-7618c0e885e1",
+      "sku": "DERM-FUNG-MICON2",
+      "productName": "Miconazol cream 2%",
+      "unit": "TuÃ½p",
+      "batchNumber": "SIM-DEMO-DERM-FUNG-MICON2-A",
+      "expiryDate": "2027-05-23",
+      "quantity": 20,
+      "scenario": "NORMAL"
+    },
+    {
+      "productId": "0a4d106e-33d4-4bee-b0c6-64f991b58445",
+      "sku": "DERM-FUNG-SEL25-SHA",
+      "productName": "Selenium sulfid shampoo 2,5%",
+      "unit": "Chai",
+      "batchNumber": "SIM-DEMO-DERM-FUNG-SEL25-SHA-A",
+      "expiryDate": "2027-06-22",
+      "quantity": 20,
+      "scenario": "NORMAL"
+    },
+    {
+      "productId": "864d7f71-457e-4121-b350-b3093e57dcd3",
+      "sku": "DERM-FUNG-TERB1-CRM",
+      "productName": "Terbinafin cream 1%",
+      "unit": "TuÃ½p",
+      "batchNumber": "SIM-DEMO-DERM-FUNG-TERB1-CRM-A",
+      "expiryDate": "2027-07-22",
+      "quantity": 20,
+      "scenario": "NORMAL"
+    },
+    {
+      "productId": "864d7f71-457e-4121-b350-b3093e57dcd3",
+      "sku": "DERM-FUNG-TERB1-CRM",
+      "productName": "Terbinafin cream 1%",
+      "unit": "TuÃ½p",
+      "batchNumber": "SIM-DEMO-DERM-FUNG-TERB1-CRM-B",
+      "expiryDate": "2027-11-19",
+      "quantity": 20,
+      "scenario": "FEFO_SECOND_BATCH"
+    },
+    {
+      "productId": "b91ab89d-6547-441c-9869-c770805bd344",
+      "sku": "DERM-FUNG-TERB250",
+      "productName": "Terbinafin tablet 250 mg",
+      "unit": "ViÃªn",
+      "batchNumber": "SIM-DEMO-DERM-FUNG-TERB250-A",
+      "expiryDate": "2027-08-21",
+      "quantity": 100,
+      "scenario": "NORMAL"
+    },
+    {
+      "productId": "55039ad2-6aeb-45cb-9210-f4f97f0747c1",
+      "sku": "DERM-INFL-BETA01",
+      "productName": "Betamethason valerat cream 0,1%",
+      "unit": "TuÃ½p",
+      "batchNumber": "SIM-DEMO-DERM-INFL-BETA01-A",
+      "expiryDate": "2026-10-15",
+      "quantity": 9,
+      "scenario": "LOW_STOCK"
+    },
+    {
+      "productId": "3cfd3ade-8859-48dc-86db-c63dd7775ef1",
+      "sku": "DERM-INFL-CLOB005",
+      "productName": "Clobetasol propionat cream 0,05%",
+      "unit": "TuÃ½p",
+      "batchNumber": "SIM-DEMO-DERM-INFL-CLOB005-A",
+      "expiryDate": "2027-04-23",
+      "quantity": 20,
+      "scenario": "NORMAL"
+    },
+    {
+      "productId": "a5ef97ab-5ea4-43f4-bc2c-4362e4e55612",
+      "sku": "DERM-INFL-DESON005",
+      "productName": "Desonid cream 0,05%",
+      "unit": "TuÃ½p",
+      "batchNumber": "SIM-DEMO-DERM-INFL-DESON005-A",
+      "expiryDate": "2027-05-23",
+      "quantity": 20,
+      "scenario": "NORMAL"
+    },
+    {
+      "productId": "a5ef97ab-5ea4-43f4-bc2c-4362e4e55612",
+      "sku": "DERM-INFL-DESON005",
+      "productName": "Desonid cream 0,05%",
+      "unit": "TuÃ½p",
+      "batchNumber": "SIM-DEMO-DERM-INFL-DESON005-B",
+      "expiryDate": "2027-11-19",
+      "quantity": 20,
+      "scenario": "FEFO_SECOND_BATCH"
+    },
+    {
+      "productId": "cc2619ec-4048-4249-9735-c92130181711",
+      "sku": "DERM-INFL-HYDRO1",
+      "productName": "Hydrocortison cream 1%",
+      "unit": "TuÃ½p",
+      "batchNumber": "SIM-DEMO-DERM-INFL-HYDRO1-A",
+      "expiryDate": "2027-06-22",
+      "quantity": 30,
+      "scenario": "NORMAL"
+    },
+    {
+      "productId": "5d983bac-911e-4a0e-a147-90aeb24f6138",
+      "sku": "DERM-INFL-TAC003",
+      "productName": "Tacrolimus ointment 0,03%",
+      "unit": "TuÃ½p",
+      "batchNumber": "SIM-DEMO-DERM-INFL-TAC003-A",
+      "expiryDate": "2027-07-22",
+      "quantity": 20,
+      "scenario": "NORMAL"
+    },
+    {
+      "productId": "048622e2-5f89-4494-a7b4-119aa524ef3d",
+      "sku": "DERM-INFL-TAC01",
+      "productName": "Tacrolimus ointment 0,1%",
+      "unit": "TuÃ½p",
+      "batchNumber": "SIM-DEMO-DERM-INFL-TAC01-A",
+      "expiryDate": "2026-10-15",
+      "quantity": 20,
+      "scenario": "EXPIRING_30_DAYS"
+    },
+    {
+      "productId": "14428f64-1e08-4e7e-b5ed-0cb4975f284e",
+      "sku": "DERM-INFL-TRIAM01",
+      "productName": "Triamcinolon cream 0,1%",
+      "unit": "TuÃ½p",
+      "batchNumber": "SIM-DEMO-DERM-INFL-TRIAM01-A",
+      "expiryDate": "2027-03-24",
+      "quantity": 20,
+      "scenario": "NORMAL"
+    },
+    {
+      "productId": "14428f64-1e08-4e7e-b5ed-0cb4975f284e",
+      "sku": "DERM-INFL-TRIAM01",
+      "productName": "Triamcinolon cream 0,1%",
+      "unit": "TuÃ½p",
+      "batchNumber": "SIM-DEMO-DERM-INFL-TRIAM01-B",
+      "expiryDate": "2027-11-19",
+      "quantity": 20,
+      "scenario": "FEFO_SECOND_BATCH"
+    },
+    {
+      "productId": "51ad44b7-441b-4e9f-86bc-e92063c58f66",
+      "sku": "DERM-KERA-SALI10",
+      "productName": "Acid salicylic ointment 10%",
+      "unit": "TuÃ½p",
+      "batchNumber": "SIM-DEMO-DERM-KERA-SALI10-A",
+      "expiryDate": "2027-04-23",
+      "quantity": 9,
+      "scenario": "LOW_STOCK"
+    },
+    {
+      "productId": "2589054f-68d0-419e-b356-694643969eb0",
+      "sku": "DERM-KERA-SALI5",
+      "productName": "Acid salicylic ointment 5%",
+      "unit": "TuÃ½p",
+      "batchNumber": "SIM-DEMO-DERM-KERA-SALI5-A",
+      "expiryDate": "2027-05-23",
+      "quantity": 20,
+      "scenario": "NORMAL"
+    },
+    {
+      "productId": "3db88288-fc7b-43f0-8199-69cf44d87dea",
+      "sku": "DERM-PARA-CROT10",
+      "productName": "Crotamiton cream 10%",
+      "unit": "TuÃ½p",
+      "batchNumber": "SIM-DEMO-DERM-PARA-CROT10-A",
+      "expiryDate": "2027-06-22",
+      "quantity": 20,
+      "scenario": "NORMAL"
+    },
+    {
+      "productId": "b31b6daa-84b4-426e-ada7-52999a377629",
+      "sku": "DERM-PARA-IVER3",
+      "productName": "Ivermectin tablet 3 mg",
+      "unit": "ViÃªn",
+      "batchNumber": "SIM-DEMO-DERM-PARA-IVER3-A",
+      "expiryDate": "2026-10-15",
+      "quantity": 60,
+      "scenario": "EXPIRING_30_DAYS"
+    },
+    {
+      "productId": "b31b6daa-84b4-426e-ada7-52999a377629",
+      "sku": "DERM-PARA-IVER3",
+      "productName": "Ivermectin tablet 3 mg",
+      "unit": "ViÃªn",
+      "batchNumber": "SIM-DEMO-DERM-PARA-IVER3-B",
+      "expiryDate": "2027-11-19",
+      "quantity": 60,
+      "scenario": "FEFO_SECOND_BATCH"
+    },
+    {
+      "productId": "ee13cba8-7450-4399-997c-dcea6931a417",
+      "sku": "DERM-PARA-PERM5",
+      "productName": "Permethrin cream 5%",
+      "unit": "TuÃ½p",
+      "batchNumber": "SIM-DEMO-DERM-PARA-PERM5-A",
+      "expiryDate": "2027-08-21",
+      "quantity": 20,
+      "scenario": "NORMAL"
+    },
+    {
+      "productId": "55977d53-f38b-444d-94c7-de8e3e84d681",
+      "sku": "DERM-PIG-HQ2",
+      "productName": "Hydroquinon cream 2%",
+      "unit": "TuÃ½p",
+      "batchNumber": "SIM-DEMO-DERM-PIG-HQ2-A",
+      "expiryDate": "2027-03-24",
+      "quantity": 20,
+      "scenario": "NORMAL"
+    },
+    {
+      "productId": "e8289386-1b47-4832-abc4-ea1ad1c64a24",
+      "sku": "DERM-PIG-HQ4",
+      "productName": "Hydroquinon cream 4%",
+      "unit": "TuÃ½p",
+      "batchNumber": "SIM-DEMO-DERM-PIG-HQ4-A",
+      "expiryDate": "2027-04-23",
+      "quantity": 20,
+      "scenario": "NORMAL"
+    },
+    {
+      "productId": "27f4d14f-80b3-48b3-bc1c-b26dae9433e2",
+      "sku": "DERM-PSO-CALC005",
+      "productName": "Calcipotriol ointment 0,005%",
+      "unit": "TuÃ½p",
+      "batchNumber": "SIM-DEMO-DERM-PSO-CALC005-A",
+      "expiryDate": "2027-05-23",
+      "quantity": 4,
+      "scenario": "LOW_STOCK"
+    },
+    {
+      "productId": "3cbfc106-a4fa-42a7-b3a8-8279bb6c0357",
+      "sku": "DERM-PSO-CYCLO25",
+      "productName": "Cyclosporin capsule 25 mg",
+      "unit": "ViÃªn",
+      "batchNumber": "SIM-DEMO-DERM-PSO-CYCLO25-A",
+      "expiryDate": "2026-10-15",
+      "quantity": 60,
+      "scenario": "EXPIRING_30_DAYS"
+    },
+    {
+      "productId": "13586ec3-8eb6-4651-ad44-50b345871a82",
+      "sku": "DERM-PSO-MTX25",
+      "productName": "Methotrexat tablet 2,5 mg",
+      "unit": "ViÃªn",
+      "batchNumber": "SIM-DEMO-DERM-PSO-MTX25-A",
+      "expiryDate": "2027-07-22",
+      "quantity": 60,
+      "scenario": "NORMAL"
+    },
+    {
+      "productId": "bd5ad154-c90e-47f5-a031-b09e994f0f92",
+      "sku": "DERM-VIR-ACYC400",
+      "productName": "Acyclovir tablet 400 mg",
+      "unit": "ViÃªn",
+      "batchNumber": "SIM-DEMO-DERM-VIR-ACYC400-A",
+      "expiryDate": "2027-08-21",
+      "quantity": 100,
+      "scenario": "NORMAL"
+    },
+    {
+      "productId": "0693eb61-eae2-499c-b0cc-23aa0bc7650d",
+      "sku": "DERM-VIR-ACYC5-CRM",
+      "productName": "Acyclovir cream 5%",
+      "unit": "TuÃ½p",
+      "batchNumber": "SIM-DEMO-DERM-VIR-ACYC5-CRM-A",
+      "expiryDate": "2027-03-24",
+      "quantity": 20,
+      "scenario": "NORMAL"
+    },
+    {
+      "productId": "0693eb61-eae2-499c-b0cc-23aa0bc7650d",
+      "sku": "DERM-VIR-ACYC5-CRM",
+      "productName": "Acyclovir cream 5%",
+      "unit": "TuÃ½p",
+      "batchNumber": "SIM-DEMO-DERM-VIR-ACYC5-CRM-B",
+      "expiryDate": "2027-11-19",
+      "quantity": 16,
+      "scenario": "FEFO_SECOND_BATCH"
+    },
+    {
+      "productId": "cc1a7236-9096-4bc0-9f92-6de5febf245a",
+      "sku": "DERM-VIR-VALA500",
+      "productName": "Valacyclovir tablet 500 mg",
+      "unit": "ViÃªn",
+      "batchNumber": "SIM-DEMO-DERM-VIR-VALA500-A",
+      "expiryDate": "2027-04-23",
+      "quantity": 60,
+      "scenario": "NORMAL"
+    },
+    {
+      "productId": "01323bad-06b3-4a86-81c7-1807c0cc792b",
+      "sku": "DERM-WART-IMIQ5",
+      "productName": "Imiquimod cream 5%",
+      "unit": "GÃ³i",
+      "batchNumber": "SIM-DEMO-DERM-WART-IMIQ5-A",
+      "expiryDate": "2026-10-15",
+      "quantity": 20,
+      "scenario": "EXPIRING_30_DAYS"
+    },
+    {
+      "productId": "715d5c2b-881f-46cc-a948-5d3080fb258e",
+      "sku": "DERM-WART-SAL-LAC",
+      "productName": "Acid salicylic 16,7% + acid lactic 16,7% solution",
+      "unit": "Chai",
+      "batchNumber": "SIM-DEMO-DERM-WART-SAL-LAC-A",
+      "expiryDate": "2027-06-22",
+      "quantity": 20,
+      "scenario": "NORMAL"
+    }
+  ]
+}

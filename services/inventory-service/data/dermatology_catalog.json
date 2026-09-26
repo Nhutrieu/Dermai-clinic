@@ -1,0 +1,669 @@
+{
+  "catalogVersion": "2026-09-25",
+  "source": "SkinDisease/Huong-dan-chan-doan-dieu-tri-Da-lieu.pdf",
+  "sourceSha256": "ea97f1b03e92402d1c6e910310f691a4042e5417993d604f463eae3b19f5e84f",
+  "pricingNote": "Giá cấu hình ban đầu để vận hành thử; quản trị viên cần duyệt lại theo báo giá nhà cung cấp.",
+  "products": [
+    {
+      "sku": "DERM-ACNE-BPO25-GEL",
+      "name": "Benzoyl peroxide gel 2,5%",
+      "unit": "Tuýp",
+      "importPrice": 45000,
+      "sellingPrice": 65000,
+      "minThreshold": 10,
+      "category": "Mụn trứng cá",
+      "referencePages": [
+        27
+      ]
+    },
+    {
+      "sku": "DERM-ACNE-BPO5-GEL",
+      "name": "Benzoyl peroxide gel 5%",
+      "unit": "Tuýp",
+      "importPrice": 52000,
+      "sellingPrice": 75000,
+      "minThreshold": 10,
+      "category": "Mụn trứng cá",
+      "referencePages": [
+        27
+      ]
+    },
+    {
+      "sku": "DERM-ACNE-CLINDA1-GEL",
+      "name": "Clindamycin gel 1%",
+      "unit": "Tuýp",
+      "importPrice": 55000,
+      "sellingPrice": 85000,
+      "minThreshold": 10,
+      "category": "Mụn trứng cá",
+      "referencePages": [
+        19,
+        27
+      ]
+    },
+    {
+      "sku": "DERM-ACNE-AZELAIC20",
+      "name": "Acid azelaic cream 20%",
+      "unit": "Tuýp",
+      "importPrice": 120000,
+      "sellingPrice": 165000,
+      "minThreshold": 8,
+      "category": "Mụn trứng cá và tăng sắc tố",
+      "referencePages": [
+        27,
+        289
+      ]
+    },
+    {
+      "sku": "DERM-ACNE-TRET005",
+      "name": "Tretinoin cream 0,05%",
+      "unit": "Tuýp",
+      "importPrice": 70000,
+      "sellingPrice": 105000,
+      "minThreshold": 8,
+      "category": "Mụn trứng cá và dày sừng",
+      "referencePages": [
+        76,
+        292
+      ]
+    },
+    {
+      "sku": "DERM-ACNE-ISO10",
+      "name": "Isotretinoin capsule 10 mg",
+      "unit": "Viên",
+      "importPrice": 8000,
+      "sellingPrice": 12000,
+      "minThreshold": 50,
+      "category": "Mụn trứng cá",
+      "referencePages": [
+        28
+      ]
+    },
+    {
+      "sku": "DERM-ACNE-ISO20",
+      "name": "Isotretinoin capsule 20 mg",
+      "unit": "Viên",
+      "importPrice": 14000,
+      "sellingPrice": 20000,
+      "minThreshold": 50,
+      "category": "Mụn trứng cá",
+      "referencePages": [
+        28
+      ]
+    },
+    {
+      "sku": "DERM-ACNE-DOXY100",
+      "name": "Doxycyclin capsule 100 mg",
+      "unit": "Viên",
+      "importPrice": 1500,
+      "sellingPrice": 2500,
+      "minThreshold": 100,
+      "category": "Mụn trứng cá và nhiễm khuẩn",
+      "referencePages": [
+        28,
+        198,
+        209
+      ]
+    },
+    {
+      "sku": "DERM-FUNG-KETO2-CRM",
+      "name": "Ketoconazol cream 2%",
+      "unit": "Tuýp",
+      "importPrice": 35000,
+      "sellingPrice": 55000,
+      "minThreshold": 12,
+      "category": "Kháng nấm",
+      "referencePages": [
+        45,
+        49
+      ]
+    },
+    {
+      "sku": "DERM-FUNG-KETO2-SHA",
+      "name": "Ketoconazol shampoo 2%",
+      "unit": "Chai",
+      "importPrice": 85000,
+      "sellingPrice": 125000,
+      "minThreshold": 8,
+      "category": "Kháng nấm và viêm da dầu",
+      "referencePages": [
+        45,
+        156
+      ]
+    },
+    {
+      "sku": "DERM-FUNG-TERB1-CRM",
+      "name": "Terbinafin cream 1%",
+      "unit": "Tuýp",
+      "importPrice": 55000,
+      "sellingPrice": 85000,
+      "minThreshold": 10,
+      "category": "Kháng nấm",
+      "referencePages": [
+        49,
+        53
+      ]
+    },
+    {
+      "sku": "DERM-FUNG-CLOTRI1",
+      "name": "Clotrimazol cream 1%",
+      "unit": "Tuýp",
+      "importPrice": 18000,
+      "sellingPrice": 30000,
+      "minThreshold": 15,
+      "category": "Kháng nấm",
+      "referencePages": [
+        49,
+        53
+      ]
+    },
+    {
+      "sku": "DERM-FUNG-MICON2",
+      "name": "Miconazol cream 2%",
+      "unit": "Tuýp",
+      "importPrice": 25000,
+      "sellingPrice": 40000,
+      "minThreshold": 10,
+      "category": "Kháng nấm",
+      "referencePages": [
+        53,
+        54
+      ]
+    },
+    {
+      "sku": "DERM-FUNG-CICLO1",
+      "name": "Ciclopirox olamin cream 1%",
+      "unit": "Tuýp",
+      "importPrice": 65000,
+      "sellingPrice": 95000,
+      "minThreshold": 8,
+      "category": "Kháng nấm",
+      "referencePages": [
+        49,
+        156
+      ]
+    },
+    {
+      "sku": "DERM-FUNG-TERB250",
+      "name": "Terbinafin tablet 250 mg",
+      "unit": "Viên",
+      "importPrice": 9000,
+      "sellingPrice": 13000,
+      "minThreshold": 50,
+      "category": "Kháng nấm toàn thân",
+      "referencePages": [
+        50,
+        59,
+        63
+      ]
+    },
+    {
+      "sku": "DERM-FUNG-ITRA100",
+      "name": "Itraconazol capsule 100 mg",
+      "unit": "Viên",
+      "importPrice": 7500,
+      "sellingPrice": 11000,
+      "minThreshold": 50,
+      "category": "Kháng nấm toàn thân",
+      "referencePages": [
+        45,
+        50,
+        54
+      ]
+    },
+    {
+      "sku": "DERM-FUNG-FLU150",
+      "name": "Fluconazol capsule 150 mg",
+      "unit": "Viên",
+      "importPrice": 10000,
+      "sellingPrice": 15000,
+      "minThreshold": 30,
+      "category": "Kháng nấm toàn thân",
+      "referencePages": [
+        45,
+        54,
+        59
+      ]
+    },
+    {
+      "sku": "DERM-FUNG-GRIS500",
+      "name": "Griseofulvin tablet 500 mg",
+      "unit": "Viên",
+      "importPrice": 3000,
+      "sellingPrice": 5000,
+      "minThreshold": 50,
+      "category": "Kháng nấm toàn thân",
+      "referencePages": [
+        50,
+        59,
+        63
+      ]
+    },
+    {
+      "sku": "DERM-FUNG-SEL25-SHA",
+      "name": "Selenium sulfid shampoo 2,5%",
+      "unit": "Chai",
+      "importPrice": 65000,
+      "sellingPrice": 95000,
+      "minThreshold": 8,
+      "category": "Lang ben và viêm da dầu",
+      "referencePages": [
+        45
+      ]
+    },
+    {
+      "sku": "DERM-INFL-HYDRO1",
+      "name": "Hydrocortison cream 1%",
+      "unit": "Tuýp",
+      "importPrice": 18000,
+      "sellingPrice": 30000,
+      "minThreshold": 15,
+      "category": "Viêm da",
+      "referencePages": [
+        118,
+        148
+      ]
+    },
+    {
+      "sku": "DERM-INFL-DESON005",
+      "name": "Desonid cream 0,05%",
+      "unit": "Tuýp",
+      "importPrice": 60000,
+      "sellingPrice": 90000,
+      "minThreshold": 10,
+      "category": "Viêm da",
+      "referencePages": [
+        118,
+        132,
+        148
+      ]
+    },
+    {
+      "sku": "DERM-INFL-BETA01",
+      "name": "Betamethason valerat cream 0,1%",
+      "unit": "Tuýp",
+      "importPrice": 28000,
+      "sellingPrice": 45000,
+      "minThreshold": 10,
+      "category": "Viêm da",
+      "referencePages": [
+        132,
+        148
+      ]
+    },
+    {
+      "sku": "DERM-INFL-CLOB005",
+      "name": "Clobetasol propionat cream 0,05%",
+      "unit": "Tuýp",
+      "importPrice": 35000,
+      "sellingPrice": 55000,
+      "minThreshold": 8,
+      "category": "Viêm da và vảy nến",
+      "referencePages": [
+        118,
+        126,
+        149
+      ]
+    },
+    {
+      "sku": "DERM-INFL-TRIAM01",
+      "name": "Triamcinolon cream 0,1%",
+      "unit": "Tuýp",
+      "importPrice": 25000,
+      "sellingPrice": 40000,
+      "minThreshold": 10,
+      "category": "Viêm da",
+      "referencePages": [
+        148,
+        297
+      ]
+    },
+    {
+      "sku": "DERM-INFL-TAC003",
+      "name": "Tacrolimus ointment 0,03%",
+      "unit": "Tuýp",
+      "importPrice": 190000,
+      "sellingPrice": 250000,
+      "minThreshold": 5,
+      "category": "Viêm da cơ địa",
+      "referencePages": [
+        102,
+        118
+      ]
+    },
+    {
+      "sku": "DERM-INFL-TAC01",
+      "name": "Tacrolimus ointment 0,1%",
+      "unit": "Tuýp",
+      "importPrice": 225000,
+      "sellingPrice": 300000,
+      "minThreshold": 5,
+      "category": "Viêm da cơ địa",
+      "referencePages": [
+        102,
+        118
+      ]
+    },
+    {
+      "sku": "DERM-BACT-MUPI2",
+      "name": "Mupirocin ointment 2%",
+      "unit": "Tuýp",
+      "importPrice": 50000,
+      "sellingPrice": 80000,
+      "minThreshold": 10,
+      "category": "Kháng khuẩn tại chỗ",
+      "referencePages": [
+        12,
+        15,
+        19
+      ]
+    },
+    {
+      "sku": "DERM-BACT-FUSI2",
+      "name": "Acid fusidic cream 2%",
+      "unit": "Tuýp",
+      "importPrice": 55000,
+      "sellingPrice": 85000,
+      "minThreshold": 10,
+      "category": "Kháng khuẩn tại chỗ",
+      "referencePages": [
+        16,
+        261
+      ]
+    },
+    {
+      "sku": "DERM-BACT-SSD1",
+      "name": "Silver sulfadiazin cream 1%",
+      "unit": "Tuýp",
+      "importPrice": 45000,
+      "sellingPrice": 70000,
+      "minThreshold": 8,
+      "category": "Kháng khuẩn tại chỗ",
+      "referencePages": [
+        19
+      ]
+    },
+    {
+      "sku": "DERM-BACT-ERY2-SOL",
+      "name": "Erythromycin solution 2%",
+      "unit": "Chai",
+      "importPrice": 35000,
+      "sellingPrice": 55000,
+      "minThreshold": 8,
+      "category": "Kháng khuẩn tại chỗ",
+      "referencePages": [
+        19,
+        27
+      ]
+    },
+    {
+      "sku": "DERM-VIR-ACYC5-CRM",
+      "name": "Acyclovir cream 5%",
+      "unit": "Tuýp",
+      "importPrice": 42000,
+      "sellingPrice": 65000,
+      "minThreshold": 8,
+      "category": "Kháng virus",
+      "referencePages": [
+        71,
+        204
+      ]
+    },
+    {
+      "sku": "DERM-VIR-ACYC400",
+      "name": "Acyclovir tablet 400 mg",
+      "unit": "Viên",
+      "importPrice": 3000,
+      "sellingPrice": 5000,
+      "minThreshold": 50,
+      "category": "Kháng virus toàn thân",
+      "referencePages": [
+        71,
+        133,
+        204
+      ]
+    },
+    {
+      "sku": "DERM-VIR-VALA500",
+      "name": "Valacyclovir tablet 500 mg",
+      "unit": "Viên",
+      "importPrice": 12000,
+      "sellingPrice": 18000,
+      "minThreshold": 30,
+      "category": "Kháng virus toàn thân",
+      "referencePages": [
+        71,
+        205
+      ]
+    },
+    {
+      "sku": "DERM-PARA-PERM5",
+      "name": "Permethrin cream 5%",
+      "unit": "Tuýp",
+      "importPrice": 65000,
+      "sellingPrice": 100000,
+      "minThreshold": 10,
+      "category": "Điều trị ghẻ",
+      "referencePages": [
+        42,
+        149
+      ]
+    },
+    {
+      "sku": "DERM-PARA-CROT10",
+      "name": "Crotamiton cream 10%",
+      "unit": "Tuýp",
+      "importPrice": 45000,
+      "sellingPrice": 70000,
+      "minThreshold": 8,
+      "category": "Điều trị ghẻ và ngứa",
+      "referencePages": [
+        149
+      ]
+    },
+    {
+      "sku": "DERM-PARA-IVER3",
+      "name": "Ivermectin tablet 3 mg",
+      "unit": "Viên",
+      "importPrice": 5000,
+      "sellingPrice": 8000,
+      "minThreshold": 30,
+      "category": "Điều trị ghẻ toàn thân",
+      "referencePages": [
+        43
+      ]
+    },
+    {
+      "sku": "DERM-PSO-CALC005",
+      "name": "Calcipotriol ointment 0,005%",
+      "unit": "Tuýp",
+      "importPrice": 180000,
+      "sellingPrice": 250000,
+      "minThreshold": 5,
+      "category": "Vảy nến",
+      "referencePages": [
+        165,
+        244
+      ]
+    },
+    {
+      "sku": "DERM-KERA-SALI5",
+      "name": "Acid salicylic ointment 5%",
+      "unit": "Tuýp",
+      "importPrice": 28000,
+      "sellingPrice": 45000,
+      "minThreshold": 10,
+      "category": "Bạt sừng",
+      "referencePages": [
+        118,
+        165
+      ]
+    },
+    {
+      "sku": "DERM-KERA-SALI10",
+      "name": "Acid salicylic ointment 10%",
+      "unit": "Tuýp",
+      "importPrice": 32000,
+      "sellingPrice": 50000,
+      "minThreshold": 10,
+      "category": "Bạt sừng",
+      "referencePages": [
+        118,
+        244
+      ]
+    },
+    {
+      "sku": "DERM-EMOL-UREA10",
+      "name": "Urea cream 10%",
+      "unit": "Tuýp",
+      "importPrice": 50000,
+      "sellingPrice": 80000,
+      "minThreshold": 10,
+      "category": "Dưỡng ẩm và dày sừng",
+      "referencePages": [
+        118,
+        271
+      ]
+    },
+    {
+      "sku": "DERM-PSO-MTX25",
+      "name": "Methotrexat tablet 2,5 mg",
+      "unit": "Viên",
+      "importPrice": 2500,
+      "sellingPrice": 4000,
+      "minThreshold": 30,
+      "category": "Ức chế miễn dịch da liễu",
+      "referencePages": [
+        91,
+        166
+      ]
+    },
+    {
+      "sku": "DERM-PSO-CYCLO25",
+      "name": "Cyclosporin capsule 25 mg",
+      "unit": "Viên",
+      "importPrice": 14000,
+      "sellingPrice": 20000,
+      "minThreshold": 30,
+      "category": "Ức chế miễn dịch da liễu",
+      "referencePages": [
+        91,
+        166
+      ]
+    },
+    {
+      "sku": "DERM-ALL-CET10",
+      "name": "Cetirizin tablet 10 mg",
+      "unit": "Viên",
+      "importPrice": 600,
+      "sellingPrice": 1000,
+      "minThreshold": 100,
+      "category": "Kháng histamin",
+      "referencePages": [
+        149,
+        153
+      ]
+    },
+    {
+      "sku": "DERM-ALL-LORA10",
+      "name": "Loratadin tablet 10 mg",
+      "unit": "Viên",
+      "importPrice": 900,
+      "sellingPrice": 1500,
+      "minThreshold": 100,
+      "category": "Kháng histamin",
+      "referencePages": [
+        132,
+        149
+      ]
+    },
+    {
+      "sku": "DERM-ALL-FEXO180",
+      "name": "Fexofenadin tablet 180 mg",
+      "unit": "Viên",
+      "importPrice": 2500,
+      "sellingPrice": 4000,
+      "minThreshold": 100,
+      "category": "Kháng histamin",
+      "referencePages": [
+        119,
+        149
+      ]
+    },
+    {
+      "sku": "DERM-ALL-CPM4",
+      "name": "Clorpheniramin tablet 4 mg",
+      "unit": "Viên",
+      "importPrice": 200,
+      "sellingPrice": 500,
+      "minThreshold": 100,
+      "category": "Kháng histamin",
+      "referencePages": [
+        149
+      ]
+    },
+    {
+      "sku": "DERM-ALL-HYDROX25",
+      "name": "Hydroxyzin tablet 25 mg",
+      "unit": "Viên",
+      "importPrice": 1200,
+      "sellingPrice": 2000,
+      "minThreshold": 50,
+      "category": "Kháng histamin",
+      "referencePages": [
+        149
+      ]
+    },
+    {
+      "sku": "DERM-PIG-HQ2",
+      "name": "Hydroquinon cream 2%",
+      "unit": "Tuýp",
+      "importPrice": 80000,
+      "sellingPrice": 120000,
+      "minThreshold": 5,
+      "category": "Tăng sắc tố",
+      "referencePages": [
+        289,
+        292
+      ]
+    },
+    {
+      "sku": "DERM-PIG-HQ4",
+      "name": "Hydroquinon cream 4%",
+      "unit": "Tuýp",
+      "importPrice": 110000,
+      "sellingPrice": 160000,
+      "minThreshold": 5,
+      "category": "Tăng sắc tố",
+      "referencePages": [
+        292
+      ]
+    },
+    {
+      "sku": "DERM-WART-IMIQ5",
+      "name": "Imiquimod cream 5%",
+      "unit": "Gói",
+      "importPrice": 120000,
+      "sellingPrice": 180000,
+      "minThreshold": 10,
+      "category": "Hạt cơm và sùi mào gà",
+      "referencePages": [
+        80,
+        219,
+        225
+      ]
+    },
+    {
+      "sku": "DERM-WART-SAL-LAC",
+      "name": "Acid salicylic 16,7% + acid lactic 16,7% solution",
+      "unit": "Chai",
+      "importPrice": 80000,
+      "sellingPrice": 120000,
+      "minThreshold": 8,
+      "category": "Hạt cơm",
+      "referencePages": [
+        75
+      ]
+    }
+  ]
+}
