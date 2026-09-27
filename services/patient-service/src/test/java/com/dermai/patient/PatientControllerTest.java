@@ -57,6 +57,19 @@ class PatientControllerTest {
    assertThat(error.getStatusCode()).isEqualTo(HttpStatus.FORBIDDEN));
  }
 
+ @Test void receptionistReceivesOnlyTheMinimumPatientDirectoryFields(){
+  var repository=mock(PatientRepository.class);var controller=new PatientController(repository,mock(AppointmentIdentityClient.class));
+  var patient=new Patient(UUID.randomUUID(),"Bệnh nhân riêng tư");patient.phone="0352790904";patient.medicalHistory="Sensitive history";patient.allergies="Sensitive allergy";
+  when(repository.findById(patient.id)).thenReturn(Optional.of(patient));
+
+  var result=(PatientController.ReceptionPatientView)controller.byId(patient.id,UUID.randomUUID(),"RECEPTIONIST");
+
+  assertThat(result.id()).isEqualTo(patient.id);
+  assertThat(result.fullName()).isEqualTo(patient.fullName);
+  assertThat(result.phone()).isEqualTo(patient.phone);
+  assertThat(result).isNotInstanceOf(Patient.class);
+ }
+
  @Test void adminCanUnlinkAnAccountWithoutDeletingTheMedicalProfile(){
   var repository=mock(PatientRepository.class);var controller=new PatientController(repository,mock(AppointmentIdentityClient.class));
   var patient=new Patient(UUID.randomUUID(),"Bệnh nhân giữ hồ sơ");

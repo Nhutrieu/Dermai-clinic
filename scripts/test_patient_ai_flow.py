@@ -39,26 +39,16 @@ def main() -> None:
         profile = client.get("/api/v1/patients/me")
         profile.raise_for_status()
         with image_path.open("rb") as image:
-            prediction = client.post(
-                "/ai/predict",
+            analyzed = client.post(
+                "/api/v1/patients/me/ai-assessments/analyze",
+                data={"sharedWithDoctor": "false", "consentAccepted": "true"},
                 files={"image": (image_path.name, image, "image/jpeg")},
             )
-        prediction.raise_for_status()
-        result = prediction.json()
+        analyzed.raise_for_status()
+        payload = analyzed.json()
+        result = payload["prediction"]
         try:
-            created = client.post(
-                "/api/v1/patients/me/ai-assessments",
-                json={
-                    "predictedLabel": result["disease"],
-                    "confidence": result["confidence"],
-                    "top3": result["top3"],
-                    "uncertain": result["uncertain"],
-                    "modelVersion": result["model_version"],
-                    "sharedWithDoctor": False,
-                },
-            )
-            created.raise_for_status()
-            created_id = created.json()["id"]
+            created_id = payload["assessment"]["id"]
 
             history = client.get("/api/v1/patients/me/ai-assessments")
             history.raise_for_status()
@@ -73,8 +63,7 @@ def main() -> None:
 
             print(json.dumps({
                 "profile": profile.status_code,
-                "predict": prediction.status_code,
-                "save": created.status_code,
+                "analyzeAndSave": analyzed.status_code,
                 "history": history.status_code,
                 "share": sharing.status_code,
                 "disease": result["disease"],

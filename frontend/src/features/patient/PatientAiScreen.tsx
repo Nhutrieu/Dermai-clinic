@@ -3,7 +3,7 @@ export { default } from "../../components/v2/skin-analysis/SkinAnalysisV2";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { BrainCircuit, CalendarDays, Check, ImagePlus, Trash2 } from "lucide-react";
 import { ApiError, request } from "../../core/api";
-import type { AiAssessment, AiPrediction, Patient } from "../../core/types";
+import type { AiAnalysisResponse, AiAssessment, AiPrediction, Patient } from "../../core/types";
 import { EmptyState, ErrorState, StateSkeleton } from "../../components/Ui";
 import PatientAiIntake, { type AiAnalysisStage } from "./PatientAiIntake";
 import PatientAiResult from "./PatientAiResult";
@@ -146,6 +146,8 @@ function LegacyPatientAiScreen({ token, patient, openBooking }: { token: string;
 
   async function analyze() {
     if (!file || fileError || analysisStage !== "idle") return;
+    const consentAccepted = window.confirm("Bạn đồng ý gửi ảnh da để DermAI phân tích và lưu ảnh đã mã hóa tối đa 180 ngày? Bạn có thể xóa ảnh khỏi tài khoản bất cứ lúc nào.");
+    if (!consentAccepted) return;
     let failedStage: AiAnalysisStage = "analyzing";
     setAnalysisStage("analyzing");
     setAnalysisError("");
@@ -156,28 +158,16 @@ function LegacyPatientAiScreen({ token, patient, openBooking }: { token: string;
     try {
       const form = new FormData();
       form.append("image", file);
-      const result = await request<AiPrediction>("/ai/predict", token, { method: "POST", body: form });
-      failedStage = "saving";
-      setAnalysisStage("saving");
-      const saved = await request<AiAssessment>("/patients/me/ai-assessments", token, {
+      form.append("sharedWithDoctor", String(share));
+      form.append("consentAccepted", "true");
+      const analyzed = await request<AiAnalysisResponse>("/patients/me/ai-assessments/analyze", token, {
         method: "POST",
-        body: JSON.stringify({
-          predictedLabel: result.disease,
-          confidence: result.confidence,
-          top3: result.top3,
-          uncertain: result.uncertain,
-          modelVersion: result.model_version,
-          sharedWithDoctor: share,
-        }),
+        body: form,
       });
-      // AI service chỉ phân tích; ảnh gốc được gửi tiếp về patient-service để quản lý quyền chia sẻ.
-      const imageForm = new FormData();
-      imageForm.append("image", file);
-      await request(`/patients/me/ai-assessments/${saved.id}/image`, token, { method: "PUT", body: imageForm });
-      saved.imageAvailable = true;
-      setPrediction(result);
-      setCurrent(saved);
-      setHistory(items => [saved, ...items]);
+      failedStage = "saving";
+      setPrediction(analyzed.prediction);
+      setCurrent(analyzed.assessment);
+      setHistory(items => [analyzed.assessment, ...items]);
       setMessage("Đã phân tích và lưu ảnh cùng kết quả vào tài khoản của bạn.");
     } catch (value) {
       if (value instanceof ApiError && [413, 415, 422].includes(value.status)) {

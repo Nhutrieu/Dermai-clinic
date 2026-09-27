@@ -68,3 +68,4 @@ export type AiCitation = { source: string; page: number };
 export type AiDiseaseGuidance = { title: string; answer: string; citations: AiCitation[]; has_evidence: boolean };
 export type AiPrediction = { disease: string; confidence: number; top3: AiRankedPrediction[]; gradcam_image: string; model_version: string; uncertain: boolean; disclaimer: string; guidance?: AiDiseaseGuidance };
 export type AiAssessment = { id: string; patientId: string; predictedLabel: string; confidence: number; top3: AiRankedPrediction[]; uncertain: boolean; modelVersion: string; sharedWithDoctor: boolean; appointmentId?: string | null; imageAvailable: boolean; createdAt: string };
+export type AiAnalysisResponse = { assessment: AiAssessment; prediction: AiPrediction };

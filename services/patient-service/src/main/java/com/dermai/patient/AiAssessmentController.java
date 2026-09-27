@@ -6,6 +6,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.*;
 import org.springframework.http.*;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
@@ -23,26 +24,31 @@ public class AiAssessmentController {
   private final PatientRepository patients;
   private final AppointmentIdentityClient appointments;
   private final ObjectMapper mapper;
+  private final AiInferenceClient inference;
+  private final AiPrivacyService privacy;
+  private final long imageRetentionDays;
 
   public AiAssessmentController(AiAssessmentRepository assessments, PatientRepository patients,
-      AppointmentIdentityClient appointments, ObjectMapper mapper) {
+      AppointmentIdentityClient appointments, ObjectMapper mapper, AiInferenceClient inference,
+      AiPrivacyService privacy,
+      @Value("${privacy.ai-image-retention-days:180}") long imageRetentionDays) {
     this.assessments = assessments;
     this.patients = patients;
     this.appointments = appointments;
     this.mapper = mapper;
+    this.inference = inference;
+    this.privacy = privacy;
+    if (imageRetentionDays < 1 || imageRetentionDays > 3650) {
+      throw new IllegalArgumentException("AI_IMAGE_RETENTION_DAYS must be between 1 and 3650.");
+    }
+    this.imageRetentionDays = imageRetentionDays;
   }
 
   public record RankedPrediction(
       @NotBlank @Size(max = 80) String label,
       @DecimalMin("0.0") @DecimalMax("1.0") double probability) {}
-  public record CreateBody(
-      @NotBlank @Size(max = 80) String predictedLabel,
-      @DecimalMin("0.0") @DecimalMax("1.0") double confidence,
-      @NotEmpty @Size(max = 3) List<@Valid RankedPrediction> top3,
-      boolean uncertain,
-      @NotBlank @Size(max = 120) String modelVersion,
-      boolean sharedWithDoctor) {}
   public record SharingBody(boolean sharedWithDoctor, UUID appointmentId) {}
+  public record AnalyzeResponse(View assessment, AiInferenceClient.Prediction prediction) {}
   public record View(
       UUID id,
       UUID patientId,
@@ -61,54 +67,47 @@ public class AiAssessmentController {
       @RequestHeader("X-User-Id") UUID identity,
       @RequestHeader("X-User-Role") String role) {
     requirePatient(role);
-    return assessments.findByPatientIdentityIdOrderByCreatedAtDesc(identity).stream().map(this::view).toList();
+    List<View> result = assessments.findByPatientIdentityIdAndDeletedAtIsNullOrderByCreatedAtDesc(identity)
+        .stream().map(this::view).toList();
+    privacy.audit(null, identity, identity, role, "LIST_OWN");
+    return result;
   }
 
-  @PostMapping("/me/ai-assessments")
+  @PostMapping(value = "/me/ai-assessments/analyze", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
   @Transactional
-  ResponseEntity<View> create(
+  ResponseEntity<AnalyzeResponse> analyze(
       @RequestHeader("X-User-Id") UUID identity,
       @RequestHeader("X-User-Role") String role,
-      @Valid @RequestBody CreateBody body) {
-    requirePatient(role);
-    validateLabels(body);
-    Patient patient = patients.findByIdentityId(identity)
-        .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Chưa có hồ sơ bệnh nhân."));
-    AiAssessment assessment = new AiAssessment(patient.id, identity);
-    assessment.predictedLabel = body.predictedLabel();
-    assessment.confidence = body.confidence();
-    assessment.top3Json = writeTop3(body.top3());
-    assessment.uncertain = body.uncertain();
-    assessment.modelVersion = body.modelVersion();
-    assessment.sharedWithDoctor = body.sharedWithDoctor();
-    return ResponseEntity.status(HttpStatus.CREATED).body(view(assessments.save(assessment)));
-  }
-
-  @PutMapping(value = "/me/ai-assessments/{id}/image", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-  @ResponseStatus(HttpStatus.NO_CONTENT)
-  @Transactional
-  void uploadImage(
-      @PathVariable UUID id,
-      @RequestHeader("X-User-Id") UUID identity,
-      @RequestHeader("X-User-Role") String role,
+      @RequestParam(defaultValue = "false") boolean sharedWithDoctor,
+      @RequestParam(defaultValue = "false") boolean consentAccepted,
       @RequestPart("image") MultipartFile image) {
     requirePatient(role);
-    // Không tin dữ liệu kiểm tra từ trình duyệt: backend kiểm tra lại dung lượng và MIME trước khi lưu.
-    if (image.isEmpty() || image.getSize() > 10L * 1024 * 1024) {
-      throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Ảnh phải có dung lượng từ 1 byte đến 10 MB.");
+    if (!consentAccepted) {
+      throw new ResponseStatusException(HttpStatus.UNPROCESSABLE_ENTITY,
+          "Explicit consent is required before an image can be analyzed.");
     }
-    String contentType = Optional.ofNullable(image.getContentType()).orElse("");
-    if (!Set.of(MediaType.IMAGE_JPEG_VALUE, MediaType.IMAGE_PNG_VALUE, "image/webp").contains(contentType)) {
-      throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Chỉ chấp nhận ảnh JPEG, PNG hoặc WebP.");
-    }
-    AiAssessment assessment = own(id, identity);
-    try {
-      assessment.imageBytes = image.getBytes();
-      assessment.imageContentType = contentType;
-      assessments.save(assessment);
-    } catch (IOException error) {
-      throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Không thể đọc ảnh tải lên.", error);
-    }
+    ValidatedImage validated = validateImage(image);
+    AiInferenceClient.Prediction prediction = inference.predict(
+        validated.bytes(), validated.contentType(), image.getOriginalFilename());
+    List<RankedPrediction> top3 = validatePrediction(prediction);
+    Patient patient = patients.findByIdentityId(identity)
+        .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Patient profile not found."));
+    AiConsentEvent consent = privacy.grant(identity);
+
+    AiAssessment assessment = new AiAssessment(patient.id, identity);
+    assessment.predictedLabel = prediction.disease();
+    assessment.confidence = prediction.confidence();
+    assessment.top3Json = writeTop3(top3);
+    assessment.uncertain = prediction.uncertain();
+    assessment.modelVersion = prediction.modelVersion();
+    assessment.sharedWithDoctor = sharedWithDoctor;
+    assessment.imageBytes = validated.bytes();
+    assessment.imageContentType = validated.contentType();
+    assessment.consentEventId = consent.id;
+    assessment.imageRetentionUntil = Instant.now().plusSeconds(imageRetentionDays * 24L * 60L * 60L);
+    AiAssessment saved = assessments.save(assessment);
+    privacy.audit(saved.id, saved.patientIdentityId, identity, role, "CREATED_FROM_SERVER_INFERENCE");
+    return ResponseEntity.status(HttpStatus.CREATED).body(new AnalyzeResponse(view(saved), prediction));
   }
 
   @GetMapping("/me/ai-assessments/{id}/image")
@@ -117,7 +116,10 @@ public class AiAssessmentController {
       @RequestHeader("X-User-Id") UUID identity,
       @RequestHeader("X-User-Role") String role) {
     requirePatient(role);
-    return image(own(id, identity));
+    AiAssessment assessment = own(id, identity);
+    ResponseEntity<byte[]> response = image(assessment);
+    privacy.audit(assessment.id, assessment.patientIdentityId, identity, role, "VIEWED_IMAGE");
+    return response;
   }
 
   @PatchMapping("/me/ai-assessments/{id}/sharing")
@@ -138,7 +140,10 @@ public class AiAssessmentController {
       assessment.appointmentId = body.appointmentId();
     }
     assessment.sharedWithDoctor = body.sharedWithDoctor();
-    return view(assessments.save(assessment));
+    AiAssessment saved = assessments.save(assessment);
+    privacy.audit(saved.id, saved.patientIdentityId, identity, role,
+        saved.sharedWithDoctor ? "SHARING_ENABLED" : "SHARING_DISABLED");
+    return view(saved);
   }
 
   @GetMapping("/appointments/{appointmentId}/shared-ai-assessment")
@@ -149,9 +154,12 @@ public class AiAssessmentController {
     if (!"DOCTOR".equals(role)) throw new ResponseStatusException(HttpStatus.FORBIDDEN);
     // Appointment-service xác nhận bác sĩ đang đăng nhập chính là bác sĩ phụ trách lịch này.
     var appointment = appointments.requireAccess(appointmentId, identity, role);
-    return assessments.findFirstByAppointmentIdAndSharedWithDoctorTrueOrderByCreatedAtDesc(appointmentId)
+    return assessments.findFirstByAppointmentIdAndSharedWithDoctorTrueAndDeletedAtIsNullOrderByCreatedAtDesc(appointmentId)
         .filter(value -> value.patientId.equals(appointment.patientId()))
-        .map(value -> ResponseEntity.ok(view(value)))
+        .map(value -> {
+          privacy.audit(value.id, value.patientIdentityId, identity, role, "DOCTOR_VIEWED_RESULT");
+          return ResponseEntity.ok(view(value));
+        })
         .orElseGet(() -> ResponseEntity.noContent().build());
   }
 
@@ -163,10 +171,12 @@ public class AiAssessmentController {
     if (!"DOCTOR".equals(role)) throw new ResponseStatusException(HttpStatus.FORBIDDEN);
     var appointment = appointments.requireAccess(appointmentId, identity, role);
     AiAssessment assessment = assessments
-        .findFirstByAppointmentIdAndSharedWithDoctorTrueOrderByCreatedAtDesc(appointmentId)
+        .findFirstByAppointmentIdAndSharedWithDoctorTrueAndDeletedAtIsNullOrderByCreatedAtDesc(appointmentId)
         .filter(value -> value.patientId.equals(appointment.patientId()))
         .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
-    return image(assessment);
+    ResponseEntity<byte[]> response = image(assessment);
+    privacy.audit(assessment.id, assessment.patientIdentityId, identity, role, "DOCTOR_VIEWED_IMAGE");
+    return response;
   }
 
   @DeleteMapping("/me/ai-assessments/{id}")
@@ -177,19 +187,72 @@ public class AiAssessmentController {
       @RequestHeader("X-User-Id") UUID identity,
       @RequestHeader("X-User-Role") String role) {
     requirePatient(role);
-    assessments.delete(own(id, identity));
+    AiAssessment assessment = own(id, identity);
+    assessment.deletedAt = Instant.now();
+    assessment.sharedWithDoctor = false;
+    assessment.appointmentId = null;
+    assessment.imageBytes = null;
+    assessment.imageContentType = null;
+    assessments.save(assessment);
+    privacy.audit(assessment.id, assessment.patientIdentityId, identity, role, "SOFT_DELETED_AND_IMAGE_ERASED");
   }
 
   private AiAssessment own(UUID id, UUID identity) {
-    return assessments.findByIdAndPatientIdentityId(id, identity)
+    return assessments.findByIdAndPatientIdentityIdAndDeletedAtIsNull(id, identity)
         .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
   }
 
-  private void validateLabels(CreateBody body) {
-    if (!LABELS.contains(body.predictedLabel()) || body.top3().stream().anyMatch(item -> !LABELS.contains(item.label()))) {
-      throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Nhãn AI không thuộc class map được hỗ trợ.");
+  private List<RankedPrediction> validatePrediction(AiInferenceClient.Prediction prediction) {
+    if (prediction.disease() == null || !LABELS.contains(prediction.disease())
+        || prediction.modelVersion() == null || prediction.modelVersion().isBlank()
+        || prediction.modelVersion().length() > 120
+        || prediction.confidence() < 0 || prediction.confidence() > 1
+        || prediction.top3() == null || prediction.top3().isEmpty() || prediction.top3().size() > 3) {
+      throw new ResponseStatusException(HttpStatus.BAD_GATEWAY, "AI service returned an invalid result.");
+    }
+    List<RankedPrediction> top3 = prediction.top3().stream()
+        .map(item -> new RankedPrediction(item.label(), item.probability()))
+        .toList();
+    if (top3.stream().anyMatch(item -> item.label() == null || !LABELS.contains(item.label())
+        || item.probability() < 0 || item.probability() > 1)
+        || !prediction.disease().equals(top3.get(0).label())) {
+      throw new ResponseStatusException(HttpStatus.BAD_GATEWAY, "AI service returned an invalid class map.");
+    }
+    return top3;
+  }
+
+  private ValidatedImage validateImage(MultipartFile image) {
+    if (image.isEmpty() || image.getSize() > 10L * 1024 * 1024) {
+      throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Image size must be between 1 byte and 10 MB.");
+    }
+    try {
+      byte[] bytes = image.getBytes();
+      String contentType = detectedImageType(bytes);
+      if (contentType == null) {
+        throw new ResponseStatusException(HttpStatus.UNSUPPORTED_MEDIA_TYPE, "Only valid JPEG, PNG, or WebP images are accepted.");
+      }
+      return new ValidatedImage(bytes, contentType);
+    } catch (IOException error) {
+      throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "The uploaded image could not be read.", error);
     }
   }
+
+  private String detectedImageType(byte[] bytes) {
+    if (bytes.length >= 3 && (bytes[0] & 255) == 0xff && (bytes[1] & 255) == 0xd8 && (bytes[2] & 255) == 0xff) {
+      return MediaType.IMAGE_JPEG_VALUE;
+    }
+    if (bytes.length >= 8 && (bytes[0] & 255) == 0x89 && bytes[1] == 0x50 && bytes[2] == 0x4e
+        && bytes[3] == 0x47 && bytes[4] == 0x0d && bytes[5] == 0x0a && bytes[6] == 0x1a && bytes[7] == 0x0a) {
+      return MediaType.IMAGE_PNG_VALUE;
+    }
+    if (bytes.length >= 12 && bytes[0] == 'R' && bytes[1] == 'I' && bytes[2] == 'F' && bytes[3] == 'F'
+        && bytes[8] == 'W' && bytes[9] == 'E' && bytes[10] == 'B' && bytes[11] == 'P') {
+      return "image/webp";
+    }
+    return null;
+  }
+
+  private record ValidatedImage(byte[] bytes, String contentType) {}
 
   private String writeTop3(List<RankedPrediction> top3) {
     try {
@@ -210,12 +273,12 @@ public class AiAssessmentController {
   private View view(AiAssessment value) {
     return new View(value.id, value.patientId, value.predictedLabel, value.confidence,
         readTop3(value.top3Json), value.uncertain, value.modelVersion,
-        value.sharedWithDoctor, value.appointmentId, value.imageBytes != null && value.imageBytes.length > 0,
+        value.sharedWithDoctor, value.appointmentId, imageAvailable(value),
         value.createdAt);
   }
 
   private ResponseEntity<byte[]> image(AiAssessment assessment) {
-    if (assessment.imageBytes == null || assessment.imageBytes.length == 0) {
+    if (!imageAvailable(assessment)) {
       throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Kết quả này không có ảnh đính kèm.");
     }
     MediaType contentType;
@@ -229,6 +292,11 @@ public class AiAssessmentController {
         // Ảnh y tế không được cache lại trong trình duyệt hoặc proxy dùng chung.
         .cacheControl(CacheControl.noStore())
         .body(assessment.imageBytes);
+  }
+
+  private boolean imageAvailable(AiAssessment assessment) {
+    return assessment.imageBytes != null && assessment.imageBytes.length > 0
+        && (assessment.imageRetentionUntil == null || assessment.imageRetentionUntil.isAfter(Instant.now()));
   }
 
   private void requirePatient(String role) {

@@ -28,6 +28,7 @@ type AiPrediction = {
   gradcam_image: string;
   model_version: string;
 };
+type AiAnalysisResponse = { assessment: AiAssessment; prediction: AiPrediction };
 
 type SupportConversation = {
   patientIdentityId: string;
@@ -42,8 +43,8 @@ const configuredImagePath = process.env.E2E_AI_IMAGE_PATH?.trim();
 const imagePath = resolve(configuredImagePath || "e2e/fixtures/synthetic-eczema-e2e.png");
 const imageProblem = !existsSync(imagePath)
     ? `Không tìm thấy ảnh E2E tại ${imagePath}.`
-    : statSync(imagePath).size > 3 * 1024 * 1024
-      ? "Ảnh E2E vượt 3 MB (giới hạn upload hiện tại của Nginx)."
+    : statSync(imagePath).size > 10 * 1024 * 1024
+      ? "Ảnh E2E vượt giới hạn upload 10 MB."
       : "";
 
 function isApiResponse(response: Response, method: string, suffix: string) {
@@ -83,39 +84,34 @@ test.describe("AI assessment persistence and sharing consent", () => {
       await page.locator('input[type="file"]').setInputFiles(imagePath!);
       await page.getByRole("checkbox", { name: /Cho phép chia sẻ với bác sĩ khi đặt lịch/ }).check();
 
-      const predictPromise = page.waitForResponse(response => isApiResponse(response, "POST", "/ai/predict"), { timeout: 120_000 });
-      const savePromise = page.waitForResponse(response => isApiResponse(response, "POST", "/api/v1/patients/me/ai-assessments"), { timeout: 120_000 });
-      const imagePromise = page.waitForResponse(response => (
-        response.request().method() === "PUT"
-        && /\/api\/v1\/patients\/me\/ai-assessments\/[^/]+\/image$/.test(new URL(response.url()).pathname)
-      ), { timeout: 120_000 });
+      const analyzePromise = page.waitForResponse(
+        response => isApiResponse(response, "POST", "/api/v1/patients/me/ai-assessments/analyze"),
+        { timeout: 120_000 },
+      );
+      page.once("dialog", dialog => void dialog.accept());
       await page.getByRole("button", { name: /KHỞI TẠO PHÂN TÍCH AI/i }).click();
 
-      const predictResponse = await predictPromise;
-      const prediction = await responseBody<AiPrediction>(predictResponse);
-      expect(predictResponse.status(), JSON.stringify(prediction)).toBe(200);
-      expect(prediction).not.toBeNull();
-      expect(prediction!.disease).not.toHaveLength(0);
-      expect(prediction!.confidence).toBeGreaterThanOrEqual(0);
-      expect(prediction!.confidence).toBeLessThanOrEqual(1);
-      expect(prediction!.top3).toHaveLength(3);
-      prediction!.top3.forEach(item => {
+      const analyzeResponse = await analyzePromise;
+      const analyzed = await responseBody<AiAnalysisResponse>(analyzeResponse);
+      expect(analyzeResponse.status(), JSON.stringify(analyzed)).toBe(201);
+      expect(analyzed).not.toBeNull();
+      const prediction = analyzed!.prediction;
+      const saved = analyzed!.assessment;
+      expect(prediction.disease).not.toHaveLength(0);
+      expect(prediction.confidence).toBeGreaterThanOrEqual(0);
+      expect(prediction.confidence).toBeLessThanOrEqual(1);
+      expect(prediction.top3).toHaveLength(3);
+      prediction.top3.forEach(item => {
         expect(item.label).not.toHaveLength(0);
         expect(item.probability).toBeGreaterThanOrEqual(0);
         expect(item.probability).toBeLessThanOrEqual(1);
       });
-      expect(prediction!.gradcam_image).toMatch(/^data:image\/png;base64,/);
-      const saveResponse = await savePromise;
-      const saved = await responseBody<AiAssessment>(saveResponse);
-      expect(saveResponse.status(), JSON.stringify(saved)).toBe(201);
-      expect(saved).not.toBeNull();
-      assessmentId = saved!.id;
-      expect(saved!.sharedWithDoctor).toBe(true);
-      const imageResponse = await imagePromise;
-      expect(imageResponse.status()).toBe(204);
+      expect(prediction.gradcam_image).toMatch(/^data:image\/png;base64,/);
+      assessmentId = saved.id;
+      expect(saved.sharedWithDoctor).toBe(true);
 
       await expect(page.getByRole("heading", { name: "Đặt lịch với bác sĩ da liễu" })).toBeVisible({ timeout: 15_000 });
-      await expect(page.locator(".skin-v2-score-ring strong")).toHaveText(String(Math.round(prediction!.confidence * 100)));
+      await expect(page.locator(".skin-v2-score-ring strong")).toHaveText(String(Math.round(prediction.confidence * 100)));
       await expect(page.locator(".skin-v2-prediction-list > li")).toHaveCount(3);
       await expect(page.getByAltText("Ảnh Grad-CAM từ mô hình")).toBeVisible();
       const after = await browserApi<AiAssessment[]>(page, "/api/v1/patients/me/ai-assessments");
@@ -136,8 +132,8 @@ test.describe("AI assessment persistence and sharing consent", () => {
           assessmentId,
           predictedLabel: persisted!.predictedLabel,
           modelVersion: persisted!.modelVersion,
-          top3Count: prediction!.top3.length,
-          gradcamImageReturned: prediction!.gradcam_image.startsWith("data:image/png;base64,"),
+          top3Count: prediction.top3.length,
+          gradcamImageReturned: prediction.gradcam_image.startsWith("data:image/png;base64,"),
           sharedWithDoctor: persisted!.sharedWithDoctor,
           imageAvailable: persisted!.imageAvailable,
           bookingFlowOpenedWithAssessment: true,

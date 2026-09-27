@@ -18,7 +18,11 @@ public class AiAssessment {
   @Column(name = "shared_with_doctor", nullable = false) public boolean sharedWithDoctor;
   @Column(name = "appointment_id") public UUID appointmentId;
   @Column(name = "image_content_type", length = 80) public String imageContentType;
+  @Convert(converter = ImageEncryptionConverter.class)
   @Column(name = "image_bytes", columnDefinition = "bytea") public byte[] imageBytes;
+  @Column(name = "consent_event_id") public UUID consentEventId;
+  @Column(name = "image_retention_until") public Instant imageRetentionUntil;
+  @Column(name = "deleted_at") public Instant deletedAt;
   @Column(name = "created_at", nullable = false) public Instant createdAt = Instant.now();
 
   protected AiAssessment() {}

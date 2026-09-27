@@ -95,3 +95,55 @@
   font-size: 14px;
   line-height: 1.6;
 }
+
+.skin-v2-overview-mark {
+  display: grid;
+  place-items: center;
+  width: 86px;
+  height: 86px;
+  margin: 24px 0 20px;
+  border: 1px solid #0f766e;
+  border-radius: 50%;
+  background: #2dd4bf26;
+  color: #0f766e;
+  box-shadow: 0 0 0 10px #2dd4bf12, 0 0 28px #0f766e20;
+}
+
+.skin-v2-overview-mark svg {
+  width: 38px;
+  height: 38px;
+}
+
+.skin-v2-overall.is-uncertain .skin-v2-overview-mark {
+  border-color: #d8c376;
+  background: #f1df9526;
+  color: #8a641f;
+  box-shadow: 0 0 0 10px #d8c37612, 0 0 28px #d8c37622;
+}
+
+.skin-v2-overall > small {
+  max-width: 270px;
+  margin-top: 10px;
+  line-height: 1.65;
+}
+
+.skin-v2-overall > small b {
+  color: inherit;
+  font-weight: 800;
+}
+
+.skin-v2-overview-pill {
+  margin-top: 18px;
+  padding: 7px 10px;
+  border: 1px solid #0f766e66;
+  background: #2dd4bf1a;
+  color: #0f766e;
+  font: 700 9px ui-monospace, monospace;
+  letter-spacing: .04em;
+}
+
+.skin-v2-overall.is-uncertain .skin-v2-overview-pill {
+  border-color: #d8c376;
+  background: #f1df951a;
+  color: #7b5714;
+}

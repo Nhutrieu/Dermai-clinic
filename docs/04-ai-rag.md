@@ -8,7 +8,7 @@ dùng confidence để khẳng định người dùng mắc hoặc không mắc 
 
 Hai luồng AI cần được phân biệt rõ:
 
-1. **Computer Vision + RAG:** `/ai/predict` dùng checkpoint PyTorch để phân loại
+1. **Computer Vision + RAG:** Patient Service gọi nội bộ `/predict` để phân loại
    ảnh, trả Top-3/Grad-CAM rồi truy hồi nội dung đúng chương bệnh từ tài liệu cục bộ.
 2. **Chat kiến thức:** `/ai/public-chat` dùng Gemini; `/ai/chat` dùng RAG
    extractive local. Gemini public chat hiện không phải RAG và không có citation.
@@ -135,7 +135,9 @@ tập OOD lâm sàng có nhãn và xác minh chuyên môn trước khi phát hà
 
 ## 7. Inference và Grad-CAM
 
-`/ai/predict` chỉ cho role `PATIENT` và nhận multipart field `image`:
+`/predict` chỉ mở trên mạng nội bộ cho Patient Service. Client dùng
+`/api/v1/patients/me/ai-assessments/analyze` với multipart `image`,
+`consentAccepted=true` và tùy chọn `sharedWithDoctor`:
 
 1. Chỉ chấp nhận JPEG, PNG, WebP tối đa 10 MB.
 2. Xác minh file thật sự giải mã được.
@@ -143,7 +145,7 @@ tập OOD lâm sàng có nhãn và xác minh chuyên môn trước khi phát hà
 4. Softmax, lấy tối đa ba lớp có score cao nhất.
 5. Nếu Top-1 thấp hơn 0,55, đặt `uncertain=true`.
 6. Tạo Grad-CAM tại convolution layer cuối và trả PNG base64 data URL.
-7. Frontend lưu metadata và ảnh gốc qua Patient Service; Grad-CAM chỉ hiển thị
+7. Patient Service tự lưu metadata và ảnh gốc đã mã hóa; Grad-CAM chỉ hiển thị
    trong response hiện tại và không được lưu lâu dài.
 
 Grad-CAM chỉ cho biết vùng ảnh ảnh hưởng đến output. Nó không chứng minh mô hình
