@@ -27,7 +27,12 @@ public class JwtGatewayFilter implements GlobalFilter, Ordered {
     this.secret = secret.getBytes(StandardCharsets.UTF_8);
   }
   @Override public Mono<Void> filter(ServerWebExchange exchange, GatewayFilterChain chain) {
-    String path=exchange.getRequest().getURI().getPath();
+    var sanitizedRequest=exchange.getRequest().mutate().headers(headers->{
+      headers.remove("X-User-Id");
+      headers.remove("X-User-Role");
+    }).build();
+    var sanitizedExchange=exchange.mutate().request(sanitizedRequest).build();
+    String path=sanitizedRequest.getURI().getPath();
     boolean publicDoctorDirectory = exchange.getRequest().getMethod() == HttpMethod.GET && path.equals("/api/v1/doctors");
     boolean publicServiceDirectory = exchange.getRequest().getMethod() == HttpMethod.GET && path.equals("/api/v1/services");
     boolean publicDoctorAvatar = exchange.getRequest().getMethod() == HttpMethod.GET && path.matches("/api/v1/doctors/[0-9a-fA-F-]+/avatar");
@@ -35,18 +40,19 @@ public class JwtGatewayFilter implements GlobalFilter, Ordered {
     boolean publicGeminiChat = exchange.getRequest().getMethod() == HttpMethod.POST && path.equals("/ai/public-chat");
     boolean publicSlotUpdates = path.equals("/api/v1/appointments/ws/slots");
     boolean publicReviews = exchange.getRequest().getMethod() == HttpMethod.GET && path.equals("/api/v1/appointments/reviews/public");
-    if (PUBLIC.contains(path) || publicDoctorDirectory || publicServiceDirectory || publicDoctorAvatar || publicDoctorProfileUpdates || publicGeminiChat || publicSlotUpdates || publicReviews || path.startsWith("/actuator/") || path.startsWith("/ai/health"))
-      return chain.filter(exchange);
-    String value=exchange.getRequest().getHeaders().getFirst(HttpHeaders.AUTHORIZATION);
-    if (value==null || !value.startsWith("Bearer ")) return unauthorized(exchange);
+    boolean publicPayOSWebhook = exchange.getRequest().getMethod() == HttpMethod.POST && path.equals("/api/v1/payments/payos-webhook");
+    if (PUBLIC.contains(path) || publicDoctorDirectory || publicServiceDirectory || publicDoctorAvatar || publicDoctorProfileUpdates || publicGeminiChat || publicSlotUpdates || publicReviews || publicPayOSWebhook || path.startsWith("/actuator/") || path.startsWith("/ai/health"))
+      return chain.filter(sanitizedExchange);
+    String value=sanitizedRequest.getHeaders().getFirst(HttpHeaders.AUTHORIZATION);
+    if (value==null || !value.startsWith("Bearer ")) return unauthorized(sanitizedExchange);
     try {
       var claims=Jwts.parser().verifyWith(Keys.hmacShaKeyFor(secret)).build()
           .parseSignedClaims(value.substring(7)).getPayload();
-      var request=exchange.getRequest().mutate()
+      var request=sanitizedRequest.mutate()
           .header("X-User-Id", claims.getSubject())
           .header("X-User-Role", String.valueOf(claims.get("role"))).build();
-      return chain.filter(exchange.mutate().request(request).build());
-    } catch (Exception ignored) { return unauthorized(exchange); }
+      return chain.filter(sanitizedExchange.mutate().request(request).build());
+    } catch (Exception ignored) { return unauthorized(sanitizedExchange); }
   }
   private Mono<Void> unauthorized(ServerWebExchange exchange) {
     exchange.getResponse().setStatusCode(HttpStatus.UNAUTHORIZED);

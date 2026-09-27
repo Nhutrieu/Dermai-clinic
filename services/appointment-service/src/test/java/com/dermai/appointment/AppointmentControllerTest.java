@@ -22,7 +22,7 @@ import org.springframework.web.server.ResponseStatusException;
 
 class AppointmentControllerTest {
   @Test
-  void receptionistCannotConfirmAnAppointmentThatNowOverlapsApprovedDoctorLeave() {
+  void receptionistCannotConfirmWithoutVerifiedPayment() {
     var service = mock(AppointmentService.class);
     var repository = mock(AppointmentRepository.class);
     var recommendations = mock(SchedulingRecommendationService.class);
@@ -30,25 +30,16 @@ class AppointmentControllerTest {
     var controller = new AppointmentController(service, repository, recommendations, audit,
         mock(PatientDirectoryClient.class));
     var appointmentId = UUID.randomUUID();
-    var receptionistId = UUID.randomUUID();
-    var doctorId = UUID.randomUUID();
-    var doctorIdentity = UUID.randomUUID();
-    var patientId = UUID.randomUUID();
-    var patientIdentity = UUID.randomUUID();
-    var start = Instant.now().plusSeconds(86_400);
-    var end = start.plusSeconds(1_800);
-    var appointment = Appointment.pending(patientId, patientIdentity, doctorId, doctorIdentity,
-        start, end, "Khám da", "key", new BigDecimal("150000"));
+    var appointment = new Appointment();
     appointment.id = appointmentId;
-    when(repository.findById(appointmentId)).thenReturn(Optional.of(appointment));
-    doThrow(new SchedulingRecommendationService.SlotUnavailableException("DOCTOR_ON_LEAVE"))
-        .when(recommendations).assertAvailable(doctorId, start, end, appointmentId, "Bearer token", "RECEPTIONIST");
+    appointment.status = AppointmentStatus.ASSIGNED;
+    doThrow(new IllegalStateException("INVALID_TRANSITION")).when(service).confirmAfterPayment(appointmentId);
 
-    assertThatThrownBy(() -> controller.confirm(appointmentId, receptionistId, "RECEPTIONIST", "Bearer token"))
-        .isInstanceOfSatisfying(SchedulingRecommendationService.SlotUnavailableException.class,
-            error -> assertThat(error.getMessage()).isEqualTo("DOCTOR_ON_LEAVE"));
-    verify(service, never()).transition(any(), any());
-    verifyNoInteractions(audit);
+    assertThatThrownBy(() -> controller.confirm(appointmentId, UUID.randomUUID(), "RECEPTIONIST", "Bearer token"))
+        .isInstanceOf(IllegalStateException.class)
+        .hasMessage("INVALID_TRANSITION");
+    verify(service).confirmAfterPayment(appointmentId);
+    verifyNoInteractions(recommendations, audit);
   }
 
   @Test
@@ -260,18 +251,19 @@ class AppointmentControllerTest {
     when(repository.findById(appointmentId)).thenReturn(Optional.of(appointment));
 
     assertThatThrownBy(() -> controller.cancel(
-        appointmentId, patientIdentity, "PATIENT", new AppointmentController.Cancel("Đổi kế hoạch")
+        appointmentId, patientIdentity, "PATIENT", new AppointmentController.Cancel("Đổi kế hoạch", null)
     )).isInstanceOfSatisfying(ResponseStatusException.class, error ->
         org.assertj.core.api.Assertions.assertThat(error.getStatusCode()).isEqualTo(HttpStatus.CONFLICT)
     );
   }
 
   @Test
-  void patientCannotCancelAConfirmedAppointmentInsideTheThirtyMinuteWindow() {
+  void patientCanCancelAConfirmedPaidAppointmentInsideTheThirtyMinuteWindow() {
     var service = mock(AppointmentService.class);
     var repository = mock(AppointmentRepository.class);
     var recommendations = mock(SchedulingRecommendationService.class);
-    var controller = new AppointmentController(service, repository, recommendations, mock(AppointmentActionAuditService.class), mock(PatientDirectoryClient.class));
+    var audit = mock(AppointmentActionAuditService.class);
+    var controller = new AppointmentController(service, repository, recommendations, audit, mock(PatientDirectoryClient.class));
     var patientIdentity = UUID.randomUUID();
     var appointmentId = UUID.randomUUID();
     var appointment = new Appointment();
@@ -279,14 +271,15 @@ class AppointmentControllerTest {
     appointment.patientIdentityId = patientIdentity;
     appointment.status = AppointmentStatus.CONFIRMED;
     appointment.createdAt = Instant.now().minusSeconds(5 * 60L);
+    var cancelled = new Appointment();
+    cancelled.id = appointmentId;
     when(repository.findById(appointmentId)).thenReturn(Optional.of(appointment));
+    when(service.cancel(appointmentId, "Đổi kế hoạch", patientIdentity, "PATIENT", "PATIENT_REQUEST")).thenReturn(cancelled);
 
-    assertThatThrownBy(() -> controller.cancel(
-        appointmentId, patientIdentity, "PATIENT", new AppointmentController.Cancel("Đổi kế hoạch")
-    )).isInstanceOfSatisfying(ResponseStatusException.class, error -> {
-      org.assertj.core.api.Assertions.assertThat(error.getStatusCode()).isEqualTo(HttpStatus.CONFLICT);
-      org.assertj.core.api.Assertions.assertThat(error.getReason()).contains("lễ tân xác nhận");
-    });
+    controller.cancel(appointmentId, patientIdentity, "PATIENT", new AppointmentController.Cancel("Đổi kế hoạch", null));
+
+    verify(service).cancel(appointmentId, "Đổi kế hoạch", patientIdentity, "PATIENT", "PATIENT_REQUEST");
+    verify(audit).record(appointmentId, patientIdentity, "PATIENT", "CANCELLED");
   }
 
   @Test
@@ -329,13 +322,13 @@ class AppointmentControllerTest {
     var receptionistIdentity = UUID.randomUUID();
     var cancelled = new Appointment();
     cancelled.id = appointmentId;
-    when(service.cancel(appointmentId, "Bệnh nhân yêu cầu hỗ trợ")).thenReturn(cancelled);
+    when(service.cancel(appointmentId, "Bệnh nhân yêu cầu hỗ trợ", receptionistIdentity, "RECEPTIONIST", "PATIENT_REQUEST")).thenReturn(cancelled);
 
     controller.cancel(
-        appointmentId, receptionistIdentity, "RECEPTIONIST", new AppointmentController.Cancel("Bệnh nhân yêu cầu hỗ trợ")
+        appointmentId, receptionistIdentity, "RECEPTIONIST", new AppointmentController.Cancel("Bệnh nhân yêu cầu hỗ trợ", null)
     );
 
-    verify(service).cancel(appointmentId, "Bệnh nhân yêu cầu hỗ trợ");
+    verify(service).cancel(appointmentId, "Bệnh nhân yêu cầu hỗ trợ", receptionistIdentity, "RECEPTIONIST", "PATIENT_REQUEST");
     verify(audit).record(appointmentId, receptionistIdentity, "RECEPTIONIST", "CANCELLED");
   }
 

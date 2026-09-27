@@ -38,6 +38,8 @@ services:
     environment:
       DB_PASSWORD: ${POSTGRES_PASSWORD:?POSTGRES_PASSWORD is required}
       SERVICE_TOKEN: ${SERVICE_TOKEN:?SERVICE_TOKEN is required}
+      DATA_ENCRYPTION_KEY: ${DATA_ENCRYPTION_KEY:?DATA_ENCRYPTION_KEY is required}
+      AI_IMAGE_RETENTION_DAYS: ${AI_IMAGE_RETENTION_DAYS:-180}
     networks: [application, database]
 
   doctor-service:
@@ -54,6 +56,18 @@ services:
       SPRING_RABBITMQ_PASSWORD: ${RABBITMQ_PASSWORD:?RABBITMQ_PASSWORD is required}
     networks: [application, database, messaging]
 
+  payment-service:
+    environment:
+      DB_PASSWORD: ${POSTGRES_PASSWORD:?POSTGRES_PASSWORD is required}
+      SERVICE_TOKEN: ${SERVICE_TOKEN:?SERVICE_TOKEN is required}
+      PAYOS_CLIENT_ID: ${PAYOS_CLIENT_ID:?PAYOS_CLIENT_ID is required}
+      PAYOS_API_KEY: ${PAYOS_API_KEY:?PAYOS_API_KEY is required}
+      PAYOS_CHECKSUM_KEY: ${PAYOS_CHECKSUM_KEY:?PAYOS_CHECKSUM_KEY is required}
+      PAYOS_RETURN_URL: ${PAYOS_RETURN_URL:?PAYOS_RETURN_URL is required}
+      PAYOS_CANCEL_URL: ${PAYOS_CANCEL_URL:?PAYOS_CANCEL_URL is required}
+      SPRING_RABBITMQ_USERNAME: ${RABBITMQ_USER:?RABBITMQ_USER is required}
+      SPRING_RABBITMQ_PASSWORD: ${RABBITMQ_PASSWORD:?RABBITMQ_PASSWORD is required}
+    networks: [application, database, messaging]
   medical-record-service:
     environment:
       DB_PASSWORD: ${POSTGRES_PASSWORD:?POSTGRES_PASSWORD is required}
@@ -62,6 +76,16 @@ services:
   prescription-service:
     environment:
       DB_PASSWORD: ${POSTGRES_PASSWORD:?POSTGRES_PASSWORD is required}
+      SERVICE_TOKEN: ${SERVICE_TOKEN:?SERVICE_TOKEN is required}
+      SPRING_RABBITMQ_USERNAME: ${RABBITMQ_USER:?RABBITMQ_USER is required}
+      SPRING_RABBITMQ_PASSWORD: ${RABBITMQ_PASSWORD:?RABBITMQ_PASSWORD is required}
+    networks: [application, database, messaging]
+
+  inventory-service:
+    ports: !reset []
+    environment:
+      DATABASE_URL: postgresql+asyncpg://${POSTGRES_USER:?POSTGRES_USER is required}:${POSTGRES_PASSWORD:?POSTGRES_PASSWORD is required}@postgres:5432/${POSTGRES_DB:?POSTGRES_DB is required}
+      CORS_ORIGINS: ${PUBLIC_ORIGIN:?PUBLIC_ORIGIN is required}
     networks: [application, database]
 
   notification-service:

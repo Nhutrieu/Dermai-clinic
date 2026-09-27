@@ -103,8 +103,10 @@ public class SchedulingRecommendationService {
      var conflict=busy.stream().filter(x->doctorId.equals(x.doctorId)&&ACTIVE.contains(x.status)&&start.isBefore(x.endAt)&&end.isAfter(x.startAt)).findFirst();
      boolean ownHold=conflict.filter(x->x.status==AppointmentStatus.HELD&&viewerIdentity.equals(x.patientIdentityId)).isPresent();
      boolean otherHold=conflict.filter(x->x.status==AppointmentStatus.HELD&&!viewerIdentity.equals(x.patientIdentityId)).isPresent();
-     String status=onLeave?"ON_LEAVE":ownHold?"HELD_BY_YOU":otherHold?"HELD_BY_OTHER":conflict.isPresent()?"BOOKED":"AVAILABLE";
-     items.add(new AvailabilityItem(doctor.id(),doctor.identityId(),doctor.fullName(),doctor.specialtyCode(),start,end,status,ownHold?conflict.get().id:null,ownHold?conflict.get().holdExpiresAt:null));
+     boolean ownPendingPayment=conflict.filter(x->x.status==AppointmentStatus.PENDING_PAYMENT&&viewerIdentity.equals(x.patientIdentityId)).isPresent();
+     boolean otherPendingPayment=conflict.filter(x->x.status==AppointmentStatus.PENDING_PAYMENT&&!viewerIdentity.equals(x.patientIdentityId)).isPresent();
+     String status=onLeave?"ON_LEAVE":ownHold?"HELD_BY_YOU":otherHold?"HELD_BY_OTHER":ownPendingPayment?"PAYMENT_PENDING_BY_YOU":otherPendingPayment?"PAYMENT_PENDING_BY_OTHER":conflict.isPresent()?"BOOKED":"AVAILABLE";
+     items.add(new AvailabilityItem(doctor.id(),doctor.identityId(),doctor.fullName(),doctor.specialtyCode(),start,end,status,ownHold?conflict.get().id:null,(ownHold||ownPendingPayment)?conflict.get().holdExpiresAt:null));
     }
     cursor=cursor.plusMinutes(slotDuration);
    }

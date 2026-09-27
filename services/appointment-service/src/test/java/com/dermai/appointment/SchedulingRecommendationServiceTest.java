@@ -82,6 +82,47 @@ class SchedulingRecommendationServiceTest {
   }
 
   @Test
+  void distinguishesPendingPaymentFromConfirmedBookingForBothViewers() {
+    var appointments = mock(AppointmentRepository.class);
+    var closures = mock(ClinicClosureRepository.class);
+    var doctorId = UUID.randomUUID();
+    var doctorIdentityId = UUID.randomUUID();
+    var patientIdentityId = UUID.randomUUID();
+    var date = futureWeekday().plusWeeks(1);
+    var start = date.atTime(8, 30).atZone(CLINIC_ZONE).toInstant();
+    var pending = new Appointment();
+    pending.id = UUID.randomUUID();
+    pending.patientIdentityId = patientIdentityId;
+    pending.doctorId = doctorId;
+    pending.startAt = start;
+    pending.endAt = start.plus(Duration.ofMinutes(30));
+    pending.status = AppointmentStatus.PENDING_PAYMENT;
+    pending.holdExpiresAt = Instant.now().plus(Duration.ofMinutes(10));
+
+    when(closures.findByClosureDate(date)).thenReturn(Optional.empty());
+    when(appointments.findActiveOverlapping(any(), any())).thenReturn(List.of(pending));
+
+    var builder = RestClient.builder().baseUrl("http://doctor-service");
+    var server = MockRestServiceServer.bindTo(builder).build();
+    server.expect(ExpectedCount.times(2), requestTo("http://doctor-service/api/v1/doctors/scheduling-data"))
+        .andRespond(withSuccess(doctorJson(doctorId, doctorIdentityId, date), MediaType.APPLICATION_JSON));
+    var service = new SchedulingRecommendationService(appointments, closures, builder.build());
+
+    var ownerView = service.availability(doctorId, date, 30, patientIdentityId, "Bearer token", "PATIENT");
+    var otherView = service.availability(doctorId, date, 30, UUID.randomUUID(), "Bearer token", "PATIENT");
+
+    assertThat(ownerView.items()).filteredOn(slot -> slot.startAt().equals(start)).singleElement().satisfies(slot -> {
+      assertThat(slot.status()).isEqualTo("PAYMENT_PENDING_BY_YOU");
+      assertThat(slot.holdExpiresAt()).isEqualTo(pending.holdExpiresAt);
+    });
+    assertThat(otherView.items()).filteredOn(slot -> slot.startAt().equals(start)).singleElement().satisfies(slot -> {
+      assertThat(slot.status()).isEqualTo("PAYMENT_PENDING_BY_OTHER");
+      assertThat(slot.holdExpiresAt()).isNull();
+    });
+    server.verify();
+  }
+
+  @Test
   void sundayIsAlwaysAClinicClosure() {
     var appointments = mock(AppointmentRepository.class);
     var closures = mock(ClinicClosureRepository.class);

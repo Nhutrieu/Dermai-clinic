@@ -1,0 +1,37 @@
+server.port: 8089
+spring:
+  application.name: payment-service
+  servlet:
+    multipart:
+      max-file-size: 5MB
+      max-request-size: 6MB
+  datasource:
+    url: ${DB_URL:jdbc:postgresql://postgres:5432/dermai?currentSchema=payment}
+    username: ${DB_USER:dermai}
+    password: ${DB_PASSWORD:change-me}
+  jpa:
+    open-in-view: false
+    hibernate.ddl-auto: validate
+    properties.hibernate.default_schema: payment
+  flyway: {schemas: payment, create-schemas: true}
+  rabbitmq:
+    host: ${RABBITMQ_HOST:rabbitmq}
+    port: 5672
+    username: ${RABBITMQ_USER:guest}
+    password: ${RABBITMQ_PASSWORD:guest}
+payment:
+  deposit-amount: ${PAYMENT_DEPOSIT_AMOUNT:100000}
+  hold-duration: ${PAYMENT_HOLD_DURATION:PT10M}
+  return-url: ${PAYOS_RETURN_URL:http://localhost:3000/payment/success}
+  cancel-url: ${PAYOS_CANCEL_URL:http://localhost:3000/payment/cancel}
+  webhook-url: ${PAYOS_WEBHOOK_URL:}
+  expiry-delay-ms: ${PAYMENT_EXPIRY_DELAY_MS:15000}
+payos:
+  client-id: ${PAYOS_CLIENT_ID:}
+  api-key: ${PAYOS_API_KEY:}
+  checksum-key: ${PAYOS_CHECKSUM_KEY:}
+services:
+  appointment-url: ${APPOINTMENT_URL:http://appointment-service:8085}
+  token: ${SERVICE_TOKEN:}
+outbox.delay-ms: ${PAYMENT_OUTBOX_DELAY_MS:1000}
+management.endpoints.web.exposure.include: health,info

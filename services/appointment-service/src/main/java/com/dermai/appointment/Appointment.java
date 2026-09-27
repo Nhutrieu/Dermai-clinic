@@ -5,7 +5,7 @@ public class Appointment{
  @Id public UUID id;@Column(name="patient_id",nullable=false) public UUID patientId;@Column(name="patient_identity_id",nullable=false) public UUID patientIdentityId;@Column(name="doctor_id") public UUID doctorId;@Column(name="doctor_identity_id") public UUID doctorIdentityId;
  @Column(name="parent_id") public UUID parentId;@Column(name="start_at",nullable=false) public Instant startAt;@Column(name="end_at",nullable=false) public Instant endAt;
  @Enumerated(EnumType.STRING) @Column(nullable=false) public AppointmentStatus status;
- @Column(length=500) public String reason;@Column(name="cancel_reason",length=500) public String cancelReason;
+ @Column(length=500) public String reason;@Column(name="cancel_reason",length=500) public String cancelReason;@Column(name="cancellation_initiator",length=30) public String cancellationInitiator;
  @Column(name="follow_up_reason",length=500) public String followUpReason;
  @Column(name="follow_up_not_before") public Instant followUpNotBefore;
  @Column(name="consultation_fee_snapshot",precision=12,scale=0) public BigDecimal consultationFeeSnapshot;

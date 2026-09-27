@@ -131,11 +131,42 @@ class AppointmentServiceTest {
         new BigDecimal("150000")
     );
     appointment.id = appointmentId;
+    appointment.status = AppointmentStatus.PENDING_CONFIRMATION;
     when(appointments.findLocked(appointmentId)).thenReturn(Optional.of(appointment));
 
-    var confirmed = service.transition(appointmentId, AppointmentStatus.CONFIRMED);
+    var confirmed = service.confirmAfterPayment(appointmentId);
 
     assertThat(confirmed.status).isEqualTo(AppointmentStatus.CONFIRMED);
+    verify(updates).afterCommit();
+  }
+
+  @Test
+  void successfulDepositWaitsForReceptionistConfirmation() {
+    var appointments = mock(AppointmentRepository.class);
+    var outbox = mock(OutboxRepository.class);
+    var updates = mock(SlotUpdateBroadcaster.class);
+    var notifications = mock(AppointmentNotificationRepository.class);
+    var service = new AppointmentService(
+        appointments, outbox, updates, notifications, mock(BookingPolicy.class)
+    );
+    var appointmentId = UUID.randomUUID();
+    var appointment = Appointment.pending(
+        UUID.randomUUID(), UUID.randomUUID(), UUID.randomUUID(), UUID.randomUUID(),
+        Instant.now().plusSeconds(86_400), Instant.now().plusSeconds(88_200),
+        "Khám da", null, new BigDecimal("150000")
+    );
+    appointment.id = appointmentId;
+    appointment.status = AppointmentStatus.PENDING_PAYMENT;
+    appointment.holdExpiresAt = Instant.now().plusSeconds(600);
+    when(appointments.findLocked(appointmentId)).thenReturn(Optional.of(appointment));
+
+    service.paymentConfirmed(appointmentId);
+
+    assertThat(appointment.status).isEqualTo(AppointmentStatus.PENDING_CONFIRMATION);
+    assertThat(appointment.holdExpiresAt).isNull();
+    var notification = ArgumentCaptor.forClass(AppointmentNotification.class);
+    verify(notifications).save(notification.capture());
+    assertThat(notification.getValue().body).contains("chờ lễ tân").contains("xác nhận");
     verify(updates).afterCommit();
   }
 

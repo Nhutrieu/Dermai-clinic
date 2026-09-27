@@ -21,6 +21,8 @@ class AppointmentScheduleQueryController {
       AppointmentStatus.PROPOSED,
       AppointmentStatus.PENDING,
       AppointmentStatus.ASSIGNED,
+      AppointmentStatus.PENDING_PAYMENT,
+      AppointmentStatus.PENDING_CONFIRMATION,
       AppointmentStatus.CONFIRMED,
       AppointmentStatus.CHECKED_IN,
       AppointmentStatus.IN_PROGRESS

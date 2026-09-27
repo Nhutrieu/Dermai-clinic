@@ -4,7 +4,7 @@ interface DeliveryRepository extends JpaRepository<Delivery,UUID>{Optional<Deliv
 @Configuration class NotificationMessaging{
  @Bean Queue notificationQueue(){return QueueBuilder.durable("dermai.notifications").withArgument("x-dead-letter-exchange","dermai.notifications.dlx").withArgument("x-dead-letter-routing-key","dermai.notifications").build();}
  @Bean TopicExchange appointmentExchange(){return ExchangeBuilder.topicExchange("dermai.appointments").durable(true).build();}
- @Bean Binding notificationBinding(@Qualifier("notificationQueue") Queue q,TopicExchange e){return BindingBuilder.bind(q).to(e).with("Appointment*");}
+ @Bean Binding notificationBinding(@Qualifier("notificationQueue") Queue q,@Qualifier("appointmentExchange") TopicExchange e){return BindingBuilder.bind(q).to(e).with("Appointment*");}
  @Bean DirectExchange deadExchange(){return ExchangeBuilder.directExchange("dermai.notifications.dlx").durable(true).build();}
  @Bean Queue deadQueue(){return QueueBuilder.durable("dermai.notifications.dead").build();}
  @Bean Binding deadBinding(@Qualifier("deadQueue") Queue deadQueue,DirectExchange deadExchange){return BindingBuilder.bind(deadQueue).to(deadExchange).with("dermai.notifications");}
@@ -15,13 +15,22 @@ interface DeliveryRepository extends JpaRepository<Delivery,UUID>{Optional<Deliv
  @RabbitListener(queues="dermai.notifications")
  public void consume(String payload)throws Exception{
   JsonNode e=json.readTree(payload);UUID eventId=UUID.fromString(e.path("eventId").asText());var existing=repo.findByEventId(eventId);if(existing.isPresent()&&existing.get().sentAt!=null)return;
-  UUID identity=UUID.fromString(e.path("patientIdentityId").asText());var owner=auth.get().uri("/api/v1/auth/internal/identities/{id}",identity).header("X-Service-Token",token).retrieve().body(Identity.class);
-  if(owner==null)throw new IllegalStateException("Không tìm thấy người nhận");
-  String status=e.path("status").asText(),start=e.path("startAt").asText();var d=existing.orElseGet(()->{var n=new Delivery();n.id=UUID.randomUUID();n.eventId=eventId;n.eventType=status;n.recipient=owner.email();n.subject=subject(status);return n;});d.attempts++;repo.save(d);
+  String directRecipient=e.path("recipientEmail").asText("").trim();
+  String recipient=directRecipient;
+  if(recipient.isBlank()){
+   UUID identity=UUID.fromString(e.path("patientIdentityId").asText());var owner=auth.get().uri("/api/v1/auth/internal/identities/{id}",identity).header("X-Service-Token",token).retrieve().body(Identity.class);
+   if(owner==null)throw new IllegalStateException("Không tìm thấy người nhận");recipient=owner.email();
+  }
+  String status=e.path("status").asText(),start=e.path("startAt").asText();String target=recipient;var d=existing.orElseGet(()->{var n=new Delivery();n.id=UUID.randomUUID();n.eventId=eventId;n.eventType=status;n.recipient=target;n.subject=subject(status);return n;});d.attempts++;repo.save(d);
   // Gmail requires the From address to match the authenticated SMTP account.
-  try{var msg=new SimpleMailMessage();msg.setTo(owner.email());msg.setFrom(mailFrom);msg.setSubject(d.subject);msg.setText("Trạng thái lịch khám: "+status+"\nThời gian: "+start+"\n\nDermAI chỉ hỗ trợ quản lý, không thay thế bác sĩ.");mail.send(msg);d.sentAt=Instant.now();d.lastError=null;repo.save(d);}
+  try{var msg=new SimpleMailMessage();msg.setTo(recipient);msg.setFrom(mailFrom);msg.setSubject(d.subject);msg.setText(message(e,status,start));mail.send(msg);d.sentAt=Instant.now();d.lastError=null;repo.save(d);}
   catch(RuntimeException ex){d.lastError=String.valueOf(ex.getMessage());repo.save(d);throw ex;}
  }
- private String subject(String s){return switch(s){case"CANCELLED"->"Lịch khám đã hủy";case"COMPLETED"->"Đã hoàn thành khám";case"FOLLOW_UP_REQUIRED"->"Yêu cầu tái khám";default->"Cập nhật lịch khám DermAI";};}
+ private String message(JsonNode event,String status,String start){
+  if("PAYMENT_PENDING".equals(status))return "Phòng khám đã tạo yêu cầu đặt lịch.\nTiền cọc: "+event.path("amount").asText()+" VNĐ\nHạn thanh toán: "+event.path("expiresAt").asText()+"\nLink thanh toán: "+event.path("checkoutUrl").asText()+"\n\nSau khi thanh toán thành công, lễ tân sẽ kiểm tra và xác nhận lịch.";
+  if("REFUNDED".equals(status)){var amount=java.text.NumberFormat.getIntegerInstance(java.util.Locale.forLanguageTag("vi-VN")).format(event.path("refundAmount").decimalValue())+"đ";var cash="CASH".equals(event.path("refundMethod").asText());var proof=cash?event.path("refundReceiptNumber").asText():event.path("refundReference").asText();return "Phòng khám đã hoàn tiền cọc: "+amount+"\nPhương thức: "+(cash?"Tiền mặt":"Chuyển khoản")+(proof.isBlank()?"":"\n"+(cash?"Số phiếu: ":"Mã giao dịch: ")+proof)+"\n\nVui lòng kiểm tra số tiền đã nhận và liên hệ lễ tân nếu cần hỗ trợ.";}
+  return "Trạng thái lịch khám: "+status+"\nThời gian: "+start+"\n\nDermAI chỉ hỗ trợ quản lý, không thay thế bác sĩ.";
+ }
+ private String subject(String s){return switch(s){case"PAYMENT_PENDING"->"Link thanh toán tiền cọc DermAI Clinic";case"REFUNDED"->"DermAI Clinic đã hoàn tiền cọc";case"CANCELLED"->"Lịch khám đã hủy";case"COMPLETED"->"Đã hoàn thành khám";case"FOLLOW_UP_REQUIRED"->"Yêu cầu tái khám";default->"Cập nhật lịch khám DermAI";};}
  record Identity(UUID identityId,String email,String role){}
 }

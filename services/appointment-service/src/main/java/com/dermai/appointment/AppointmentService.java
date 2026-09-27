@@ -1,9 +1,11 @@
 package com.dermai.appointment;
-import org.springframework.dao.CannotAcquireLockException;import org.springframework.dao.DataIntegrityViolationException;import org.springframework.stereotype.Service;import org.springframework.transaction.annotation.Transactional;import java.math.BigDecimal;import java.time.*;import java.util.*;
+import com.fasterxml.jackson.databind.ObjectMapper;import org.springframework.dao.CannotAcquireLockException;import org.springframework.dao.DataIntegrityViolationException;import org.springframework.stereotype.Service;import org.springframework.transaction.annotation.Transactional;import java.math.BigDecimal;import java.time.*;import java.util.*;
 @Service @Transactional
 public class AppointmentService{
+ private static final ObjectMapper JSON=new ObjectMapper();
  private final AppointmentRepository repo;private final OutboxRepository outbox;private final SlotUpdateBroadcaster slots;private final AppointmentNotificationRepository notifications;private final BookingPolicy bookingPolicy;
  AppointmentService(AppointmentRepository r,OutboxRepository o,SlotUpdateBroadcaster slots,AppointmentNotificationRepository notifications,BookingPolicy bookingPolicy){repo=r;outbox=o;this.slots=slots;this.notifications=notifications;this.bookingPolicy=bookingPolicy;}
+ public Appointment find(UUID id){return repo.findById(id).orElseThrow(NoSuchElementException::new);}
  public Appointment book(UUID patient,UUID patientIdentity,UUID doctor,UUID doctorIdentity,Instant start,Instant end,String reason,BigDecimal consultationFeeSnapshot,String key,boolean bypassActiveLimit){
   if(!start.isBefore(end)||start.isBefore(Instant.now()))throw new IllegalArgumentException("INVALID_INTERVAL");
   if(Duration.between(start,end).toMinutes()>120)throw new IllegalArgumentException("DURATION_TOO_LONG");
@@ -36,7 +38,7 @@ public class AppointmentService{
  public Appointment confirmHold(UUID id,UUID patientIdentity,String reason,String key){
   var x=locked(id);if(x.status!=AppointmentStatus.HELD||!patientIdentity.equals(x.patientIdentityId))throw new IllegalStateException("INVALID_HOLD");
   if(x.holdExpiresAt==null||x.holdExpiresAt.isBefore(Instant.now())){x.transition(AppointmentStatus.CANCELLED);x.cancelReason="HOLD_EXPIRED";slots.afterCommit();throw new HoldExpiredException();}
-  if(reason==null||reason.isBlank())throw new IllegalArgumentException("REASON_REQUIRED");x.reason=reason.trim();x.idempotencyKey=key;x.holdExpiresAt=null;x.transition(AppointmentStatus.ASSIGNED);event(x,"AppointmentCreated");notify(x,"REQUEST_CREATED","Đã gửi yêu cầu đặt lịch","Yêu cầu đặt lịch của bạn đã được ghi nhận.");slots.afterCommit();return x;
+  if(reason==null||reason.isBlank())throw new IllegalArgumentException("REASON_REQUIRED");x.reason=reason.trim();x.idempotencyKey=key;x.holdExpiresAt=Instant.now().plus(Duration.ofMinutes(10));x.transition(AppointmentStatus.PENDING_PAYMENT);event(x,"AppointmentCreated");notify(x,"REQUEST_CREATED","Đã gửi yêu cầu đặt lịch","Yêu cầu đặt lịch của bạn đã được ghi nhận.");slots.afterCommit();return x;
  }
  public void releaseHold(UUID id,UUID patientIdentity){var x=locked(id);if(!patientIdentity.equals(x.patientIdentityId))throw new IllegalStateException("INVALID_HOLD");if(x.status==AppointmentStatus.HELD){x.transition(AppointmentStatus.CANCELLED);x.cancelReason="HOLD_RELEASED";x.patientHidden=true;slots.afterCommit();}}
  public Appointment checkIn(UUID id){
@@ -55,17 +57,53 @@ public class AppointmentService{
   x.transition(AppointmentStatus.COMPLETED);repo.save(x);event(x,"AppointmentCOMPLETED");notify(x,"COMPLETED","Buổi khám đã hoàn thành","Phòng khám đã cập nhật lượt khám của bạn là hoàn thành.");slots.afterCommit();return x;
  }
  public Appointment noShow(UUID id){var x=locked(id);if(x.startAt.plus(Duration.ofMinutes(30)).isAfter(Instant.now()))throw new IllegalStateException("NO_SHOW_TOO_EARLY");x.transition(AppointmentStatus.NO_SHOW);event(x,"AppointmentNoShow");notify(x,"NO_SHOW","Cảnh báo: Bạn đã bỏ lỡ lịch khám","Hệ thống ghi nhận bạn chưa đến theo lịch đã xác nhận. Nếu có nhầm lẫn hoặc cần đặt lại lịch, vui lòng liên hệ lễ tân qua chat hỗ trợ hoặc hotline 0352 790 904.");slots.afterCommit();return x;}
- public Appointment cancel(UUID id,String reason){if(reason==null||reason.isBlank())throw new IllegalArgumentException("CANCEL_REASON_REQUIRED");var x=locked(id);x.transition(AppointmentStatus.CANCELLED);x.cancelReason=reason;event(x,"AppointmentCancelled");notify(x,"CANCELLED","Lịch khám đã hủy",reason);slots.afterCommit();return x;}
+ public Appointment cancel(UUID id,String reason){return cancel(id,reason,null,null,"PATIENT_REQUEST");}
+ public Appointment cancel(UUID id,String reason,UUID actorIdentityId,String actorRole,String initiator){
+  if(reason==null||reason.isBlank())throw new IllegalArgumentException("CANCEL_REASON_REQUIRED");
+  var x=locked(id);x.transition(AppointmentStatus.CANCELLED);x.cancelReason=reason;x.cancellationInitiator="CLINIC".equals(initiator)?"CLINIC":"PATIENT_REQUEST";
+  var details=new LinkedHashMap<String,Object>();
+  if(actorIdentityId!=null)details.put("actorIdentityId",actorIdentityId.toString());
+  if(actorRole!=null)details.put("actorRole",actorRole);
+  details.put("cancellationInitiator","CLINIC".equals(initiator)?"CLINIC":"PATIENT_REQUEST");
+  details.put("cancelReason",reason);
+  event(x,"AppointmentCancelled",details);notify(x,"CANCELLED","Lịch khám đã hủy",reason);slots.afterCommit();return x;
+ }
  public Appointment reschedule(UUID id,Instant start,Instant end,String key,boolean bypassActiveLimit){var old=locked(id);if(!EnumSet.of(AppointmentStatus.PENDING,AppointmentStatus.ASSIGNED,AppointmentStatus.CONFIRMED).contains(old.status))throw new IllegalStateException("INVALID_TRANSITION");old.transition(AppointmentStatus.CANCELLED);old.cancelReason="RESCHEDULED";repo.flush();var next=book(old.patientId,old.patientIdentityId,old.doctorId,old.doctorIdentityId,start,end,old.reason,old.consultationFeeSnapshot,key,bypassActiveLimit);next.parentId=old.id;event(next,"AppointmentRescheduled");notify(next,"RESCHEDULED","Lịch khám đã được đổi","Lịch khám của bạn đã chuyển sang thời gian mới.");return next;}
  public Appointment requireFollowUp(UUID completed,String reason,Instant notBefore){if(reason==null||reason.isBlank())throw new IllegalArgumentException("FOLLOW_UP_REASON_REQUIRED");if(notBefore==null)throw new IllegalArgumentException("FOLLOW_UP_DATE_REQUIRED");var old=locked(completed);if(old.status==AppointmentStatus.IN_PROGRESS)old.transition(AppointmentStatus.COMPLETED);if(old.status!=AppointmentStatus.COMPLETED)throw new IllegalStateException("INVALID_TRANSITION");old.transition(AppointmentStatus.FOLLOW_UP_REQUIRED);old.followUpReason=reason;old.followUpNotBefore=notBefore;old.patientHidden=false;event(old,"FollowUpRequired");return old;}
  public Appointment followUp(UUID parent,Instant start,Instant end,BigDecimal consultationFeeSnapshot,String key,boolean bypassActiveLimit){var old=locked(parent);if(old.status!=AppointmentStatus.FOLLOW_UP_REQUIRED)throw new IllegalStateException("FOLLOW_UP_NOT_REQUIRED");if(old.followUpNotBefore!=null&&start.isBefore(old.followUpNotBefore))throw new IllegalArgumentException("FOLLOW_UP_TOO_EARLY");var next=book(old.patientId,old.patientIdentityId,old.doctorId,old.doctorIdentityId,start,end,old.followUpReason,consultationFeeSnapshot,key,bypassActiveLimit);next.parentId=old.id;old.status=AppointmentStatus.COMPLETED;event(next,"FollowUpBooked");return next;}
- private Appointment locked(UUID id){return repo.findLocked(id).orElseThrow(NoSuchElementException::new);}
+ public Appointment preparePayment(UUID id,UUID patientIdentity){
+  var x=locked(id);if(!patientIdentity.equals(x.patientIdentityId))throw new IllegalStateException("BOOKING_OWNER_MISMATCH");
+  if(x.status==AppointmentStatus.PENDING_PAYMENT)return x;
+  if(!EnumSet.of(AppointmentStatus.PENDING,AppointmentStatus.ASSIGNED).contains(x.status))throw new IllegalStateException("BOOKING_NOT_PAYABLE");
+  x.transition(AppointmentStatus.PENDING_PAYMENT);x.holdExpiresAt=Instant.now().plus(Duration.ofMinutes(10));repo.save(x);slots.afterCommit();return x;
+ }
+ public void paymentConfirmed(UUID id){
+  var x=locked(id);if(EnumSet.of(AppointmentStatus.PENDING_CONFIRMATION,AppointmentStatus.CONFIRMED).contains(x.status))return;if(x.status!=AppointmentStatus.PENDING_PAYMENT)return;
+  x.holdExpiresAt=null;x.transition(AppointmentStatus.PENDING_CONFIRMATION);repo.save(x);event(x,"AppointmentDepositPaid");notify(x,"PAYMENT_CONFIRMED","Đã thanh toán tiền cọc","Yêu cầu đặt lịch đang chờ lễ tân kiểm tra và xác nhận.");slots.afterCommit();
+ }
+ public Appointment confirmAfterPayment(UUID id){
+  var x=locked(id);if(x.status!=AppointmentStatus.PENDING_CONFIRMATION)throw new IllegalStateException("INVALID_TRANSITION");
+  x.transition(AppointmentStatus.CONFIRMED);repo.save(x);event(x,"AppointmentConfirmedByReception");notify(x,"CONFIRMED","Lịch khám đã được xác nhận","Lễ tân đã xác nhận lịch khám của bạn.");slots.afterCommit();return x;
+ }
+ public void paymentCancelled(UUID id){
+  var x=locked(id);if(x.status==AppointmentStatus.CANCELLED)return;if(x.status!=AppointmentStatus.PENDING_PAYMENT)return;
+  x.holdExpiresAt=null;x.transition(AppointmentStatus.CANCELLED);x.cancelReason="PAYMENT_CANCELLED_BY_PATIENT";repo.save(x);notify(x,"PAYMENT_CANCELLED","Đã hủy thanh toán","Lịch khám đã hủy và khung giờ đã được trả lại.");slots.afterCommit();
+ }
+ public void paymentExpired(UUID id){
+  var x=locked(id);if(x.status==AppointmentStatus.CANCELLED_EXPIRED)return;if(x.status!=AppointmentStatus.PENDING_PAYMENT)return;
+  x.holdExpiresAt=null;x.transition(AppointmentStatus.CANCELLED_EXPIRED);x.cancelReason="PAYMENT_HOLD_EXPIRED";repo.save(x);notify(x,"PAYMENT_EXPIRED","Đã hết thời gian thanh toán","Lịch khám đã tự động hủy vì chưa thanh toán trong 10 phút.");slots.afterCommit();
+ } private Appointment locked(UUID id){return repo.findLocked(id).orElseThrow(NoSuchElementException::new);}
  private void flushConflict(Appointment x){try{repo.saveAndFlush(x);}catch(DataIntegrityViolationException|CannotAcquireLockException e){throw new SlotConflictException();}}
  private RuntimeException conflict(RuntimeException e){String message=e instanceof DataIntegrityViolationException integrity?String.valueOf(integrity.getMostSpecificCause().getMessage()):String.valueOf(e.getMessage());return message.contains("no_patient_overlap")?new PatientOverlapException():new SlotConflictException();}
  private void requireFeeWhenDoctorSelected(UUID doctor,BigDecimal fee){if(doctor!=null&&(fee==null||fee.signum()<0))throw new IllegalArgumentException("CONSULTATION_FEE_REQUIRED");}
  private String localTime(Instant value){return java.time.format.DateTimeFormatter.ofPattern("HH:mm 'ngày' dd/MM/yyyy").withZone(ZoneId.of("Asia/Ho_Chi_Minh")).format(value);}
  void notify(Appointment x,String type,String title,String body){if(!notifications.existsByAppointmentIdAndNotificationType(x.id,type))notifications.save(new AppointmentNotification(x,type,title,body));}
- private void event(Appointment x,String type){var e=new OutboxEvent(x.id,type,"{}");e.payload="{\"eventId\":\""+e.id+"\",\"appointmentId\":\""+x.id+"\",\"patientIdentityId\":\""+x.patientIdentityId+"\",\"status\":\""+x.status+"\",\"startAt\":\""+x.startAt+"\"}";outbox.save(e);}
+ private void event(Appointment x,String type){event(x,type,Map.of());}
+ private void event(Appointment x,String type,Map<String,Object> details){
+  var e=new OutboxEvent(x.id,type,"{}");var body=new LinkedHashMap<String,Object>();
+  body.put("eventId",e.id.toString());body.put("appointmentId",x.id.toString());if(x.patientIdentityId!=null)body.put("patientIdentityId",x.patientIdentityId.toString());if(x.status!=null)body.put("status",x.status.toString());if(x.startAt!=null)body.put("startAt",x.startAt.toString());body.putAll(details);
+  try{e.payload=JSON.writeValueAsString(body);}catch(Exception impossible){throw new IllegalStateException(impossible);}outbox.save(e);
+ }
  static class SlotConflictException extends RuntimeException{}
  static class PatientOverlapException extends RuntimeException{}
  static class HoldExpiredException extends RuntimeException{}
