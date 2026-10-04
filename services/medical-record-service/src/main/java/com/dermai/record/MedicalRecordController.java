@@ -11,9 +11,15 @@ public class MedicalRecordController{
  MedicalRecordController(MedicalRecordRepository r,@Value("${services.appointment-url}") String url,JdbcTemplate jdbc){repo=r;appointments=RestClient.builder().baseUrl(url).build();this.jdbc=jdbc;}
  record Body(@NotNull UUID appointmentId,@NotNull UUID patientId,@NotBlank @Size(max=2000) String finalDiagnosis,@Size(max=10000) String clinicalNotes,@Size(max=5000) String treatmentPlan,@NotNull MedicalRecord.Severity severity,Instant followUpAt){}
  @PostMapping ResponseEntity<MedicalRecord> create(@RequestHeader("X-User-Id") UUID doctor,@RequestHeader("X-User-Role") String role,@Valid @RequestBody Body b){
-  require(role,"DOCTOR");var ownership=appointments.get().uri("/api/v1/appointments/{id}",b.appointmentId()).header("X-User-Id",doctor.toString()).header("X-User-Role",role).retrieve().body(AppointmentOwnership.class);
+  require(role,"DOCTOR");
+  var existing=repo.findByAppointmentId(b.appointmentId());
+  if(existing.isPresent()){
+   var signed=existing.get();
+   if(signed.doctorId.equals(doctor)&&signed.patientId.equals(b.patientId()))return ResponseEntity.ok(signed);
+   throw new ResponseStatusException(HttpStatus.CONFLICT,"Hồ sơ đã tồn tại");
+  }
+  var ownership=appointments.get().uri("/api/v1/appointments/{id}",b.appointmentId()).header("X-User-Id",doctor.toString()).header("X-User-Role",role).retrieve().body(AppointmentOwnership.class);
   if(ownership==null||!b.patientId().equals(ownership.patientId())||!"IN_PROGRESS".equals(ownership.status()))throw new ResponseStatusException(HttpStatus.CONFLICT,"Lịch không thuộc bác sĩ, sai bệnh nhân hoặc chưa bắt đầu");
-  if(repo.findByAppointmentId(b.appointmentId()).isPresent())throw new ResponseStatusException(HttpStatus.CONFLICT,"Hồ sơ đã tồn tại");
   var x=new MedicalRecord();x.id=UUID.randomUUID();x.appointmentId=b.appointmentId();x.patientId=b.patientId();x.patientIdentityId=ownership.patientIdentityId();x.doctorId=doctor;x.finalDiagnosis=b.finalDiagnosis();x.clinicalNotes=b.clinicalNotes();x.treatmentPlan=b.treatmentPlan();x.severity=b.severity();x.followUpAt=b.followUpAt();x.signedAt=Instant.now();return ResponseEntity.status(201).body(repo.save(x));
  }
  @GetMapping("/{id}") MedicalRecord get(@PathVariable UUID id,@RequestHeader("X-User-Id") UUID user,@RequestHeader("X-User-Role") String role){requireAny(role,"DOCTOR","PATIENT","ADMIN");var x=repo.findById(id).orElseThrow(()->new ResponseStatusException(HttpStatus.NOT_FOUND));if(role.equals("DOCTOR")&&!x.doctorId.equals(user))throw new ResponseStatusException(HttpStatus.FORBIDDEN);if(role.equals("PATIENT")){if(!x.patientIdentityId.equals(user))throw new ResponseStatusException(HttpStatus.FORBIDDEN);if(repo.isHiddenForPatient(x.id,user))throw new ResponseStatusException(HttpStatus.NOT_FOUND);}return x;}

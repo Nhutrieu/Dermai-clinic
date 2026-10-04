@@ -1,12 +1,15 @@
 package com.dermai.payment;
 import java.time.Instant;
 import java.util.Map;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Component;
 import vn.payos.PayOS;
 import vn.payos.exception.NotFoundException;
 import vn.payos.model.v2.paymentRequests.CreatePaymentLinkRequest;
 
-@Component class PayOSClientAdapter implements PayOSGateway{
+@Component
+@ConditionalOnProperty(name="payos.fake-mode",havingValue="false",matchIfMissing=true)
+class PayOSClientAdapter implements PayOSGateway{
  private final PayOS payOS;
  PayOSClientAdapter(PayOS payOS){this.payOS=payOS;}
 

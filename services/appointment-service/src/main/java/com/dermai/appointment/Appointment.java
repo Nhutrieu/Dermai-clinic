@@ -12,6 +12,8 @@ public class Appointment{
  @Column(name="patient_hidden",nullable=false) public boolean patientHidden=false;
  @Column(name="hold_expires_at") public Instant holdExpiresAt;
  @Column(name="checked_in_at") public Instant checkedInAt;
+ @Column(name="services_confirmed_at") public Instant servicesConfirmedAt;
+ @Column(name="services_confirmed_by") public UUID servicesConfirmedBy;
  @Column(name="idempotency_key",unique=true) public String idempotencyKey;@Version public long version;
  @Column(name="created_at") public Instant createdAt=Instant.now();@Column(name="updated_at") public Instant updatedAt=Instant.now();
  protected Appointment(){}

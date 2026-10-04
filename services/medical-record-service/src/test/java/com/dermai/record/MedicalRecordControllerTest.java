@@ -21,6 +21,31 @@ import org.springframework.web.server.ResponseStatusException;
 
 class MedicalRecordControllerTest {
   @Test
+  void signingTheSameAppointmentAgainReturnsTheExistingRecord() {
+    var repository = mock(MedicalRecordRepository.class);
+    var doctorIdentity = UUID.randomUUID();
+    var existing = record(UUID.randomUUID());
+    existing.doctorId = doctorIdentity;
+    when(repository.findByAppointmentId(existing.appointmentId)).thenReturn(Optional.of(existing));
+    var controller = new MedicalRecordController(repository, "http://appointment-service", mock(JdbcTemplate.class));
+    var body = new MedicalRecordController.Body(
+        existing.appointmentId,
+        existing.patientId,
+        "Chẩn đoán gửi lại",
+        null,
+        null,
+        MedicalRecord.Severity.MILD,
+        null
+    );
+
+    var response = controller.create(doctorIdentity, "DOCTOR", body);
+
+    assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
+    assertThat(response.getBody()).isSameAs(existing);
+    verify(repository, never()).save(org.mockito.ArgumentMatchers.any());
+  }
+
+  @Test
   void patientCanIdempotentlyHideTheirOwnSignedResult() {
     var repository = mock(MedicalRecordRepository.class);
     var jdbc = mock(JdbcTemplate.class);

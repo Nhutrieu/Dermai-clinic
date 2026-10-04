@@ -27,6 +27,6 @@ public class Identity {
   if(role==Role.PATIENT)throw new IllegalArgumentException("USE_PATIENT_REGISTER");
   var x=new Identity();x.id=UUID.randomUUID();x.email=email.toLowerCase();x.passwordHash=hash;x.displayName=displayName==null?null:displayName.trim();x.role=role;x.status=Status.ACTIVE;x.emailVerifiedAt=Instant.now();x.createdAt=Instant.now();return x;
  }
- public enum Role {ADMIN,RECEPTIONIST,DOCTOR,PATIENT}
+ public enum Role {ADMIN,RECEPTIONIST,PHARMACIST,DOCTOR,PATIENT}
  public enum Status {PENDING,ACTIVE,LOCKED,DISABLED}
 }

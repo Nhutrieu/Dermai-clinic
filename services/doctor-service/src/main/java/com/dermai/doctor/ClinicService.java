@@ -2,6 +2,8 @@ package com.dermai.doctor;
 
 import jakarta.persistence.*;
 import java.math.BigDecimal;
+import java.util.LinkedHashSet;
+import java.util.Set;
 import java.util.UUID;
 
 @Entity
@@ -11,8 +13,13 @@ public class ClinicService {
   @Column(nullable = false, unique = true, length = 80) public String code;
   @Column(nullable = false, length = 160) public String name;
   @Column(nullable = false, length = 1000) public String description;
+  @Column(name = "specialty_code", nullable = false, length = 80) public String specialtyCode;
   @Column(name = "price_from", nullable = false, precision = 12, scale = 0) public BigDecimal priceFrom;
   @Column(name = "duration_minutes", nullable = false) public int durationMinutes;
   @Column(name = "display_order", nullable = false) public int displayOrder;
   @Column(nullable = false) public boolean active = true;
+  @ElementCollection(fetch = FetchType.EAGER)
+  @CollectionTable(name = "clinic_service_doctors", joinColumns = @JoinColumn(name = "service_id"))
+  @Column(name = "doctor_id", nullable = false)
+  public Set<UUID> doctorIds = new LinkedHashSet<>();
 }

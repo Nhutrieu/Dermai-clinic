@@ -25,13 +25,18 @@ public class SchedulingRecommendationService {
  private final SchedulingEngine engine;
  private final RestClient doctors;
  private final ClinicClosureRepository closures;
+ private final String weeklyClosureDay;
 
- @Autowired SchedulingRecommendationService(AppointmentRepository appointments,ClinicClosureRepository closures,@Value("${doctor-service.url}") String doctorUrl){
-  this(appointments,closures,RestClient.builder().baseUrl(doctorUrl).build());
+ @Autowired SchedulingRecommendationService(AppointmentRepository appointments,ClinicClosureRepository closures,@Value("${doctor-service.url}") String doctorUrl,@Value("${clinic.weekly-closure-day:SUNDAY}") String weeklyClosureDay){
+  this(appointments,closures,RestClient.builder().baseUrl(doctorUrl).build(),weeklyClosureDay);
  }
 
  SchedulingRecommendationService(AppointmentRepository appointments,ClinicClosureRepository closures,RestClient doctors){
-  this.appointments=appointments;this.closures=closures;this.engine=new SchedulingEngine();this.doctors=doctors;
+  this(appointments,closures,doctors,"SUNDAY");
+ }
+
+ SchedulingRecommendationService(AppointmentRepository appointments,ClinicClosureRepository closures,RestClient doctors,String weeklyClosureDay){
+  this.appointments=appointments;this.closures=closures;this.engine=new SchedulingEngine();this.doctors=doctors;this.weeklyClosureDay=weeklyClosureDay==null?"SUNDAY":weeklyClosureDay.trim().toUpperCase(Locale.ROOT);
  }
 
  public Result recommend(Request request,String authorization,String role){
@@ -235,8 +240,9 @@ public class SchedulingRecommendationService {
    throw new ResponseStatusException(HttpStatus.CONFLICT,"Mã bác sĩ và tài khoản bác sĩ không khớp.");
   return doctor.fullName();
  }
- private boolean isWeeklyClinicClosure(LocalDate date){return date.getDayOfWeek()==DayOfWeek.SUNDAY;}
- private String weeklyClinicClosureReason(LocalDate date){return isWeeklyClinicClosure(date)?"Phòng khám nghỉ Chủ nhật.":null;}
+ private boolean isWeeklyClinicClosure(LocalDate date){return !"NONE".equals(weeklyClosureDay)&&date.getDayOfWeek().name().equals(weeklyClosureDay);}
+ private String weeklyClinicClosureReason(LocalDate date){return isWeeklyClinicClosure(date)?"Phòng khám nghỉ "+displayWeekday(date.getDayOfWeek())+".":null;}
+ private String displayWeekday(DayOfWeek day){return switch(day){case MONDAY->"Thứ Hai";case TUESDAY->"Thứ Ba";case WEDNESDAY->"Thứ Tư";case THURSDAY->"Thứ Năm";case FRIDAY->"Thứ Sáu";case SATURDAY->"Thứ Bảy";case SUNDAY->"Chủ nhật";};}
  private boolean overlapsLunch(ZonedDateTime start,ZonedDateTime end){return start.toLocalTime().isBefore(LUNCH_END)&&end.toLocalTime().isAfter(LUNCH_START);}
  private int slotMinutesFor(DoctorData doctor,ScheduleData schedule,LocalDate date){
   return SLOT_MINUTES;

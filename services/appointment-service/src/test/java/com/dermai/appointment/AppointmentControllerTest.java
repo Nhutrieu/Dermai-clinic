@@ -349,4 +349,49 @@ class AppointmentControllerTest {
     verify(service).completeStaleConsultation(appointmentId);
     verify(audit).record(appointmentId, receptionistIdentity, "RECEPTIONIST", "COMPLETED_VISIT");
   }
+
+  @Test
+  void doctorCannotCompleteBeforeConfirmingPerformedServices() {
+    var service = mock(AppointmentService.class);
+    var repository = mock(AppointmentRepository.class);
+    var controller = new AppointmentController(service, repository, mock(SchedulingRecommendationService.class),
+        mock(AppointmentActionAuditService.class), mock(PatientDirectoryClient.class));
+    var appointmentId = UUID.randomUUID();
+    var doctorIdentity = UUID.randomUUID();
+    var appointment = new Appointment();
+    appointment.id = appointmentId;
+    appointment.doctorIdentityId = doctorIdentity;
+    appointment.status = AppointmentStatus.IN_PROGRESS;
+    when(repository.findById(appointmentId)).thenReturn(Optional.of(appointment));
+
+    assertThatThrownBy(() -> controller.complete(appointmentId, doctorIdentity, "DOCTOR"))
+        .isInstanceOfSatisfying(ResponseStatusException.class, error ->
+            assertThat(error.getStatusCode()).isEqualTo(HttpStatus.CONFLICT));
+    verify(service, never()).transition(appointmentId, AppointmentStatus.COMPLETED);
+  }
+
+  @Test
+  void doctorCanCompleteAfterConfirmingPerformedServices() {
+    var service = mock(AppointmentService.class);
+    var repository = mock(AppointmentRepository.class);
+    var audit = mock(AppointmentActionAuditService.class);
+    var controller = new AppointmentController(service, repository, mock(SchedulingRecommendationService.class), audit,
+        mock(PatientDirectoryClient.class));
+    var appointmentId = UUID.randomUUID();
+    var doctorIdentity = UUID.randomUUID();
+    var appointment = new Appointment();
+    appointment.id = appointmentId;
+    appointment.doctorIdentityId = doctorIdentity;
+    appointment.status = AppointmentStatus.IN_PROGRESS;
+    appointment.servicesConfirmedAt = Instant.now();
+    var completed = new Appointment();
+    completed.id = appointmentId;
+    when(repository.findById(appointmentId)).thenReturn(Optional.of(appointment));
+    when(service.transition(appointmentId, AppointmentStatus.COMPLETED)).thenReturn(completed);
+
+    controller.complete(appointmentId, doctorIdentity, "DOCTOR");
+
+    verify(service).transition(appointmentId, AppointmentStatus.COMPLETED);
+    verify(audit).record(appointmentId, doctorIdentity, "DOCTOR", "COMPLETED_VISIT");
+  }
 }

@@ -9,11 +9,16 @@ spring:
     hibernate.ddl-auto: validate
     properties.hibernate.default_schema: appointment
   flyway: {schemas: appointment, create-schemas: true}
+  servlet:
+    multipart:
+      max-file-size: 5MB
+      max-request-size: 6MB
 management.endpoints.web.exposure.include: health,info
 security.service-token: ${SERVICE_TOKEN:}
 doctor-service.url: ${DOCTOR_URL:http://doctor-service:8084}
 patient-service.url: ${PATIENT_URL:http://patient-service:8083}
 ai-service.url: ${AI_URL:http://ai-service:8000}
+clinic.weekly-closure-day: ${CLINIC_WEEKLY_CLOSURE_DAY:SUNDAY}
 spring.rabbitmq:
   host: ${RABBITMQ_HOST:rabbitmq}
   port: 5672

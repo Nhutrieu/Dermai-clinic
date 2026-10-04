@@ -27,6 +27,7 @@ payment:
   webhook-url: ${PAYOS_WEBHOOK_URL:}
   expiry-delay-ms: ${PAYMENT_EXPIRY_DELAY_MS:15000}
 payos:
+  fake-mode: ${PAYOS_FAKE_MODE:false}
   client-id: ${PAYOS_CLIENT_ID:}
   api-key: ${PAYOS_API_KEY:}
   checksum-key: ${PAYOS_CHECKSUM_KEY:}

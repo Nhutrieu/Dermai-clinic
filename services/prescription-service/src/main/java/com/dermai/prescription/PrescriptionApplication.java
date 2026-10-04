@@ -1,3 +1,3 @@
 package com.dermai.prescription;
-import org.springframework.boot.SpringApplication;import org.springframework.boot.autoconfigure.SpringBootApplication;
-@SpringBootApplication public class PrescriptionApplication{public static void main(String[]a){SpringApplication.run(PrescriptionApplication.class,a);}}
+import java.time.Clock;import org.springframework.boot.SpringApplication;import org.springframework.boot.autoconfigure.SpringBootApplication;import org.springframework.context.annotation.Bean;
+@SpringBootApplication public class PrescriptionApplication{public static void main(String[]a){SpringApplication.run(PrescriptionApplication.class,a);}@Bean Clock clock(){return Clock.systemUTC();}}

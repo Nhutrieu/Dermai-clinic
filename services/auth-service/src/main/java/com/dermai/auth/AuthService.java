@@ -161,7 +161,7 @@ public class AuthService {
  }
  private Identity receptionist(UUID id){
   var user=users.findById(id).orElseThrow(()->new StaffManagementException("STAFF_NOT_FOUND"));
-  if(user.role!=Identity.Role.RECEPTIONIST)throw new StaffManagementException("NOT_RECEPTIONIST");return user;
+  if(user.role!=Identity.Role.RECEPTIONIST)throw new StaffManagementException("NOT_MANAGED_STAFF");return user;
  }
  private Identity passwordManagedStaff(UUID id){
   var user=users.findById(id).orElseThrow(()->new StaffManagementException("STAFF_NOT_FOUND"));

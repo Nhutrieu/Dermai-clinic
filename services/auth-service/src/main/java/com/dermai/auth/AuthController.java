@@ -62,7 +62,7 @@ public class AuthController {
   return accountStatus.subscribe(actor);
  }
  @GetMapping("/me") ResponseEntity<?> me(@RequestHeader("X-User-Id") UUID actor,@RequestHeader("X-User-Role") String caller){
-  if(!Set.of("PATIENT","RECEPTIONIST").contains(caller))return ResponseEntity.status(403).body(Map.of("code","FORBIDDEN"));
+  if(!Set.of("PATIENT","RECEPTIONIST","PHARMACIST").contains(caller))return ResponseEntity.status(403).body(Map.of("code","FORBIDDEN"));
   var staff=service.findIdentity(actor).orElseThrow(()->new ResponseStatusException(HttpStatus.NOT_FOUND));return ResponseEntity.ok(view(staff));
  }
  @PatchMapping("/me/profile") ResponseEntity<?> updateMyProfile(@RequestHeader("X-User-Id") UUID actor,@RequestHeader("X-User-Role") String caller,@Valid @RequestBody StaffName x){
