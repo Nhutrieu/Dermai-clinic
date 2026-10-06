@@ -170,6 +170,58 @@ CREATE UNIQUE INDEX ux_ai_assessments_shared_appointment
   ON ai_assessments(appointment_id)
   WHERE appointment_id IS NOT NULL AND shared_with_doctor = true;
 
+-- Source: services/patient-service/src/main/resources/db/migration/V7__ai_privacy_controls.sql
+CREATE TABLE ai_consent_events (
+  id uuid PRIMARY KEY,
+  patient_identity_id uuid NOT NULL,
+  purpose varchar(80) NOT NULL,
+  policy_version varchar(40) NOT NULL,
+  granted_at timestamptz NOT NULL DEFAULT now()
+);
+
+ALTER TABLE ai_assessments
+  ADD COLUMN consent_event_id uuid REFERENCES ai_consent_events(id),
+  ADD COLUMN image_retention_until timestamptz,
+  ADD COLUMN deleted_at timestamptz;
+
+UPDATE ai_assessments
+SET image_retention_until = created_at + interval '180 days'
+WHERE image_bytes IS NOT NULL;
+
+CREATE INDEX ix_ai_assessments_image_retention
+  ON ai_assessments(image_retention_until)
+  WHERE image_bytes IS NOT NULL;
+
+CREATE TABLE ai_access_audit_logs (
+  id uuid PRIMARY KEY,
+  assessment_id uuid,
+  patient_identity_id uuid,
+  actor_identity_id uuid NOT NULL,
+  actor_role varchar(20) NOT NULL,
+  action_type varchar(50) NOT NULL,
+  source_ip varchar(64),
+  user_agent varchar(500),
+  created_at timestamptz NOT NULL DEFAULT now()
+);
+
+CREATE INDEX ix_ai_access_audit_actor_created
+  ON ai_access_audit_logs(actor_identity_id, created_at DESC);
+
+CREATE OR REPLACE FUNCTION reject_immutable_privacy_event_change()
+RETURNS trigger LANGUAGE plpgsql AS $$
+BEGIN
+  RAISE EXCEPTION 'privacy consent and audit events are immutable';
+END;
+$$;
+
+CREATE TRIGGER ai_consent_events_immutable
+  BEFORE UPDATE OR DELETE ON ai_consent_events
+  FOR EACH ROW EXECUTE FUNCTION reject_immutable_privacy_event_change();
+
+CREATE TRIGGER ai_access_audit_logs_immutable
+  BEFORE UPDATE OR DELETE ON ai_access_audit_logs
+  FOR EACH ROW EXECUTE FUNCTION reject_immutable_privacy_event_change();
+
 -- ============================================================================
 -- doctor-service
 -- ============================================================================
@@ -286,6 +338,37 @@ WHERE NOT EXISTS (
     WHERE saturday.doctor_id = template.doctor_id
       AND saturday.weekday = 6
 );
+
+-- Source: services/doctor-service/src/main/resources/db/migration/V13__clinic_services_by_specialty.sql
+ALTER TABLE clinic_services ADD COLUMN specialty_code VARCHAR(80);
+
+UPDATE clinic_services SET specialty_code = CASE code
+    WHEN 'ACNE' THEN 'DA LIỄU - ĐIỀU TRỊ MỤN'
+    WHEN 'PIGMENT' THEN 'DA LIỄU THẨM MỸ.'
+    WHEN 'REJUVENATION' THEN 'DA LIỄU THẨM MỸ.'
+    ELSE 'DA LIỄU TỔNG QUÁT'
+END;
+
+ALTER TABLE clinic_services ALTER COLUMN specialty_code SET NOT NULL;
+CREATE INDEX ix_clinic_services_specialty_active
+    ON clinic_services (upper(trim(specialty_code)), display_order)
+    WHERE active;
+
+-- Source: services/doctor-service/src/main/resources/db/migration/V14__assign_clinic_services_to_doctors.sql
+CREATE TABLE clinic_service_doctors (
+    service_id UUID NOT NULL REFERENCES clinic_services(id) ON DELETE CASCADE,
+    doctor_id UUID NOT NULL REFERENCES doctors(id) ON DELETE CASCADE,
+    PRIMARY KEY (service_id, doctor_id)
+);
+
+INSERT INTO clinic_service_doctors (service_id, doctor_id)
+SELECT service.id, doctor.id
+FROM clinic_services service
+JOIN doctors doctor
+  ON upper(trim(doctor.specialty_code)) = upper(trim(service.specialty_code));
+
+CREATE INDEX ix_clinic_service_doctors_doctor
+    ON clinic_service_doctors (doctor_id, service_id);
 
 -- ============================================================================
 -- appointment-service
@@ -777,6 +860,32 @@ ALTER TABLE appointments ADD CONSTRAINT no_patient_overlap
   ) WHERE (status IN
     ('HELD','PROPOSED','PENDING','ASSIGNED','PENDING_PAYMENT','PENDING_CONFIRMATION','CONFIRMED','CHECKED_IN','IN_PROGRESS'));
 
+-- Source: services/appointment-service/src/main/resources/db/migration/V30__appointment_performed_services.sql
+ALTER TABLE appointments ADD COLUMN services_confirmed_at TIMESTAMPTZ;
+ALTER TABLE appointments ADD COLUMN services_confirmed_by UUID;
+
+-- Existing finished visits predate service confirmation. Treat them as confirmed
+-- with no additional services so they remain billable after this migration.
+UPDATE appointments
+SET services_confirmed_at = COALESCE(updated_at, created_at, now()),
+    services_confirmed_by = doctor_identity_id
+WHERE status IN ('COMPLETED', 'FOLLOW_UP_REQUIRED');
+
+CREATE TABLE appointment_performed_services (
+    id UUID PRIMARY KEY,
+    appointment_id UUID NOT NULL REFERENCES appointments(id) ON DELETE CASCADE,
+    service_id UUID NOT NULL,
+    service_code VARCHAR(80) NOT NULL,
+    service_name VARCHAR(160) NOT NULL,
+    unit_price NUMERIC(12, 0) NOT NULL CHECK (unit_price >= 0),
+    confirmed_by UUID NOT NULL,
+    confirmed_at TIMESTAMPTZ NOT NULL,
+    CONSTRAINT uq_appointment_performed_service UNIQUE (appointment_id, service_id)
+);
+
+CREATE INDEX ix_appointment_performed_services_appointment
+    ON appointment_performed_services (appointment_id);
+
 -- ============================================================================
 -- payment-service
 -- ============================================================================
@@ -864,6 +973,14 @@ CREATE UNIQUE INDEX ux_payments_refund_receipt_number
 ALTER TABLE payments
   ADD CONSTRAINT ck_payments_refund_method
   CHECK (refund_method IS NULL OR refund_method IN ('BANK_TRANSFER', 'CASH'));
+
+-- Source: services/payment-service/src/main/resources/db/migration/V6__deposit_settings.sql
+CREATE TABLE deposit_settings (
+  id integer PRIMARY KEY CHECK (id = 1),
+  amount numeric(12,0) NOT NULL CHECK (amount BETWEEN 1000 AND 100000000),
+  updated_at timestamptz NOT NULL DEFAULT now(),
+  updated_by uuid
+);
 
 -- ============================================================================
 -- medical-record-service

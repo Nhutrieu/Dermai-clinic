@@ -25,10 +25,11 @@ import {
 const patient = credentialsFromEnvironment(1);
 const receptionist = roleCredentialsFromEnvironment("RECEPTIONIST");
 const doctor = roleCredentialsFromEnvironment("DOCTOR");
+const pharmacist = roleCredentialsFromEnvironment("PHARMACIST");
 const baseURL = process.env.E2E_BASE_URL?.trim() || "http://localhost:3000";
 const missingReasons = [
   !patient ? credentialsMissingReason([1]) : "",
-  !receptionist || !doctor ? roleCredentialsMissingReason(["RECEPTIONIST", "DOCTOR"]) : "",
+  !receptionist || !doctor || !pharmacist ? roleCredentialsMissingReason(["RECEPTIONIST", "DOCTOR", "PHARMACIST"]) : "",
 ].filter(Boolean).join(" ");
 
 function isApiResponse(response: Response, method: string, suffix: string) {
@@ -43,7 +44,7 @@ test.describe("complete clinic visit lifecycle", () => {
   test.skip(Boolean(missingReasons), missingReasons);
 
   test("E2E-FLOW-001: booking through reception, consultation and patient review", async ({ browser, page, request }) => {
-    test.setTimeout(180_000);
+    test.setTimeout(240_000);
     const runtimeReason = await runtimeUnavailable(request);
     if (runtimeReason) {
       test.skip(true, runtimeReason);
@@ -52,19 +53,57 @@ test.describe("complete clinic visit lifecycle", () => {
 
     const receptionistContext = await browser.newContext({ baseURL, locale: "vi-VN", timezoneId: "Asia/Ho_Chi_Minh" });
     const doctorContext = await browser.newContext({ baseURL, locale: "vi-VN", timezoneId: "Asia/Ho_Chi_Minh" });
+    const pharmacistContext = await browser.newContext({ baseURL, locale: "vi-VN", timezoneId: "Asia/Ho_Chi_Minh" });
     const receptionistPage = await receptionistContext.newPage();
     const doctorPage = await doctorContext.newPage();
+    const pharmacistPage = await pharmacistContext.newPage();
     let holdId: string | null = null;
     let appointmentId: string | null = null;
     let medicalRecordId: string | null = null;
     let prescriptionId: string | null = null;
+    let invoiceId: string | null = null;
 
     try {
       await Promise.all([
         loginAs(page, patient!, "PATIENT"),
         loginAs(receptionistPage, receptionist!, "RECEPTIONIST"),
         loginAs(doctorPage, doctor!, "DOCTOR"),
+        loginAs(pharmacistPage, pharmacist!, "PHARMACIST"),
       ]);
+
+      type InventoryProduct = { id: string; sku: string; name: string; currentQuantity: number };
+      const productsResult = await browserApi<InventoryProduct[]>(pharmacistPage, "/api/v1/inventory/products");
+      expect(productsResult.ok, JSON.stringify(productsResult.body)).toBeTruthy();
+      let medicine = productsResult.body.find(item => item.sku === "E2E-HYDROCORT");
+      if (!medicine) {
+        const created = await browserApi<InventoryProduct>(pharmacistPage, "/api/v1/inventory/products", {
+          method: "POST",
+          body: {
+            sku: "E2E-HYDROCORT",
+            name: "Hydrocortisone E2E",
+            unit: "tuýp",
+            importPrice: 20000,
+            sellingPrice: 35000,
+            minThreshold: 5,
+          },
+        });
+        expect(created.status, JSON.stringify(created.body)).toBe(201);
+        medicine = created.body;
+      }
+      if (medicine.currentQuantity < 10) {
+        const expires = new Date();
+        expires.setUTCFullYear(expires.getUTCFullYear() + 1);
+        const imported = await browserApi(pharmacistPage, "/api/v1/inventory/import-batch", {
+          method: "POST",
+          body: {
+            productId: medicine.id,
+            batchNumber: `E2E-${Date.now()}`,
+            expiryDate: expires.toISOString().slice(0, 10),
+            quantity: 100,
+          },
+        });
+        expect(imported.status, JSON.stringify(imported.body)).toBe(201);
+      }
 
       const [patientState, doctorResult] = await Promise.all([
         patientSnapshot(page),
@@ -128,7 +167,7 @@ test.describe("complete clinic visit lifecycle", () => {
       expect(booked).not.toBeNull();
       appointmentId = booked!.id;
       holdId = null;
-      expect(booked!.status).toBe("ASSIGNED");
+      expect(booked!.status).toBe("PENDING_PAYMENT");
 
       await receptionistPage.reload();
       await expectRoleNavigation(receptionistPage, "Lễ tân");
@@ -137,12 +176,12 @@ test.describe("complete clinic visit lifecycle", () => {
       await expect(receptionistPage.getByRole("heading", { name: "Yêu cầu đặt lịch", exact: true })).toBeVisible();
       const requestRow = receptionistPage.locator(".reception-request-item")
         .filter({ hasText: reason })
-        .filter({ has: receptionistPage.getByRole("button", { name: "Xác nhận lịch", exact: true }) });
+        .filter({ has: receptionistPage.getByRole("button", { name: "Xác nhận yêu cầu", exact: true }) });
       await expect(requestRow).toBeVisible({ timeout: 15_000 });
       const confirmResponsePromise = receptionistPage.waitForResponse(response =>
         isApiResponse(response, "POST", `/api/v1/appointments/${appointmentId}/confirm`),
       );
-      await requestRow.getByRole("button", { name: "Xác nhận lịch", exact: true }).click();
+      await requestRow.getByRole("button", { name: "Xác nhận yêu cầu", exact: true }).click();
       const receptionConfirmResponse = await confirmResponsePromise;
       expect(receptionConfirmResponse.status()).toBe(200);
       expect((await responseBody<Appointment>(receptionConfirmResponse))?.status).toBe("CONFIRMED");
@@ -196,12 +235,16 @@ test.describe("complete clinic visit lifecycle", () => {
       medicalRecordId = record?.id || null;
       expect(medicalRecordId).toBeTruthy();
 
-      await consultation.getByLabel("Tên thuốc", { exact: true }).fill("Hydrocortisone E2E");
+      const medicineSearch = consultation.getByLabel("Tìm thuốc cho dòng 1", { exact: true });
+      await medicineSearch.fill("Hydrocortisone E2E");
+      await consultation.getByRole("option", { name: /Hydrocortisone E2E/ }).click();
+      await consultation.getByLabel("Số lượng thuốc 1", { exact: true }).fill("2");
       await consultation.getByLabel("Liều dùng", { exact: true }).fill("Bôi một lớp mỏng");
       await consultation.getByLabel("Tần suất", { exact: true }).fill("2 lần/ngày");
       await consultation.getByLabel("Thời gian dùng", { exact: true }).fill("7 ngày");
       await consultation.getByLabel("Hướng dẫn riêng", { exact: true }).fill("Ngưng dùng nếu kích ứng.");
-      await consultation.getByLabel("Hướng dẫn chung", { exact: true }).fill("Giữ vùng da sạch và tái khám khi triệu chứng tăng.");
+      await consultation.locator(".prescription-general-instructions textarea")
+        .fill("Giữ vùng da sạch và tái khám khi triệu chứng tăng.");
       const prescriptionResponsePromise = doctorPage.waitForResponse(response =>
         isApiResponse(response, "POST", "/api/v1/prescriptions"),
       );
@@ -215,6 +258,19 @@ test.describe("complete clinic visit lifecycle", () => {
         expect.objectContaining({ drugName: "Hydrocortisone E2E" }),
       ]));
 
+      const firstService = consultation.locator(".doctor-service-options input[type=checkbox]").first();
+      await expect(firstService).toBeVisible();
+      await firstService.check();
+      const servicesResponsePromise = doctorPage.waitForResponse(response =>
+        isApiResponse(response, "PUT", `/api/v1/appointments/${appointmentId}/performed-services`),
+      );
+      await consultation.locator(".doctor-service-confirmation > footer button").click();
+      const servicesResponse = await servicesResponsePromise;
+      const confirmedServices = await responseBody<{ confirmedAt: string; items: Array<{ serviceId: string; unitPrice: number }> }>(servicesResponse);
+      expect(servicesResponse.status(), JSON.stringify(confirmedServices)).toBe(200);
+      expect(confirmedServices?.confirmedAt).toBeTruthy();
+      expect(confirmedServices?.items).toHaveLength(1);
+
       const completeResponsePromise = doctorPage.waitForResponse(response =>
         isApiResponse(response, "POST", `/api/v1/appointments/${appointmentId}/complete`),
       );
@@ -227,10 +283,90 @@ test.describe("complete clinic visit lifecycle", () => {
         contentType: "image/png",
       });
 
+      await receptionistPage.getByRole("navigation", { name: "Điều hướng Lễ tân" })
+        .getByRole("button", { name: "Hóa đơn", exact: true }).click();
+      await expect(receptionistPage.getByRole("heading", { name: "Hóa đơn", exact: true })).toBeVisible();
+      await receptionistPage.locator(".cashier-hero").getByRole("button", { name: "Làm mới", exact: true }).click();
+      const appointmentPicker = receptionistPage.locator("#cashier-patient-picker");
+      await appointmentPicker.fill(patientState.patient.fullName);
+      const appointmentOption = receptionistPage.locator(".cashier-patient-results button").filter({ hasText: patientState.patient.fullName }).first();
+      await expect(appointmentOption).toBeVisible({ timeout: 30_000 });
+      await appointmentOption.click();
+      const confirmedServicePanel = receptionistPage.locator(".cashier-services-confirmed");
+      await expect(confirmedServicePanel.locator("li")).toHaveCount(1, { timeout: 15_000 });
+      await expect(confirmedServicePanel.locator("input[type=checkbox]")).toHaveCount(0);
+      const createInvoiceButton = receptionistPage.getByRole("button", { name: "Tạo hóa đơn", exact: true });
+      await expect(createInvoiceButton).toBeEnabled({ timeout: 15_000 });
+      const invoiceResponsePromise = receptionistPage.waitForResponse(response =>
+        isApiResponse(response, "POST", "/api/v1/billing/invoices"),
+      );
+      await createInvoiceButton.click();
+      const invoiceResponse = await invoiceResponsePromise;
+      type Invoice = {
+        id: string;
+        status: "AWAITING_PAYMENT" | "PAID" | "DISPENSED";
+        remainingAmount: number;
+        medicineFulfillment: string;
+        serviceItems: Array<{ serviceId: string; serviceName: string; unitPrice: number }>;
+        items: Array<{ medicineName: string; prescribedQuantity: number }>;
+      };
+      let invoice = await responseBody<Invoice>(invoiceResponse);
+      expect(invoiceResponse.status(), JSON.stringify(invoice)).toBe(201);
+      expect(invoice).toMatchObject({
+        medicineFulfillment: "CLINIC_PHARMACY",
+        serviceItems: [expect.objectContaining({ serviceId: confirmedServices!.items[0].serviceId })],
+        items: [expect.objectContaining({ medicineName: "Hydrocortisone E2E", prescribedQuantity: 2 })],
+      });
+      invoiceId = invoice!.id;
+
+      const invoiceCard = receptionistPage.locator(".cashier-invoice")
+        .filter({ hasText: `#${invoiceId.slice(0, 8).toUpperCase()}` });
+      await expect(invoiceCard).toBeVisible({ timeout: 15_000 });
+      await invoiceCard.getByRole("button", { name: "Xem chi tiết", exact: true }).click();
+      if (invoice!.status === "AWAITING_PAYMENT") {
+        const cashInput = invoiceCard.locator("footer label").filter({ hasText: "Khách đưa" }).locator("input");
+        await cashInput.fill(String(invoice!.remainingAmount));
+        const cashResponsePromise = receptionistPage.waitForResponse(response =>
+          isApiResponse(response, "POST", `/api/v1/billing/invoices/${invoiceId}/cash`),
+        );
+        await invoiceCard.getByRole("button", { name: "Thu tiền mặt", exact: true }).click();
+        const cashResponse = await cashResponsePromise;
+        const receipt = await responseBody<{ invoice: Invoice }>(cashResponse);
+        expect(cashResponse.status(), JSON.stringify(receipt)).toBe(200);
+        invoice = receipt!.invoice;
+      }
+      expect(invoice!.status).toBe("PAID");
+      await expect(invoiceCard.getByText("Đã chuyển sang quầy Dược", { exact: true })).toBeVisible({ timeout: 15_000 });
+
+      await pharmacistPage.reload();
+      await expectRoleNavigation(pharmacistPage, "Dược sĩ");
+      await pharmacistPage.getByRole("navigation", { name: "Điều hướng Dược sĩ" })
+        .getByRole("button", { name: "Đơn chờ xuất", exact: true }).click();
+      await expect(pharmacistPage.getByRole("heading", { name: "Xuất thuốc an toàn, đúng lô", exact: true })).toBeVisible();
+      const prescriptionCode = `RX-${invoiceId.slice(0, 8).toUpperCase()}`;
+      const pharmacyRow = pharmacistPage.locator(".pharmacy-queue-item").filter({ hasText: prescriptionCode });
+      await expect(pharmacyRow).toBeVisible({ timeout: 15_000 });
+      await pharmacyRow.click();
+      const dispenseResponsePromise = pharmacistPage.waitForResponse(response =>
+        isApiResponse(response, "POST", "/api/v1/pharmacy/dispense"),
+      );
+      await pharmacistPage.getByRole("button", { name: "Xác nhận Xuất kho & Giao thuốc", exact: true }).click();
+      const dispenseResponse = await dispenseResponsePromise;
+      const dispensed = await responseBody<{ prescriptionId: string; status: string }>(dispenseResponse);
+      expect(dispenseResponse.status(), JSON.stringify(dispensed)).toBe(200);
+      expect(dispensed).toMatchObject({ prescriptionId: invoiceId, status: "DISPENSED" });
+      const synchronizedInvoice = await browserApi<Invoice>(
+        receptionistPage,
+        `/api/v1/billing/invoices/${invoiceId}`,
+      );
+      expect(synchronizedInvoice.status, JSON.stringify(synchronizedInvoice.body)).toBe(200);
+      expect(synchronizedInvoice.body.status).toBe("DISPENSED");
+
       await page.reload();
       await expectRoleNavigation(page, "Bệnh nhân");
       await page.getByRole("navigation", { name: "Điều hướng Bệnh nhân" })
         .getByRole("button", { name: "Kết quả khám", exact: true }).click();
+      await page.getByRole("menuitem", { name: "Kết quả khám", exact: true }).click();
       await expect(page.getByRole("heading", { name: "Kết quả khám của bạn" })).toBeVisible();
       const medicalResult = page.locator(".patient-medical-list li").filter({ hasText: reason });
       await expect(medicalResult).toBeVisible({ timeout: 15_000 });
@@ -267,9 +403,11 @@ test.describe("complete clinic visit lifecycle", () => {
           appointmentId,
           medicalRecordId,
           prescriptionId,
+          invoiceId,
           doctorId: candidate!.doctor.id,
           startAt: candidate!.slot.startAt,
           finalStatus: "COMPLETED",
+          invoiceStatus: "DISPENSED",
           reviewSubmitted: true,
         }, null, 2)),
         contentType: "application/json",
@@ -291,7 +429,7 @@ test.describe("complete clinic visit lifecycle", () => {
         const hidden = await browserApi<unknown>(page, `/api/v1/medical-records/${medicalRecordId}/hide`, { method: "PATCH" });
         if (!hidden.ok) cleanupErrors.push(new Error(`Không thể ẩn hồ sơ E2E ${medicalRecordId}: HTTP ${hidden.status}.`));
       }
-      await Promise.all([receptionistContext.close(), doctorContext.close()]);
+      await Promise.all([receptionistContext.close(), doctorContext.close(), pharmacistContext.close()]);
       if (cleanupErrors.length) throw new AggregateError(cleanupErrors, "Không dọn sạch được dữ liệu lifecycle E2E.");
     }
   });

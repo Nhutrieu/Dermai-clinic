@@ -853,3 +853,426 @@
 .doctor-profile-readonly-grid>div:last-child:nth-child(odd){grid-column:1/-1;border-right:0}
 @media(max-width:760px){.doctor-profile-readonly-grid,.doctor-profile-personal-view{grid-template-columns:1fr}.doctor-profile-readonly-grid>div,.doctor-profile-personal-view>div,.doctor-profile-readonly-grid>div:nth-child(odd),.doctor-profile-personal-view>div:nth-child(odd),.doctor-profile-readonly-grid>div:nth-last-child(-n+2),.doctor-profile-personal-view>div:nth-last-child(-n+2){border-right:0;border-bottom:1px solid var(--doctor-profile-border)}.doctor-profile-readonly-grid>div:last-child,.doctor-profile-personal-view>div:last-child{border-bottom:0}}
 @media(max-width:520px){.doctor-profile-edit-actions,.doctor-profile-edit-actions button{width:100%}}
+
+/* Prescription workspace: give medication details room to breathe at every breakpoint. */
+.consultation-dialog {
+  width: min(1280px, 100%);
+}
+
+.consultation input,
+.consultation select,
+.consultation textarea {
+  min-width: 0;
+  background: #fff;
+}
+
+.prescription-stage {
+  margin-top: 20px;
+}
+
+.doctor-consult-steps {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 0;
+  margin: 18px 0 0;
+  padding: 0;
+  list-style: none;
+  border: 1px solid #d8e6e1;
+  border-radius: 14px;
+  overflow: hidden;
+  background: #f7faf9;
+}
+
+.doctor-consult-steps li {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+  padding: 12px 16px;
+  color: #758781;
+}
+
+.doctor-consult-steps li + li { border-left: 1px solid #d8e6e1; }
+.doctor-consult-steps li > span { display: grid; flex: 0 0 28px; width: 28px; height: 28px; place-items: center; border: 1px solid #c8d8d3; border-radius: 50%; background: #fff; font-size: 12px; font-weight: 900; }
+.doctor-consult-steps li > div { display: grid; min-width: 0; gap: 2px; }
+.doctor-consult-steps li b { color: inherit; font-size: 12px; }
+.doctor-consult-steps li small { overflow: hidden; font-size: 10px; text-overflow: ellipsis; white-space: nowrap; }
+.doctor-consult-steps li.is-complete { color: #157467; background: #f0f8f5; }
+.doctor-consult-steps li.is-complete > span { border-color: #8bc9ba; background: #dff4ee; }
+.doctor-consult-steps li.is-current { color: #fff; background: linear-gradient(135deg, #116f64, #139486); }
+.doctor-consult-steps li.is-current > span { border-color: rgba(255,255,255,.55); background: rgba(255,255,255,.16); }
+
+.prescription-stage-head {
+  display: flex;
+  align-items: end;
+  justify-content: space-between;
+  gap: 24px;
+}
+
+.prescription-stage-head h3,
+.prescription-stage-head p {
+  margin: 0;
+}
+
+.prescription-stage-head span {
+  display: block;
+  margin-bottom: 5px;
+  color: #118879;
+  font-size: 10px;
+  font-weight: 850;
+  letter-spacing: .14em;
+}
+
+.prescription-stage-head h3 {
+  color: #173f36;
+  font-size: 18px;
+}
+
+.prescription-stage-head p {
+  max-width: 430px;
+  color: #6b807a;
+  font-size: 12px;
+  text-align: right;
+}
+
+.prescription-stage > form {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 14px;
+  margin-top: 14px;
+}
+
+.prescription-stage .drug-row {
+  position: relative;
+  display: grid;
+  grid-template-columns:
+    minmax(230px, 2.2fr)
+    minmax(90px, .65fr)
+    minmax(145px, 1.15fr)
+    minmax(145px, 1.1fr);
+  gap: 12px;
+  padding: 18px 16px 16px 42px;
+  border: 1px solid #d5e4df;
+  border-radius: 14px;
+  background: #f7fbf9;
+}
+
+.drug-row-number {
+  position: absolute;
+  top: 18px;
+  left: 14px;
+  width: 20px;
+  height: 20px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  background: #168f80;
+  color: #fff;
+  font-size: 11px;
+  font-weight: 850;
+}
+
+.prescription-stage .drug-row .drug-field {
+  min-width: 0;
+  gap: 6px;
+  color: #345d53;
+  font-size: 11px;
+  font-weight: 800;
+}
+
+.prescription-stage .drug-field select,
+.prescription-stage .drug-field input {
+  width: 100%;
+  height: 44px;
+}
+
+.prescription-stage .drug-field-medicine select {
+  font-weight: 700;
+}
+
+.medicine-picker { position: relative; min-width: 0; }
+.prescription-stage .medicine-picker > input {
+  padding-right: 36px;
+  font-weight: 700;
+  background-image: linear-gradient(45deg, transparent 50%, #52736b 50%), linear-gradient(135deg, #52736b 50%, transparent 50%);
+  background-position: calc(100% - 17px) 19px, calc(100% - 12px) 19px;
+  background-repeat: no-repeat;
+  background-size: 5px 5px, 5px 5px;
+}
+.medicine-picker-results {
+  position: absolute;
+  z-index: 20;
+  top: calc(100% + 6px);
+  left: 0;
+  width: max(100%, 390px);
+  max-width: min(520px, calc(100vw - 80px));
+  max-height: 290px;
+  overflow-y: auto;
+  padding: 6px;
+  border: 1px solid #c8ddd6;
+  border-radius: 11px;
+  background: #fff;
+  box-shadow: 0 14px 34px rgba(7, 49, 40, .16);
+}
+.medicine-picker-results button {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  padding: 10px 11px;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  color: #173f36;
+  text-align: left;
+}
+.medicine-picker-results button:hover,
+.medicine-picker-results button:focus-visible,
+.medicine-picker-results button[aria-selected="true"] { background: #eaf6f2; }
+.medicine-picker-results button span,
+.medicine-picker-results button strong,
+.medicine-picker-results button small { display: block; min-width: 0; }
+.medicine-picker-results button strong {
+  overflow: hidden;
+  font-size: 13px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.medicine-picker-results button small {
+  margin-top: 3px;
+  color: #6d817b;
+  font-size: 11px;
+  font-weight: 600;
+}
+.medicine-picker-results button em {
+  flex: 0 0 auto;
+  color: #168475;
+  font-size: 11px;
+  font-style: normal;
+  font-weight: 800;
+}
+.medicine-picker-results > p {
+  margin: 0;
+  padding: 12px;
+  color: #71847f;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.prescription-stage .drug-field-duration {
+  grid-column: 1 / 2;
+}
+
+.prescription-stage .drug-field-instructions {
+  grid-column: 2 / 5;
+}
+
+.prescription-stage .drug-remove {
+  grid-column: 4;
+  justify-self: end;
+  padding: 8px 11px;
+  border: 1px solid #e2c5c0;
+  border-radius: 8px;
+  background: #fff;
+  color: #a9483d;
+  font-size: 12px;
+  font-weight: 750;
+}
+
+.prescription-general-instructions {
+  padding-top: 2px;
+}
+
+.prescription-general-instructions > span {
+  color: #2f5b50;
+}
+
+.prescription-general-instructions > small {
+  color: #71847f;
+  font-size: 11px;
+  font-weight: 500;
+}
+
+.prescription-general-instructions textarea {
+  min-height: 84px;
+}
+
+.prescription-stage .prescription-actions {
+  justify-content: flex-end;
+  padding-top: 2px;
+}
+
+.prescription-stage .prescription-actions button {
+  min-height: 44px;
+}
+
+.prescription-stage .prescription-actions .prescription-skip { border-color: #a8cbc3; color: #176b60; font-weight: 800; }
+
+.prescription-stage .finish-visit {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 20px;
+  margin-top: 18px;
+  padding: 16px;
+  border: 1px solid #dce8e3;
+  border-radius: 12px;
+  background: #fbfdfc;
+}
+
+.prescription-stage .finish-visit strong {
+  display: block;
+  color: #244f44;
+  font-size: 13px;
+}
+
+.prescription-stage .finish-visit p {
+  margin: 4px 0 0;
+  color: #71847f;
+  font-size: 12px;
+}
+
+.prescription-stage .finish-visit .primary {
+  flex: 0 0 auto;
+  min-height: 44px;
+}
+
+.doctor-service-confirmation {
+  display: grid;
+  gap: 18px;
+  margin-top: 0;
+  padding: clamp(18px, 2.5vw, 28px);
+  border: 1px solid #cfe2dc;
+  border-radius: 18px;
+  background: linear-gradient(145deg, #f8fcfb 0%, #eef8f5 100%);
+  box-shadow: 0 14px 34px rgba(15, 91, 77, .08);
+}
+
+.doctor-service-confirmation.is-confirmed {
+  border-color: #87c7b8;
+  background: #f1faf7;
+}
+
+.doctor-service-confirmation > header,
+.doctor-service-confirmation > footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.doctor-service-confirmation > header span {
+  color: #0f766e;
+  font-size: 10px;
+  font-weight: 900;
+  letter-spacing: .08em;
+}
+
+.doctor-service-confirmation > header h3 {
+  margin: 3px 0 0;
+  color: #173f38;
+  font-size: 16px;
+}
+
+.doctor-service-confirmation > header > b { padding: 8px 12px; border: 1px solid #b9ddd4; border-radius: 999px; background: #fff; color: #0f766e; font-size: 12px; white-space: nowrap; }
+.doctor-service-confirmation > p { max-width: 760px; margin: 0; color: #5f756f; font-size: 13px; line-height: 1.55; }
+.doctor-service-options { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 9px; }
+.doctor-service-options label { display:grid!important;grid-template-columns:auto minmax(0,1fr) auto;align-items:center;gap:12px;min-height:76px;box-sizing:border-box;padding:13px 14px;border:1px solid #d3e3de;border-radius:13px;background:#fff;cursor:pointer;transition:border-color .18s,box-shadow .18s,transform .18s}
+.doctor-service-options label:hover{border-color:#8fc8ba;transform:translateY(-1px);box-shadow:0 8px 20px rgba(15,91,77,.08)}
+.doctor-service-options label.selected { border-color: #0f9488; background: #eaf8f5; box-shadow: 0 0 0 2px rgba(15,148,136,.15); }
+.doctor-service-options input { width: auto; accent-color: #0f9488; }
+.doctor-service-options label span { display: grid; gap: 3px; }
+.doctor-service-options label small { color: #617a74; }
+.doctor-service-options label em{color:#0f766e;font-size:12px;font-style:normal;font-weight:900;white-space:nowrap}
+.doctor-service-empty{padding:24px;border:1px dashed #aacfc5;border-radius:13px;background:rgba(255,255,255,.72);color:#55736b;text-align:center;font-size:13px;font-weight:700}
+.doctor-service-confirmation > footer span { color: #526e67; font-size: 12px; font-weight: 700; }
+.doctor-service-confirmation > footer{padding-top:15px;border-top:1px solid #d5e6e1}
+.doctor-service-confirmation > footer button { min-height: 44px; padding: 0 20px; border: 0; border-radius: 11px; background: #0f766e; color: #fff; font-weight: 850; cursor: pointer; box-shadow:0 8px 18px rgba(15,118,110,.18) }
+.doctor-service-confirmation > footer button:disabled { opacity: .55; cursor: wait; }
+.doctor-back-to-prescription{display:block;margin:12px 0 0;padding:7px 3px;border:0;background:transparent;color:#477168;font-size:12px;font-weight:750;cursor:pointer}
+
+@media (max-width: 1050px) {
+  .prescription-stage .drug-row {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .prescription-stage .drug-field-duration,
+  .prescription-stage .drug-field-instructions {
+    grid-column: auto;
+  }
+
+  .prescription-stage .drug-field-medicine {
+    grid-column: 1 / -1;
+  }
+
+  .prescription-stage .drug-remove {
+    grid-column: 2;
+  }
+}
+
+@media (max-width: 700px) {
+  .doctor-consult-steps { grid-template-columns: 1fr; }
+  .doctor-consult-steps li + li { border-top: 1px solid #d8e6e1; border-left: 0; }
+  .prescription-stage-head {
+    align-items: start;
+    flex-direction: column;
+    gap: 7px;
+  }
+
+  .prescription-stage-head p {
+    text-align: left;
+  }
+
+  .prescription-stage .prescription-actions {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .prescription-stage .prescription-actions button {
+    width: 100%;
+  }
+}
+
+@media (max-width: 600px) {
+  .doctor-service-options { grid-template-columns: 1fr; }
+  .doctor-service-confirmation > header,
+  .doctor-service-confirmation > footer { align-items: stretch; flex-direction: column; }
+  .doctor-service-confirmation > footer button { width: 100%; }
+  .doctor-service-options label{grid-template-columns:auto minmax(0,1fr)}
+  .doctor-service-options label em{grid-column:2}
+  .prescription-stage .drug-row {
+    grid-template-columns: 1fr;
+    padding: 42px 12px 14px;
+  }
+
+  .drug-row-number {
+    top: 14px;
+    left: 14px;
+  }
+
+  .prescription-stage .drug-field-medicine,
+  .prescription-stage .drug-remove {
+    grid-column: auto;
+  }
+
+  .prescription-stage .drug-remove {
+    width: 100%;
+    justify-self: stretch;
+  }
+
+  .prescription-stage .finish-visit {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .prescription-stage .finish-visit .primary {
+    width: 100%;
+  }
+
+  .medicine-picker-results {
+    width: 100%;
+    max-width: 100%;
+  }
+}

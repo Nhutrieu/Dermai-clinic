@@ -1,16 +1,25 @@
 /* Reception booking is a dense operational workflow, not a marketing surface. */
-.role-receptionist .hotline-launch {
+.shell.role-receptionist > .app-main {
+  /* Keep the last row, pagination and inline notices above the floating
+     booking/chat controls when the page is scrolled to the end. */
+  padding-bottom: 150px;
+  scroll-padding-bottom: 150px;
+}
+button.hotline-launch {
   position: fixed;
   z-index: 94;
-  right: 24px;
-  bottom: 86px;
+  right: 24px !important;
+  bottom: 88px !important;
   display: inline-flex;
-  min-height: var(--control-min-height);
+  width: 48px;
+  height: 48px;
+  min-height: 48px;
   align-items: center;
-  gap: var(--space-2);
-  padding: 0 var(--space-4);
+  justify-content: center;
+  gap: 0;
+  padding: 0;
   border: 1px solid var(--color-primary);
-  border-radius: var(--radius-control);
+  border-radius: 50%;
   background: var(--color-primary);
   color: var(--color-surface);
   box-shadow: var(--shadow-sm);
@@ -18,16 +27,38 @@
   font-weight: 800;
 }
 
-.role-receptionist .hotline-launch:hover {
+.hotline-launch > span {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+button.reception-notification-launcher {
+  right: 24px !important;
+  bottom: 152px !important;
+  z-index: 100 !important;
+}
+
+.reception-notification-panel {
+  right: 84px !important;
+  bottom: 24px !important;
+  z-index: 99 !important;
+}
+
+.hotline-launch:hover {
   border-color: var(--color-primary-strong);
   background: var(--color-primary-strong);
 }
 
-.role-receptionist .hotline-launch:active {
+.hotline-launch:active {
   transform: translateY(1px);
 }
 
-.role-receptionist .hotline-launch svg {
+.hotline-launch svg {
   width: 18px;
   height: 18px;
 }
@@ -1135,7 +1166,7 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .role-receptionist .hotline-launch:active,
+  .hotline-launch:active,
   .reception-slot-grid > button.is-updated {
     animation: none;
     transform: none;
@@ -1145,5 +1176,121 @@
   .reception-action-dialog,
   .hotline-success {
     animation: none;
+  }
+}
+
+.hotline-payment-options {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--space-3);
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+.hotline-payment-options legend {
+  grid-column: 1 / -1;
+  margin-bottom: var(--space-2);
+  color: var(--color-text-secondary);
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.hotline-payment-options > label {
+  display: flex;
+  min-height: 78px;
+  gap: var(--space-3);
+  align-items: flex-start;
+  padding: var(--space-3);
+  border: 1px solid var(--color-border-strong);
+  border-radius: var(--radius-control);
+  background: var(--color-surface);
+  cursor: pointer;
+}
+
+.hotline-payment-options > label:has(input:checked) {
+  border-color: var(--color-primary);
+  background: var(--color-primary-soft);
+}
+
+.hotline-payment-options input {
+  margin-top: 4px;
+}
+
+.hotline-payment-options strong,
+.hotline-payment-options small {
+  display: block;
+}
+
+.hotline-payment-options small {
+  margin-top: 4px;
+  color: var(--color-text-secondary);
+  line-height: 1.4;
+}
+
+.hotline-payment-email {
+  margin-top: var(--space-4);
+}
+
+.hotline-payment-result {
+  display: grid;
+  justify-items: center;
+  gap: var(--space-3);
+  padding: var(--space-4);
+  border: 1px solid var(--color-success-border);
+  border-radius: var(--radius-control);
+  background: var(--color-surface);
+  text-align: center;
+}
+
+.hotline-payment-result p {
+  margin: 0;
+  color: var(--color-text-secondary);
+}
+
+.hotline-payment-result a {
+  min-height: 44px;
+  padding: 11px 18px;
+  border-radius: var(--radius-control);
+  background: var(--color-primary);
+  color: white;
+  font-weight: 800;
+  text-decoration: none;
+}
+
+.hotline-payment-qr {
+  display: block;
+  width: min(280px, 100%);
+  height: auto;
+  padding: 8px;
+  border-radius: var(--radius-control);
+  background: white;
+}
+
+@media (max-width: 640px) {
+  .hotline-payment-options {
+    grid-template-columns: 1fr;
+  }
+}
+@media (max-width: 780px) {
+  .shell.role-receptionist > .app-main {
+    padding-bottom: 190px;
+    scroll-padding-bottom: 190px;
+  }
+
+  button.hotline-launch {
+    right: 14px !important;
+    bottom: 152px !important;
+  }
+
+  button.reception-notification-launcher {
+    right: 14px !important;
+    bottom: 216px !important;
+  }
+
+  .reception-notification-panel {
+    right: 74px !important;
+    bottom: 88px !important;
+    width: min(370px, calc(100vw - 104px));
   }
 }

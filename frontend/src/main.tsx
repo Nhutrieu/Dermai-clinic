@@ -11,7 +11,7 @@ import AppHeader from "./components/AppHeader";
 import AppFooter from "./components/AppFooter";
 import PasswordRequirements from "./components/PasswordRequirements";
 import { authErrorMessage, isPasswordValid, passwordValidationMessage, PASSWORD_MAX_LENGTH, PASSWORD_MIN_LENGTH } from "./core/passwordPolicy";
-import { NAVIGATION_BY_ROLE, ROLE_NAMES } from "./core/appNavigation";
+import { NAVIGATION_BY_ROLE, ROLE_NAMES, type AppNavItemId } from "./core/appNavigation";
 import "./styles/design-system.css";
 import "./styles/global.css";
 import "./styles/navigation.css";
@@ -26,7 +26,10 @@ import "./styles/chat.css";
 import "./styles/support-assignment.css";
 import "./styles/support-ai.css";
 import "./styles/admin-analytics.css";
+import "./styles/admin-billing.css";
+import "./styles/admin-inventory.css";
 import "./styles/workspace-theme.css";
+import "./styles/cashier.css";
 import "./styles/auth-home-theme.css";
 import GoogleSignIn, { type GoogleLoginResult } from "./features/auth/GoogleSignIn";
 import HomePage from "./components/v2/homepage/HomepageV2";
@@ -36,15 +39,20 @@ const PatientRoute = lazy(() => import("./routes/PatientRoute"));
 const DoctorRoute = lazy(() => import("./routes/DoctorRoute"));
 const ReceptionistRoute = lazy(() => import("./routes/ReceptionistRoute"));
 const AdminRoute = lazy(() => import("./routes/AdminRoute"));
+const PharmacyRoute = lazy(() => import("./routes/PharmacyRoute"));
 const AdminPanel = lazy(() => import("./features/admin/AdminPanel"));
 const ReceptionWorkspace = lazy(() => import("./features/reception/ReceptionWorkspace"));
+const PharmacyModule = lazy(() => import("./features/pharmacy/PharmacyModule"));
+
 const PatientDashboard = lazy(() => import("./features/patient/PatientDashboard"));
 const PatientAppointments = lazy(() => import("./features/patient/PatientAppointmentsView"));
 const PatientMedicalRecords = lazy(() => import("./features/patient/PatientMedicalRecords"));
+const PatientInvoices = lazy(() => import("./features/patient/PatientInvoices"));
 const DoctorProfile = lazy(() => import("./features/doctor/DoctorProfileScreen"));
 const DoctorView = lazy(() => import("./features/doctor/DoctorView"));
 const ReceptionHotlineBooking = lazy(() => import("./features/reception/HotlineBooking"));
 const PatientNotifications = lazy(() => import("./features/patient/PatientNotifications"));
+const ReceptionNotifications = lazy(() => import("./features/reception/ReceptionNotifications"));
 const PatientAiScreen = lazy(() => import("./features/patient/PatientAiScreen"));
 const SupportChat = lazy(() => import("./features/support/SupportChat"));
 const ReceptionistAccountDialog = lazy(() => import("./features/reception/ReceptionistAccountDialog"));
@@ -108,6 +116,7 @@ function App() {
     const [authNotice, setAuthNotice] = useState("");
     const [accountLocked, setAccountLocked] = useState(() => { try { return localStorage.getItem(ACCOUNT_LOCKED_STORAGE_KEY) === "1" || sessionStorage.getItem(ACCOUNT_LOCKED_STORAGE_KEY) === "1"; } catch { return false; } });
     const [sessionRecoveryReady, setSessionRecoveryReady] = useState(false);
+    const [paymentReturnProcessing, setPaymentReturnProcessing] = useState(() => ["/payment/success", "/payment/cancel"].includes(window.location.pathname));
     const sessionRef = useRef(session);
     const sessionChannelRef = useRef<BroadcastChannel | null>(null);
 
@@ -288,6 +297,66 @@ function App() {
         if (event.type === "DOCTOR_PROFILE_UPDATED" || event.type === "DOCTOR_LEAVE_APPROVED") window.dispatchEvent(new CustomEvent("doctor-profiles-changed", { detail: event }));
         if (event.type === "DOCTOR_LEAVE_APPROVED") window.dispatchEvent(new CustomEvent("doctor-leave-approved", { detail: event }));
     }, { path: "/api/v1/doctors/ws/profile" }), []);
+    useEffect(() => {
+        const path = window.location.pathname;
+        const isSuccessReturn = path === "/payment/success";
+        const isCancelReturn = path === "/payment/cancel";
+        if (!isSuccessReturn && !isCancelReturn) {
+            setPaymentReturnProcessing(false);
+            return;
+        }
+        if (!session || session.role !== "PATIENT" || !sessionRecoveryReady) return;
+
+        let active = true;
+        const params = new URLSearchParams(window.location.search);
+        const orderCode = params.get("orderCode") || "";
+        const cancelled = params.get("cancel") === "true" || params.get("status") === "CANCELLED";
+
+        const pendingInvoicePayment = sessionStorage.getItem("dermai-pending-invoice-payment");
+        const finish = (notice: { tone: "info" | "success" | "error"; text: string }, destination: "appointments" | "billing" = "appointments") => {
+            if (!active) return;
+            sessionStorage.setItem("derm-home-intent", destination);
+            sessionStorage.setItem("dermai-payment-notice", JSON.stringify(notice));
+            sessionStorage.removeItem("dermai-pending-payment");
+            sessionStorage.removeItem("dermai-pending-invoice-payment");
+            window.location.replace("/");
+        };
+
+        if (!/^[0-9]+$/.test(orderCode)) {
+            finish({ tone: "error", text: "Dữ liệu thanh toán không hợp lệ." });
+            return () => { active = false };
+        }
+
+        if (isSuccessReturn && !cancelled) {
+            const endpoint = pendingInvoicePayment ? "/payments/invoices/" + orderCode + "/reconcile" : "/payments/" + orderCode + "/reconcile";
+            request<{ status: string; invoiceId?: string }>(endpoint, session.accessToken, { method: "POST" })
+                .then(result => {
+                    const isInvoice = Boolean(pendingInvoicePayment || result.invoiceId);
+                    finish(result.status === "SUCCESS"
+                        ? { tone: "success", text: isInvoice ? "Thanh toán hóa đơn thành công. Trạng thái hóa đơn đã được cập nhật." : "Thanh toán cọc thành công. Yêu cầu đang chờ lễ tân kiểm tra và xác nhận." }
+                        : { tone: "info", text: isInvoice ? "Hệ thống đang đối soát hóa đơn. Trạng thái sẽ tự cập nhật." : "Hệ thống đang đối soát giao dịch. Trạng thái lịch sẽ tự cập nhật." }, isInvoice ? "billing" : "appointments");
+                })
+                .catch(error => finish({ tone: "error", text: (error as Error).message }, pendingInvoicePayment ? "billing" : "appointments"));
+            return () => { active = false };
+        }
+
+        if (!isCancelReturn || !cancelled) {
+            finish({ tone: "error", text: "Dữ liệu hủy thanh toán không hợp lệ." });
+            return () => { active = false };
+        }
+
+        request<{ status: string }>((pendingInvoicePayment ? "/payments/invoices/" : "/payments/") + orderCode + "/cancel", session.accessToken, { method: "POST" })
+            .then(result => finish({
+                tone: "success",
+                text: pendingInvoicePayment ? "Đã hủy thanh toán hóa đơn. Bạn có thể thanh toán lại khi cần."
+                    : result.status === "EXPIRED"
+                    ? "Đơn thanh toán đã hết hạn và khung giờ đã được trả lại."
+                    : "Đã hủy thanh toán và trả lại khung giờ khám.",
+            }, pendingInvoicePayment ? "billing" : "appointments"))
+            .catch(error => finish({ tone: "error", text: (error as Error).message }, pendingInvoicePayment ? "billing" : "appointments"));
+
+        return () => { active = false };
+    }, [session?.accessToken, session?.role, sessionRecoveryReady]);
     function openHomeAuth(destination?: "appointments" | "ai") {
         if (destination) sessionStorage.setItem("derm-home-intent", destination);
         else sessionStorage.removeItem("derm-home-intent");
@@ -297,6 +366,8 @@ function App() {
     if (!session) return <Suspense fallback={<State text="Đang tải giao diện..." />}><PublicRoute>{accountLocked ? <LockedAccount onHome={() => { localStorage.removeItem(ACCOUNT_LOCKED_STORAGE_KEY); sessionStorage.removeItem(ACCOUNT_LOCKED_STORAGE_KEY); setAccountLocked(false); }} /> : forgotOpen ? <ForgotPassword close={() => setForgotOpen(false)} /> : authOpen ? <><button className="auth-home" onClick={() => setAuthOpen(false)}><X /> Về trang chủ</button><Login notice={authNotice} onForgotPassword={() => setForgotOpen(true)} onAccountLocked={() => lockAccount(true)} onLogin={tokens => { localStorage.removeItem(ACCOUNT_LOCKED_STORAGE_KEY); sessionStorage.removeItem(ACCOUNT_LOCKED_STORAGE_KEY); setAccountLocked(false); if (applySession(tokens, true)) setAuthNotice("") }} /></> : <HomePage openAuth={openHomeAuth} chat={<ChatBox openAuth={() => openHomeAuth("appointments")} />} />}</PublicRoute></Suspense>
     if (!sessionRecoveryReady) return <State text="Đang khôi phục phiên đăng nhập..." />;
 
+    if (paymentReturnProcessing) return <State text="Đang đối soát trạng thái thanh toán..." />;
+
     function logout() {
         // Revoke the refresh token server-side, then clear the local session immediately.
         void request("/auth/logout", undefined, { method: "POST", body: JSON.stringify({ refreshToken: session!.refreshToken }) }).catch(() => undefined);
@@ -304,8 +375,8 @@ function App() {
         setAuthNotice("");
     }
 
-    const workspace = <><Dashboard key={session.accessToken} session={session} logout={logout} />{session.role === "PATIENT" && <PatientNotifications session={session} />}{session.role === "RECEPTIONIST" && <ReceptionHotlineBooking session={session} />}{["PATIENT", "RECEPTIONIST", "ADMIN"].includes(session.role) && <SupportChat session={session} />}</>;
-    const Route = session.role === "PATIENT" ? PatientRoute : session.role === "DOCTOR" ? DoctorRoute : session.role === "RECEPTIONIST" ? ReceptionistRoute : AdminRoute;
+    const workspace = <><Dashboard key={session.accessToken} session={session} logout={logout} />{session.role === "PATIENT" && <PatientNotifications session={session} />}{session.role === "RECEPTIONIST" && <><ReceptionNotifications session={session} /><ReceptionHotlineBooking session={session} /></>}{["PATIENT", "RECEPTIONIST"].includes(session.role) && <SupportChat session={session} />}</>;
+    const Route = session.role === "PATIENT" ? PatientRoute : session.role === "DOCTOR" ? DoctorRoute : session.role === "RECEPTIONIST" ? ReceptionistRoute : session.role === "PHARMACIST" ? PharmacyRoute : AdminRoute;
     return <Suspense fallback={<State text="Đang mở không gian làm việc..." />}><Route>{workspace}</Route></Suspense>;
 }
 function LockedAccount({ onHome }: { onHome: () => void }) {
@@ -536,11 +607,12 @@ function Login({ onLogin, onForgotPassword, onAccountLocked, notice = "" }: { on
     </form></div>;
 }
 function Dashboard({ session, logout }: { session: Tokens; logout: () => void }) {
-    const [tab, setTab] = useState<"profile" | "appointments" | "records" | "ai">(() => {
+    const [tab, setTab] = useState<AppNavItemId>(() => {
         if (session.role !== "PATIENT") return "profile";
         const intent = sessionStorage.getItem("derm-home-intent");
         sessionStorage.removeItem("derm-home-intent");
         if (sessionStorage.getItem("derm-home-booking") || intent === "appointments") return "appointments";
+        if (intent === "billing") return "billing";
         return intent === "ai" ? "ai" : "profile";
     }); const [patient, setPatient] = useState<Patient | null>(null); const [doctor, setDoctor] = useState<Doctor | null>(null); const [appointments, setAppointments] = useState<Appointment[]>([]); const [records, setRecords] = useState<MedicalRecord[]>([]); const [prescriptions, setPrescriptions] = useState<Prescription[]>([]); const [patients, setPatients] = useState<Record<string, Patient>>({}); const [work, setWork] = useState<WorkSchedule[]>([]); const [leave, setLeave] = useState<LeavePeriod[]>([]); const [loading, setLoading] = useState(true); const [error, setError] = useState("");
     const [patientResourceState, setPatientResourceState] = useState({
@@ -565,7 +637,7 @@ function Dashboard({ session, logout }: { session: Tokens; logout: () => void })
     }
 
     useEffect(() => {
-        if (!new Set(["PATIENT", "RECEPTIONIST", "DOCTOR", "ADMIN"]).has(session.role)) return;
+        if (!new Set(["PATIENT", "RECEPTIONIST", "PHARMACIST", "DOCTOR", "ADMIN"]).has(session.role)) return;
         let active = true;
 
         request<AccountProfile>("/auth/me", session.accessToken)
@@ -716,7 +788,7 @@ function Dashboard({ session, logout }: { session: Tokens; logout: () => void })
         ? patient?.fullName || roleName
         : session.role === "DOCTOR"
             ? `BS. ${doctor?.fullName || roleName}`
-            : session.role === "RECEPTIONIST" || session.role === "ADMIN"
+            : session.role === "RECEPTIONIST" || session.role === "PHARMACIST" || session.role === "ADMIN"
                 ? accountProfile?.displayName || roleName
                 : roleName;
     const headerAvatar = accountAvatarSrc || (session.role === "DOCTOR" ? doctor?.avatarUrl : undefined);
@@ -741,12 +813,15 @@ function Dashboard({ session, logout }: { session: Tokens; logout: () => void })
             {error && <State text={error} error />}
             {!loading && !error && session.role === "ADMIN" && <AdminPanel token={session.accessToken} tab={tab} />}
             {!loading && !error && session.role === "RECEPTIONIST" && <ReceptionWorkspace token={session.accessToken} tab={tab} onNavigate={setTab} />}
+            {!loading && !error && session.role === "PHARMACIST" && <PharmacyModule token={session.accessToken} tab={tab} onNavigate={setTab} />}
+
             {!loading && !error && session.role === "PATIENT" && patient && tab === "profile" && <PatientDashboard token={session.accessToken} patient={patient} appointments={appointments} records={records} prescriptions={prescriptions} resourceState={patientResourceState} savedPatient={setPatient} changedAppointments={setAppointments} openAppointments={() => setTab("appointments")} openAi={() => setTab("ai")} openRecords={() => setTab("records")} />}
             {!loading && !error && session.role === "PATIENT" && patient && tab === "appointments" && <PatientAppointments token={session.accessToken} patient={patient} appointments={appointments} changed={setAppointments} />}
             {!loading && !error && session.role === "PATIENT" && patient && tab === "records" && <PatientMedicalRecords token={session.accessToken} patient={patient} appointments={appointments} records={records} prescriptions={prescriptions} resourceState={patientResourceState} openAppointments={() => setTab("appointments")} recordHidden={id => setRecords(current => current.filter(record => record.id !== id))} />}
+            {!loading && !error && session.role === "PATIENT" && patient && tab === "billing" && <PatientInvoices token={session.accessToken} />}
             {!loading && !error && session.role === "PATIENT" && patient && tab === "ai" && <PatientAiScreen token={session.accessToken} patient={patient} openBooking={() => setTab("appointments")} />}
             {!loading && !error && session.role === "DOCTOR" && doctor && tab === "profile" && <DoctorProfile token={session.accessToken} doctor={doctor} work={work} leave={leave} saved={setDoctor} />}
-            {!loading && !error && session.role === "DOCTOR" && doctor && tab === "appointments" && <DoctorView token={session.accessToken} doctor={doctor} appointments={appointments} patients={patients} work={work} leave={leave} transition={transition} requireFollowUp={requireFollowUp} />}
+            {!loading && !error && session.role === "DOCTOR" && doctor && tab === "appointments" && <DoctorView token={session.accessToken} doctor={doctor} appointments={appointments} records={records} patients={patients} work={work} leave={leave} transition={transition} requireFollowUp={requireFollowUp} recordSaved={record => setRecords(current => [...current.filter(item => item.id !== record.id), record])} />}
             {!loading && !error && session.role === "DOCTOR" && tab === "records" && <RecordList records={records} patients={patients} />}
         </main>
         {/* Patient screens prioritize appointments and health results, so the

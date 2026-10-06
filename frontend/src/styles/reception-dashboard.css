@@ -743,6 +743,7 @@
 }
 
 .reception-status-assigned,
+.reception-status-paid,
 .reception-status-confirmed {
   border-color: var(--color-info-border);
   background: var(--color-info-surface);

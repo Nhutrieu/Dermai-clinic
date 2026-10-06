@@ -47,7 +47,7 @@ type Props = {
   onRetryReminders: () => Promise<void>;
   onRemind: (appointmentId: string, action: ReminderAction["actionType"]) => Promise<void>;
   onReschedule: (appointmentId: string, startAt: string) => Promise<Appointment>;
-  onCancel: (appointmentId: string, reason: string) => Promise<Appointment>;
+  onCancel: (appointmentId: string, reason: string, initiator: "PATIENT_REQUEST" | "CLINIC") => Promise<Appointment>;
   onCheckIn: (appointmentId: string) => Promise<void>;
   onNoShow: (appointmentId: string) => Promise<void>;
   onComplete: (appointmentId: string) => Promise<void>;
@@ -520,7 +520,7 @@ export default function ReceptionAcceptedAppointments(props: Props) {
                                 appointment={appointment}
                                 patientName={patientName(appointment)}
                                 doctorName={doctorName(appointment)}
-                                submit={reason => props.onCancel(appointment.id, reason)}
+                                submit={(reason, initiator) => props.onCancel(appointment.id, reason, initiator)}
                               />
                             )}
                             {canMarkNoShow && (

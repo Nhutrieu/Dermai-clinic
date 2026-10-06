@@ -22,12 +22,15 @@ type Props = {
     onClearPatient: () => void;
     refreshAppointments: () => Promise<void>;
     footer?: ReactNode;
+    mode?: "dashboard" | "patients" | "all";
 };
 
 const statusLabels: Record<string, string> = {
     PROPOSED: "Chờ bệnh nhân xác nhận",
     PENDING: "Chờ xử lý",
     ASSIGNED: "Đã phân công",
+    PENDING_PAYMENT: "Chờ thanh toán cọc",
+    PENDING_CONFIRMATION: "Đã cọc · Chờ lễ tân xác nhận",
     CONFIRMED: "Đã xác nhận",
     CHECKED_IN: "Đã check-in",
     IN_PROGRESS: "Đang khám",
@@ -48,6 +51,7 @@ function formatDateTime(value: string) {
 }
 
 export default function AdminOverview(props: Props) {
+    const mode = props.mode || "all";
     const now = Date.now();
     const upcoming = props.appointments
         .filter(item => new Date(item.startAt).getTime() >= now && item.status !== "CANCELLED")
@@ -58,7 +62,8 @@ export default function AdminOverview(props: Props) {
         .filter(item => item.patientId === props.selectedPatientId)
         .sort((left, right) => new Date(right.startAt).getTime() - new Date(left.startAt).getTime());
 
-    return <div className="admin-overview">
+    return <div className={`admin-overview admin-overview-${mode}`}>
+        {mode !== "patients" && <>
         <AdminAnalytics appointments={props.appointments} doctors={props.doctors} patients={props.patients} patientTotal={props.patientTotal} loading={props.loading} />
 
         {!props.loading && <AdminStaleConsultations token={props.token} appointments={props.appointments} doctors={props.doctors} patients={props.patients} refresh={props.refreshAppointments} />}
@@ -82,7 +87,9 @@ export default function AdminOverview(props: Props) {
             </div>}
         </section>
 
-        <section className="admin-overview-section admin-patient-management" aria-labelledby="admin-patient-management-title">
+        </>}
+
+        {mode !== "dashboard" && <section className="admin-overview-section admin-patient-management" aria-labelledby="admin-patient-management-title">
             <header>
                 <div><h2 id="admin-patient-management-title">Tra cứu bệnh nhân</h2><p>Tìm hồ sơ và kiểm tra lịch sử đặt lịch gần đây.</p></div>
                 <span>{props.patientTotal} bệnh nhân</span>
@@ -127,7 +134,7 @@ export default function AdminOverview(props: Props) {
                     </section>
                 </article> : <div className="admin-patient-detail-empty"><strong>Chọn một bệnh nhân</strong><p>Thông tin liên hệ và lịch sử đặt lịch sẽ xuất hiện tại đây.</p></div>}
             </div>
-        </section>
+        </section>}
         {props.footer}
     </div>;
 }

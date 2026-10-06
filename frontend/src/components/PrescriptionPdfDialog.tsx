@@ -3,6 +3,7 @@ import { createPortal } from "react-dom";
 import { FileText, Printer, ZoomIn, ZoomOut, X } from "lucide-react";
 import { request } from "../core/api";
 import type { Appointment, MedicalRecord, Patient, Prescription } from "../core/types";
+import "../styles/patient-medical-records.css";
 
 const CLINIC_ADDRESS = "32/2 Thống Nhất, phường Gò Vấp, TP. Hồ Chí Minh";
 const CLINIC_HOTLINE = "0352 790 904";
@@ -42,7 +43,7 @@ export function PrescriptionPdfModal({
     const [record, setRecord] = useState<MedicalRecord | null>(initialRecord || null);
     const [prescription, setPrescription] = useState<Prescription | null>(initialPrescription || null);
     const [patient, setPatient] = useState<Patient | null>(initialPatient || null);
-    const [loading, setLoading] = useState(Boolean(token && (!initialRecord || !initialPrescription || !initialPatient)));
+    const [loading, setLoading] = useState(Boolean(token && (!initialPrescription || !initialPatient)));
     const [loadError, setLoadError] = useState("");
     const [printNotice, setPrintNotice] = useState("");
     const dialogRef = useRef<HTMLDivElement>(null);
@@ -54,7 +55,10 @@ export function PrescriptionPdfModal({
             setLoading(false);
             return;
         }
-        const needsRelatedDocument = !initialRecord || !initialPrescription;
+        // A signed prescription is already a complete printable document. Do not
+        // fetch its medical record just to enrich the preview: receptionist users
+        // intentionally cannot read arbitrary clinical records.
+        const needsRelatedDocument = !initialPrescription;
         const needsPatientProfile = !initialPatient;
         if (!needsRelatedDocument && !needsPatientProfile) {
             setLoading(false);
@@ -100,8 +104,14 @@ export function PrescriptionPdfModal({
         Promise.allSettled([loadRelatedDocument(), loadPatient()])
             .then(results => {
                 if (!active) return;
+                const failedParts = results
+                    .map((result, index) => result.status === "rejected" ? (index === 0 ? "nội dung đơn thuốc" : "thông tin bệnh nhân") : "")
+                    .filter(Boolean);
                 const rejected = results.find(result => result.status === "rejected") as PromiseRejectedResult | undefined;
-                if (rejected) setLoadError((rejected.reason as Error)?.message || "Một phần thông tin đơn thuốc chưa tải được.");
+                if (rejected) {
+                    const reason = (rejected.reason as Error)?.message;
+                    setLoadError("Không tải được " + failedParts.join(" và ") + "." + (reason ? " " + reason : ""));
+                }
             })
             .finally(() => {
                 if (active) setLoading(false);
@@ -206,7 +216,7 @@ export function PrescriptionPdfModal({
                     </div>
                 ) : <>
                     {loading && <div className="clinical-pdf-inline-status" role="status" aria-live="polite">Đang bổ sung thông tin hồ sơ...</div>}
-                    {loadError && <div className="clinical-pdf-inline-status is-error" role="alert">Một phần thông tin chưa tải được: {loadError}</div>}
+                    {loadError && <div className="clinical-pdf-inline-status is-error" role="alert">{loadError} Nội dung đơn thuốc đã ký vẫn được giữ nguyên.</div>}
                     <div className="clinical-pdf-scale" style={zoomStyle}>
                         <article className="clinical-pdf-paper printable-area" aria-label="Nội dung đơn thuốc điện tử">
                             <header className="clinical-pdf-document-header">
@@ -233,7 +243,7 @@ export function PrescriptionPdfModal({
                                     <div><dt>Số điện thoại</dt><dd>{displayPhone}</dd></div>
                                     <div><dt>Bác sĩ kê đơn</dt><dd>BS. {doctorName}</dd></div>
                                     {dateSource && <div><dt>Thời gian</dt><dd>{formatTime(dateSource)}, {formatDate(dateSource)}</dd></div>}
-                                    <div className="is-wide"><dt>Chẩn đoán được ghi nhận</dt><dd>{record?.finalDiagnosis || "Chưa tải được kết luận từ hồ sơ khám."}</dd></div>
+                                    {record?.finalDiagnosis && <div className="is-wide"><dt>Chẩn đoán được ghi nhận</dt><dd>{record.finalDiagnosis}</dd></div>}
                                 </dl>
                             </section>
 

@@ -6,7 +6,7 @@ FastAPI service quản lý tồn kho theo lô và cấp thuốc theo FEFO cho De
 
 - Migration khởi tạo: `db/migration/V1__pharmacy_inventory.sql`.
 - File khởi tạo toàn hệ thống: `database/dermai_full_schema.sql` ở thư mục gốc.
-- Service vẫn chạy `CREATE SCHEMA IF NOT EXISTS` và SQLAlchemy `create_all()` khi khởi động để tương thích với môi trường hiện có; migration là nguồn chuẩn để tạo database mới và review thay đổi schema.
+- Service vẫn chạy `CREATE SCHEMA IF NOT EXISTS` và SQLAlchemy `create_all()` khi khởi động để tương thích với môi trường hiện có. Lúc khởi động, service cũng bổ sung hai CHECK cho trạng thái đơn và loại biến động kho nếu database cũ được tạo trước khi model khai báo chúng. Migration là nguồn chuẩn để tạo database mới và review thay đổi schema.
 
 ## Luồng dữ liệu thật
 

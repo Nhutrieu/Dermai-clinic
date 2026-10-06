@@ -7,6 +7,10 @@ import AdminDoctorsManagement from "./AdminDoctorsManagement";
 import AdminReceptionistAccounts from "./AdminReceptionistAccounts";
 import AdminStaffCreateForm, { type StaffRole } from "./AdminStaffCreateForm";
 import AdminClinicReviews from "./AdminClinicReviews";
+import ReceptionRefundQueue from "../reception/ReceptionRefundQueue";
+import AdminBilling from "./AdminBilling";
+import AdminInventory from "./AdminInventory";
+import AdminServices from "./AdminServices";
 import { authErrorMessage, isPasswordValid } from "../../core/passwordPolicy";
 
 export default function AdminPanel({ token, tab }: { token: string; tab: string }) {
@@ -57,25 +61,25 @@ export default function AdminPanel({ token, tab }: { token: string; tab: string 
             setCreatingStaff(false);
         }
     }
-    if (tab === "profile") {
-        return <AdminOverview
-            token={token}
-            loading={adminDataLoading}
-            appointments={appointments}
-            doctors={doctors}
-            patients={patients}
-            patientTotal={patientTotal}
-            query={query}
-            message={message}
-            selectedPatientId={selectedPatientId}
-            onQueryChange={setQuery}
-            onSearch={loadPatients}
-            onSelectPatient={setSelectedPatientId}
-            onClearPatient={() => setSelectedPatientId("")}
-            refreshAppointments={loadAppointments}
-            footer={<AdminClinicReviews token={token} />}
-        />;
-    }
+    const renderOverview = (mode: "dashboard" | "patients") => <AdminOverview
+        token={token}
+        mode={mode}
+        loading={adminDataLoading}
+        appointments={appointments}
+        doctors={doctors}
+        patients={patients}
+        patientTotal={patientTotal}
+        query={query}
+        message={message}
+        selectedPatientId={selectedPatientId}
+        onQueryChange={setQuery}
+        onSearch={loadPatients}
+        onSelectPatient={setSelectedPatientId}
+        onClearPatient={() => setSelectedPatientId("")}
+        refreshAppointments={loadAppointments}
+    />;
+    if (tab === "profile") return renderOverview("dashboard");
+    if (tab === "patients") return renderOverview("patients");
     if (tab === "appointments") {
         return <AdminDoctorsManagement
             token={token}
@@ -85,6 +89,12 @@ export default function AdminPanel({ token, tab }: { token: string; tab: string 
             onSaved={updated => setDoctors(current => current.map(item => item.id === updated.id ? updated : item))}
         />;
     }
+    if (tab === "billing") return <div className="admin-module-page"><AdminBilling token={token} /></div>;
+    if (tab === "inventory") return <div className="admin-module-page"><AdminInventory token={token} /></div>;
+    if (tab === "services") return <div className="admin-module-page"><AdminServices token={token} doctors={doctors} /></div>;
+    if (tab === "refunds") return <div className="admin-module-page"><ReceptionRefundQueue token={token} readOnly /></div>;
+    if (tab === "reviews") return <div className="admin-module-page"><AdminClinicReviews token={token} /></div>;
+    if (tab !== "records") return renderOverview("dashboard");
     return <div className="admin-staff-page">
         <AdminStaffCreateForm
             email={email}

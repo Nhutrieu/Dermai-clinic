@@ -15,6 +15,14 @@
   text-align: center;
 }
 
+.support-messages article a,
+.support-ai-messages article a {
+  color: inherit;
+  font-weight: 800;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
 .support-ai-handoff {
   display: inline-flex;
   min-height: 40px;
@@ -342,4 +350,68 @@
     scroll-behavior: auto;
     transition: none;
   }
+}
+
+.support-composer { display: grid; gap: .5rem; }
+.support-composer-row { display: flex; align-items: flex-end; gap: .5rem; }
+.support-composer-row textarea { flex: 1; }
+.support-attach-button { width: 2.75rem; height: 2.75rem; border: 1px solid var(--border, #cbd5e1); border-radius: .75rem; display: grid; place-items: center; cursor: pointer; color: #0f766e; background: #fff; flex: 0 0 auto; }
+.support-attach-button input { position: absolute; width: 1px; height: 1px; opacity: 0; pointer-events: none; }
+.support-attach-button svg { width: 1.2rem; }
+.support-image-selection { display: flex; justify-content: space-between; align-items: center; gap: .5rem; padding: .5rem .65rem; border-radius: .65rem; background: #ecfdf5; color: #115e59; font-size: .78rem; }
+.support-image-selection button { border: 0; background: transparent; display: grid; place-items: center; padding: .15rem; }
+.support-image-selection svg { width: 1rem; height: 1rem; }
+.support-message-image { display: block; width: min(100%, 320px); max-height: 320px; object-fit: contain; border-radius: .75rem; margin: .45rem 0; background: #f8fafc; }
+.support-image-loading, .support-image-error { display: block; margin: .4rem 0; font-size: .75rem; }
+.support-image-error { color: #b91c1c; }
+/* Keep the attachment, message field and send action readable at every panel width. */
+.support-panel > form.support-composer {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  align-items: stretch;
+  gap: 8px;
+}
+.support-panel .support-composer-row {
+  display: grid;
+  grid-template-columns: 46px minmax(0, 1fr) 64px;
+  align-items: end;
+  gap: 8px;
+  min-width: 0;
+}
+.support-panel .support-composer-row > textarea {
+  min-width: 0;
+  width: 100%;
+  height: 58px;
+  min-height: 58px;
+  padding: 9px 11px;
+  line-height: 1.35;
+  overflow-y: auto;
+}
+.support-panel .support-composer-row > .support-attach-button {
+  box-sizing: border-box;
+  width: 46px;
+  min-width: 46px;
+  height: 54px;
+}
+.support-panel .support-composer-row > button {
+  box-sizing: border-box;
+  width: 64px;
+  min-width: 64px;
+  height: 54px;
+  padding-inline: 8px;
+  white-space: nowrap;
+}
+.support-panel .support-image-selection button {
+  width: 28px;
+  min-width: 28px;
+  height: 28px;
+  padding: 0;
+}
+@media (max-width: 380px) {
+  .support-panel .support-composer-row {
+    grid-template-columns: 42px minmax(0, 1fr) 58px;
+    gap: 6px;
+  }
+  .support-panel .support-composer-row > .support-attach-button { width: 42px; min-width: 42px; }
+  .support-panel .support-composer-row > button { width: 58px; min-width: 58px; padding-inline: 5px; }
 }

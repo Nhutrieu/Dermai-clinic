@@ -3,6 +3,7 @@ import jakarta.persistence.LockModeType;
 import java.time.Instant;
 import java.util.*;
 import org.springframework.data.jpa.repository.*;
+import org.springframework.data.repository.query.Param;
 interface PaymentRepository extends JpaRepository<Payment, UUID>{
  Optional<Payment> findByBookingIdAndPatientIdentityId(UUID bookingId,UUID patientIdentityId);
  Optional<Payment> findByBookingId(UUID bookingId);
@@ -17,4 +18,6 @@ interface PaymentRepository extends JpaRepository<Payment, UUID>{
  List<Payment> findTop100ByStatusInOrderByUpdatedAtAsc(Collection<PaymentStatus> statuses);
  List<Payment> findTop100ByStatusInAndExpiresAtLessThanEqualOrderByExpiresAtAsc(Collection<PaymentStatus> statuses,Instant now);
  List<Payment> findTop100ByStatusInOrderByRefundRequestedAtDesc(Collection<PaymentStatus> statuses);
+ @Query("select p from Payment p where (p.createdAt between :from and :to) or (p.refundRequestedAt between :from and :to) or (p.refundedAt between :from and :to) order by p.createdAt desc")
+ List<Payment> findReportPayments(@Param("from")Instant from,@Param("to")Instant to);
 }

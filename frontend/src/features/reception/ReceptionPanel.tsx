@@ -23,6 +23,7 @@ function getStatusBadge(status: string) {
     switch (status) {
         case "PENDING": return { label: "Chờ tiếp nhận", badgeClass: "badge-pending" };
         case "ASSIGNED": return { label: "Đã xếp bác sĩ", badgeClass: "badge-assigned" };
+        case "PENDING_CONFIRMATION": return { label: "Đã cọc · Chờ xác nhận", badgeClass: "badge-pending" };
         case "CONFIRMED": return { label: "Đã xác nhận", badgeClass: "badge-confirmed" };
         case "CHECKED_IN": return { label: "Đã đến phòng khám", badgeClass: "badge-confirmed" };
         case "IN_PROGRESS": return { label: "Đang khám", badgeClass: "badge-in-progress" };
@@ -158,11 +159,11 @@ export default function ReceptionPanel({ token, tab }: { token: string; tab: str
             setBusyAppointmentId("");
         }
     }
-    async function cancel(id: string, cancelReason: string) {
+    async function cancel(id: string, cancelReason: string, initiator: "PATIENT_REQUEST" | "CLINIC") {
         try {
             const updated = await request<Appointment>(`/appointments/${id}/cancel`, token, {
                 method: "POST",
-                body: JSON.stringify({ reason: cancelReason.trim() })
+                body: JSON.stringify({ reason: cancelReason.trim(), initiator })
             });
             setMessage("Đã hủy lịch và cập nhật danh sách vận hành.");
             setMessageError(false);

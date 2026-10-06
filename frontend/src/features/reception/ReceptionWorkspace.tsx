@@ -13,6 +13,8 @@ import type {
 } from "../../core/types";
 import ReceptionDashboard from "./ReceptionDashboard";
 import ReceptionPanel from "./ReceptionPanel";
+import ReceptionRefundQueue from "./ReceptionRefundQueue";
+import CashierWorkspace from "../cashier/CashierWorkspace";
 import {
   APPOINTMENT_ALREADY_HANDLED_MESSAGE,
   isAppointmentAlreadyHandledError,
@@ -20,7 +22,7 @@ import {
 } from "./receptionBookingModel";
 
 type PatientPage = { content: Patient[]; totalElements: number };
-type ReceptionTab = "profile" | "appointments" | "records";
+type ReceptionTab = "profile" | "appointments" | "records" | "billing" | "refunds";
 type LeaveApprovalNotice = { id: string; doctorId: string; startAt: string; endAt: string; reviewedAt: string };
 const RECEPTION_LEAVE_APPROVALS_SEEN_KEY = "dermai-reception-leave-approvals-seen";
 
@@ -80,7 +82,7 @@ export default function ReceptionWorkspace({
   useEffect(() => {
     const navigate = (event: Event) => {
       const target = (event as CustomEvent<ReceptionTab>).detail;
-      if (["profile", "appointments", "records"].includes(target)) onNavigate(target);
+      if (["profile", "appointments", "records", "billing", "refunds"].includes(target)) onNavigate(target);
     };
     window.addEventListener("reception-navigate", navigate);
     return () => window.removeEventListener("reception-navigate", navigate);
@@ -155,6 +157,14 @@ export default function ReceptionWorkspace({
     </section>
   ) : null;
 
+  if (tab === "refunds") return <>
+    {leaveAlert}
+    <ReceptionRefundQueue token={token} />
+  </>;
+  if (tab === "billing") return <>
+    {leaveAlert}
+    <CashierWorkspace token={token} />
+  </>;
   if (tab !== "profile") return <>
     {leaveAlert}
     <ReceptionPanel token={token} tab={tab} />

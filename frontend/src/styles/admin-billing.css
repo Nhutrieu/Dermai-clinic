@@ -1,0 +1,351 @@
+.admin-billing {
+  margin-top: 18px;
+  display: grid;
+  gap: 16px;
+}
+
+.admin-billing > header {
+  display: flex;
+  justify-content: space-between;
+  gap: 18px;
+  align-items: center;
+  padding-bottom: 12px;
+  border-bottom: 1px solid #dcebe8;
+}
+
+.admin-billing > header span {
+  color: #0f766e;
+  font-size: .76rem;
+  font-weight: 800;
+  letter-spacing: .1em;
+  text-transform: uppercase;
+}
+
+.admin-billing > header h2 { margin: 5px 0; }
+.admin-billing > header p { margin: 0; color: #637a7f; }
+.admin-billing button { display: inline-flex; align-items: center; justify-content: center; gap: 7px; }
+.admin-billing button svg { width: 17px; height: 17px; }
+
+.admin-billing-export {
+  min-height: 42px;
+  padding: 0 16px;
+  border: 1px solid #b9d8d2;
+  border-radius: 10px;
+  background: #fff;
+  color: #0f766e;
+  font-weight: 750;
+  white-space: nowrap;
+}
+
+.admin-billing-feedback {
+  margin: 0;
+  padding: 11px 14px;
+  border: 1px solid #bde1d9;
+  border-radius: 10px;
+  background: #edfaf6;
+  color: #17685f;
+}
+
+.admin-total-revenue {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  padding: 20px 22px;
+  border: 1px solid #9dd7cc;
+  border-radius: 16px;
+  background: linear-gradient(120deg, #e8f8f4 0%, #f5fcfa 55%, #e2f4ef 100%);
+  box-shadow: 0 10px 24px rgba(15, 118, 110, .08);
+}
+
+.admin-total-revenue > div { display: grid; gap: 5px; }
+.admin-total-revenue span { color: #0f766e; font-size: .78rem; font-weight: 850; letter-spacing: .08em; text-transform: uppercase; }
+.admin-total-revenue small { color: #607a76; font-size: .78rem; }
+.admin-total-revenue b { color: #0a5f59; font-size: clamp(1.45rem, 2.4vw, 2.05rem); white-space: nowrap; }
+
+.admin-billing-metrics {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.admin-billing-metrics article {
+  display: grid;
+  gap: 7px;
+  min-width: 0;
+  padding: 16px;
+  border: 1px solid #d7e9e5;
+  border-radius: 14px;
+  background: #f2faf8;
+}
+
+.admin-billing-metrics span { color: #60776f; font-size: .82rem; }
+.admin-billing-metrics b { font-size: 1.14rem; }
+.admin-billing-metrics .is-warning { border-color: #f0d79d; background: #fff8e7; }
+
+.admin-cash-flow {
+  min-width: 0;
+  padding: 20px;
+  border: 1px solid #d7e9e5;
+  border-radius: 16px;
+  background: #fbfefd;
+}
+
+.admin-cash-flow > header { display: flex; align-items: center; justify-content: space-between; gap: 18px; margin-bottom: 18px; }
+.admin-cash-flow-title { display: flex; align-items: center; gap: 12px; min-width: 0; }
+.admin-cash-flow-title > span { width: 40px; height: 40px; flex: 0 0 40px; display: grid; place-items: center; border-radius: 12px; background: #dff5f0; color: #0f766e; }
+.admin-cash-flow-title svg { width: 20px; height: 20px; }
+.admin-cash-flow-title h3 { margin: 0; color: #173941; font-size: 1rem; }
+.admin-cash-flow-title p { margin: 4px 0 0; color: #718489; font-size: .8rem; }
+.admin-cash-flow-legend { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 12px; color: #587173; font-size: .76rem; font-weight: 700; }
+.admin-cash-flow-legend span { display: inline-flex; align-items: center; gap: 6px; white-space: nowrap; }
+.admin-cash-flow-legend span::before { content: ""; width: 9px; height: 9px; border-radius: 3px; background: currentColor; }
+.admin-cash-flow-legend .is-online { color: #0d9488; }
+.admin-cash-flow-legend .is-cash { color: #2563eb; }
+.admin-cash-flow-legend .is-refund { color: #e28743; }
+.admin-cash-flow-legend .is-balance { color: #e8aa00; }
+.admin-cash-flow-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; }
+.admin-finance-chart { min-width: 0; overflow: hidden; border: 1px solid #d8e2e0; border-radius: 12px; background: linear-gradient(180deg, #fff 0%, #fbfcfc 100%); }
+.admin-finance-chart.is-wide { grid-column: 1 / -1; }
+.admin-finance-chart h4 { margin: 0; padding: 15px 14px 4px; color: #18343b; font-size: .9rem; font-weight: 850; letter-spacing: .045em; text-align: center; text-transform: uppercase; }
+.admin-finance-svg { display: block; width: 100%; min-width: 580px; height: auto; }
+.chart-grid-line { stroke: #e2e8e7; stroke-width: 1; }
+.chart-zero-line { stroke: #afbfbc; stroke-width: 1.2; }
+.chart-axis-label,
+.chart-period-label,
+.chart-value-label { fill: #617476; font-family: inherit; font-size: 10px; }
+.chart-period-label { font-size: 9px; }
+.chart-value-label { font-size: 9px; font-weight: 700; paint-order: stroke; stroke: #fff; stroke-width: 3px; stroke-linejoin: round; }
+.chart-cash-bar { opacity: .9; transition: opacity .16s ease; }
+.chart-cash-bar:hover { opacity: .7; }
+.chart-cash-bar.is-online { fill: #4675c7; }
+.chart-cash-bar.is-cash { fill: #ef7d2b; }
+.chart-cash-bar.is-refund { fill: #a5a5a5; }
+.chart-balance-line,
+.chart-flow-line { fill: none; stroke-width: 3; stroke-linecap: round; stroke-linejoin: round; }
+.chart-balance-line { stroke: #f0ad00; }
+.chart-balance-dot { fill: #f0ad00; stroke: #fff; stroke-width: 2; }
+.chart-flow-line.is-online { stroke: #4675c7; }
+.chart-flow-line.is-cash { stroke: #ef7d2b; }
+.chart-flow-line.is-refund { stroke: #a5a5a5; }
+.chart-flow-dot { stroke: #fff; stroke-width: 2; }
+.chart-flow-dot.is-online { fill: #4675c7; }
+.chart-flow-dot.is-cash { fill: #ef7d2b; }
+.chart-flow-dot.is-refund { fill: #a5a5a5; }
+.chart-value-label.is-online { fill: #315fae; }
+.chart-value-label.is-cash { fill: #c8621e; }
+.chart-value-label.is-refund { fill: #777; }
+.chart-value-label.is-balance { fill: #a67600; }
+.admin-revenue-legend { display: flex; justify-content: center; flex-wrap: wrap; gap: 16px; padding: 8px 16px 0; color: #587173; font-size: .74rem; font-weight: 700; }
+.admin-revenue-legend span { display: inline-flex; align-items: center; gap: 6px; }
+.admin-revenue-legend span::before { content: ""; width: 10px; height: 10px; border-radius: 2px; background: currentColor; }
+.admin-revenue-legend .is-consultation { color: #4675c7; }
+.admin-revenue-legend .is-service { color: #20a286; }
+.admin-revenue-legend .is-medicine { color: #ef7d2b; }
+.admin-finance-svg.is-revenue { min-width: 720px; }
+.chart-revenue-bar { opacity: .9; transition: opacity .16s ease; }
+.chart-revenue-bar:hover { opacity: .7; }
+.chart-revenue-bar.is-consultation { fill: #4675c7; }
+.chart-revenue-bar.is-service { fill: #20a286; }
+.chart-revenue-bar.is-medicine { fill: #ef7d2b; }
+.chart-value-label.is-consultation { fill: #315fae; }
+.chart-value-label.is-service { fill: #147762; }
+.chart-value-label.is-medicine { fill: #c8621e; }
+.admin-cash-flow-scroll { min-width: 0; overflow-x: auto; padding-bottom: 3px; }
+.admin-cash-flow-plot { position: relative; min-width: 860px; height: 270px; padding: 12px 8px 0 60px; border-radius: 12px; background: repeating-linear-gradient(to bottom, #f8fcfb 0, #f8fcfb calc(33.333% - 1px), #deebe8 calc(33.333% - 1px), #deebe8 33.333%); }
+.admin-cash-flow-scale { position: absolute; inset: 8px auto 29px 0; width: 53px; display: flex; flex-direction: column; justify-content: space-between; align-items: flex-end; color: #769091; font-size: .68rem; }
+.admin-cash-flow-bars { height: 100%; display: grid; grid-template-columns: repeat(30, minmax(18px, 1fr)); gap: 5px; }
+.admin-cash-flow-day { min-width: 0; display: grid; grid-template-rows: minmax(0, 1fr) 28px; }
+.admin-cash-flow-columns { min-height: 0; display: flex; align-items: flex-end; justify-content: center; gap: 2px; }
+.admin-cash-flow-columns i { width: 5px; min-height: 0; border-radius: 4px 4px 1px 1px; transition: opacity .16s ease, filter .16s ease; }
+.admin-cash-flow-columns i:hover { opacity: .78; filter: saturate(1.25); }
+.admin-cash-flow-columns .is-online { background: #0d9488; }
+.admin-cash-flow-columns .is-cash { background: #2563eb; }
+.admin-cash-flow-columns .is-refund { background: #e28743; }
+.admin-cash-flow-day time { align-self: end; color: #789091; font-size: .64rem; text-align: center; white-space: nowrap; }
+.admin-cash-flow-empty { min-height: 180px; display: grid; place-items: center; align-content: center; gap: 10px; border: 1px dashed #c7ded9; border-radius: 12px; color: #718489; text-align: center; }
+.admin-cash-flow-empty svg { width: 28px; height: 28px; color: #55a99f; }
+
+.admin-medicine-layout {
+  display: grid;
+  grid-template-columns: minmax(290px, .72fr) minmax(0, 1.8fr);
+  gap: 20px;
+  align-items: start;
+}
+
+.admin-medicine-form,
+.admin-medicine-catalog {
+  min-width: 0;
+  padding: 20px;
+  border: 1px solid #d6e7e3;
+  border-radius: 16px;
+  background: #f9fcfb;
+}
+
+.admin-medicine-form { display: grid; gap: 14px; }
+
+.admin-medicine-section-title {
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  margin-bottom: 4px;
+}
+
+.admin-medicine-section-title > span {
+  width: 38px;
+  height: 38px;
+  flex: 0 0 38px;
+  display: grid;
+  place-items: center;
+  border-radius: 11px;
+  background: #dff5f0;
+  color: #0f766e;
+}
+
+.admin-medicine-section-title svg { width: 19px; }
+.admin-medicine-section-title h3 { margin: 0; font-size: 1rem; }
+.admin-medicine-section-title p { margin: 3px 0 0; color: #718489; font-size: .78rem; }
+
+.admin-medicine-form label,
+.medicine-row label {
+  min-width: 0;
+  display: grid;
+  gap: 6px;
+  color: #31585a;
+  font-size: .82rem;
+  font-weight: 700;
+}
+
+.admin-medicine-form input,
+.medicine-row input:not([type="checkbox"]) {
+  width: 100%;
+  min-width: 0;
+  min-height: 42px;
+  padding: 9px 11px;
+  border: 1px solid #bed8d3 !important;
+  border-radius: 9px;
+  background: #fff !important;
+  color: #173941;
+  outline: none;
+}
+
+.admin-medicine-form input::placeholder { color: #91a3a6; }
+.admin-medicine-form input:focus,
+.medicine-row input:not([type="checkbox"]):focus { border-color: #0d9488 !important; box-shadow: 0 0 0 3px rgba(13, 148, 136, .12) !important; }
+
+.admin-medicine-form-pair { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.admin-medicine-form .primary { width: 100%; min-height: 44px; margin-top: 2px; border: 0; font-weight: 800; }
+
+.admin-medicine-catalog { overflow: hidden; }
+.medicine-table { margin-top: 16px; overflow-x: auto; border: 1px solid #d5e6e2; border-radius: 12px; background: #fff; }
+.medicine-table-head,
+.medicine-row { min-width: 790px; display: grid; grid-template-columns: .72fr 1.4fr .65fr .82fr .65fr .85fr 88px; gap: 10px; align-items: center; }
+
+.medicine-table-head {
+  padding: 11px 13px;
+  border-bottom: 1px solid #cfe2de;
+  background: #edf8f5;
+  color: #53716f;
+  font-size: .72rem;
+  font-weight: 800;
+  letter-spacing: .03em;
+  text-transform: uppercase;
+}
+
+.medicine-row { padding: 11px 13px; border-bottom: 1px solid #e3eeeb; }
+.medicine-row:last-child { border-bottom: 0; }
+.medicine-row:hover { background: #fbfefd; }
+.medicine-row label > span:first-child { display: none; }
+.medicine-row input:not([type="checkbox"]) { min-height: 38px; padding: 7px 9px; font-size: .82rem; }
+
+.medicine-active {
+  display: flex !important;
+  align-items: center;
+  gap: 7px !important;
+  color: #286b61 !important;
+  font-size: .78rem !important;
+  white-space: nowrap;
+}
+
+.medicine-active input { width: 17px; height: 17px; flex: 0 0 17px; accent-color: #0d9488; }
+.medicine-active > span { display: inline !important; }
+
+.medicine-save {
+  min-height: 38px;
+  padding: 0 12px;
+  border: 1px solid #b7d7d1;
+  border-radius: 9px;
+  background: #fff;
+  color: #0f766e;
+  font-size: .8rem;
+  font-weight: 800;
+}
+
+.medicine-save:hover { border-color: #0d9488; background: #effaf7; }
+.admin-medicine-empty { margin: 16px 0 0; padding: 24px; border: 1px dashed #bed8d3; border-radius: 12px; color: #718489; text-align: center; }
+
+@media (max-width: 1100px) {
+  .admin-medicine-layout { grid-template-columns: 1fr; }
+  .admin-cash-flow-grid { grid-template-columns: 1fr; }
+}
+
+@media (max-width: 760px) {
+  .admin-billing > header { align-items: flex-start; flex-direction: column; }
+  .admin-billing-export { width: 100%; }
+  .admin-billing-metrics { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .admin-cash-flow { padding: 16px; }
+  .admin-cash-flow > header { align-items: flex-start; flex-direction: column; }
+  .admin-cash-flow-legend { justify-content: flex-start; }
+  .admin-medicine-form,
+  .admin-medicine-catalog { padding: 16px; }
+  .medicine-table { overflow: visible; border: 0; background: transparent; }
+  .medicine-table-head { display: none; }
+  .medicine-row {
+    min-width: 0;
+    grid-template-columns: 1fr 1fr;
+    margin-top: 12px;
+    padding: 14px;
+    border: 1px solid #d5e6e2 !important;
+    border-radius: 12px;
+    background: #fff;
+  }
+  .medicine-row label > span:first-child { display: inline; }
+  .medicine-row label:nth-child(2) { grid-column: 1 / -1; }
+  .medicine-active { align-self: end; min-height: 38px; }
+  .medicine-save { align-self: end; }
+}
+
+@media (max-width: 480px) {
+  .admin-total-revenue { align-items: flex-start; flex-direction: column; }
+  .admin-billing-metrics,
+  .admin-medicine-form-pair,
+  .medicine-row { grid-template-columns: 1fr; }
+  .medicine-row label:nth-child(2) { grid-column: auto; }
+}
+.admin-deposit-setting {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(320px, 420px);
+  align-items: center;
+  gap: 12px 28px;
+  margin: 0;
+  padding: 18px 20px;
+  border: 1px solid #cce1dc;
+  border-radius: 16px;
+  background: #f4faf8;
+}
+.admin-deposit-setting h3 { margin: 0 0 6px; }
+.admin-deposit-setting p { margin: 0; color: #526963; }
+.admin-deposit-setting__field { display: grid; gap: 8px; }
+.admin-deposit-setting label { font-weight: 600; }
+.admin-deposit-setting__controls { display: flex; gap: 10px; }
+.admin-deposit-setting__controls input { width: 100%; min-width: 0; padding: 10px 12px; border: 1px solid #b7d0ca; border-radius: 10px; }
+.admin-deposit-setting__controls button { flex: 0 0 auto; padding: 10px 16px; }
+.admin-deposit-setting > p { grid-column: 1 / -1; }
+.admin-deposit-setting .is-error { color: #a42c35; }
+@media (max-width: 760px) {
+  .admin-deposit-setting { grid-template-columns: 1fr; padding: 16px; }
+}
+@media (max-width: 480px) {
+  .admin-deposit-setting__controls { flex-wrap: wrap; }
+  .admin-deposit-setting__controls button { width: 100%; }
+}

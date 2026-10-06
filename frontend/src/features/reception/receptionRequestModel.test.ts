@@ -25,6 +25,7 @@ function appointment(id: string, patientId: string, status: string, createdAt: s
 const requests = [
   appointment("pending", "patient-1", "PENDING", "2026-08-02T03:00:00.000Z"),
   appointment("assigned", "patient-2", "ASSIGNED", "2026-08-01T03:00:00.000Z"),
+  appointment("paid", "patient-2", "PENDING_CONFIRMATION", "2026-08-01T04:00:00.000Z"),
   appointment("confirmed", "patient-1", "CONFIRMED", "2026-07-30T03:00:00.000Z"),
   appointment("cancelled", "patient-2", "CANCELLED", "2026-07-20T03:00:00.000Z"),
   appointment("completed", "patient-1", "COMPLETED", "2026-08-02T04:00:00.000Z"),
@@ -38,7 +39,7 @@ describe("reception request filters", () => {
       sentDate: "ALL",
       sort: "NEWEST",
     }, new Date("2026-08-02T08:00:00.000Z"));
-    expect(result.map(item => item.id)).toEqual(["pending", "assigned"]);
+    expect(result.map(item => item.id)).toEqual(["pending", "paid", "assigned"]);
   });
 
   it("searches patient names without accents and phone numbers", () => {
@@ -55,7 +56,7 @@ describe("reception request filters", () => {
       sort: "NEWEST",
     });
     expect(byName.map(item => item.id)).toEqual(["pending", "confirmed"]);
-    expect(byPhone.map(item => item.id)).toEqual(["assigned", "cancelled"]);
+    expect(byPhone.map(item => item.id)).toEqual(["paid", "assigned", "cancelled"]);
   });
 
   it("uses the sent date filter and keeps technical statuses unchanged", () => {
@@ -66,6 +67,6 @@ describe("reception request filters", () => {
       sort: "NEWEST",
     }, new Date("2026-08-02T08:00:00.000Z"));
     expect(result.map(item => item.status)).toEqual(["PENDING"]);
-    expect(countReceptionRequests(requests)).toEqual({ pending: 1, assigned: 1, confirmed: 1, cancelled: 1 });
+    expect(countReceptionRequests(requests)).toEqual({ pending: 1, assigned: 1, pendingConfirmation: 1, confirmed: 1, cancelled: 1 });
   });
 });

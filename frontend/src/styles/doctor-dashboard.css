@@ -446,6 +446,150 @@
   line-height: 1.5;
 }
 
+.doctor-queue-section {
+  overflow: hidden;
+  margin-bottom: var(--space-4);
+  background: var(--doctor-dashboard-surface);
+  border: 1px solid var(--doctor-dashboard-border);
+  border-radius: var(--radius-panel);
+}
+
+.doctor-queue-section > header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-4);
+  padding: 18px 22px;
+  background: var(--doctor-dashboard-surface-muted);
+  border-bottom: 1px solid var(--doctor-dashboard-border);
+}
+
+.doctor-queue-heading {
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+}
+
+.doctor-queue-heading-icon {
+  width: 42px;
+  height: 42px;
+  display: grid;
+  place-items: center;
+  color: var(--color-primary);
+  background: #fff;
+  border: 1px solid var(--doctor-dashboard-border);
+  border-radius: var(--radius-control);
+  flex: 0 0 auto;
+}
+
+.doctor-queue-heading-icon svg {
+  width: 21px;
+  height: 21px;
+}
+
+.doctor-queue-heading h3 {
+  margin: 0 0 3px;
+  color: var(--color-ink);
+  font-size: 19px;
+  line-height: 1.3;
+}
+
+.doctor-queue-heading p {
+  margin: 0;
+  color: var(--color-text-secondary);
+  font-size: 14px;
+  line-height: 1.45;
+}
+
+.doctor-queue-section > header > span {
+  padding: 5px 10px;
+  color: var(--color-primary);
+  background: #fff;
+  border: 1px solid var(--doctor-dashboard-border);
+  border-radius: 999px;
+  font-size: 13px;
+  font-weight: 750;
+  white-space: nowrap;
+}
+
+.doctor-queue-list {
+  display: grid;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.doctor-queue-row {
+  display: grid;
+  grid-template-columns: 52px 64px minmax(160px, 1fr) minmax(140px, auto) auto;
+  align-items: center;
+  gap: var(--space-3);
+  min-height: 88px;
+  padding: var(--space-3) 22px;
+  border-bottom: 1px solid var(--doctor-dashboard-border);
+  transition: background-color 150ms ease;
+}
+
+.doctor-queue-row:last-child {
+  border-bottom: 0;
+}
+
+.doctor-queue-row:hover {
+  background: var(--doctor-dashboard-surface-muted);
+}
+
+.doctor-queue-row.is-next {
+  background: var(--color-info-surface);
+  box-shadow: inset 3px 0 0 var(--color-primary);
+}
+
+.doctor-queue-position {
+  display: grid;
+  justify-items: center;
+  gap: 1px;
+  color: var(--color-text-secondary);
+}
+
+.doctor-queue-position span {
+  font-size: 10px;
+  font-weight: 750;
+  letter-spacing: 0.08em;
+}
+
+.doctor-queue-position b {
+  color: var(--color-ink);
+  font-size: 20px;
+  font-variant-numeric: tabular-nums;
+  line-height: 1.1;
+}
+
+.doctor-queue-row time {
+  color: var(--color-primary);
+  font-size: 18px;
+  font-weight: 750;
+  font-variant-numeric: tabular-nums;
+}
+
+.doctor-next-marker {
+  min-height: 26px;
+  display: inline-flex;
+  align-items: center;
+  padding: 3px 8px;
+  color: #fff;
+  background: var(--color-primary);
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 750;
+}
+
+.doctor-queue-empty {
+  min-height: 120px;
+  margin: 0;
+  border: 0;
+  border-radius: 0;
+}
+
 .doctor-schedule-section {
   overflow: hidden;
   background: var(--doctor-dashboard-surface);
@@ -1007,6 +1151,20 @@
     grid-template-columns: 70px minmax(0, 1fr) auto;
   }
 
+  .doctor-queue-row {
+    grid-template-columns: 48px 62px minmax(0, 1fr) auto;
+  }
+
+  .doctor-queue-row .doctor-appointment-signals {
+    grid-column: 3;
+    justify-content: flex-start;
+  }
+
+  .doctor-queue-row .doctor-appointment-actions {
+    grid-column: 4;
+    grid-row: 1 / span 2;
+  }
+
   .doctor-appointment-signals {
     grid-column: 2;
     justify-content: flex-start;
@@ -1082,6 +1240,36 @@
     align-items: flex-start;
   }
 
+  .doctor-queue-section > header {
+    align-items: flex-start;
+  }
+
+  .doctor-queue-heading-icon {
+    display: none;
+  }
+
+  .doctor-queue-row {
+    grid-template-columns: 40px 58px minmax(0, 1fr);
+    gap: var(--space-2);
+    padding-inline: var(--space-3);
+  }
+
+  .doctor-queue-row .doctor-appointment-signals,
+  .doctor-queue-row .doctor-appointment-actions {
+    grid-column: 3;
+    grid-row: auto;
+    justify-content: flex-start;
+  }
+
+  .doctor-queue-row .doctor-appointment-actions {
+    flex-wrap: wrap;
+  }
+
+  .doctor-queue-row .doctor-button,
+  .doctor-queue-row .doctor-ai-preview-button {
+    flex: 1 1 140px;
+  }
+
   .doctor-schedule-filters {
     padding-inline: var(--space-4);
   }
@@ -1133,6 +1321,7 @@
 
 @media (prefers-reduced-motion: reduce) {
   .doctor-button,
+  .doctor-queue-row,
   .doctor-appointment-row,
   .doctor-ai-preview-button {
     transition: none;

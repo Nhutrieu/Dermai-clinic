@@ -2,6 +2,7 @@ import { FormEvent, useEffect, useRef, useState } from "react";
 import { ArrowRight, Bot, CalendarDays, CircleHelp, ScanSearch } from "lucide-react";
 import { request } from "../../core/api";
 import type { SupportMessage } from "../../core/types";
+import SupportMessageText from "./SupportMessageText";
 
 export type AssistantTurnResponse = {
   answer: string;
@@ -88,7 +89,7 @@ export default function SupportAssistant({
       </section>}
       {transcript.map(message => <article className={message.senderRole === "PATIENT" ? "mine" : message.senderRole === "SYSTEM" ? "system" : "theirs support-ai-message"} key={message.id}>
         <b>{message.senderRole === "PATIENT" ? "Bạn" : message.senderRole === "SYSTEM" ? "Hệ thống" : message.senderRole === "RECEPTIONIST" ? "Lễ tân Derm" : "Trợ lý Derm"}</b>
-        <p>{message.body}</p>
+        <p><SupportMessageText body={message.body} /></p>
         <small>{new Date(message.sentAt).toLocaleTimeString("vi-VN", { hour: "2-digit", minute: "2-digit" })}</small>
       </article>)}
       {pendingQuestion && <article className="mine support-ai-pending" aria-label="Tin nhan dang gui">

@@ -75,6 +75,13 @@ describe("ReceptionAppointmentRequests", () => {
     expect(html).toContain("1</strong><span>yêu cầu đang cần lễ tân xử lý");
   });
 
+  it("shows a confirmation action only after the deposit succeeds", () => {
+    const html = render([{ ...request, status: "PENDING_CONFIRMATION" }]);
+    expect(html).toContain("Đã cọc · Chờ xác nhận");
+    expect(html).toContain("Xác nhận yêu cầu");
+    expect(html).toContain("Cần xử lý (1)");
+  });
+
   it("renders the guided empty state without database wording", () => {
     const html = render([]);
     expect(html).toContain("Không có yêu cầu mới");

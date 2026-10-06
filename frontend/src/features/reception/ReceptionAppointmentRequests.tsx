@@ -43,7 +43,7 @@ type Props = {
   onRecommend: (appointment: Appointment) => Promise<void>;
   onAssign: (appointmentId: string, slot: Recommendation) => Promise<void>;
   onConfirm: (appointmentId: string) => Promise<void>;
-  onCancel: (appointmentId: string, reason: string) => Promise<Appointment>;
+  onCancel: (appointmentId: string, reason: string, initiator: "PATIENT_REQUEST" | "CLINIC") => Promise<Appointment>;
   onOpenSupport: (patient: Patient) => void;
   onOpenAccepted: () => void;
 };
@@ -126,7 +126,7 @@ export default function ReceptionAppointmentRequests(props: Props) {
     () => filterReceptionRequests(requests, props.patients, { query, status, sentDate, sort }),
     [props.patients, query, requests, sentDate, sort, status],
   );
-  const actionableCount = counts.pending + counts.assigned;
+  const actionableCount = counts.pending + counts.assigned + counts.pendingConfirmation;
   const filtersChanged = Boolean(query.trim()) || status !== "OPEN" || sentDate !== "ALL" || sort !== "NEWEST";
   const hasActiveRequests = actionableCount > 0;
 
@@ -217,6 +217,7 @@ export default function ReceptionAppointmentRequests(props: Props) {
                 <option value="ALL">Tất cả ({requests.length})</option>
                 <option value="PENDING">Chờ xử lý ({counts.pending})</option>
                 <option value="ASSIGNED">Đã phân công ({counts.assigned})</option>
+                <option value="PENDING_CONFIRMATION">Đã cọc · Chờ xác nhận ({counts.pendingConfirmation})</option>
                 <option value="CONFIRMED">Đã xác nhận ({counts.confirmed})</option>
                 <option value="CANCELLED">Đã hủy ({counts.cancelled})</option>
               </select>
@@ -343,14 +344,16 @@ export default function ReceptionAppointmentRequests(props: Props) {
                           {isBusy ? "Đang tìm lịch..." : "Đề xuất bác sĩ"}
                         </button>
                       )}
-                      {item.status === "ASSIGNED" && (
+                      {item.status === "ASSIGNED" && <span className="reception-request-payment-wait">Chờ thanh toán cọc</span>}
+                      {item.status === "PENDING_CONFIRMATION" && (
                         <button
                           type="button"
                           className="reception-button-primary"
                           disabled={isBusy}
                           onClick={() => void props.onConfirm(item.id)}
                         >
-                          {isBusy ? "Đang xác nhận..." : "Xác nhận lịch"}
+                          <CheckCircle2 aria-hidden="true" />
+                          {isBusy ? "Đang xác nhận..." : "Xác nhận yêu cầu"}
                         </button>
                       )}
                       <details className="reception-request-more">
@@ -365,12 +368,12 @@ export default function ReceptionAppointmentRequests(props: Props) {
                               Liên hệ bệnh nhân
                             </button>
                           )}
-                          {["PENDING", "ASSIGNED"].includes(item.status) && (
+                          {["PENDING", "ASSIGNED", "PENDING_CONFIRMATION"].includes(item.status) && (
                             <ReceptionCancelControl
                               appointment={item}
                               patientName={patientName}
                               doctorName={doctorName}
-                              submit={reason => props.onCancel(item.id, reason)}
+                              submit={(reason, initiator) => props.onCancel(item.id, reason, initiator)}
                             />
                           )}
                         </div>
@@ -424,7 +427,7 @@ export default function ReceptionAppointmentRequests(props: Props) {
             </li>
             <li>
               <span>3</span>
-              <div><strong>Xác nhận lịch</strong><p>Lịch đã xác nhận sẽ chuyển sang mục Lịch đã nhận.</p></div>
+              <div><strong>Xác nhận lịch</strong><p>{counts.pendingConfirmation} yêu cầu đã cọc đang chờ lễ tân xác nhận.</p></div>
             </li>
           </ol>
           {!hasActiveRequests && (

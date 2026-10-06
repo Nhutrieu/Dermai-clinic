@@ -23,6 +23,31 @@ async def lifespan(_: FastAPI):
             f'ALTER TABLE "{settings.database_schema}".products '
             'ADD COLUMN IF NOT EXISTS active BOOLEAN NOT NULL DEFAULT TRUE'
         ))
+        # Older local databases were created by create_all() before the enum
+        # checks were declared on the models. Keep them aligned with V1 SQL.
+        await connection.execute(text(f'''
+            DO $$
+            BEGIN
+                IF NOT EXISTS (
+                    SELECT 1 FROM pg_constraint
+                    WHERE conrelid = '"{settings.database_schema}".prescriptions'::regclass
+                      AND conname = 'ck_pharmacy_prescriptions_status'
+                ) THEN
+                    ALTER TABLE "{settings.database_schema}".prescriptions
+                    ADD CONSTRAINT ck_pharmacy_prescriptions_status
+                    CHECK (status IN ('PENDING_PAYMENT', 'PAID', 'DISPENSED', 'CANCELLED'));
+                END IF;
+                IF NOT EXISTS (
+                    SELECT 1 FROM pg_constraint
+                    WHERE conrelid = '"{settings.database_schema}".inventory_logs'::regclass
+                      AND conname = 'ck_inventory_logs_action_type'
+                ) THEN
+                    ALTER TABLE "{settings.database_schema}".inventory_logs
+                    ADD CONSTRAINT ck_inventory_logs_action_type
+                    CHECK (action_type IN ('IMPORT', 'DISPENSE'));
+                END IF;
+            END $$;
+        '''))
 
     yield
     await engine.dispose()

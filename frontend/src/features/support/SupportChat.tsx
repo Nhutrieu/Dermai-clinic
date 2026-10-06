@@ -1,10 +1,12 @@
 import { FormEvent, useEffect, useRef, useState } from "react";
-import { CalendarCheck, CircleCheck, Headphones, MessageCircle, MessagesSquare, ShieldCheck, UserCheck, UserMinus, X } from "lucide-react";
+import { CalendarCheck, CircleCheck, Headphones, ImagePlus, MessageCircle, MessagesSquare, ShieldCheck, UserCheck, UserMinus, X } from "lucide-react";
 import { request } from "../../core/api";
 import { EmptyState } from "../../components/Ui";
 import { enableChimeNotifications, subscribeRealtime, playChimeNotification } from "../../core/realtime";
 import type { Appointment, AvailabilityResponse, AvailabilitySlot, Doctor, Patient, StaffDirectoryEntry, SupportConversation, SupportMessage, Tokens } from "../../core/types";
 import { newIncomingSupportMessages } from "./supportMessageModel";
+import SupportMessageText from "./SupportMessageText";
+import SupportMessageImage from "./SupportMessageImage";
 import SupportAssistant, { type AssistantTurnResponse } from "./SupportAssistant";
 
 function tokenSubject(token: string) {
@@ -56,6 +58,7 @@ export default function SupportChat({ session }: { session: Tokens }) {
     const [conversation, setConversation] = useState("");
     const [patients, setPatients] = useState<Record<string, Patient>>({});
     const [text, setText] = useState("");
+    const [imageFile, setImageFile] = useState<File | null>(null);
     const [error, setError] = useState("");
     const [assignmentBusy, setAssignmentBusy] = useState(false);
     const [bookingOpen, setBookingOpen] = useState(false);
@@ -76,6 +79,7 @@ export default function SupportChat({ session }: { session: Tokens }) {
 
     const knownMessageIdsRef = useRef<Set<string>>(new Set());
     const messagesInitializedRef = useRef(false);
+    const loadRef = useRef<() => Promise<void>>(async () => undefined);
     const messageListRef = useRef<HTMLDivElement>(null);
     const requestedConversationRef = useRef("");
     const dismissedConversationIdsRef = useRef<Set<string>>(new Set(Object.keys(initialDismissedSnapshotsRef.current || {})));
@@ -186,6 +190,7 @@ export default function SupportChat({ session }: { session: Tokens }) {
             setError((reason as Error).message);
         }
     }
+    loadRef.current = load;
 
     useEffect(() => {
         // Chat data is refreshed on demand and through WebSocket. Do not keep
@@ -215,8 +220,8 @@ export default function SupportChat({ session }: { session: Tokens }) {
     useEffect(() => subscribeRealtime(event => {
         // Event-driven refresh also runs while the panel is closed so the launcher
         // can show a new unread badge without bringing back background polling.
-        if (event.type === "CHAT_CHANGED" && !document.hidden) void load();
-    }), [conversation, open]);
+        if (event.type === "CHAT_CHANGED") void loadRef.current();
+    }), []);
 
     useEffect(() => {
         const openChat = (event: Event) => {
@@ -337,19 +342,41 @@ export default function SupportChat({ session }: { session: Tokens }) {
 
     async function send(event: FormEvent) {
         event.preventDefault();
-        if (!text.trim() || (receptionist && (!conversation || !assignedToMe)) || admin) return;
+        if ((!text.trim() && !imageFile) || (receptionist && (!conversation || !assignedToMe)) || admin) return;
         try {
-            await request("/appointments/support", session.accessToken, {
-                method: "POST",
-                body: JSON.stringify({ patientIdentityId: receptionist ? conversation : null, body: text.trim() }),
-            });
+            if (imageFile) {
+                const form = new FormData();
+                form.append("file", imageFile);
+                if (text.trim()) form.append("body", text.trim());
+                if (receptionist) form.append("patientIdentityId", conversation);
+                await request("/appointments/support/images", session.accessToken, { method: "POST", body: form });
+            } else {
+                await request("/appointments/support", session.accessToken, {
+                    method: "POST",
+                    body: JSON.stringify({ patientIdentityId: receptionist ? conversation : null, body: text.trim() }),
+                });
+            }
             setText("");
+            setImageFile(null);
             await load();
         } catch (reason) {
             setError((reason as Error).message);
         }
     }
 
+    function chooseImage(file: File | undefined) {
+        if (!file) return;
+        if (!["image/jpeg", "image/png", "image/webp"].includes(file.type)) {
+            setError("Chỉ hỗ trợ ảnh JPG, PNG hoặc WebP.");
+            return;
+        }
+        if (file.size > 5 * 1024 * 1024) {
+            setError("Ảnh phải có dung lượng tối đa 5 MB.");
+            return;
+        }
+        setError("");
+        setImageFile(file);
+    }
     async function assistantUpdated(result: AssistantTurnResponse) {
         await load();
         if (result.escalated) {
@@ -461,8 +488,9 @@ export default function SupportChat({ session }: { session: Tokens }) {
     };
 
     return <div className={`support-chat ${staffViewer ? "receptionist-support-chat" : ""}`}>
-        <button className="support-launch" aria-expanded={open} aria-controls="reception-support-panel" onClick={() => setOpen(!open)}>
-            {open ? "Đóng" : admin ? "Giám sát hỗ trợ" : receptionist ? "Hộp thư hỗ trợ" : "Hỗ trợ"}
+        <button className="support-launch" aria-label={open ? "Đóng hộp thư hỗ trợ" : admin ? "Giám sát hỗ trợ" : receptionist ? "Hộp thư hỗ trợ" : "Hỗ trợ"} aria-expanded={open} aria-controls="reception-support-panel" onClick={() => setOpen(!open)}>
+            {open ? <X aria-hidden="true" /> : <MessageCircle aria-hidden="true" />}
+            <span className="support-launch-label">{open ? "Đóng" : admin ? "Giám sát hỗ trợ" : receptionist ? "Hộp thư hỗ trợ" : "Hỗ trợ"}</span>
             {unread.length > 0 && <span className="support-badge">{unread.length > 99 ? "99+" : unread.length}</span>}
         </button>
         {open && <section id="reception-support-panel" className="support-panel" aria-label={staffViewer ? "Hộp thư hỗ trợ bệnh nhân" : "Hỗ trợ Derm Clinic"}>
@@ -521,16 +549,21 @@ export default function SupportChat({ session }: { session: Tokens }) {
             </form> : <>
                 <div ref={messageListRef} className="support-messages" role="log" aria-live="polite" aria-label="Nội dung trao đổi hỗ trợ">{visible.length === 0 ? <p>{staffViewer ? "Cuộc trò chuyện chưa có tin nhắn." : "Lễ tân chưa gửi tin nhắn mới. Bạn có thể bổ sung nội dung bên dưới."}</p> : visible.map(message => {
                     const mine=staffViewer ? message.senderIdentityId === currentIdentityId && message.senderRole === "RECEPTIONIST" : message.senderRole === "PATIENT";
-                    return <article className={message.senderRole === "SYSTEM" ? "system" : mine ? "mine" : "theirs"} key={message.id}><b>{messageSender(message)}</b><p>{messageBody(message)}</p><small>{new Date(message.sentAt).toLocaleString("vi-VN")}</small></article>;
+                    return <article className={message.senderRole === "SYSTEM" ? "system" : mine ? "mine" : "theirs"} key={message.id}><b>{messageSender(message)}</b><p><SupportMessageText body={messageBody(message)} /></p>{message.attachmentContentType && !admin && (!receptionist || assignedToMe) && <SupportMessageImage message={message} token={session.accessToken} />}<small>{new Date(message.sentAt).toLocaleString("vi-VN")}</small></article>;
                 })}</div>
-                {admin ? <div className="support-monitor-note"><ShieldCheck aria-hidden="true" /><span><b>Chế độ giám sát</b><small>Admin có thể xem người phụ trách và nội dung nhưng không gửi tin thay lễ tân.</small></span></div> : receptionist && !assignedToMe ? <div className="support-reply-locked"><Headphones aria-hidden="true" /><span>{resolvedConversation ? "Yêu cầu đã hoàn tất. Bạn vẫn có thể xem lại toàn bộ lịch sử phía trên." : activeConversation?.assignedReceptionistIdentityId ? `Cuộc trò chuyện đang do ${staffName(activeConversation.assignedReceptionistIdentityId)} phụ trách.` : "Nhận xử lý để trả lời bệnh nhân."}</span></div> : <form onSubmit={send}><textarea aria-label="Nội dung tin nhắn hỗ trợ" aria-keyshortcuts="Enter" title="Enter để gửi, Shift + Enter để xuống dòng" maxLength={2000} value={text} onChange={event => setText(event.target.value)} onKeyDown={event => {
-                    // Enter submits like a messaging app; preserve Shift+Enter
-                    // for multiline content and never interrupt an active IME.
-                    if (event.key === "Enter" && !event.shiftKey && !event.nativeEvent.isComposing) {
-                        event.preventDefault();
-                        event.currentTarget.form?.requestSubmit();
-                    }
-                }} placeholder="Nhập nội dung hỗ trợ về lịch khám…" /><button aria-label="Gửi tin nhắn" disabled={!text.trim()}>Gửi</button></form>}
+                {admin ? <div className="support-monitor-note"><ShieldCheck aria-hidden="true" /><span><b>Chế độ giám sát</b><small>Admin có thể xem người phụ trách và nội dung nhưng không gửi tin thay lễ tân.</small></span></div> : receptionist && !assignedToMe ? <div className="support-reply-locked"><Headphones aria-hidden="true" /><span>{resolvedConversation ? "Yêu cầu đã hoàn tất. Bạn vẫn có thể xem lại toàn bộ lịch sử phía trên." : activeConversation?.assignedReceptionistIdentityId ? `Cuộc trò chuyện đang do ${staffName(activeConversation.assignedReceptionistIdentityId)} phụ trách.` : "Nhận xử lý để trả lời bệnh nhân."}</span></div> : <form className="support-composer" onSubmit={send}>
+                    {imageFile && <div className="support-image-selection"><span>{imageFile.name} · {(imageFile.size / 1024 / 1024).toFixed(1)} MB</span><button type="button" onClick={() => setImageFile(null)} aria-label="Bỏ ảnh đã chọn"><X aria-hidden="true" /></button></div>}
+                    <div className="support-composer-row">
+                        <label className="support-attach-button" title="Gửi ảnh JPG, PNG hoặc WebP, tối đa 5 MB"><ImagePlus aria-hidden="true" /><span className="sr-only">Chọn ảnh</span><input type="file" accept="image/jpeg,image/png,image/webp" onChange={event => { chooseImage(event.target.files?.[0]); event.currentTarget.value = ""; }} /></label>
+                        <textarea aria-label="Nội dung tin nhắn hỗ trợ" aria-keyshortcuts="Enter" title="Enter để gửi, Shift + Enter để xuống dòng" maxLength={2000} value={text} onChange={event => setText(event.target.value)} onKeyDown={event => {
+                            if (event.key === "Enter" && !event.shiftKey && !event.nativeEvent.isComposing) {
+                                event.preventDefault();
+                                event.currentTarget.form?.requestSubmit();
+                            }
+                        }} placeholder="Nhập nội dung hỗ trợ về lịch khám…" />
+                        <button aria-label="Gửi tin nhắn" disabled={!text.trim() && !imageFile}>Gửi</button>
+                    </div>
+                </form>}
             </>}
             </>}
             {error && <small className="support-error" role="alert">{error}</small>}

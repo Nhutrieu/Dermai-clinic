@@ -44,4 +44,30 @@ describe("patient appointment history", () => {
         expect(html.match(/aria-haspopup="dialog"/g)).toHaveLength(3);
         expect(html).toContain("Xóa lịch");
     });
+
+    it("only offers a refund request for a paid patient cancellation", () => {
+        const cancelled = { ...appointment("cancelled", "CANCELLED"), cancellationInitiator: "PATIENT_REQUEST" };
+        const render = (status: "CANCELLED" | "SUCCESS" | "REFUND_REQUESTED") => renderToStaticMarkup(
+            <PatientAppointmentList
+                token="token"
+                appointments={[cancelled]}
+                refundPayments={{ cancelled: { amount: 5000, status } }}
+                requestRefund={vi.fn(async () => undefined)}
+                hide={vi.fn(async () => undefined)}
+            />
+        );
+
+        expect(render("CANCELLED")).not.toContain("Yêu cầu hoàn tiền cọc");
+        expect(render("CANCELLED")).toContain("Xóa lịch");
+        expect(render("SUCCESS")).toContain("Yêu cầu hoàn tiền cọc");
+        expect(render("REFUND_REQUESTED")).toContain("Đã gửi yêu cầu hoàn tiền");
+        const clinicCancelled = renderToStaticMarkup(
+            <PatientAppointmentList
+                appointments={[{ ...cancelled, cancellationInitiator: "CLINIC" }]}
+                refundPayments={{ cancelled: { amount: 5000, status: "SUCCESS" } }}
+                requestRefund={vi.fn(async () => undefined)}
+            />
+        );
+        expect(clinicCancelled).not.toContain("Yêu cầu hoàn tiền cọc");
+    });
 });

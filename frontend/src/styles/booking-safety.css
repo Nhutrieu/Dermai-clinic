@@ -197,6 +197,24 @@
   height: 17px;
 }
 
+.notification-warning-label.is-booking {
+  color: #087f70;
+}
+
+.notification-warning-label.is-invoice {
+  color: #1d5f8f;
+}
+
+.reception-notification-panel .notification-list > article.is-booking.unread {
+  border-left: 3px solid #0d9488;
+  background: #edf9f6;
+}
+
+.reception-notification-panel .notification-list > article.is-invoice.unread {
+  border-left: 3px solid #2f7eae;
+  background: #eef7fc;
+}
+
 .patient-route .notification-list b,
 .patient-route .notification-list p,
 .patient-route .notification-list small,
@@ -260,6 +278,28 @@
   color: #fff;
   box-shadow: 0 12px 28px rgba(8, 145, 178, .28) !important;
 }
+.patient-route .support-launch {
+  display: grid;
+  width: 48px;
+  height: 48px;
+  min-height: 48px;
+  padding: 0;
+  place-items: center;
+  border-radius: 50% !important;
+}
+.patient-route .support-launch > svg {
+  width: 20px;
+  height: 20px;
+}
+.patient-route .support-launch-label {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
 .patient-route .notification-launcher:hover,
 .patient-route .support-launch:hover {
   background: linear-gradient(135deg, #0ea5c0, #0d887f) !important;
@@ -304,4 +344,23 @@
 .clinic-closure-list article > div > small {
   color: #526b64;
   line-height: 1.45;
+}
+.role-receptionist .reception-notification-launcher { right: 190px; bottom: 24px; z-index: 96; }
+.role-receptionist .reception-notification-panel { right: 190px; bottom: 84px; z-index: 97; }
+.reception-cancellation-toast { position: fixed; z-index: 110; top: 18px; left: 50%; width: min(650px, calc(100vw - 32px)); display: grid; grid-template-columns: auto minmax(0, 1fr) auto auto; gap: 12px; align-items: center; padding: 14px 16px; border: 1px solid #efc47e; border-radius: 12px; background: #fff8e8; color: #724d13; box-shadow: 0 16px 45px #3b2b1230; transform: translateX(-50%); }
+.reception-cancellation-toast > svg { width: 22px; }
+.reception-cancellation-toast b, .reception-cancellation-toast small { display: block; }
+.reception-cancellation-toast small { margin-top: 3px; line-height: 1.4; }
+.reception-cancellation-toast button { min-height: 34px; border: 1px solid #d8a855; border-radius: 8px; background: #fff; color: #724d13; padding: 0 11px; font-weight: 800; }
+.reception-cancellation-toast button:last-child { width: 34px; padding: 0; display: grid; place-items: center; }
+.reception-cancellation-toast button:last-child svg { width: 16px; }
+.reception-cancellation-toast.is-booking { border-color: #92d8cc; background: #effaf7; color: #075f55; box-shadow: 0 16px 45px #0b59482b; }
+.reception-cancellation-toast.is-booking button { border-color: #8bcfc4; color: #075f55; }
+.reception-cancellation-toast.is-invoice { border-color: #9bc9e4; background: #f0f8fc; color: #164f73; box-shadow: 0 16px 45px #164f7326; }
+.reception-cancellation-toast.is-invoice button { border-color: #8bbbd7; color: #164f73; }
+@media (max-width: 520px) {
+  .role-receptionist .reception-notification-launcher { right: 84px; bottom: 16px; }
+  .role-receptionist .reception-notification-panel { right: 15px; bottom: 84px; }
+  .reception-cancellation-toast { top: 10px; grid-template-columns: auto 1fr auto; }
+  .reception-cancellation-toast > button:first-of-type { display: none; }
 }

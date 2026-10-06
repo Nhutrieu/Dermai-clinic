@@ -84,6 +84,7 @@ services:
       PATIENT_URL: http://patient-service:8083
       AI_URL: http://ai-service:8000
       SERVICE_TOKEN: ${SERVICE_TOKEN:-}
+      CLINIC_WEEKLY_CLOSURE_DAY: ${CLINIC_WEEKLY_CLOSURE_DAY:-SUNDAY}
     healthcheck: {test: ["CMD", "curl", "-fsS", "http://localhost:8085/actuator/health"], interval: 20s, timeout: 5s, retries: 10, start_period: 50s}
     depends_on: {postgres: {condition: service_healthy}, rabbitmq: {condition: service_healthy}, ai-service: {condition: service_healthy}}
   payment-service:
@@ -98,6 +99,7 @@ services:
       APPOINTMENT_URL: http://appointment-service:8085
       SERVICE_TOKEN: ${SERVICE_TOKEN:-}
       PAYMENT_DEPOSIT_AMOUNT: ${PAYMENT_DEPOSIT_AMOUNT:-100000}
+      PAYOS_FAKE_MODE: ${PAYOS_FAKE_MODE:-false}
       PAYOS_CLIENT_ID: ${PAYOS_CLIENT_ID:-}
       PAYOS_API_KEY: ${PAYOS_API_KEY:-}
       PAYOS_CHECKSUM_KEY: ${PAYOS_CHECKSUM_KEY:-}

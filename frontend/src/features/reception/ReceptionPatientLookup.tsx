@@ -126,10 +126,10 @@ function AppointmentRow({
     });
   }
 
-  async function cancel(reason: string) {
+  async function cancel(reason: string, initiator: "PATIENT_REQUEST" | "CLINIC") {
     return request<Appointment>(`/appointments/${appointment.id}/cancel`, token, {
       method: "POST",
-      body: JSON.stringify({ reason: reason.trim() }),
+      body: JSON.stringify({ reason: reason.trim(), initiator }),
     });
   }
 

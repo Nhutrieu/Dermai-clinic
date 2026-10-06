@@ -17,4 +17,9 @@ class AppointmentCancellationConsumerTest {
   consumer.consume("{\"appointmentId\":\""+bookingId+"\",\"actorIdentityId\":\""+actorId+"\",\"actorRole\":\"RECEPTIONIST\",\"cancellationInitiator\":\"CLINIC\",\"cancelReason\":\"Bác sĩ nghỉ\"}");
   verify(payments).requestRefund(bookingId,actorId,"RECEPTIONIST","CLINIC","Bác sĩ nghỉ");
  }
+ @Test void receptionistCancellingForPatientRequestsPolicyRefund() throws Exception {
+  var payments=mock(PaymentService.class);var consumer=new AppointmentCancellationConsumer(payments,new ObjectMapper());var bookingId=UUID.randomUUID();var actorId=UUID.randomUUID();
+  consumer.consume("{\"appointmentId\":\""+bookingId+"\",\"actorIdentityId\":\""+actorId+"\",\"actorRole\":\"RECEPTIONIST\",\"cancellationInitiator\":\"PATIENT_REQUEST\",\"cancelReason\":\"Bệnh nhân gọi hủy\"}");
+  verify(payments).requestPatientRefundOnBehalf(bookingId,actorId,"RECEPTIONIST","Bệnh nhân gọi hủy");
+ }
 }

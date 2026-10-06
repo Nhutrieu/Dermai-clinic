@@ -119,7 +119,7 @@ PostgreSQL 16 · Redis 7 · RabbitMQ 3.13 · Docker Compose
 | Frontend | React, TypeScript, Vite, CSS Design System và Nginx |
 | Gateway | Spring Cloud Gateway, JWT, RBAC và định tuyến API |
 | Backend | Java 21, Spring Boot 3.4, Spring Data JPA và Flyway |
-| Dữ liệu | PostgreSQL 16 với 7 schema và 24 bảng nghiệp vụ |
+| Dữ liệu | PostgreSQL 16 với 9 schema và 48 bảng nghiệp vụ |
 | Realtime | WebSocket; dữ liệu được tải lại từ nguồn thật sau sự kiện |
 | Messaging | RabbitMQ và outbox event cho thông báo bất đồng bộ |
 | AI | FastAPI, PyTorch, EfficientNet-B0, Grad-CAM, TF-IDF RAG và Gemini public chat |

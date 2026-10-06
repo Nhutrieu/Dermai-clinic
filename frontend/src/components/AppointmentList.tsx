@@ -113,7 +113,7 @@ function LegacyAppointmentList({ appointments, token, cancel, reschedule, bookFo
                 </div>
                 <div className="actions">
                     <span className={`status-badge ${badgeClass}`}>{label}</span>
-                    {["PENDING", "ASSIGNED", "CONFIRMED"].includes(x.status) && canSelfManage && reschedule && token && <RescheduleControl token={token} appointment={x} submit={value => reschedule(x.id, value)} />}
+                    {["PENDING", "ASSIGNED"].includes(x.status) && canSelfManage && reschedule && token && <RescheduleControl token={token} appointment={x} submit={value => reschedule(x.id, value)} />}
                     {["PENDING", "ASSIGNED", "CONFIRMED"].includes(x.status) && canSelfManage && cancel && <CancelControl submit={reason => cancel(x.id, reason)} />}
                     {["PENDING", "ASSIGNED", "CONFIRMED"].includes(x.status) && !canSelfManage && (reschedule || cancel) && <button className="contact-reception" onClick={() => window.dispatchEvent(new Event("open-support-chat"))}>Liên hệ hỗ trợ để đổi hoặc hủy lịch</button>}
                     {x.status === "FOLLOW_UP_REQUIRED" && token && bookFollowUp && <PatientFollowUpControl token={token} appointment={x} submit={slot => bookFollowUp(x.id, slot)} />}

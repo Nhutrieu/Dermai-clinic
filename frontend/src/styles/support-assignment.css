@@ -304,3 +304,47 @@
 .receptionist-support-chat .support-conversations::-webkit-scrollbar-thumb:hover {
   background: #5f9185;
 }
+/* Staff support stays in the floating action rail without covering footer data. */
+.receptionist-support-chat .support-launch {
+  display: grid;
+  width: 48px;
+  height: 48px;
+  min-height: 48px;
+  place-items: center;
+  padding: 0;
+  border-radius: 50%;
+}
+
+.receptionist-support-chat .support-launch > svg {
+  width: 20px;
+  height: 20px;
+}
+
+.receptionist-support-chat .support-launch-label {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+/* Lock the staff floating-action rail above legacy responsive rules. */
+.receptionist-support-chat {
+  right: 24px !important;
+  bottom: 24px !important;
+}
+
+@media (max-width: 780px) {
+  .receptionist-support-chat {
+    right: 14px !important;
+    bottom: 88px !important;
+  }
+}
+/* The open support workspace owns the floating layer. */
+body:has(.receptionist-support-chat .support-panel) .hotline-launch,
+body:has(.receptionist-support-chat .support-panel) .reception-notification-launcher {
+  visibility: hidden !important;
+  opacity: 0 !important;
+  pointer-events: none !important;
+}

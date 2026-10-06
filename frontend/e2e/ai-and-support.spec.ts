@@ -111,8 +111,13 @@ test.describe("AI assessment persistence and sharing consent", () => {
       expect(saved.sharedWithDoctor).toBe(true);
 
       await expect(page.getByRole("heading", { name: "Đặt lịch với bác sĩ da liễu" })).toBeVisible({ timeout: 15_000 });
-      await expect(page.locator(".skin-v2-score-ring strong")).toHaveText(String(Math.round(prediction.confidence * 100)));
-      await expect(page.locator(".skin-v2-prediction-list > li")).toHaveCount(3);
+      const predictionSummary = page.locator("article").filter({ hasText: "Top 3 từ mô hình" });
+      await expect(predictionSummary.getByRole("listitem")).toHaveCount(3);
+      const confidenceLabel = new Intl.NumberFormat("vi-VN", {
+        minimumFractionDigits: 1,
+        maximumFractionDigits: 1,
+      }).format(prediction.confidence * 100) + "%";
+      await expect(predictionSummary.getByText(confidenceLabel, { exact: true })).toBeVisible();
       await expect(page.getByAltText("Ảnh Grad-CAM từ mô hình")).toBeVisible();
       const after = await browserApi<AiAssessment[]>(page, "/api/v1/patients/me/ai-assessments");
       expect(after.ok).toBeTruthy();

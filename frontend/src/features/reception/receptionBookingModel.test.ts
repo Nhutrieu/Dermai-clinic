@@ -17,6 +17,8 @@ describe("reception booking presentation rules", () => {
       "ON_LEAVE",
       "HELD_BY_YOU",
       "HELD_BY_OTHER",
+      "PAYMENT_PENDING_BY_YOU",
+      "PAYMENT_PENDING_BY_OTHER",
     ];
     const details = states.map(receptionSlotDetails);
     expect(details.map(item => item.label)).toEqual([
@@ -25,6 +27,8 @@ describe("reception booking presentation rules", () => {
       "Bác sĩ nghỉ",
       "Đang giữ cho bạn",
       "Đang được giữ",
+      "Chờ bạn thanh toán",
+      "Đang chờ thanh toán",
     ]);
     expect(details.filter(item => item.selectable)).toHaveLength(1);
   });

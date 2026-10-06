@@ -103,6 +103,33 @@
 .app-nav button:hover { background: var(--app-surface-muted); color: var(--app-text-strong); }
 .app-nav button.is-active { background: var(--app-active-surface); color: var(--color-primary); }
 .app-nav button.is-active::after { display: none; }
+.app-nav-group { position: relative; flex: 0 0 auto; }
+.app-nav-group > button .app-nav-chevron { width: 14px; height: 14px; margin-left: -2px; transition: transform .18s ease; }
+.app-nav-group.is-open > button .app-nav-chevron { transform: rotate(180deg); }
+.app-nav-submenu {
+  position: absolute;
+  z-index: 100;
+  top: calc(100% + 8px);
+  left: 0;
+  width: 210px;
+  padding: 6px;
+  border: 1px solid var(--app-border);
+  border-radius: var(--radius-control);
+  display: grid;
+  gap: 3px;
+  background: var(--app-surface);
+  box-shadow: var(--shadow-md);
+}
+.app-nav .app-nav-submenu button {
+  width: 100%;
+  min-height: 42px;
+  padding: 0 11px;
+  justify-content: flex-start;
+  border-radius: 7px;
+  color: var(--app-text);
+}
+.app-nav .app-nav-submenu button:hover { background: var(--app-surface-muted); color: var(--app-text-strong); }
+.app-nav .app-nav-submenu button.is-active { background: var(--app-active-surface); color: var(--color-primary); }
 
 .app-header-actions { display: flex; align-items: center; gap: 8px; }
 .app-theme-toggle, .app-menu-button {
@@ -189,6 +216,18 @@
 .app-drawer-heading button { width: 44px; height: 44px; border: 0; display: grid; place-items: center; background: transparent; color: var(--app-text); }
 .app-nav-mobile { margin-top: 18px; display: grid; justify-content: stretch; gap: 6px; }
 .app-nav-mobile button { width: 100%; justify-content: flex-start; }
+.app-nav-mobile .app-nav-group { width: 100%; }
+.app-nav-mobile .app-nav-submenu {
+  position: static;
+  width: 100%;
+  margin-top: 4px;
+  padding: 4px 4px 4px 18px;
+  border: 0;
+  border-left: 2px solid var(--app-border);
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+}
 .app-drawer-account { margin-top: 24px; padding-top: 18px; border-top: 1px solid var(--app-border); display: grid; gap: 5px; }
 .app-drawer-account > strong, .app-drawer-account > span { padding-inline: 11px; }
 .app-drawer-account > span { color: var(--app-text-muted); font-size: 13px; }
@@ -356,6 +395,7 @@
   .app-header-inner { width: min(100% - 28px, 1480px); gap: 16px; }
   .app-nav { justify-content: flex-start; overflow-x: auto; scrollbar-width: none; }
   .app-nav::-webkit-scrollbar { display: none; }
+  .app-nav:has(.app-nav-group.is-open) { overflow: visible; }
   .app-nav button { padding-inline: 10px; }
   .app-user-copy { display: none; }
   .app-user-trigger { grid-template-columns: 36px 16px; }

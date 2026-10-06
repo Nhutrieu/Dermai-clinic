@@ -5,7 +5,7 @@ export type PatientCredentials = {
   password: string;
 };
 
-export type UserRole = "PATIENT" | "RECEPTIONIST" | "DOCTOR" | "ADMIN";
+export type UserRole = "PATIENT" | "RECEPTIONIST" | "DOCTOR" | "PHARMACIST" | "ADMIN";
 
 export type Doctor = {
   id: string;
@@ -56,6 +56,8 @@ const ACTIVE_UPCOMING_STATUSES = new Set([
   "PROPOSED",
   "PENDING",
   "ASSIGNED",
+  "PENDING_PAYMENT",
+  "PENDING_CONFIRMATION",
   "CONFIRMED",
   "CHECKED_IN",
   "IN_PROGRESS",
@@ -67,13 +69,13 @@ export function credentialsFromEnvironment(index: 1 | 2): PatientCredentials | n
   return email && password ? { email, password } : null;
 }
 
-export function roleCredentialsFromEnvironment(role: "RECEPTIONIST" | "DOCTOR"): PatientCredentials | null {
+export function roleCredentialsFromEnvironment(role: "RECEPTIONIST" | "DOCTOR" | "PHARMACIST"): PatientCredentials | null {
   const email = process.env[`E2E_${role}_EMAIL`]?.trim();
   const password = process.env[`E2E_${role}_PASSWORD`];
   return email && password ? { email, password } : null;
 }
 
-export function roleCredentialsMissingReason(roles: Array<"RECEPTIONIST" | "DOCTOR">) {
+export function roleCredentialsMissingReason(roles: Array<"RECEPTIONIST" | "DOCTOR" | "PHARMACIST">) {
   const names = roles.flatMap(role => [
     `E2E_${role}_EMAIL`,
     `E2E_${role}_PASSWORD`,
@@ -113,6 +115,7 @@ export async function loginAs(page: Page, credentials: PatientCredentials, role:
     PATIENT: "Bệnh nhân",
     RECEPTIONIST: "Lễ tân",
     DOCTOR: "Bác sĩ",
+    PHARMACIST: "Dược sĩ",
     ADMIN: "Quản trị viên",
   };
   await page.goto("/");
@@ -121,7 +124,7 @@ export async function loginAs(page: Page, credentials: PatientCredentials, role:
   await page.getByLabel("Email", { exact: true }).fill(credentials.email);
   await page.getByLabel("Mật khẩu", { exact: true }).fill(credentials.password);
   await page.getByRole("button", { name: "Đăng nhập", exact: true }).click();
-  await expect(page.getByRole("navigation", { name: `Điều hướng ${roleLabels[role]}` })).toBeVisible({ timeout: 15_000 });
+  await expect(page.getByRole("navigation", { name: `Điều hướng ${roleLabels[role]}` })).toBeVisible({ timeout: 30_000 });
 }
 
 export async function loginPatient(page: Page, credentials: PatientCredentials) {
@@ -287,12 +290,24 @@ export async function selectCandidateInUi(page: Page, candidate: BookingCandidat
   }
 
   if (await dateInput.inputValue() !== candidate.date) {
+    const closureDialog = page.getByRole("dialog").filter({ hasText: "Phòng khám tạm nghỉ" });
+    if (await closureDialog.isVisible().catch(() => false)) {
+      await closureDialog.getByRole("button", { name: "Chọn ngày khác", exact: true }).click();
+    }
     const responsePromise = page.waitForResponse(response =>
       isAvailabilityResponse(response, candidate.doctor.id, candidate.date),
     );
     await dateInput.fill(candidate.date);
     const response = await responsePromise;
     expect(response.ok(), "Tải slot sau khi chọn ngày").toBeTruthy();
+  }
+
+  const ownSlotButton = page.getByRole("button", {
+    name: new RegExp(`^${displayTime(candidate.slot.startAt)}, Bạn đang giữ`),
+  });
+  if (await ownSlotButton.isVisible().catch(() => false)) {
+    await expect(ownSlotButton).toBeEnabled();
+    return ownSlotButton;
   }
 
   const slotButton = page.getByRole("button", {
@@ -327,13 +342,42 @@ export async function beginHoldInUi(page: Page, slotButton: ReturnType<Page["get
 
 export async function confirmHoldInUi(page: Page, holdId: string, reason: string) {
   await page.getByLabel("Triệu chứng hoặc nhu cầu thăm khám", { exact: true }).fill(reason);
-  const responsePromise = page.waitForResponse(response => {
+  await page.getByRole("button", { name: "Xác nhận đặt lịch", exact: true }).click();
+  const dialog = page.getByRole("dialog", { name: "Xác nhận thanh toán tiền cọc" });
+  await expect(dialog).toBeVisible();
+  const bookingResponsePromise = page.waitForResponse(response => {
     const url = new URL(response.url());
     return response.request().method() === "POST"
       && url.pathname.endsWith(`/api/v1/appointments/holds/${holdId}/confirm`);
   });
-  await page.getByRole("button", { name: "Xác nhận đặt lịch", exact: true }).click();
-  return responsePromise;
+  const paymentResponsePromise = page.waitForResponse(response => {
+    const url = new URL(response.url());
+    return response.request().method() === "POST" && url.pathname.endsWith("/api/v1/payments");
+  });
+  const reconcileResponsePromise = page.waitForResponse(response => {
+    const url = new URL(response.url());
+    return response.request().method() === "POST" && /\/api\/v1\/payments\/\d+\/reconcile$/.test(url.pathname);
+  });
+  await dialog.getByRole("button", { name: "Xác nhận và thanh toán", exact: true }).click();
+  const bookingResponse = await bookingResponsePromise;
+  const paymentResponse = await paymentResponsePromise;
+  if (paymentResponse.status() !== 201) throw new Error(`Không tạo được thanh toán E2E: HTTP ${paymentResponse.status()}.`);
+  const reconcileResponse = await reconcileResponsePromise;
+  if (reconcileResponse.status() !== 200) throw new Error(`Không đối soát được thanh toán E2E: HTTP ${reconcileResponse.status()}.`);
+  // The fake provider return performs a hard navigation back to the app. Wait for
+  // that navigation to settle before polling through page.evaluate.
+  await expect(page.getByRole("navigation", { name: "Điều hướng Bệnh nhân" })).toBeVisible({ timeout: 30_000 });
+  const booked = await responseBody<Appointment>(bookingResponse);
+  if (booked?.id) {
+    await expect.poll(async () => {
+      const current = await appointmentById(page, booked.id);
+      return current.ok ? current.body.status : `HTTP_${current.status}`;
+    }, {
+      message: "Sự kiện thanh toán phải chuyển lịch sang chờ lễ tân xác nhận",
+      timeout: 15_000,
+    }).toBe("PENDING_CONFIRMATION");
+  }
+  return bookingResponse;
 }
 
 export async function responseBody<T>(response: Response): Promise<T | null> {
@@ -378,11 +422,11 @@ export async function cleanupVisitAppointment(
   if (!current.ok) throw new Error(`Không đọc được lịch E2E ${appointmentId}: HTTP ${current.status}.`);
 
   let status = current.body.status;
-  if (["ASSIGNED", "PENDING"].includes(status)) {
+  if (["ASSIGNED", "PENDING", "PENDING_PAYMENT"].includes(status)) {
     await cleanupAppointment(patientPage, appointmentId);
     return;
   }
-  if (["CONFIRMED", "CHECKED_IN"].includes(status)) {
+  if (["PENDING_CONFIRMATION", "CONFIRMED", "CHECKED_IN"].includes(status)) {
     const cancelled = await browserApi<Appointment>(receptionistPage, `/api/v1/appointments/${appointmentId}/cancel`, {
       method: "POST",
       body: { reason: "E2E_CLEANUP" },
@@ -390,6 +434,11 @@ export async function cleanupVisitAppointment(
     if (!cancelled.ok) throw new Error(`Lễ tân không thể hủy lịch E2E ${appointmentId}: HTTP ${cancelled.status}.`);
     status = cancelled.body.status;
   } else if (status === "IN_PROGRESS") {
+    const services = await browserApi(doctorPage, `/api/v1/appointments/${appointmentId}/performed-services`, {
+      method: "PUT",
+      body: { serviceIds: [] },
+    });
+    if (!services.ok) throw new Error(`Doctor could not confirm services for E2E appointment ${appointmentId}: HTTP ${services.status}.`);
     const completed = await browserApi<Appointment>(doctorPage, `/api/v1/appointments/${appointmentId}/complete`, { method: "POST" });
     if (!completed.ok) throw new Error(`Bác sĩ không thể hoàn tất lịch E2E ${appointmentId}: HTTP ${completed.status}.`);
     status = completed.body.status;

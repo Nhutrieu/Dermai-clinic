@@ -414,7 +414,7 @@ export default function ReceptionQueueBoard(props: Props) {
               if (item.status === "PENDING") {
                 action = <button type="button" className="reception-row-action" onClick={props.onOpenRequests}>Mở yêu cầu<ChevronRight aria-hidden="true" /></button>;
               } else if (item.status === "ASSIGNED") {
-                action = <button type="button" className="reception-row-action" disabled={busy} onClick={() => void props.onConfirm(item.id).catch(() => undefined)}>{busy ? "Đang xác nhận" : "Xác nhận lịch"}</button>;
+                action = <span className="reception-queue-no-action">Chờ thanh toán cọc</span>;
               } else if (item.status === "CONFIRMED") {
                 action = (
                   <div className="reception-row-action-group">

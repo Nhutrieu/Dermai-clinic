@@ -40,12 +40,13 @@ import {
 } from "../../components/PatientAppointmentList";
 import PatientProfile from "./PatientProfile";
 
-const ACTIVE_APPOINTMENT_STATUSES = new Set(["PROPOSED", "PENDING", "ASSIGNED", "CONFIRMED", "CHECKED_IN", "IN_PROGRESS"]);
+const ACTIVE_APPOINTMENT_STATUSES = new Set(["PROPOSED", "PENDING", "ASSIGNED", "PENDING_PAYMENT", "PENDING_CONFIRMATION", "CONFIRMED", "CHECKED_IN", "IN_PROGRESS"]);
 const RESCHEDULABLE_STATUSES = new Set(["PENDING", "ASSIGNED", "CONFIRMED"]);
 const IMPORTANT_NOTIFICATION_TYPES = new Set([
     "REQUEST_CREATED",
     "BOOKING_PROPOSAL",
     "PROPOSAL_ACCEPTED",
+    "PAYMENT_CONFIRMED",
     "CONFIRMED",
     "CHECKED_IN",
     "RESCHEDULED",
@@ -269,7 +270,7 @@ export default function PatientDashboard({
 
     // Keep the actions accurate even when the dashboard stays open past the cutoff.
     useEffect(() => {
-        if (!nextAppointment || !["PENDING", "ASSIGNED"].includes(nextAppointment.status)) return;
+        if (!nextAppointment || !["PENDING", "ASSIGNED", "PENDING_CONFIRMATION"].includes(nextAppointment.status)) return;
         const closesAt = patientAppointmentSelfServiceClosesAt(nextAppointment.createdAt);
         const now = Date.now();
         if (!Number.isFinite(closesAt) || closesAt < now) return;

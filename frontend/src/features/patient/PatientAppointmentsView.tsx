@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import { AlertTriangle, BrainCircuit, CalendarDays, CheckCircle2, Clock3, Stethoscope } from "lucide-react";
-import { request } from "../../core/api";
+import { ApiError, request } from "../../core/api";
 import { formatVnd } from "../../core/currency";
 import { subscribeRealtime } from "../../core/realtime";
 import type { AiAssessment, Appointment, AvailabilityResponse, AvailabilitySlot, Doctor, Patient } from "../../core/types";
@@ -8,9 +8,15 @@ import AppointmentList from "../../components/AppointmentList";
 import AccessibleDialog from "../../components/AccessibleDialog";
 import { formatAiPercentage, patientAiLabel } from "./patientAiPresentation";
 
-const ACTIVE_UPCOMING_STATUSES = new Set(["PROPOSED", "PENDING", "ASSIGNED", "CONFIRMED", "CHECKED_IN", "IN_PROGRESS"]);
+const ACTIVE_UPCOMING_STATUSES = new Set(["PROPOSED", "PENDING", "ASSIGNED", "PENDING_PAYMENT", "PENDING_CONFIRMATION", "CONFIRMED", "CHECKED_IN", "IN_PROGRESS"]);
 const HOLD_DURATION_SECONDS = 5 * 60;
 type Feedback = { tone: "info" | "success" | "error"; text: string };
+
+function aiBookingSummary(assessment: AiAssessment) {
+    const top = assessment.top3.map(item => `${patientAiLabel(item.label)} ${formatAiPercentage(item.probability)}`).join("; ");
+    return `Kết quả kiểm tra da bằng AI (tham khảo): ${top}. Phiên bản mô hình ${assessment.modelVersion}.${assessment.uncertain ? " AI đánh dấu kết quả chưa chắc chắn." : ""}`;
+}
+type RefundPayment = { id: string; bookingId: string; amount: number; refundAmount?: number; status: "CREATING" | "PENDING" | "CANCEL_REQUESTED" | "SUCCESS" | "REFUND_REQUESTED" | "REFUNDED" | "CANCELLED" | "EXPIRED" | "FAILED" };
 type BookingDialogProps = {
     title: string;
     descriptionId: string;
@@ -64,6 +70,8 @@ function slotLabel(status: AvailabilitySlot["status"], holdCountdown: string) {
         case "ON_LEAVE": return "Bác sĩ nghỉ";
         case "HELD_BY_YOU": return "Bạn đang giữ " + holdCountdown;
         case "HELD_BY_OTHER": return "Người khác đang giữ";
+        case "PAYMENT_PENDING_BY_YOU": return "Bạn đang chờ thanh toán";
+        case "PAYMENT_PENDING_BY_OTHER": return "Người khác đang chờ thanh toán";
         default: return "Còn trống";
     }
 }
@@ -119,6 +127,10 @@ export default function PatientAppointmentsView({
     const [sharedAi, setSharedAi] = useState<AiAssessment | null>(null);
     const [items, setItems] = useState(appointments);
     const [feedback, setFeedback] = useState<Feedback | null>(null);
+    const [refundPayments, setRefundPayments] = useState<Record<string, RefundPayment>>({});
+    const [depositConfirmationOpen, setDepositConfirmationOpen] = useState(false);
+    const [depositAmount, setDepositAmount] = useState<number | null>(null);
+    const [changedAmountPayment, setChangedAmountPayment] = useState<{ amount: number; checkoutUrl: string } | null>(null);
     const [busy, setBusy] = useState(false);
     const slotRequestInFlight = useRef(false);
     const clinicClosureNoticeKeyRef = useRef("");
@@ -131,6 +143,18 @@ export default function PatientAppointmentsView({
         ? Math.min(HOLD_DURATION_SECONDS, Math.max(0, Math.ceil((new Date(holdUntil).getTime() - holdClock) / 1000)))
         : 0;
     const holdCountdown = Math.floor(holdSeconds / 60) + ":" + String(holdSeconds % 60).padStart(2, "0");
+
+    useEffect(() => {
+        const raw = sessionStorage.getItem("dermai-payment-notice");
+        if (!raw) return;
+        sessionStorage.removeItem("dermai-payment-notice");
+        try {
+            const notice = JSON.parse(raw) as Feedback;
+            if (notice?.text && (notice.tone === "success" || notice.tone === "error" || notice.tone === "info")) setFeedback(notice);
+        } catch {
+            /* Bỏ qua thông báo cũ không hợp lệ. */
+        }
+    }, []);
 
     useEffect(() => {
         if (sessionStorage.getItem("patient-appointments-focus") !== "history") return;
@@ -152,6 +176,23 @@ export default function PatientAppointmentsView({
     useEffect(() => {
         loadDoctors().catch(error => setFeedback({ tone: "error", text: (error as Error).message }));
     }, [token]);
+
+    async function loadDepositAmount() {
+        const setting = await request<{ amount: number }>("/payments/deposit-setting", token, { cache: "no-store" });
+        setDepositAmount(setting.amount);
+        return setting.amount;
+    }
+
+    useEffect(() => { void loadDepositAmount().catch(() => setDepositAmount(null)); }, [token]);
+
+    async function openDepositConfirmation() {
+        try {
+            await loadDepositAmount();
+            setDepositConfirmationOpen(true);
+        } catch (error) {
+            setFeedback({ tone: "error", text: (error as Error).message });
+        }
+    }
 
     useEffect(() => {
         const refresh = () => { void loadDoctors().catch(() => undefined) };
@@ -179,6 +220,7 @@ export default function PatientAppointmentsView({
                     : undefined);
             if (!assessment) return;
             setSharedAi(assessment);
+            setReason(value => value.trim() ? value : aiBookingSummary(assessment));
             sessionStorage.removeItem("dermai-ai-booking");
         }).catch(() => undefined);
     }, [token]);
@@ -324,6 +366,7 @@ export default function PatientAppointmentsView({
     }, [holdUntil]);
 
     async function releaseHold() {
+        setDepositConfirmationOpen(false);
         if (!holdId) return;
         const id = holdId;
         setHoldId("");
@@ -457,6 +500,18 @@ export default function PatientAppointmentsView({
         }, 0);
     }
 
+    async function cancelDepositConfirmation() {
+        setDepositConfirmationOpen(false);
+        await releaseHold();
+        await findSlots(true);
+        setFeedback({ tone: "info", text: "Bạn chưa xác nhận thanh toán. Khung giờ đã được trả lại." });
+    }
+
+    async function confirmDepositAndPay() {
+        setDepositConfirmationOpen(false);
+        await book();
+    }
+
     async function book() {
         if (!selected || !holdId || !reason.trim()) return;
         setBusy(true);
@@ -472,6 +527,9 @@ export default function PatientAppointmentsView({
                     body: JSON.stringify({ sharedWithDoctor: true, appointmentId: booked.id })
                 });
             }
+            const payment = await request<{ amount: number; checkoutUrl: string; qrCode: string; expiresAt: string }>("/payments", token, {
+                method: "POST", body: JSON.stringify({ bookingId: booked.id })
+            });
             const latest = await request<Appointment[]>("/appointments/mine", token);
             setItems(latest);
             changed(latest);
@@ -480,6 +538,13 @@ export default function PatientAppointmentsView({
             setSelected(null);
             setHoldId("");
             setHoldUntil("");
+            sessionStorage.setItem("dermai-pending-payment", JSON.stringify({ bookingId: booked.id, ...payment }));
+            if (payment.amount !== depositAmount) {
+                setDepositAmount(payment.amount);
+                setChangedAmountPayment({ amount: payment.amount, checkoutUrl: payment.checkoutUrl });
+                return;
+            }
+            window.location.assign(payment.checkoutUrl);
             await findSlots(true);
             setFeedback({
                 tone: "success",
@@ -509,13 +574,44 @@ export default function PatientAppointmentsView({
         }
     }
 
+    useEffect(() => {
+        const cancelled = items.filter(item => item.status === "CANCELLED");
+        if (!cancelled.length) { setRefundPayments({}); return; }
+        let active = true;
+        Promise.all(cancelled.map(async item => {
+            try {
+                const payment = await request<RefundPayment>("/payments/booking/" + item.id, token);
+                return [item.id, payment] as const;
+            } catch (error) {
+                if (error instanceof ApiError && error.status === 404) return [item.id, null] as const;
+                throw error;
+            }
+        })).then(entries => {
+            if (!active) return;
+            setRefundPayments(Object.fromEntries(entries.filter((entry): entry is readonly [string, RefundPayment] => entry[1] !== null)));
+        }).catch(() => { if (active) setRefundPayments({}); });
+        return () => { active = false; };
+    }, [items, token]);
+
+    async function requestDepositRefund(id: string) {
+        const payment = await request<RefundPayment>("/payments/booking/" + id + "/refunds/request", token, {
+            method: "POST",
+            body: JSON.stringify({ reason: "Bệnh nhân yêu cầu hoàn tiền cọc sau khi hủy lịch" })
+        });
+        setRefundPayments(current => ({ ...current, [id]: payment }));
+        setFeedback({ tone: "success", text: `Đã gửi yêu cầu hoàn ${formatVnd(payment.refundAmount ?? payment.amount)} đến lễ tân theo chính sách phòng khám.` });
+    }
     async function cancel(id: string, cancelReason: string) {
+        const paid = ["PENDING_CONFIRMATION", "CONFIRMED"].includes(items.find(item => item.id === id)?.status || "");
         await request("/appointments/" + id + "/cancel", token, {
             method: "POST", body: JSON.stringify({ reason: cancelReason })
         });
         const latest = await request<Appointment[]>("/appointments/mine", token);
         setItems(latest);
         changed(latest);
+        setFeedback({ tone: "success", text: paid
+            ? "Đã hủy lịch. Tiền cọc chưa tự động hoàn; nếu muốn hoàn cọc, hãy bấm nút Yêu cầu hoàn tiền cọc tại lịch vừa hủy."
+            : "Đã hủy lịch và trả lại khung giờ. Không phát sinh hoàn tiền vì lịch chưa thanh toán cọc." });
     }
 
     async function hide(id: string) {
@@ -527,6 +623,41 @@ export default function PatientAppointmentsView({
 
     return (
         <>
+            {depositConfirmationOpen && selected && holdId && (
+                <BookingDialog
+                    title="Xác nhận thanh toán tiền cọc"
+                    titleId="deposit-confirmation-title"
+                    descriptionId="deposit-confirmation-description"
+                    primaryLabel="Xác nhận và thanh toán"
+                    secondaryLabel="Chưa thanh toán"
+                    onPrimary={() => void confirmDepositAndPay()}
+                    onClose={() => void cancelDepositConfirmation()}
+                    note="Sau khi xác nhận, bạn sẽ được chuyển sang cổng thanh toán. Vui lòng hoàn tất trong 10 phút."
+                >
+                    <p>
+                        Để xác nhận lịch khám, bạn cần thanh toán tiền cọc
+                        <strong> {formatVnd(depositAmount ?? 0)}</strong>.
+                    </p>
+                    <p>
+                        Lịch khám với <strong>BS. {selected.doctorName}</strong> vào
+                        <strong> {formatDateTime(selected.startAt)}</strong>.
+                    </p>
+                    <p>Sau khi thanh toán thành công, yêu cầu sẽ được chuyển đến lễ tân để kiểm tra và xác nhận lịch.</p>
+                </BookingDialog>
+            )}
+            {changedAmountPayment && (
+                <BookingDialog
+                    title="Tiền cọc vừa thay đổi"
+                    titleId="changed-deposit-title"
+                    descriptionId="changed-deposit-description"
+                    primaryLabel="Đồng ý và thanh toán"
+                    secondaryLabel="Để sau"
+                    onPrimary={() => window.location.assign(changedAmountPayment.checkoutUrl)}
+                    onClose={() => { setChangedAmountPayment(null); setFeedback({ tone: "info", text: "Bạn chưa thanh toán cọc. Yêu cầu đặt lịch sẽ hết hạn nếu không thanh toán đúng hạn." }); }}
+                >
+                    <p>Mức cọc mới là <strong>{formatVnd(changedAmountPayment.amount)}</strong>. Vui lòng xác nhận số tiền trước khi mở trang thanh toán.</p>
+                </BookingDialog>
+            )}
             {timeConflict && (
                 <BookingDialog
                     tone="danger"
@@ -825,11 +956,11 @@ export default function PatientAppointmentsView({
                             type="button"
                             className="booking-confirm"
                             disabled={busy || !selected || !reason.trim() || !holdId}
-                            onClick={() => void book()}
+                            onClick={() => void openDepositConfirmation()}
                         >
                             {busy && selected ? "Đang xử lý..." : "Xác nhận đặt lịch"}
                         </button>
-                        <small className="booking-payment-note">Thanh toán trực tiếp tại phòng khám.</small>
+                        <small className="booking-payment-note">{depositAmount === null ? "Đang tải mức cọc..." : `Thanh toán cọc ${formatVnd(depositAmount)} trong 10 phút; sau đó lễ tân sẽ kiểm tra và xác nhận lịch.`}</small>
                         {(!selected || !reason.trim()) && (
                             <small className="booking-confirm-help">
                                 {!selected ? "Chọn một khung giờ để tiếp tục." : "Nhập lý do khám để xác nhận."}
@@ -851,6 +982,8 @@ export default function PatientAppointmentsView({
                     token={token}
                     appointments={items}
                     cancel={cancel}
+                    refundPayments={refundPayments}
+                    requestRefund={requestDepositRefund}
                     hide={hide}
                     patientName={patient.fullName}
                     onBookNew={() => {

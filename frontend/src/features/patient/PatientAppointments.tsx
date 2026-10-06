@@ -9,7 +9,7 @@ import { subscribeRealtime } from "../../core/realtime";
 import type { AiAssessment, Appointment, AvailabilitySlot, Doctor, Patient } from "../../core/types";
 import AppointmentList, { HideCancelledButton, ReviewControl } from "../../components/AppointmentList";
 import { formatAiPercentage, patientAiLabel } from "./patientAiPresentation";
-const ACTIVE_UPCOMING_STATUSES = new Set(["PROPOSED", "PENDING", "ASSIGNED", "CONFIRMED", "CHECKED_IN", "IN_PROGRESS"]);
+const ACTIVE_UPCOMING_STATUSES = new Set(["PROPOSED", "PENDING", "ASSIGNED", "PENDING_PAYMENT", "PENDING_CONFIRMATION", "CONFIRMED", "CHECKED_IN", "IN_PROGRESS"]);
 function activeUpcoming(list: Appointment[]) { const now = Date.now(); return list.filter(item => ACTIVE_UPCOMING_STATUSES.has(item.status) && (["CHECKED_IN", "IN_PROGRESS"].includes(item.status) || new Date(item.endAt).getTime() > now)) }
 function clinicDate(value: string) { return new Intl.DateTimeFormat("en-CA", { timeZone: "Asia/Ho_Chi_Minh", year: "numeric", month: "2-digit", day: "2-digit" }).format(new Date(value)) }
 function LegacyPatientAppointments({ token, patient, appointments, changed }: { token: string; patient: Patient; appointments: Appointment[]; changed: (appointments: Appointment[]) => void }) {

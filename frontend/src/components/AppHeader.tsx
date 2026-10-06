@@ -18,10 +18,12 @@ const FOCUSABLE = "a[href],button:not([disabled]),[tabindex]:not([tabindex='-1']
 export default function AppHeader(props: AppHeaderProps) {
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [userOpen, setUserOpen] = useState(false);
+  const [navigationOpen, setNavigationOpen] = useState<AppNavItem["id"] | null>(null);
   const drawerRef = useRef<HTMLElement>(null);
   const menuButtonRef = useRef<HTMLButtonElement>(null);
   const userButtonRef = useRef<HTMLButtonElement>(null);
   const userMenuRef = useRef<HTMLDivElement>(null);
+  const navigationRef = useRef<HTMLElement>(null);
   const initial = props.displayName.trim().slice(0, 1).toLocaleUpperCase("vi") || "D";
 
   useEffect(() => {
@@ -75,21 +77,42 @@ export default function AppHeader(props: AppHeaderProps) {
     };
   }, [userOpen]);
 
+  useEffect(() => {
+    if (!navigationOpen) return;
+    function close(event: PointerEvent) {
+      const target = event.target as Node;
+      if (!navigationRef.current?.contains(target) && !drawerRef.current?.contains(target)) setNavigationOpen(null);
+    }
+    function closeOnEscape(event: KeyboardEvent) {
+      if (event.key === "Escape") setNavigationOpen(null);
+    }
+    document.addEventListener("pointerdown", close);
+    document.addEventListener("keydown", closeOnEscape);
+    return () => {
+      document.removeEventListener("pointerdown", close);
+      document.removeEventListener("keydown", closeOnEscape);
+    };
+  }, [navigationOpen]);
   function navigate(id: AppNavItem["id"]) {
+    setNavigationOpen(null);
     props.onNavigate(id);
     if (drawerOpen) closeDrawer();
   }
 
   function closeDrawer() {
+    setNavigationOpen(null);
     setDrawerOpen(false);
     window.requestAnimationFrame(() => menuButtonRef.current?.focus());
   }
 
   const navigation = (mobile = false) => (
-    <nav className={mobile ? "app-nav app-nav-mobile" : "app-nav"} aria-label={`Điều hướng ${props.roleName}`}>
+    <nav ref={mobile ? undefined : navigationRef} className={mobile ? "app-nav app-nav-mobile" : "app-nav"} aria-label={`Điều hướng ${props.roleName}`}>
       {props.items.map(item => {
         const Icon = item.icon;
-        return (
+        const children = item.children || [];
+        const hasChildren = children.length > 0;
+        const groupActive = props.activeItem === item.id || children.some(child => child.id === props.activeItem);
+        if (!hasChildren) return (
           <button
             key={item.id}
             type="button"
@@ -101,6 +124,28 @@ export default function AppHeader(props: AppHeaderProps) {
             <span>{item.label}</span>
           </button>
         );
+        const menuId = `app-nav-menu-${mobile ? "mobile" : "desktop"}-${item.id}`;
+        return <div className={`app-nav-group ${navigationOpen === item.id ? "is-open" : ""}`} key={item.id}>
+          <button
+            type="button"
+            className={groupActive ? "is-active" : ""}
+            aria-expanded={navigationOpen === item.id}
+            aria-haspopup="menu"
+            aria-controls={menuId}
+            onClick={() => setNavigationOpen(current => current === item.id ? null : item.id)}
+          >
+            <Icon aria-hidden="true" />
+            <span>{item.label}</span>
+            <ChevronDown className="app-nav-chevron" aria-hidden="true" />
+          </button>
+          {navigationOpen === item.id && <div id={menuId} className="app-nav-submenu" role="menu">
+            <button type="button" role="menuitem" className={props.activeItem === item.id ? "is-active" : ""} onClick={() => navigate(item.id)}><Icon aria-hidden="true" /><span>{item.label}</span></button>
+            {children.map(child => {
+              const ChildIcon = child.icon;
+              return <button type="button" role="menuitem" key={child.id} className={props.activeItem === child.id ? "is-active" : ""} onClick={() => navigate(child.id)}><ChildIcon aria-hidden="true" /><span>{child.label}</span></button>;
+            })}
+          </div>}
+        </div>;
       })}
     </nav>
   );

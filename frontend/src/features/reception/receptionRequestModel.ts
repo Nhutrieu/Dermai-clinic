@@ -5,6 +5,7 @@ export type ReceptionRequestStatusFilter =
   | "ALL"
   | "PENDING"
   | "ASSIGNED"
+  | "PENDING_CONFIRMATION"
   | "CONFIRMED"
   | "CANCELLED";
 
@@ -18,7 +19,7 @@ export type ReceptionRequestFilters = {
   sort: ReceptionRequestSort;
 };
 
-const REQUEST_STATUSES = new Set(["PENDING", "ASSIGNED", "CONFIRMED", "CANCELLED"]);
+const REQUEST_STATUSES = new Set(["PENDING", "ASSIGNED", "PENDING_CONFIRMATION", "CONFIRMED", "CANCELLED"]);
 
 function searchable(value?: string) {
   return (value || "")
@@ -47,6 +48,8 @@ export function getReceptionRequestStatus(status: string) {
       return { label: "Chờ xử lý", className: "reception-status-pending" };
     case "ASSIGNED":
       return { label: "Đã phân công", className: "reception-status-assigned" };
+    case "PENDING_CONFIRMATION":
+      return { label: "Đã cọc · Chờ xác nhận", className: "reception-status-paid" };
     case "CONFIRMED":
       return { label: "Đã xác nhận", className: "reception-status-confirmed" };
     case "CANCELLED":
@@ -70,7 +73,7 @@ export function filterReceptionRequests(
   return requests
     .filter(isReceptionRequest)
     .filter(item => {
-      if (filters.status === "OPEN" && !["PENDING", "ASSIGNED"].includes(item.status)) return false;
+      if (filters.status === "OPEN" && !["PENDING", "ASSIGNED", "PENDING_CONFIRMATION"].includes(item.status)) return false;
       if (!["OPEN", "ALL"].includes(filters.status) && item.status !== filters.status) return false;
 
       const sentAt = requestTimestamp(item);
@@ -92,8 +95,9 @@ export function countReceptionRequests(requests: Appointment[]) {
   return requests.reduce((counts, item) => {
     if (item.status === "PENDING") counts.pending += 1;
     if (item.status === "ASSIGNED") counts.assigned += 1;
+    if (item.status === "PENDING_CONFIRMATION") counts.pendingConfirmation += 1;
     if (item.status === "CONFIRMED") counts.confirmed += 1;
     if (item.status === "CANCELLED") counts.cancelled += 1;
     return counts;
-  }, { pending: 0, assigned: 0, confirmed: 0, cancelled: 0 });
+  }, { pending: 0, assigned: 0, pendingConfirmation: 0, confirmed: 0, cancelled: 0 });
 }

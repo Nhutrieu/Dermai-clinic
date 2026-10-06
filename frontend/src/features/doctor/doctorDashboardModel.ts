@@ -62,19 +62,31 @@ export function isStaleConsultation(appointment: Pick<Appointment, "status" | "e
     && now.getTime() >= endAt + 60 * 60_000;
 }
 
+function timestamp(value?: string): number {
+  if (!value) return Number.POSITIVE_INFINITY;
+  const parsed = new Date(value).getTime();
+  return Number.isFinite(parsed) ? parsed : Number.POSITIVE_INFINITY;
+}
+
+export function compareAppointmentQueueOrder(left: Appointment, right: Appointment): number {
+  return timestamp(left.startAt) - timestamp(right.startAt)
+    || timestamp(left.createdAt) - timestamp(right.createdAt)
+    || left.id.localeCompare(right.id);
+}
+
 export function getTodayAppointments(appointments: Appointment[], now = new Date()): Appointment[] {
   return appointments
     .filter(item => isClinicToday(item, now))
-    .sort((left, right) => new Date(left.startAt).getTime() - new Date(right.startAt).getTime());
+    .sort(compareAppointmentQueueOrder);
+}
+
+export function getWaitingQueue(appointments: Appointment[], now = new Date()): Appointment[] {
+  return getTodayAppointments(appointments, now)
+    .filter(item => ["CONFIRMED", "CHECKED_IN"].includes(item.status));
 }
 
 export function getNextPatient(appointments: Appointment[], now = new Date()): Appointment | undefined {
-  const today = getTodayAppointments(appointments, now);
-  // Patients checked in at reception take priority over merely confirmed visits.
-  const arrived = today.filter(item => item.status === "CHECKED_IN");
-  if (arrived.length) return arrived[0];
-  const confirmed = today.filter(item => item.status === "CONFIRMED");
-  return confirmed.find(item => new Date(item.startAt).getTime() >= now.getTime()) ?? confirmed[0];
+  return getWaitingQueue(appointments, now)[0];
 }
 
 export function getActiveConsultations(appointments: Appointment[]): Appointment[] {

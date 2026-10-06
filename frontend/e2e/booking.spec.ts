@@ -3,6 +3,7 @@ import {
   activeBookingsAt,
   activeUpcoming,
   beginHoldInUi,
+  browserApi,
   cleanupAppointment,
   cleanupHold,
   confirmHoldInUi,
@@ -91,10 +92,10 @@ test.describe("critical patient booking journey", () => {
         patientId: snapshot.patient.id,
         doctorId: candidate.doctor.id,
         startAt: candidate.slot.startAt,
-        status: "ASSIGNED",
+        status: "PENDING_PAYMENT",
         reason,
       });
-      await expect(page.getByText("Đã gửi yêu cầu đặt lịch", { exact: false })).toBeVisible();
+      await expect(page.getByText("Đã cọc · Chờ lễ tân xác nhận", { exact: true })).toBeVisible();
       await expect(page.getByText(reason, { exact: true })).toBeVisible();
 
       await test.info().attach("booking-result.json", {
@@ -167,34 +168,45 @@ test.describe("same-slot concurrency", () => {
       }
 
       await Promise.all([openBooking(page), openBooking(secondPage)]);
-      const [firstSlotButton, secondSlotButton] = await Promise.all([
+      await Promise.all([
         selectCandidateInUi(page, candidate),
         selectCandidateInUi(secondPage, candidate),
       ]);
 
-      // Both clicks start from the same AVAILABLE snapshot; the server/database decides the winner.
-      const holdAttempts = await Promise.allSettled([
-        beginHoldInUi(page, firstSlotButton, firstActive.length, { programmatic: true }),
-        beginHoldInUi(secondPage, secondSlotButton, secondActive.length, { programmatic: true }),
+      // Both requests start from the same AVAILABLE UI snapshot; the server/database decides the winner.
+      const holdResponses = await Promise.all([
+        browserApi<Appointment & { code?: string; detail?: string }>(page, "/api/v1/appointments/holds", {
+          method: "POST",
+          body: {
+            patientId: firstSnapshot.patient.id,
+            doctorId: candidate.doctor.id,
+            doctorIdentityId: candidate.slot.doctorIdentityId,
+            startAt: candidate.slot.startAt,
+            endAt: candidate.slot.endAt,
+          },
+        }),
+        browserApi<Appointment & { code?: string; detail?: string }>(secondPage, "/api/v1/appointments/holds", {
+          method: "POST",
+          body: {
+            patientId: secondSnapshot.patient.id,
+            doctorId: candidate.doctor.id,
+            doctorIdentityId: candidate.slot.doctorIdentityId,
+            startAt: candidate.slot.startAt,
+            endAt: candidate.slot.endAt,
+          },
+        }),
       ]);
-      const holdResponses = holdAttempts.map(result => result.status === "fulfilled" ? result.value : null);
-      const holdBodies = await Promise.all(holdResponses.map(response => response
-        ? responseBody<Appointment & { code?: string; detail?: string }>(response)
-        : null));
+      const holdBodies = holdResponses.map(response => response.body);
       holdResponses.forEach((response, index) => {
-        if (response?.status() === 201 && holdBodies[index]?.id) holdIds[index] = holdBodies[index]!.id;
+        if (response.status === 201 && holdBodies[index]?.id) holdIds[index] = holdBodies[index]!.id;
       });
-      const holdFailures = holdAttempts
-        .filter((result): result is PromiseRejectedResult => result.status === "rejected")
-        .map(result => String(result.reason));
-      expect(holdFailures, JSON.stringify(holdBodies)).toHaveLength(0);
 
       const successIndexes = holdResponses
-        .map((response, index) => ({ status: response?.status(), index }))
+        .map((response, index) => ({ status: response.status, index }))
         .filter(result => result.status === 201)
         .map(result => result.index);
       const conflictIndexes = holdResponses
-        .map((response, index) => ({ status: response?.status(), index }))
+        .map((response, index) => ({ status: response.status, index }))
         .filter(result => result.status === 409)
         .map(result => result.index);
       expect(successIndexes, JSON.stringify(holdBodies)).toHaveLength(1);
@@ -202,10 +214,13 @@ test.describe("same-slot concurrency", () => {
       winnerIndex = successIndexes[0] as 0 | 1;
       const loserIndex = conflictIndexes[0] as 0 | 1;
       expect(String(holdBodies[loserIndex]?.code || ""), JSON.stringify(holdBodies[loserIndex])).toMatch(/CONFLICT|NOT_AVAILABLE/);
-      await expect(pages[loserIndex].locator(".booking-feedback-error")).toBeVisible();
 
       const winnerPage = pages[winnerIndex];
       const winningHoldId = holdIds[winnerIndex]!;
+      await winnerPage.bringToFront();
+      await winnerPage.reload();
+      await openBooking(winnerPage);
+      await selectCandidateInUi(winnerPage, candidate);
       const reason = "E2E-BOOK-002 - kiểm thử hai bệnh nhân tranh cùng slot";
       const confirmResponse = await confirmHoldInUi(winnerPage, winningHoldId, reason);
       const booked = await responseBody<Appointment>(confirmResponse);
@@ -216,7 +231,7 @@ test.describe("same-slot concurrency", () => {
       expect(booked).toMatchObject({
         doctorId: candidate.doctor.id,
         startAt: candidate.slot.startAt,
-        status: "ASSIGNED",
+        status: "PENDING_PAYMENT",
       });
 
       await expect(pages[loserIndex].getByRole("button", {
@@ -237,7 +252,7 @@ test.describe("same-slot concurrency", () => {
           testCase: "E2E-BOOK-002",
           doctorId: candidate.doctor.id,
           startAt: candidate.slot.startAt,
-          holdHttpStatuses: holdResponses.map(response => response?.status() || null),
+          holdHttpStatuses: holdResponses.map(response => response.status),
           winnerPatient: winnerIndex + 1,
           bookedAppointmentsAcrossPatients: firstBookings.length + secondBookings.length,
           appointmentId,

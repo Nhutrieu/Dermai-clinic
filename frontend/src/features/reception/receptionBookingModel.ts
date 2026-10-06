@@ -117,6 +117,10 @@ export function receptionSlotDetails(status: AvailabilitySlot["status"]) {
       return { label: "Đang giữ cho bạn", className: "is-held", selectable: false };
     case "HELD_BY_OTHER":
       return { label: "Đang được giữ", className: "is-held", selectable: false };
+    case "PAYMENT_PENDING_BY_YOU":
+      return { label: "Chờ bạn thanh toán", className: "is-held", selectable: false };
+    case "PAYMENT_PENDING_BY_OTHER":
+      return { label: "Đang chờ thanh toán", className: "is-held", selectable: false };
   }
 }
 

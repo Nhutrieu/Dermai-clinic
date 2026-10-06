@@ -3,7 +3,7 @@ import { ShieldCheck, UserPlus } from "lucide-react";
 import PasswordRequirements from "../../components/PasswordRequirements";
 import { isPasswordValid, passwordValidationMessage, PASSWORD_MAX_LENGTH, PASSWORD_MIN_LENGTH } from "../../core/passwordPolicy";
 
-export type StaffRole = "DOCTOR" | "RECEPTIONIST" | "ADMIN";
+export type StaffRole = "DOCTOR" | "RECEPTIONIST" | "PHARMACIST" | "ADMIN";
 
 type Props = {
   email: string;
@@ -31,7 +31,11 @@ const roleGuidance: Record<StaffRole, { label: string; description: string }> = 
   },
   RECEPTIONIST: {
     label: "Tài khoản lễ tân",
-    description: "Được tiếp nhận yêu cầu, đặt lịch hộ, check-in và hỗ trợ bệnh nhân.",
+    description: "Được tiếp nhận yêu cầu, đặt lịch hộ, check-in, lập hóa đơn, thu tiền và cấp thuốc.",
+  },
+  PHARMACIST: {
+    label: "Tài khoản dược sĩ",
+    description: "Được xem đơn đã thanh toán, chọn lô FEFO, xuất thuốc và quản lý nhập kho.",
   },
   ADMIN: {
     label: "Tài khoản quản trị viên",
@@ -41,7 +45,7 @@ const roleGuidance: Record<StaffRole, { label: string; description: string }> = 
 
 export default function AdminStaffCreateForm(props: Props) {
   const guidance = roleGuidance[props.role];
-  const submitLabel = props.role === "DOCTOR" ? "Tạo tài khoản bác sĩ" : props.role === "RECEPTIONIST" ? "Tạo tài khoản lễ tân" : "Tạo quản trị viên";
+  const submitLabel = props.role === "DOCTOR" ? "Tạo tài khoản bác sĩ" : props.role === "RECEPTIONIST" ? "Tạo tài khoản lễ tân" : props.role === "PHARMACIST" ? "Tạo tài khoản dược sĩ" : "Tạo quản trị viên";
 
   return <section className="admin-staff-create" aria-labelledby="admin-staff-create-title">
     <header>
@@ -74,6 +78,7 @@ export default function AdminStaffCreateForm(props: Props) {
             <select value={props.role} onChange={event => props.onRoleChange(event.target.value as StaffRole)}>
               <option value="DOCTOR">Bác sĩ</option>
               <option value="RECEPTIONIST">Lễ tân</option>
+              <option value="PHARMACIST">Dược sĩ</option>
               <option value="ADMIN">Quản trị viên</option>
             </select>
           </label>

@@ -25,6 +25,7 @@ function appointmentStatusLabel(status: string) {
   switch (status) {
     case "PENDING": return "Chờ xử lý";
     case "ASSIGNED": return "Đã phân công";
+    case "PENDING_CONFIRMATION": return "Đã cọc · Chờ lễ tân xác nhận";
     case "CONFIRMED": return "Đã xác nhận";
     case "CHECKED_IN": return "Đã đến phòng khám";
     case "CANCELLED": return "Đã hủy";
@@ -296,11 +297,12 @@ export function ReceptionCancelControl({
   submit,
   onSuccess,
 }: AppointmentContext & {
-  submit: (reason: string) => Promise<Appointment>;
+  submit: (reason: string, initiator: "PATIENT_REQUEST" | "CLINIC") => Promise<Appointment>;
   onSuccess?: (appointment: Appointment) => void;
 }) {
   const [open, setOpen] = useState(false);
   const [reason, setReason] = useState("");
+  const [initiator, setInitiator] = useState<"PATIENT_REQUEST" | "CLINIC">("PATIENT_REQUEST");
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState<Appointment | null>(null);
@@ -310,7 +312,7 @@ export function ReceptionCancelControl({
     setSubmitting(true);
     setError("");
     try {
-      const updated = await submit(reason.trim());
+      const updated = await submit(reason.trim(), initiator);
       setSuccess(updated);
     } catch (cause) {
       setError(toBookingIssue(cause).detail);
@@ -324,6 +326,7 @@ export function ReceptionCancelControl({
     const completed = success;
     setOpen(false);
     setReason("");
+    setInitiator("PATIENT_REQUEST");
     setError("");
     setSuccess(null);
     if (completed) onSuccess?.(completed);
@@ -365,6 +368,9 @@ export function ReceptionCancelControl({
           {success ? (
             <div className="reception-action-success" aria-live="polite">
               <p>Lịch đã được hệ thống xác nhận hủy. Khung giờ được trả lại theo quy trình lịch hẹn hiện có.</p>
+              <p>{initiator === "PATIENT_REQUEST"
+                ? "Nếu cọc đã thanh toán và còn đủ điều kiện hoàn, hệ thống sẽ tạo yêu cầu hoàn theo chính sách để lễ tân xử lý."
+                : "Nếu đã thanh toán cọc, hệ thống sẽ chuyển yêu cầu hoàn đủ tiền cọc cho lễ tân xử lý."}</p>
               <NotificationDeliveryStatus />
             </div>
           ) : (
@@ -377,7 +383,14 @@ export function ReceptionCancelControl({
               <p className="reception-action-safety reception-action-safety-danger">
                 Sau khi hệ thống xác nhận, lịch này không thể khôi phục bằng thao tác hiện tại.
               </p>
-              <div className="reception-action-field">
+                            <fieldset className="reception-cancel-initiator">
+                <legend>Bên chủ động hủy</legend>
+                <label><input type="radio" name={`cancel-initiator-${appointment.id}`} checked={initiator === "PATIENT_REQUEST"} onChange={() => setInitiator("PATIENT_REQUEST")} /> Bệnh nhân yêu cầu hủy</label>
+                <label><input type="radio" name={`cancel-initiator-${appointment.id}`} checked={initiator === "CLINIC"} onChange={() => setInitiator("CLINIC")} /> Phòng khám chủ động hủy (hoàn đủ tiền cọc)</label>
+                <p className="reception-cancel-refund-note">{initiator === "PATIENT_REQUEST"
+                  ? "Nếu cọc đã thanh toán và còn đủ điều kiện hoàn, hệ thống sẽ tự tạo yêu cầu hoàn theo chính sách (100% hoặc 50%) để lễ tân xử lý."
+                  : "Nếu đã thanh toán cọc, hệ thống tạo yêu cầu hoàn đủ tiền cọc để lễ tân xử lý."}</p>
+              </fieldset><div className="reception-action-field">
                 <label htmlFor={`cancel-reason-${appointment.id}`}>Lý do hủy <span aria-hidden="true">*</span></label>
                 <textarea
                   id={`cancel-reason-${appointment.id}`}

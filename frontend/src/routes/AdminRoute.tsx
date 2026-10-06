@@ -6,6 +6,7 @@ import "../styles/admin-doctors.css";
 import "../styles/admin-staff.css";
 import "../styles/admin-stale-consultations.css";
 import "../styles/admin-overview.css";
+import "../styles/admin-services.css";
 
 export default function AdminRoute({ children }: { children: ReactNode }) {
   return children;

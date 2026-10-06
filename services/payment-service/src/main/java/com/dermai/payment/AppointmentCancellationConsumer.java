@@ -28,6 +28,9 @@ class AppointmentCancellationConsumer {
   var actorValue=event.path("actorIdentityId").asText("");
   var actorIdentityId=actorValue.isBlank()?null:UUID.fromString(actorValue);
   var initiator=event.path("cancellationInitiator").asText("PATIENT_REQUEST");
-  if("CLINIC".equals(initiator))payments.requestRefund(bookingId,actorIdentityId,event.path("actorRole").asText("SYSTEM"),initiator,event.path("cancelReason").asText("Phòng khám hủy lịch"));
+  var actorRole=event.path("actorRole").asText("SYSTEM");
+  if("CLINIC".equals(initiator))payments.requestRefund(bookingId,actorIdentityId,actorRole,initiator,event.path("cancelReason").asText("Phòng khám hủy lịch"));
+  else if("PATIENT_REQUEST".equals(initiator) && ("RECEPTIONIST".equals(actorRole) || "ADMIN".equals(actorRole)))
+   payments.requestPatientRefundOnBehalf(bookingId,actorIdentityId,actorRole,event.path("cancelReason").asText("Bệnh nhân yêu cầu hủy lịch"));
  }
 }

@@ -3,7 +3,10 @@ import {
     ArrowRight,
     CalendarClock,
     CheckCircle2,
+    ChevronDown,
+    ChevronLeft,
     ChevronRight,
+    ChevronUp,
     FileText,
     MessageCircle,
     Pill,
@@ -55,6 +58,8 @@ const SEVERITY_LABELS: Record<string, string> = {
     SEVERE: "Mức độ nặng",
     URGENT: "Cần được ưu tiên",
 };
+
+const RECORDS_PER_PAGE = 3;
 
 export function isAiSupportedReason(reason?: string) {
     const normalized = (reason || "").trim().toLocaleLowerCase("vi");
@@ -248,7 +253,9 @@ export default function PatientMedicalRecords({
     const [period, setPeriod] = useState("all");
     const [kind, setKind] = useState("all");
     const [order, setOrder] = useState("newest");
+    const [page, setPage] = useState(0);
     const [pdfPrescription, setPdfPrescription] = useState<Prescription | null>(null);
+    const [detailCollapsed, setDetailCollapsed] = useState(false);
     const detailRef = useRef<HTMLElement>(null);
 
     useEffect(() => {
@@ -300,14 +307,31 @@ export default function PatientMedicalRecords({
         return order === "newest" ? result : [...result].reverse();
     }, [doctorsById, entries, kind, order, period, query]);
 
+    const pageCount = Math.max(1, Math.ceil(filteredEntries.length / RECORDS_PER_PAGE));
+    const pagedEntries = useMemo(
+        () => filteredEntries.slice(page * RECORDS_PER_PAGE, (page + 1) * RECORDS_PER_PAGE),
+        [filteredEntries, page],
+    );
+
     useEffect(() => {
-        if (filteredEntries.some(entry => entry.record.id === selectedRecordId)) return;
-        setSelectedRecordId(filteredEntries[0]?.record.id || "");
-    }, [filteredEntries, selectedRecordId]);
+        setPage(0);
+    }, [kind, order, period, query]);
+
+    useEffect(() => {
+        if (page < pageCount) return;
+        setPage(pageCount - 1);
+    }, [page, pageCount]);
+
+    useEffect(() => {
+        if (pagedEntries.some(entry => entry.record.id === selectedRecordId)) return;
+        setSelectedRecordId(pagedEntries[0]?.record.id || "");
+        setDetailCollapsed(false);
+    }, [pagedEntries, selectedRecordId]);
 
     const selectedEntry = filteredEntries.find(entry => entry.record.id === selectedRecordId);
     function selectRecord(id: string) {
         setSelectedRecordId(id);
+        setDetailCollapsed(false);
         if (window.matchMedia("(max-width: 768px)").matches) {
             window.setTimeout(() => {
                 detailRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
@@ -373,7 +397,7 @@ export default function PatientMedicalRecords({
                 ) : filteredEntries.length === 0 ? (
                     <RecordState tone="empty" title="Không có kết quả phù hợp" description="Hãy thay đổi từ khóa hoặc bộ lọc để xem các lần khám khác." />
                 ) : <ol className="patient-medical-list">
-                    {filteredEntries.map(entry => {
+                    {pagedEntries.map(entry => {
                         const appointment = entry.appointment;
                         const doctor = appointment?.doctorId ? doctorsById.get(appointment.doctorId) : undefined;
                         const date = appointment?.startAt || entry.record.signedAt;
@@ -400,6 +424,11 @@ export default function PatientMedicalRecords({
                         </li>;
                     })}
                 </ol>}
+                {filteredEntries.length > RECORDS_PER_PAGE && <nav className="patient-medical-pagination" aria-label="Phân trang lịch sử khám">
+                    <button type="button" disabled={page === 0} onClick={() => setPage(current => Math.max(0, current - 1))}><ChevronLeft aria-hidden="true" />Trước</button>
+                    <span>Trang <b>{page + 1}</b> / {pageCount}</span>
+                    <button type="button" disabled={page + 1 >= pageCount} onClick={() => setPage(current => Math.min(pageCount - 1, current + 1))}>Sau<ChevronRight aria-hidden="true" /></button>
+                </nav>}
             </section>
 
             {selectedEntry && <article className="patient-medical-detail" ref={detailRef} tabIndex={-1} aria-labelledby="patient-medical-detail-title">
@@ -409,9 +438,16 @@ export default function PatientMedicalRecords({
                         <h3 id="patient-medical-detail-title">{selectedEntry.record.finalDiagnosis || "Kết quả đang được bác sĩ cập nhật"}</h3>
                         <p>{selectedEntry.appointment ? "Khám ngày" : "Bác sĩ ký ngày"} <time dateTime={selectedDate}>{formatDate(selectedDate, { weekday: "long", day: "2-digit", month: "long", year: "numeric" })}</time></p>
                     </div>
-                    <RecordStatus complete={isPatientRecordComplete(selectedEntry)} />
+                    <div className="patient-medical-detail-actions">
+                        <RecordStatus complete={isPatientRecordComplete(selectedEntry)} />
+                        <button type="button" className="patient-medical-collapse" aria-expanded={!detailCollapsed} aria-controls="patient-medical-detail-body" onClick={() => setDetailCollapsed(value => !value)}>
+                            {detailCollapsed ? <ChevronDown aria-hidden="true" /> : <ChevronUp aria-hidden="true" />}
+                            {detailCollapsed ? "Xem chi tiết" : "Thu gọn"}
+                        </button>
+                    </div>
                 </header>
 
+                <div id="patient-medical-detail-body" className="patient-medical-detail-body" hidden={detailCollapsed}>
                 <section className="patient-medical-section" aria-labelledby="patient-visit-information-title">
                     <div className="patient-medical-section-heading"><Stethoscope aria-hidden="true" /><h4 id="patient-visit-information-title">Thông tin buổi khám</h4></div>
                     <dl className="patient-medical-facts">
@@ -477,6 +513,7 @@ export default function PatientMedicalRecords({
                     <p>Liên hệ phòng khám nếu bạn cần hỗ trợ thêm về kết quả hoặc lịch tái khám.</p>
                     <button type="button" onClick={openSupport}><MessageCircle aria-hidden="true" />Liên hệ hỗ trợ</button>
                 </footer>
+                </div>
             </article>}
         </div>
 

@@ -14,15 +14,15 @@ import org.springframework.transaction.support.TransactionTemplate;
  private final PaymentRepository payments;private final PaymentOutboxRepository outbox;
  private final OrderCodeGenerator orderCodes;private final PayOSGateway payOS;private final BookingClient bookings;
  private final ObjectMapper json;private final Clock clock;private final TransactionTemplate tx;
- private final BigDecimal deposit;private final Duration holdDuration;private final String returnUrl;private final String cancelUrl;
+ private final DepositSettingsService depositSettings;private final Duration holdDuration;private final String returnUrl;private final String cancelUrl;
 
  PaymentService(PaymentRepository payments,PaymentOutboxRepository outbox,OrderCodeGenerator orderCodes,
    PayOSGateway payOS,BookingClient bookings,ObjectMapper json,Clock clock,PlatformTransactionManager transactionManager,
-   @Value("${payment.deposit-amount:100000}")BigDecimal deposit,
+   DepositSettingsService depositSettings,
    @Value("${payment.hold-duration:PT10M}")Duration holdDuration,
    @Value("${payment.return-url}")String returnUrl,@Value("${payment.cancel-url}")String cancelUrl){
   this.payments=payments;this.outbox=outbox;this.orderCodes=orderCodes;this.payOS=payOS;this.bookings=bookings;
-  this.json=json;this.clock=clock;this.tx=new TransactionTemplate(transactionManager);this.deposit=deposit;
+  this.json=json;this.clock=clock;this.tx=new TransactionTemplate(transactionManager);this.depositSettings=depositSettings;
   this.holdDuration=holdDuration;this.returnUrl=returnUrl;this.cancelUrl=cancelUrl;
  }
 
@@ -43,7 +43,7 @@ import org.springframework.transaction.support.TransactionTemplate;
     payment=tx.execute(status->{
      var concurrent=payments.findByBookingId(bookingId);if(concurrent.isPresent())return concurrent.get();
      var now=clock.instant();
-     return payments.saveAndFlush(Payment.creating(bookingId,patientIdentityId,deposit,orderCodes.next(),booking.startAt(),now.plus(holdDuration),now,normalizedEmail));
+     return payments.saveAndFlush(Payment.creating(bookingId,patientIdentityId,depositSettings.current().amount(),orderCodes.next(),booking.startAt(),now.plus(holdDuration),now,normalizedEmail));
     });
    }catch(DataIntegrityViolationException race){payment=payments.findByBookingId(bookingId).orElseThrow(()->race);}
   }
@@ -158,6 +158,19 @@ import org.springframework.transaction.support.TransactionTemplate;
   if(untilAppointment.compareTo(Duration.ofHours(6))>=0)return payment.amount.divide(new BigDecimal("2"),0,java.math.RoundingMode.DOWN);
   return BigDecimal.ZERO;
  }
+ public Optional<PaymentResponse> requestPatientRefundOnBehalf(UUID bookingId,UUID actorIdentityId,String actorRole,String reason){
+  if(!Set.of("RECEPTIONIST","ADMIN").contains(actorRole))throw new PaymentForbidden();
+  return tx.execute(status->{
+   var payment=payments.findLockedByBookingId(bookingId).orElse(null);if(payment==null)return Optional.empty();
+   if(EnumSet.of(PaymentStatus.REFUND_REQUESTED,PaymentStatus.REFUNDED).contains(payment.status))return Optional.of(response(payment));
+   if(payment.status!=PaymentStatus.SUCCESS)return Optional.empty();
+   var now=clock.instant();var eligibleAmount=patientRefundAmount(payment,now);
+   if(eligibleAmount.signum()<=0)return Optional.empty();
+   payment.status=PaymentStatus.REFUND_REQUESTED;payment.refundReason=reason;payment.refundRequestedByIdentity=actorIdentityId;payment.refundRequestedByRole=actorRole;
+   payment.refundInitiator="PATIENT_REQUEST";payment.refundRequestedAt=now;payment.refundAmount=eligibleAmount;payment.updatedAt=now;
+   payments.save(payment);addEvent(payment,"payment.refund_requested","REFUND_REQUESTED");return Optional.of(response(payment));
+  });
+ }
  public Optional<PaymentResponse> requestRefund(UUID bookingId,UUID actorIdentityId,String actorRole,String initiator,String reason){
   return tx.execute(status->{
    var payment=payments.findLockedByBookingId(bookingId).orElse(null);if(payment==null)return Optional.empty();
@@ -171,7 +184,10 @@ import org.springframework.transaction.support.TransactionTemplate;
  }
 
  public List<PaymentResponse> refunds(){return payments.findTop100ByStatusInOrderByRefundRequestedAtDesc(EnumSet.of(PaymentStatus.REFUND_REQUESTED,PaymentStatus.REFUNDED)).stream().map(this::response).toList();}
- public List<PaymentResponse> all(){return payments.findAll().stream().sorted(Comparator.comparing((Payment p)->p.createdAt).reversed()).limit(500).map(this::response).toList();}
+ public List<PaymentResponse> report(Instant from,Instant to){
+  if(from==null||to==null||from.isAfter(to))throw new PaymentConflict("INVALID_REPORT_RANGE");
+  return payments.findReportPayments(from,to).stream().map(this::response).toList();
+ }
 
  public PaymentResponse completeRefund(UUID paymentId,BigDecimal amount,String method,String reference,String recipientName,RefundEvidence evidence,UUID actorIdentityId,String actorRole){
   if(!"RECEPTIONIST".equals(actorRole))throw new PaymentForbidden();

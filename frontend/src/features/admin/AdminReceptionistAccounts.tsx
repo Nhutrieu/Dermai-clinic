@@ -138,7 +138,7 @@ export default function AdminReceptionistAccounts({ token, revision }: Props) {
         body: JSON.stringify({ displayName: displayName.trim() }),
       });
       setAccounts(current => current.map(account => account.identityId === updated.identityId ? updated : account));
-      setMessage("Đã cập nhật tên nhân viên lễ tân.");
+      setMessage("Đã cập nhật tên nhân viên.");
       setAccountEvents(await request<StaffAccountEvent[]>(`/auth/staff/${selected.identityId}/events`, token));
     } catch (reason) {
       setError((reason as Error).message);
@@ -150,7 +150,7 @@ export default function AdminReceptionistAccounts({ token, revision }: Props) {
   async function toggleAccount() {
     if (!selected) return;
     const blocking = selected.status !== "LOCKED";
-    if (blocking && !window.confirm(`Khóa tài khoản lễ tân ${accountName(selected)}? Các phiên đăng nhập dài hạn sẽ bị thu hồi.`)) return;
+    if (blocking && !window.confirm(`Khóa tài khoản nhân viên ${accountName(selected)}? Các phiên đăng nhập dài hạn sẽ bị thu hồi.`)) return;
     setBusy(true);
     setError("");
     setMessage("");
@@ -160,7 +160,7 @@ export default function AdminReceptionistAccounts({ token, revision }: Props) {
         body: JSON.stringify({ blocked: blocking }),
       });
       setAccounts(current => current.map(account => account.identityId === updated.identityId ? updated : account));
-      setMessage(blocking ? "Đã khóa tài khoản lễ tân." : "Đã mở khóa tài khoản lễ tân.");
+      setMessage(blocking ? "Đã khóa tài khoản nhân viên." : "Đã mở khóa tài khoản nhân viên.");
       await loadAccounts(updated.identityId);
       setAccountEvents(await request<StaffAccountEvent[]>(`/auth/staff/${updated.identityId}/events`, token));
     } catch (reason) {
@@ -193,14 +193,14 @@ export default function AdminReceptionistAccounts({ token, revision }: Props) {
 
   async function deleteAccount() {
     if (!selected || busy) return;
-    if (!window.confirm(`Xóa vĩnh viễn tài khoản lễ tân ${accountName(selected)}? Nhân viên sẽ không thể đăng nhập lại. Nhật ký thao tác lịch khám vẫn được giữ.`)) return;
+    if (!window.confirm(`Xóa vĩnh viễn tài khoản nhân viên ${accountName(selected)}? Nhân viên sẽ không thể đăng nhập lại. Nhật ký thao tác lịch khám vẫn được giữ.`)) return;
     setBusy(true);
     setError("");
     setMessage("");
     try {
       await request(`/auth/staff/${selected.identityId}`, token, { method: "DELETE" });
       await loadAccounts();
-      setMessage("Đã xóa tài khoản nhân viên lễ tân.");
+      setMessage("Đã xóa tài khoản nhân viên.");
     } catch (reason) {
       setError((reason as Error).message);
     } finally {
@@ -214,13 +214,13 @@ export default function AdminReceptionistAccounts({ token, revision }: Props) {
         <h2 id="receptionist-accounts-title">Đội ngũ lễ tân</h2>
         <p>Tìm nhân viên, cập nhật thông tin đăng nhập và kiểm tra lịch sử xử lý lịch khám.</p>
       </div>
-      <div className="admin-staff-counts" aria-label="Tổng hợp tài khoản lễ tân">
+      <div className="admin-staff-counts" aria-label="Tổng hợp tài khoản nhân viên">
         <span><strong>{activeCount}</strong> có thể đăng nhập</span>
         {lockedCount > 0 && <span className="is-locked"><strong>{lockedCount}</strong> đã khóa</span>}
       </div>
     </header>
 
-    <div className="admin-staff-toolbar" aria-label="Bộ lọc tài khoản lễ tân">
+    <div className="admin-staff-toolbar" aria-label="Bộ lọc tài khoản nhân viên">
       <label className="admin-staff-search">
         <span>Tìm nhân viên</span>
         <span><Search aria-hidden="true" /><input type="search" value={query} onChange={event => setQuery(event.target.value)} placeholder="Nhập tên hoặc email" /></span>
@@ -238,8 +238,8 @@ export default function AdminReceptionistAccounts({ token, revision }: Props) {
     {error && <p className="admin-staff-feedback is-error" role="alert">{error}</p>}
     {message && <p className="admin-staff-feedback is-success" aria-live="polite">{message}</p>}
 
-    {loading ? <StateSkeleton rows={3} label="Đang tải danh sách lễ tân" /> : accounts.length === 0 ? <EmptyState icon={UserRound} title="Chưa có tài khoản lễ tân" description="Tạo tài khoản ở biểu mẫu phía trên để bắt đầu phân công nhân sự." /> : <div className="admin-staff-layout">
-      <nav className="admin-staff-list" aria-label="Danh sách tài khoản lễ tân">
+    {loading ? <StateSkeleton rows={3} label="Đang tải danh sách nhân viên" /> : accounts.length === 0 ? <EmptyState icon={UserRound} title="Chưa có tài khoản nhân viên" description="Tạo tài khoản ở biểu mẫu phía trên để bắt đầu phân công nhân sự." /> : <div className="admin-staff-layout">
+      <nav className="admin-staff-list" aria-label="Danh sách tài khoản nhân viên">
         {filteredAccounts.length === 0 ? <div className="admin-staff-filter-empty"><Search aria-hidden="true" /><b>Không tìm thấy tài khoản phù hợp</b><button type="button" onClick={() => { setQuery(""); setFilter("ALL"); }}>Xóa bộ lọc</button></div> : filteredAccounts.map(account => <button
           type="button"
           className={selectedId === account.identityId ? "is-selected" : ""}
@@ -270,7 +270,7 @@ export default function AdminReceptionistAccounts({ token, revision }: Props) {
           <div><h4 id="staff-profile-heading">Tên hiển thị</h4><p>Tên này giúp phân biệt người phụ trách trong hộp thư và nhật ký thao tác.</p></div>
           <form className="admin-staff-name-form" onSubmit={updateName}>
             <label htmlFor="receptionist-display-name">Họ tên nhân viên</label>
-            <div><input id="receptionist-display-name" required maxLength={150} value={displayName} onChange={event => setDisplayName(event.target.value)} placeholder="Nhập họ tên lễ tân" /><button type="submit" className="secondary" disabled={busy || !displayName.trim()}>Lưu tên</button></div>
+            <div><input id="receptionist-display-name" required maxLength={150} value={displayName} onChange={event => setDisplayName(event.target.value)} placeholder="Nhập họ tên nhân viên" /><button type="submit" className="secondary" disabled={busy || !displayName.trim()}>Lưu tên</button></div>
             {!selected.displayName && <small>Tài khoản cũ chưa có tên. Hãy bổ sung để theo dõi thao tác chính xác.</small>}
           </form>
         </section>

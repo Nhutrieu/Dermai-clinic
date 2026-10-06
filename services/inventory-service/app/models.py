@@ -72,6 +72,10 @@ class Prescription(Base):
     __tablename__ = "prescriptions"
     __table_args__ = (
         Index("ix_prescriptions_status_paid_at", "status", "paid_at"),
+        CheckConstraint(
+            "status IN ('PENDING_PAYMENT', 'PAID', 'DISPENSED', 'CANCELLED')",
+            name="ck_pharmacy_prescriptions_status",
+        ),
         {"schema": SCHEMA},
     )
 
@@ -119,6 +123,7 @@ class InventoryLog(Base):
     __tablename__ = "inventory_logs"
     __table_args__ = (
         Index("ix_inventory_logs_product_created", "product_id", "created_at"),
+        CheckConstraint("action_type IN ('IMPORT', 'DISPENSE')", name="ck_inventory_logs_action_type"),
         {"schema": SCHEMA},
     )
 

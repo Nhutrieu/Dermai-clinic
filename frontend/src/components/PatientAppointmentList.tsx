@@ -1,5 +1,5 @@
 import { FormEvent, useEffect, useState } from "react";
-import { CalendarDays, CheckCircle2, ChevronDown, ChevronUp, CircleAlert, MessageCircle, Search, Trash2, X } from "lucide-react";
+import { CalendarDays, CheckCircle2, ChevronDown, ChevronUp, CircleAlert, Clock3, MessageCircle, Search, Trash2, X } from "lucide-react";
 import { request } from "../core/api";
 import { formatVnd } from "../core/currency";
 import {
@@ -11,10 +11,14 @@ import type { Appointment, ClinicReview, Recommendation, RecommendationResult } 
 import AccessibleDialog from "./AccessibleDialog";
 import { EmptyState } from "./Ui";
 
+export type AppointmentRefundPayment = { amount: number; refundAmount?: number; status: "CREATING" | "PENDING" | "CANCEL_REQUESTED" | "SUCCESS" | "REFUND_REQUESTED" | "REFUNDED" | "CANCELLED" | "EXPIRED" | "FAILED" };
+
 type AppointmentListProps = {
     appointments: Appointment[];
     token?: string;
     cancel?: (id: string, reason: string) => Promise<void>;
+    refundPayments?: Record<string, AppointmentRefundPayment>;
+    requestRefund?: (id: string) => Promise<void>;
     reschedule?: (id: string, value: string, endAt?: string) => Promise<void>;
     bookFollowUp?: (id: string, slot: Recommendation) => Promise<void>;
     hide?: (id: string) => Promise<void>;
@@ -42,6 +46,7 @@ export function statusDetails(status: string) {
         case "PROPOSED": return { label: "Chờ bạn xác nhận", className: "is-proposed" };
         case "PENDING": return { label: "Chờ tiếp nhận", className: "is-pending" };
         case "ASSIGNED": return { label: "Đã xếp bác sĩ", className: "is-assigned" };
+        case "PENDING_CONFIRMATION": return { label: "Đã cọc · Chờ lễ tân xác nhận", className: "is-pending-confirmation" };
         case "CONFIRMED": return { label: "Đã xác nhận", className: "is-confirmed" };
         case "CHECKED_IN": return { label: "Đã đến phòng khám", className: "is-checked-in" };
         case "IN_PROGRESS": return { label: "Đang khám", className: "is-in-progress" };
@@ -61,7 +66,7 @@ export function AppointmentStatusBadge({ status, awaitingClinicUpdate = false }:
     return <span className={"appointment-status " + details.className}>{details.label}</span>;
 }
 
-export function CancelAppointmentControl({ submit }: { submit: (reason: string) => Promise<void> }) {
+export function CancelAppointmentControl({ submit, paid = false }: { submit: (reason: string) => Promise<void>; paid?: boolean }) {
     const [open, setOpen] = useState(false);
     const [reason, setReason] = useState("");
     const [busy, setBusy] = useState(false);
@@ -88,7 +93,8 @@ export function CancelAppointmentControl({ submit }: { submit: (reason: string) 
 
     return (
         <div className="appointment-inline-form">
-            <label>
+            {paid && <p className="appointment-refund-note">Lịch này đã thanh toán cọc. Hủy lịch không tự động hoàn tiền; sau khi hủy, hệ thống sẽ tính mức hoàn theo thời điểm bạn gửi yêu cầu.</p>}
+<label>
                 Lý do hủy
                 <input
                     required
@@ -109,6 +115,39 @@ export function CancelAppointmentControl({ submit }: { submit: (reason: string) 
     );
 }
 
+function RefundRequestControl({ payment, submit }: { payment: AppointmentRefundPayment; submit: () => Promise<void> }) {
+    const [confirming, setConfirming] = useState(false);
+    const [busy, setBusy] = useState(false);
+    const [error, setError] = useState("");
+    if (payment.status === "REFUND_REQUESTED") return <span className="appointment-refund-state is-pending" role="status">
+        <Clock3 aria-hidden="true" />
+        <span className="appointment-refund-state-copy">
+            <strong>Đã gửi yêu cầu hoàn tiền</strong>
+            <small><b>{formatVnd(payment.refundAmount ?? payment.amount)}</b> · Đang chờ lễ tân xử lý</small>
+        </span>
+    </span>;
+    if (payment.status === "REFUNDED") return <span className="appointment-refund-state is-completed" role="status">
+        <CheckCircle2 aria-hidden="true" />
+        <span className="appointment-refund-state-copy">
+            <strong>Đã hoàn tiền cọc</strong>
+            <small>Giao dịch đã hoàn tất</small>
+        </span>
+    </span>;
+    if (!confirming) return <button type="button" className="appointment-refund-action" onClick={() => setConfirming(true)}>Yêu cầu hoàn tiền cọc</button>;
+    return <div className="appointment-inline-form appointment-refund-confirm">
+        <p>Hệ thống sẽ tính mức hoàn: 100% nếu yêu cầu trong 30 phút từ lúc cọc hoặc còn ít nhất 24 giờ trước lịch; 50% nếu còn từ 6–24 giờ; dưới 6 giờ không được hoàn.</p>
+        <div>
+            <button type="button" disabled={busy} onClick={async () => {
+                setBusy(true); setError("");
+                try { await submit(); setConfirming(false); }
+                catch (cause) { setError((cause as Error).message); }
+                finally { setBusy(false); }
+            }}>{busy ? "Đang gửi..." : "Gửi yêu cầu"}</button>
+            <button type="button" disabled={busy} onClick={() => { setConfirming(false); setError(""); }}>Đóng</button>
+        </div>
+        {error && <small role="alert">{error}</small>}
+    </div>;
+}
 export function RescheduleAppointmentControl({
     token,
     appointment,
@@ -150,7 +189,7 @@ export function RescheduleAppointmentControl({
     if (!open) return <button type="button" onClick={() => setOpen(true)}>Đổi lịch</button>;
     return (
         <div className="appointment-inline-form">
-            <label>
+<label>
                 Thời gian mong muốn
                 <input type="datetime-local" required value={value} onChange={event => {
                     setValue(event.target.value);
@@ -215,7 +254,7 @@ function FollowUpControl({
     if (!open) return <button type="button" onClick={() => setOpen(true)}>Chọn giờ tái khám</button>;
     return (
         <div className="appointment-inline-form">
-            <p><strong>Lý do:</strong> {appointment.followUpReason || "Bác sĩ yêu cầu tái khám"}</p>
+<p><strong>Lý do:</strong> {appointment.followUpReason || "Bác sĩ yêu cầu tái khám"}</p>
             <label>
                 Thời gian mong muốn
                 <input type="datetime-local" required min={minimum} value={value} onChange={event => {
@@ -403,6 +442,8 @@ export default function PatientAppointmentList({
     appointments,
     token,
     cancel,
+    refundPayments = {},
+    requestRefund,
     reschedule,
     bookFollowUp,
     hide,
@@ -419,7 +460,7 @@ export default function PatientAppointmentList({
     useEffect(() => {
         const now = Date.now();
         const nearestClosingTime = appointments
-            .filter(item => ["PENDING", "ASSIGNED"].includes(item.status))
+            .filter(item => ["PENDING", "ASSIGNED", "PENDING_CONFIRMATION"].includes(item.status))
             .map(item => patientAppointmentSelfServiceClosesAt(item.createdAt))
             .filter(closesAt => Number.isFinite(closesAt) && closesAt >= now)
             .sort((left, right) => left - right)[0];
@@ -480,6 +521,7 @@ export default function PatientAppointmentList({
                         <select value={statusFilter} onChange={event => setStatusFilter(event.target.value)}>
                             <option value="ALL">Tất cả</option>
                             <option value="PENDING">Chờ tiếp nhận</option>
+                            <option value="PENDING_CONFIRMATION">Đã cọc · Chờ lễ tân xác nhận</option>
                             <option value="CONFIRMED">Đã xác nhận</option>
                             <option value="CHECKED_IN">Đã đến phòng khám</option>
                             <option value="COMPLETED">Đã hoàn thành</option>
@@ -528,7 +570,8 @@ export default function PatientAppointmentList({
                 <div className="appointment-history-list" id="patient-appointment-history-list">
                     {visibleAppointments.map(item => {
                         const canSelfManage = canPatientSelfManageAppointment(item.status, item.createdAt, selfServiceNow);
-                        const hasSelfServiceAction = ["PENDING", "ASSIGNED", "CONFIRMED"].includes(item.status);
+                        const hasSelfServiceAction = ["PENDING", "ASSIGNED", "PENDING_CONFIRMATION", "CONFIRMED"].includes(item.status);
+                        const refundPayment = refundPayments[item.id];
                         return (
                             <article className="patient-appointment-row" data-appointment-id={item.id} key={item.id}>
                                 <div className="appointment-date-icon" aria-hidden="true"><CalendarDays /></div>
@@ -546,7 +589,7 @@ export default function PatientAppointmentList({
                                 </div>
                                 <div className="patient-appointment-actions">
                                     <AppointmentStatusBadge status={item.status} awaitingClinicUpdate={isStaleInProgressAppointment(item, selfServiceNow)} />
-                                    {hasSelfServiceAction && canSelfManage && reschedule && token && (
+                                    {hasSelfServiceAction && !["PENDING_CONFIRMATION", "CONFIRMED"].includes(item.status) && canSelfManage && reschedule && token && (
                                             <RescheduleAppointmentControl
                                                 token={token}
                                                 appointment={item}
@@ -554,7 +597,7 @@ export default function PatientAppointmentList({
                                             />
                                         )}
                                     {hasSelfServiceAction && canSelfManage && cancel && (
-                                        <CancelAppointmentControl submit={reason => cancel(item.id, reason)} />
+                                        <CancelAppointmentControl paid={["PENDING_CONFIRMATION", "CONFIRMED"].includes(item.status)} submit={reason => cancel(item.id, reason)} />
                                     )}
                                     {hasSelfServiceAction && !canSelfManage && (reschedule || cancel) && (
                                         <button
@@ -566,13 +609,23 @@ export default function PatientAppointmentList({
                                             Liên hệ hỗ trợ để đổi hoặc hủy lịch
                                         </button>
                                     )}
+                                    {item.status === "CANCELLED" && refundPayment && requestRefund && (
+                                        (refundPayment.status === "SUCCESS" && item.cancellationInitiator === "PATIENT_REQUEST")
+                                        || refundPayment.status === "REFUND_REQUESTED"
+                                        || refundPayment.status === "REFUNDED"
+                                    ) && (
+                                        <RefundRequestControl payment={refundPayment} submit={() => requestRefund(item.id)} />
+                                    )}
+                                    {item.status === "CANCELLED" && refundPayment && ["CANCELLED", "EXPIRED", "FAILED"].includes(refundPayment.status) && (
+                                        <span className="appointment-refund-unpaid" role="status">Chưa thanh toán cọc · Không có tiền để hoàn</span>
+                                    )}
                                     {item.status === "FOLLOW_UP_REQUIRED" && token && bookFollowUp && (
                                         <FollowUpControl token={token} appointment={item} submit={slot => bookFollowUp(item.id, slot)} />
                                     )}
                                     {item.status === "COMPLETED" && token && patientName && (
                                         <AppointmentReviewControl token={token} appointmentId={item.id} patientName={patientName} />
                                     )}
-                                    {token && hide && canHideAppointmentFromHistory(item.status) && (
+                                    {token && hide && canHideAppointmentFromHistory(item.status) && (!refundPayment || !["SUCCESS", "REFUND_REQUESTED"].includes(refundPayment.status)) && (
                                         <DeleteAppointmentControl appointment={item} submit={() => hide(item.id)} />
                                     )}
                                 </div>

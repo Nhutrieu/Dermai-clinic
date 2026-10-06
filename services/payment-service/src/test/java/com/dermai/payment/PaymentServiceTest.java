@@ -12,17 +12,20 @@ import org.springframework.transaction.support.SimpleTransactionStatus;
 
 class PaymentServiceTest{
  private PaymentRepository payments;private PaymentOutboxRepository outbox;private PayOSGateway payOS;private PaymentService service;
- private OrderCodeGenerator orderCodes;private BookingClient bookings;
+ private OrderCodeGenerator orderCodes;private BookingClient bookings;private DepositSettingsService depositSettings;
 
  @BeforeEach void setUp(){
   payments=mock(PaymentRepository.class);outbox=mock(PaymentOutboxRepository.class);payOS=mock(PayOSGateway.class);
   orderCodes=mock(OrderCodeGenerator.class);bookings=mock(BookingClient.class);
   var manager=mock(PlatformTransactionManager.class);when(manager.getTransaction(any())).thenReturn(new SimpleTransactionStatus());
+  depositSettings=mock(DepositSettingsService.class);
+  when(depositSettings.current()).thenReturn(new DepositSettingsService.DepositSetting(new BigDecimal("100000"),null,null));
   service=new PaymentService(payments,outbox,orderCodes,payOS,bookings,new ObjectMapper().findAndRegisterModules(),
-    Clock.fixed(Instant.parse("2026-09-21T03:00:00Z"),ZoneOffset.UTC),manager,new BigDecimal("100000"),Duration.ofMinutes(10),"https://app/success","https://app/cancel");
+    Clock.fixed(Instant.parse("2026-09-21T03:00:00Z"),ZoneOffset.UTC),manager,depositSettings,Duration.ofMinutes(10),"https://app/success","https://app/cancel");
  }
 
  @Test void receptionistPaymentStoresRecipientAndPublishesEmailLinkEvent(){
+  when(depositSettings.current()).thenReturn(new DepositSettingsService.DepositSetting(new BigDecimal("125000"),null,null));
   var bookingId=UUID.randomUUID();var patientIdentityId=UUID.randomUUID();
   var stored=new java.util.concurrent.atomic.AtomicReference<Payment>();
   when(payments.findByBookingIdAndPatientIdentityId(bookingId,patientIdentityId)).thenReturn(Optional.empty());
@@ -37,6 +40,7 @@ class PaymentServiceTest{
   var result=service.create(bookingId,patientIdentityId," Patient@Example.com ");
 
   assertThat(result.status()).isEqualTo(PaymentStatus.PENDING);
+  assertThat(result.amount()).isEqualByComparingTo("125000");
   assertThat(result.recipientEmail()).isEqualTo("patient@example.com");
   var event=org.mockito.ArgumentCaptor.forClass(PaymentOutboxEvent.class);
   verify(outbox).save(event.capture());
@@ -122,6 +126,32 @@ class PaymentServiceTest{
   assertThat(event.getValue().routingKey).isEqualTo("payment.refund_requested");
  }
 
+ @Test void receptionistCancellingForPatientQueuesPolicyRefundOnce(){
+  var payment=pendingPayment();payment.status=PaymentStatus.SUCCESS;
+  payment.createdAt=Instant.parse("2026-09-20T00:00:00Z");payment.appointmentStartAt=Instant.parse("2026-09-21T15:00:00Z");
+  var actor=UUID.randomUUID();when(payments.findLockedByBookingId(payment.bookingId)).thenReturn(Optional.of(payment));
+
+  var first=service.requestPatientRefundOnBehalf(payment.bookingId,actor,"RECEPTIONIST","Bệnh nhân gọi hủy");
+  var second=service.requestPatientRefundOnBehalf(payment.bookingId,actor,"RECEPTIONIST","Bệnh nhân gọi hủy");
+
+  assertThat(first).isPresent();assertThat(second).isPresent();
+  assertThat(payment.status).isEqualTo(PaymentStatus.REFUND_REQUESTED);
+  assertThat(payment.refundAmount).isEqualByComparingTo("50000");
+  assertThat(payment.refundInitiator).isEqualTo("PATIENT_REQUEST");
+  assertThat(payment.refundRequestedByRole).isEqualTo("RECEPTIONIST");
+  assertThat(payment.refundRequestedByIdentity).isEqualTo(actor);
+  verify(outbox,times(1)).save(any(PaymentOutboxEvent.class));
+ }
+ @Test void receptionistCancellationDoesNotQueueRefundWithoutPaidEligibleDeposit(){
+  var payment=pendingPayment();var actor=UUID.randomUUID();
+  when(payments.findLockedByBookingId(payment.bookingId)).thenReturn(Optional.of(payment));
+
+  assertThat(service.requestPatientRefundOnBehalf(payment.bookingId,actor,"RECEPTIONIST","Bệnh nhân gọi hủy")).isEmpty();
+  payment.status=PaymentStatus.SUCCESS;payment.createdAt=Instant.parse("2026-09-20T00:00:00Z");
+  assertThat(service.requestPatientRefundOnBehalf(payment.bookingId,actor,"RECEPTIONIST","Bệnh nhân gọi hủy")).isEmpty();
+  assertThat(payment.status).isEqualTo(PaymentStatus.SUCCESS);
+  verifyNoInteractions(outbox);
+ }
  @Test void patientCannotRequestRefundForClinicInitiatedCancellation(){
   var payment=pendingPayment();payment.status=PaymentStatus.SUCCESS;
   when(bookings.get(payment.bookingId)).thenReturn(new BookingClient.BookingDetails(payment.bookingId,payment.patientIdentityId,payment.appointmentStartAt,"CANCELLED","Bác sĩ nghỉ","CLINIC"));
@@ -250,13 +280,18 @@ class PaymentServiceTest{
   assertThat(payment.payosTransId).isEqualTo("bank-reference");
   verify(outbox).save(any(PaymentOutboxEvent.class));
  }
+ @Test void adminReportUsesTheRequestedWindowWithoutARecordLimit(){
+  var from=Instant.parse("2026-09-01T00:00:00Z");var to=Instant.parse("2026-10-01T00:00:00Z");
+  var payment=pendingPayment();payment.status=PaymentStatus.REFUNDED;
+  when(payments.findReportPayments(from,to)).thenReturn(List.of(payment));
+
+  assertThat(service.report(from,to)).extracting(PaymentService.PaymentResponse::status).containsExactly(PaymentStatus.REFUNDED);
+  verify(payments).findReportPayments(from,to);
+  verify(payments,never()).findAll();
+ }
  private Payment pendingPayment(){
   var now=Instant.parse("2026-09-21T03:00:00Z");
   var payment=Payment.creating(UUID.randomUUID(),UUID.randomUUID(),new BigDecimal("100000"),123456L,now.plusSeconds(3600),now.plusSeconds(600),now);
   payment.status=PaymentStatus.PENDING;payment.paymentLinkId="pay-link-id";return payment;
  }
 }
-
-
-
-

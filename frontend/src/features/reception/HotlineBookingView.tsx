@@ -36,25 +36,35 @@ import type {
 } from "../../core/types";
 import {
   BookingConflictDialog,
-  NotificationDeliveryStatus,
 } from "./ReceptionAppointmentActions";
 import {
   type BookingIssue,
   clinicDateInput,
   formatReceptionDateTime,
   formatReceptionTime,
-  isConfirmedAppointmentStatus,
   receptionSlotDetails,
   toBookingIssue,
 } from "./receptionBookingModel";
 
 type PatientPage = { content: Patient[]; totalElements: number };
 type LoadState = "idle" | "loading" | "success" | "error";
+type PaymentResponse = {
+  id: string;
+  bookingId: string;
+  amount: number;
+  orderCode: number;
+  status: string;
+  checkoutUrl: string;
+  qrCode: string;
+  expiresAt: string;
+  recipientEmail?: string;
+};
 type BookingSuccess = {
   appointment: Appointment;
   patient: Patient;
   doctor: Doctor;
   slot: AvailabilitySlot;
+  payment: PaymentResponse;
 };
 type BookingAttempt = { key: string; appointment?: Appointment };
 
@@ -64,6 +74,23 @@ function patientIdentitySummary(patient: Patient) {
     ? new Date(`${patient.dob}T00:00:00`).toLocaleDateString("vi-VN")
     : "Chưa khai báo ngày sinh";
   return `${phone}, ${dob}`;
+}
+
+function formatPaymentDeadline(value: string) {
+  const deadline = new Date(value);
+  const time = deadline.toLocaleTimeString("vi-VN", {
+    hour: "2-digit",
+    minute: "2-digit",
+    hour12: false,
+    timeZone: "Asia/Ho_Chi_Minh",
+  });
+  const date = deadline.toLocaleDateString("vi-VN", {
+    day: "2-digit",
+    month: "2-digit",
+    year: "numeric",
+    timeZone: "Asia/Ho_Chi_Minh",
+  });
+  return time + " ngày " + date;
 }
 
 function connectionLabel(state: RealtimeConnectionState) {
@@ -106,6 +133,8 @@ export default function ReceptionHotlineBookingView({ session }: { session: Toke
 
   const [reason, setReason] = useState("");
   const [reasonError, setReasonError] = useState("");
+  const [paymentEmail, setPaymentEmail] = useState("");
+  const [paymentEmailError, setPaymentEmailError] = useState("");
   const [bookingBusy, setBookingBusy] = useState(false);
   const [bookingError, setBookingError] = useState("");
   const [partialAppointment, setPartialAppointment] = useState<Appointment | null>(null);
@@ -392,47 +421,55 @@ export default function ReceptionHotlineBookingView({ session }: { session: Toke
       return false;
     }
     setReasonError("");
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(paymentEmail.trim())) {
+      setPaymentEmailError("Nhập email hợp lệ để gửi link thanh toán.");
+      return false;
+    }
+    setPaymentEmailError("");
     return true;
   }
 
-  function finishBooking(confirmed: Appointment, slot: AvailabilitySlot, patient: Patient, selectedDoctor: Doctor) {
-    // Availability updates caused by this booking can arrive before the confirm
-    // response. They are not a conflict once this appointment is ours.
+  function finishBooking(
+    appointment: Appointment,
+    slot: AvailabilitySlot,
+    patient: Patient,
+    selectedDoctor: Doctor,
+    payment: PaymentResponse,
+  ) {
     selectedSlotRef.current = null;
     setConflict(null);
-    setSuccess({ appointment: confirmed, patient, doctor: selectedDoctor, slot });
+    setSuccess({ appointment, patient, doctor: selectedDoctor, slot, payment });
     setPartialAppointment(null);
     setBookingError("");
     bookingAttemptRef.current = null;
     window.dispatchEvent(new Event("reception-appointments-changed"));
   }
 
-  async function confirmCreatedAppointment(
+  async function createPaymentForAppointment(
     appointment: Appointment,
     slot: AvailabilitySlot,
     patient: Patient,
     selectedDoctor: Doctor,
   ) {
     try {
-      const confirmed = await request<Appointment>(
-        `/appointments/${appointment.id}/confirm`,
-        session.accessToken,
-        { method: "POST" },
-      );
-      finishBooking(confirmed, slot, patient, selectedDoctor);
+      const payment = await request<PaymentResponse>("/payments", session.accessToken, {
+        method: "POST",
+        body: JSON.stringify({
+          bookingId: appointment.id,
+          patientIdentityId: patient.identityId,
+          recipientEmail: paymentEmail.trim(),
+        }),
+      });
+      const latest = await request<Appointment>("/appointments/" + appointment.id, session.accessToken)
+        .catch(() => ({ ...appointment, status: "PENDING_PAYMENT" }));
+      finishBooking(latest, slot, patient, selectedDoctor, payment);
       return true;
     } catch (cause) {
-      const latest = await request<Appointment>(
-        `/appointments/${appointment.id}`,
-        session.accessToken,
-      ).catch(() => null);
-      if (latest && isConfirmedAppointmentStatus(latest.status)) {
-        finishBooking(latest, slot, patient, selectedDoctor);
-        return true;
-      }
+      const latest = await request<Appointment>("/appointments/" + appointment.id, session.accessToken)
+        .catch(() => null);
       setPartialAppointment(latest || appointment);
       setBookingError(
-        "Yêu cầu lịch đã được tạo nhưng bước xác nhận chưa hoàn tất. Không tạo lịch mới, hãy thử xác nhận lại.",
+        "Lịch đã được tạo nhưng chưa tạo được yêu cầu thanh toán. Không tạo lịch mới, hãy thử lại.",
       );
       return false;
     }
@@ -469,7 +506,7 @@ export default function ReceptionHotlineBookingView({ session }: { session: Toke
       // for confirmation/retry details, but stop realtime availability refreshes
       // from treating our own reservation as a competing booking.
       selectedSlotRef.current = null;
-      await confirmCreatedAppointment(appointment, slot, patient, selectedDoctor);
+      await createPaymentForAppointment(appointment, slot, patient, selectedDoctor);
     } catch (cause) {
       const issue = toBookingIssue(cause);
       if (issue.conflict) {
@@ -495,7 +532,7 @@ export default function ReceptionHotlineBookingView({ session }: { session: Toke
     setBookingBusy(true);
     setBookingError("");
     try {
-      await confirmCreatedAppointment(appointment, slot, patient, selectedDoctor);
+      await createPaymentForAppointment(appointment, slot, patient, selectedDoctor);
     } finally {
       setBookingBusy(false);
     }
@@ -509,6 +546,8 @@ export default function ReceptionHotlineBookingView({ session }: { session: Toke
     setSlots([]);
     setReason("");
     setReasonError("");
+    setPaymentEmail("");
+    setPaymentEmailError("");
     setBookingError("");
     setPartialAppointment(null);
     setPatientNotice("");
@@ -541,17 +580,18 @@ export default function ReceptionHotlineBookingView({ session }: { session: Toke
       <button
         type="button"
         className="hotline-launch"
+        aria-label="Đặt lịch cho bệnh nhân"
         aria-haspopup="dialog"
         aria-expanded={open}
         onClick={() => void show()}
       >
         <PhoneCall aria-hidden="true" />
-        <span>Đặt lịch hotline</span>
+        <span>Đặt lịch cho bệnh nhân</span>
       </button>
 
       {open && (
         <AccessibleDialog
-          title={success ? "Lịch hotline đã được xác nhận" : "Đặt lịch qua hotline"}
+          title={success ? "Đang chờ bệnh nhân thanh toán" : "Đặt lịch cho bệnh nhân"}
           titleId="reception-hotline-title"
           descriptionId="reception-hotline-description"
           className="reception-hotline-dialog"
@@ -564,22 +604,28 @@ export default function ReceptionHotlineBookingView({ session }: { session: Toke
               <PhoneCall aria-hidden="true" />
               <span><strong>Đường dây phòng khám</strong><a href="tel:0352790904">0352 790 904</a></span>
             </div>
-            <p>Xác minh người gọi, đọc lại lịch hẹn và chỉ kết thúc khi hệ thống xác nhận.</p>
+            <p>Dùng khi lễ tân đặt lịch hộ qua điện thoại và gửi link cọc cho bệnh nhân.</p>
           </div>
 
           {success ? (
             <section className="hotline-success" aria-live="polite">
               <CheckCircle2 aria-hidden="true" />
-              <h3>Đã xác nhận lịch khám</h3>
-              <p>Thông tin bên dưới là kết quả trả về sau khi thao tác hoàn tất.</p>
+              <h3>Đã tạo yêu cầu thanh toán cọc</h3>
+              <p>Slot được giữ trong 10 phút. Sau khi khách thanh toán thành công, yêu cầu sẽ chuyển sang hàng chờ để lễ tân xác nhận.</p>
               <dl>
                 <div><dt>Bệnh nhân</dt><dd>{success.patient.fullName}</dd></div>
                 <div><dt>Số điện thoại</dt><dd>{success.patient.phone || "Chưa có"}</dd></div>
                 <div><dt>Bác sĩ</dt><dd>BS. {success.doctor.fullName}</dd></div>
                 <div><dt>Thời gian</dt><dd>{formatReceptionDateTime(success.slot.startAt)}</dd></div>
-                <div><dt>Trạng thái</dt><dd>Đã xác nhận</dd></div>
+                <div><dt>Trạng thái</dt><dd>Đang chờ thanh toán</dd></div>
+                <div><dt>Tiền cọc</dt><dd>{new Intl.NumberFormat("vi-VN").format(success.payment.amount)}đ</dd></div>
+                <div><dt>Hạn thanh toán cọc</dt><dd>{formatPaymentDeadline(success.payment.expiresAt)}</dd></div>
               </dl>
-              <NotificationDeliveryStatus />
+              <div className="hotline-payment-result">
+                <strong>Đã tạo link gửi tới {success.payment.recipientEmail}</strong>
+                <p>Bệnh nhân mở link trên điện thoại và thanh toán online trong 10 phút.</p>
+                <a href={success.payment.checkoutUrl} target="_blank" rel="noreferrer">Mở link thanh toán</a>
+              </div>
               <div className="hotline-success-actions">
                 <button type="button" onClick={resetForAnotherBooking}>Tạo lịch khác</button>
                 <button type="button" className="hotline-primary-button" onClick={openAcceptedAppointments}>
@@ -875,7 +921,7 @@ export default function ReceptionHotlineBookingView({ session }: { session: Toke
                     )}
                   </div>
                   <p className="hotline-no-hold-note">
-                    Quy trình đặt qua điện thoại không giữ khung giờ tạm. Hệ thống kiểm tra lại khung giờ khi lễ tân xác nhận.
+                    Sau khi tạo yêu cầu thanh toán, khung giờ được giữ tối đa 10 phút.
                   </p>
                   {liveNotice && <div className="hotline-inline-notice" role="status">{liveNotice}</div>}
                 </section>
@@ -907,12 +953,39 @@ export default function ReceptionHotlineBookingView({ session }: { session: Toke
                     {reasonError && <span className="hotline-field-error" role="alert">{reasonError}</span>}
                   </div>
                 </section>
+
+                <section className="hotline-work-section" aria-labelledby="hotline-payment-title">
+                  <header className="hotline-section-heading">
+                    <span aria-hidden="true"><Clock3 /></span>
+                    <div><h3 id="hotline-payment-title">Gửi link thanh toán cọc</h3><p>Bệnh nhân nhận link và thanh toán online tại nhà trong 10 phút.</p></div>
+                  </header>
+                  <div className="booking-field hotline-payment-email">
+                    <label htmlFor="hotline-payment-email">Email nhận link <span aria-hidden="true">*</span></label>
+                    <input
+                      id="hotline-payment-email"
+                      type="email"
+                      required
+                      maxLength={320}
+                      disabled={workflowLocked}
+                      value={paymentEmail}
+                      aria-invalid={Boolean(paymentEmailError)}
+                      onChange={event => {
+                        setPaymentEmail(event.target.value);
+                        setPaymentEmailError("");
+                        bookingAttemptRef.current = null;
+                      }}
+                      placeholder="benhnhan@example.com"
+                    />
+                    <small>Link được gửi đến email để bệnh nhân thanh toán online tại nhà.</small>
+                    {paymentEmailError && <span className="hotline-field-error" role="alert">{paymentEmailError}</span>}
+                  </div>
+                </section>
               </div>
 
               <aside className="hotline-review" aria-labelledby="hotline-review-title">
                 <div className="hotline-review-heading">
                   <span aria-hidden="true"><PhoneCall /></span>
-                  <div><h3 id="hotline-review-title">Đọc lại với bệnh nhân</h3><p>Kiểm tra đủ thông tin trước khi xác nhận.</p></div>
+                  <div><h3 id="hotline-review-title">Đọc lại với bệnh nhân</h3><p>Kiểm tra đủ thông tin trước khi tạo yêu cầu thanh toán.</p></div>
                 </div>
                 <dl>
                   <div><dt>Bệnh nhân</dt><dd>{selectedPatient?.fullName || "Chưa chọn"}</dd><button type="button" disabled={workflowLocked} onClick={() => focusSection("patient")}>Sửa</button></div>
@@ -921,7 +994,8 @@ export default function ReceptionHotlineBookingView({ session }: { session: Toke
                   <div><dt>Ngày khám</dt><dd>{date ? new Date(`${date}T00:00:00`).toLocaleDateString("vi-VN") : "Chưa chọn"}</dd><button type="button" disabled={workflowLocked} onClick={() => focusSection("date")}>Sửa</button></div>
                   <div><dt>Khung giờ</dt><dd>{selectedSlot ? formatReceptionTime(selectedSlot.startAt) : "Chưa chọn"}</dd><button type="button" disabled={workflowLocked} onClick={() => focusSection("slot")}>Sửa</button></div>
                   <div><dt>Lý do khám</dt><dd className="hotline-review-reason">{reason.trim() || "Chưa nhập"}</dd><button type="button" disabled={workflowLocked} onClick={() => focusSection("reason")}>Sửa</button></div>
-                  <div><dt>Kênh đặt</dt><dd>Điện thoại</dd></div>
+                  <div><dt>Kênh thanh toán</dt><dd>Link online qua email</dd></div>
+                  <div><dt>Email</dt><dd>{paymentEmail.trim() || "Chưa nhập"}</dd></div>
                   <div><dt>Trạng thái khung giờ</dt><dd>{selectedSlot ? "Sẽ kiểm tra lại khi xác nhận" : "Chưa chọn"}</dd></div>
                 </dl>
 
@@ -929,7 +1003,7 @@ export default function ReceptionHotlineBookingView({ session }: { session: Toke
                   <div className="hotline-partial-status" role="alert">
                     <strong>Yêu cầu đã được tạo</strong>
                     <span>Mã lịch: {partialAppointment.id}</span>
-                    <p>Không tạo lịch mới. Hãy thử xác nhận lại hoặc mở danh sách yêu cầu để xử lý.</p>
+                    <p>Không tạo lịch mới. Hãy thử tạo lại yêu cầu thanh toán.</p>
                   </div>
                 )}
 
@@ -942,10 +1016,10 @@ export default function ReceptionHotlineBookingView({ session }: { session: Toke
                   onClick={() => partialAppointment ? void retryConfirmation() : void book()}
                 >
                   {bookingBusy
-                    ? "Đang chờ hệ thống xác nhận..."
+                    ? "Đang tạo yêu cầu thanh toán..."
                     : partialAppointment
-                      ? "Thử xác nhận lại"
-                      : "Xác nhận đặt lịch"}
+                      ? "Thử tạo thanh toán lại"
+                      : "Tạo yêu cầu thanh toán"}
                 </button>
                 {partialAppointment && (
                   <button type="button" className="hotline-secondary-action" onClick={() => {
@@ -955,7 +1029,7 @@ export default function ReceptionHotlineBookingView({ session }: { session: Toke
                     Xem yêu cầu đã tạo
                   </button>
                 )}
-                <small className="hotline-confirm-help">Không báo thành công trước khi nhận xác nhận từ hệ thống.</small>
+                <small className="hotline-confirm-help">Khi cổng thanh toán báo thành công, lễ tân cần kiểm tra và xác nhận yêu cầu.</small>
               </aside>
             </div>
           )}

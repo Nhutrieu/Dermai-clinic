@@ -9,6 +9,12 @@ const API_ERROR_MESSAGES: Record<string, string> = {
   NOT_FOUND: "Không tìm thấy dữ liệu yêu cầu.",
   VALIDATION_ERROR: "Thông tin nhập vào chưa hợp lệ. Vui lòng kiểm tra lại.",
   SLOT_CONFLICT: "Khung giờ này vừa được người khác chọn. Vui lòng chọn giờ khác.",
+  APPOINTMENT_NOT_CANCELLED: "Chỉ có thể yêu cầu hoàn cọc sau khi lịch đã hủy.",
+  PATIENT_REFUND_REQUEST_NOT_ALLOWED: "Lịch này không thuộc luồng bệnh nhân yêu cầu hoàn cọc.",
+  PAYMENT_NOT_REFUNDABLE: "Giao dịch này không đủ điều kiện gửi yêu cầu hoàn cọc.",
+  REFUND_NOT_ELIGIBLE_UNDER_6_HOURS: "Thời điểm yêu cầu còn dưới 6 giờ trước lịch khám nên tiền cọc không được hoàn.",
+  REFUND_AMOUNT_MUST_MATCH_POLICY: "Số tiền hoàn phải đúng với mức hệ thống đã tính theo chính sách.",
+  INVALID_DEPOSIT_AMOUNT: "Tiền cọc phải là số nguyên từ 1.000đ đến 100.000.000đ.",
   DOCTOR_SLOT_CONFLICT: "Bác sĩ đã có lịch trong khung giờ này.",
 };
 
@@ -16,6 +22,7 @@ function vietnameseApiMessage(detail: string | undefined, code: string | undefin
   if (code && API_ERROR_MESSAGES[code]) return API_ERROR_MESSAGES[code];
   const message = detail?.trim();
   if (!message) return fallback;
+  if (API_ERROR_MESSAGES[message]) return API_ERROR_MESSAGES[message];
   const looksEnglish = /\b(error|failed|failure|invalid|unauthorized|forbidden|not found|required|must|cannot|unable|already exists|conflict|timeout|unavailable)\b/i.test(message);
   return looksEnglish ? fallback : message;
 }
@@ -98,8 +105,15 @@ async function retryAfterUnauthorized(path: string, token: string | undefined, i
 }
 
 async function readApiError(response: Response, fallback: string) {
-  const body = await response.json().catch(() => ({ detail: fallback })) as { detail?: string; code?: string };
-  return new ApiError(vietnameseApiMessage(body.detail, body.code, fallback), response.status, body.code);
+  const statusFallback = response.status === 403
+    ? API_ERROR_MESSAGES.ACCESS_DENIED
+    : response.status === 404
+      ? API_ERROR_MESSAGES.NOT_FOUND
+      : response.status >= 500
+        ? "Dịch vụ đang tạm thời gián đoạn. Vui lòng thử lại."
+        : fallback;
+  const body = await response.json().catch(() => ({ detail: statusFallback })) as { detail?: string; code?: string };
+  return new ApiError(vietnameseApiMessage(body.detail, body.code, statusFallback), response.status, body.code);
 }
 
 export async function request<T>(path: string, token?: string, init?: RequestInit): Promise<T> {

@@ -79,7 +79,7 @@ describe("reception appointment actions", () => {
         role: "RECEPTIONIST",
       }} />,
     );
-    expect(html).toContain("Đặt lịch hotline");
+    expect(html).toContain("Đặt lịch cho bệnh nhân");
     expect(html).toContain('aria-haspopup="dialog"');
     expect(html).toContain('aria-expanded="false"');
   });

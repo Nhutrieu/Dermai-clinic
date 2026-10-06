@@ -1012,3 +1012,10 @@
 .admin-patient-detail .patient-account-actions button:disabled { cursor: wait; opacity: 0.62; transform: none; }
 @media (max-width: 900px) { .admin-patient-directory { grid-template-columns: 1fr; } .admin-patient-directory > nav { grid-template-columns: repeat(2, minmax(0, 1fr)); max-height: 260px; } }
 @media (max-width: 620px) { .admin-patient-directory > nav, .admin-patient-detail dl { grid-template-columns: 1fr; } .admin-patient-detail { padding: 18px; } .admin-patient-detail .patient-account-actions button { width: 100%; } }
+
+.admin-module-page {
+  width: min(100%, var(--admin-overview-content-width));
+  margin: 0 auto;
+  padding-bottom: 88px;
+}
+.admin-module-page > .panel { margin-top: 0; }

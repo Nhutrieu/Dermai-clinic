@@ -205,7 +205,7 @@
 
 .patient-medical-list article {
   position: relative;
-  padding: 18px 20px;
+  padding: 14px 16px;
   background: var(--color-surface);
   transition: background var(--patient-medical-motion-duration) var(--patient-medical-motion-ease);
 }
@@ -315,7 +315,7 @@
 }
 
 .patient-medical-list h4 {
-  margin: 15px 0 0;
+  margin: 10px 0 0;
   color: var(--color-ink);
   font-size: 16px;
   line-height: 1.35;
@@ -333,7 +333,7 @@
 
 .patient-medical-list-reason {
   display: -webkit-box;
-  margin: 10px 0 0;
+  margin: 7px 0 0;
   overflow: hidden;
   line-height: 1.5;
   -webkit-box-orient: vertical;
@@ -344,7 +344,7 @@
   display: flex;
   flex-wrap: wrap;
   gap: 7px 12px;
-  margin-top: 13px;
+  margin-top: 9px;
 }
 
 .patient-medical-list-meta span {
@@ -367,7 +367,7 @@
   min-height: var(--control-min-height);
   align-items: center;
   gap: 5px;
-  margin-top: 13px;
+  margin-top: 10px;
   padding: 0 12px;
   border: 1px solid var(--color-border-strong);
   border-radius: var(--radius-control);
@@ -390,6 +390,55 @@
 
 .patient-medical-open:hover svg {
   transform: translateX(2px);
+}
+
+.patient-medical-pagination {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  align-items: center;
+  gap: var(--space-2);
+  padding: 13px 16px;
+  border-top: 1px solid var(--color-border);
+  background: var(--color-surface-subtle);
+}
+
+.patient-medical-pagination button {
+  display: inline-flex;
+  min-height: 38px;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  padding: 0 10px;
+  border: 1px solid var(--color-border-strong);
+  border-radius: var(--radius-control);
+  background: var(--color-surface);
+  color: var(--color-primary);
+  font-size: 13px;
+  font-weight: 800;
+}
+
+.patient-medical-pagination button:last-child {
+  justify-self: end;
+}
+
+.patient-medical-pagination button:disabled {
+  opacity: .45;
+  cursor: not-allowed;
+}
+
+.patient-medical-pagination button svg {
+  width: 16px;
+  height: 16px;
+}
+
+.patient-medical-pagination > span {
+  color: var(--color-text-secondary);
+  font-size: 13px;
+  white-space: nowrap;
+}
+
+.patient-medical-pagination > span b {
+  color: var(--color-ink);
 }
 
 .patient-medical-state {
@@ -483,7 +532,7 @@
   background: var(--patient-medical-document-surface);
 }
 
-.patient-medical-detail > header > div > span {
+.patient-medical-detail > header > div:first-child > span {
   color: var(--color-text-secondary);
   font-size: 14px;
   font-weight: 700;
@@ -502,6 +551,49 @@
   font-size: 14px;
   line-height: 1.5;
   text-transform: capitalize;
+}
+
+.patient-medical-detail-actions {
+  display: flex;
+  flex: 0 0 auto;
+  align-items: center;
+  justify-content: flex-end;
+  gap: var(--space-2);
+}
+
+.patient-medical-collapse {
+  display: inline-flex;
+  min-height: var(--control-min-height);
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  padding: 0 13px;
+  border: 1px solid var(--color-border-strong);
+  border-radius: var(--radius-control);
+  background: var(--color-surface);
+  color: var(--color-primary);
+  font-size: 14px;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.patient-medical-collapse:hover {
+  border-color: var(--color-primary);
+  background: var(--color-surface-subtle);
+}
+
+.patient-medical-collapse:focus-visible {
+  outline: 3px solid color-mix(in srgb, var(--color-primary) 24%, transparent);
+  outline-offset: 2px;
+}
+
+.patient-medical-collapse svg {
+  width: 18px;
+  height: 18px;
+}
+
+.patient-medical-detail-body[hidden] {
+  display: none;
 }
 
 .patient-medical-section {
@@ -1098,8 +1190,10 @@
 .clinical-pdf-document-title h1 {
   margin: 0;
   color: var(--color-ink);
-  font-family: Newsreader, Georgia, serif;
+  font-family: Manrope, "Segoe UI", Arial, sans-serif;
   font-size: 32px;
+  font-weight: 700;
+  letter-spacing: -.025em;
   line-height: 1.2;
 }
 
@@ -1444,6 +1538,15 @@
     display: grid;
   }
 
+  .patient-medical-detail-actions {
+    justify-content: flex-start;
+    flex-wrap: wrap;
+  }
+
+  .patient-medical-collapse {
+    flex: 1 1 150px;
+  }
+
   .patient-medical-detail h3 {
     font-size: 27px;
   }
@@ -1621,5 +1724,322 @@
   .clinical-pdf-inline-status,
   .clinical-pdf-print-notice {
     display: none;
+  }
+}
+
+.patient-invoices{display:grid;gap:14px;margin:0 0 20px;padding:18px;border:1px solid #cfe2dd;border-radius:18px;background:#fff}.patient-invoices>header{display:flex;gap:10px;align-items:flex-start}.patient-invoices>header svg{color:#08766d}.patient-invoices h2{margin:0}.patient-invoices header p{margin:4px 0;color:#687a76}.patient-invoices>div{display:grid;gap:10px}.patient-invoices article{display:grid;gap:12px;padding:14px;border-radius:14px;background:#f4faf8}.patient-invoices article>div{display:flex;justify-content:space-between}.patient-invoices article small{color:#08766d;font-weight:700}.patient-invoices dl{display:grid;grid-template-columns:repeat(5,1fr);gap:8px;margin:0}.patient-invoices dl span{display:grid;font-size:.8rem;color:#667874}.patient-invoices dl b{font-size:.95rem;color:#173d38}.patient-invoices button{justify-self:end;display:flex;align-items:center;gap:7px}.patient-invoices button svg{width:18px}@media(max-width:720px){.patient-invoices dl{grid-template-columns:repeat(2,1fr)}.patient-invoices article>div{flex-direction:column}}
+
+/* Patient billing: compact heading, explicit workflow status, and readable totals. */
+.patient-invoices {
+  gap: 18px;
+  padding: clamp(18px, 2vw, 24px);
+  border-color: #c7ddd7;
+  border-radius: 22px;
+  box-shadow: 0 12px 34px rgba(12, 69, 58, .06);
+}
+
+.patient-invoices > .patient-invoices-head {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 14px;
+}
+
+.patient-invoices-icon {
+  width: 44px;
+  height: 44px;
+  display: grid;
+  place-items: center;
+  border-radius: 13px;
+  background: #e5f6f2;
+  color: #08766d;
+}
+
+.patient-invoices-icon svg {
+  width: 22px;
+  height: 22px;
+}
+
+.patient-invoices-head h2 {
+  color: #173d38;
+  font-size: 20px;
+}
+
+.patient-invoices-head p {
+  max-width: 680px;
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.patient-invoices .patient-invoices-refresh {
+  min-height: 40px;
+  padding: 8px 12px;
+  border: 1px solid #c9ddd8;
+  border-radius: 10px;
+  background: #fff;
+  color: #176b61;
+  font-weight: 750;
+}
+
+.patient-invoices-refresh:disabled {
+  cursor: wait;
+  opacity: .65;
+}
+
+.patient-invoices-message {
+  margin: 0;
+  padding: 11px 13px;
+  border: 1px solid #ecc8c0;
+  border-radius: 10px;
+  background: #fff4f1;
+  color: #99483d;
+}
+
+.patient-invoices > .patient-invoices-tools {
+  display: grid;
+  grid-template-columns: minmax(0, 520px) auto;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.patient-invoices-search {
+  min-height: 44px;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 9px;
+  padding: 0 12px;
+  border: 1px solid #c7ddd7;
+  border-radius: 12px;
+  background: #fff;
+  color: #66807a;
+}
+
+.patient-invoices-search:focus-within {
+  border-color: #0b8f82;
+  box-shadow: 0 0 0 3px rgba(11, 143, 130, .12);
+}
+
+.patient-invoices-search > svg {
+  width: 18px;
+  height: 18px;
+}
+
+.patient-invoices-search input {
+  min-width: 0;
+  padding: 10px 0;
+  border: 0;
+  outline: 0;
+  background: transparent;
+  color: #173d38;
+}
+
+.patient-invoices-search button {
+  width: 30px;
+  height: 30px;
+  display: grid;
+  place-items: center;
+  padding: 0;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  color: #607772;
+}
+
+.patient-invoices-search button:hover {
+  background: #edf6f3;
+}
+
+.patient-invoices-count {
+  color: #607772;
+  font-size: 13px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.patient-invoices > .patient-invoice-list {
+  gap: 14px;
+}
+
+.patient-invoices-empty {
+  margin: 0;
+  padding: 24px;
+  border: 1px dashed #c7ddd7;
+  border-radius: 14px;
+  background: #f7fbfa;
+  color: #607772;
+  text-align: center;
+}
+
+.patient-invoices .patient-invoice-card {
+  gap: 16px;
+  padding: 0;
+  overflow: hidden;
+  border: 1px solid #d6e6e2;
+  border-radius: 16px;
+  background: #fff;
+}
+
+.patient-invoices .patient-invoice-card-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 16px 18px 13px;
+  border-bottom: 1px solid #e4eeeb;
+  background: #f7fbfa;
+}
+
+.patient-invoice-card-head > div {
+  display: grid;
+  gap: 4px;
+}
+
+.patient-invoice-card-head b {
+  color: #173d38;
+  font-size: 15px;
+}
+
+.patient-invoices .patient-invoice-card-head small {
+  color: #70827d;
+  font-size: 11px;
+  font-weight: 650;
+}
+
+.patient-invoice-status {
+  flex: 0 0 auto;
+  padding: 6px 10px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 800;
+}
+
+.patient-invoice-status.is-awaiting { background: #fff2ce; color: #8a6100; }
+.patient-invoice-status.is-pharmacy { background: #e7f3ff; color: #21638f; }
+.patient-invoice-status.is-paid,
+.patient-invoice-status.is-dispensed { background: #e4f7eb; color: #17653e; }
+.patient-invoice-status.is-cancelled { background: #f5e8e5; color: #974b40; }
+
+.patient-invoices .patient-invoice-amounts {
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 10px;
+  padding: 0 18px 18px;
+}
+
+.patient-invoice-amounts > div {
+  min-width: 0;
+  display: grid;
+  gap: 5px;
+  padding: 12px;
+  border-radius: 11px;
+  background: #f4f8f7;
+}
+
+.patient-invoice-amounts dt {
+  color: #6a7d78;
+  font-size: 11px;
+}
+
+.patient-invoice-amounts dd {
+  margin: 0;
+  color: #173d38;
+  font-size: 15px;
+  font-weight: 800;
+}
+
+.patient-invoice-amounts .is-deposit dd {
+  color: #15806c;
+}
+
+.patient-invoice-amounts .is-balance {
+  background: #e9f7f3;
+}
+
+.patient-invoice-amounts .is-balance dd {
+  color: #086b60;
+}
+
+.patient-invoice-pharmacy-note {
+  margin: -8px 18px 16px;
+  padding: 10px 12px;
+  border-radius: 10px;
+  background: #eef6ff;
+  color: #37677f;
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+.patient-invoices .patient-invoice-pay {
+  margin: -3px 18px 16px;
+  min-height: 42px;
+}
+
+.patient-invoices .patient-invoices-toggle {
+  justify-self: center;
+  min-height: 42px;
+  padding: 9px 16px;
+  border: 1px solid #bcd8d1;
+  border-radius: 999px;
+  background: #fff;
+  color: #08766d;
+  font-weight: 800;
+}
+
+.patient-invoices-toggle:hover {
+  background: #edf8f5;
+  border-color: #8fc7bb;
+}
+
+@media (max-width: 820px) {
+  .patient-invoices .patient-invoice-amounts {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .patient-invoice-amounts .is-balance {
+    grid-column: 1 / -1;
+  }
+}
+
+@media (max-width: 600px) {
+  .patient-invoices > .patient-invoices-head {
+    grid-template-columns: auto minmax(0, 1fr);
+  }
+
+  .patient-invoices .patient-invoices-refresh {
+    grid-column: 1 / -1;
+    width: 100%;
+    justify-content: center;
+  }
+
+  .patient-invoices > .patient-invoices-tools {
+    grid-template-columns: 1fr;
+  }
+
+  .patient-invoices-count {
+    justify-self: start;
+  }
+
+  .patient-invoices .patient-invoice-card-head {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .patient-invoice-status {
+    align-self: flex-start;
+  }
+
+  .patient-invoices .patient-invoice-amounts {
+    padding: 0 14px 14px;
+  }
+}
+
+@media (max-width: 420px) {
+  .patient-invoices .patient-invoice-amounts {
+    grid-template-columns: 1fr;
+  }
+
+  .patient-invoice-amounts .is-balance {
+    grid-column: auto;
   }
 }

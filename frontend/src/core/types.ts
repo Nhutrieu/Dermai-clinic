@@ -2,7 +2,7 @@ export type Tokens = {
   accessToken: string;
   refreshToken: string;
   expiresIn: number;
-  role: "PATIENT" | "DOCTOR" | "RECEPTIONIST" | "ADMIN";
+  role: "PATIENT" | "DOCTOR" | "RECEPTIONIST" | "PHARMACIST" | "ADMIN";
 };
 
 export type Patient = {
@@ -27,6 +27,7 @@ export type Doctor = {
   bio?: string;
   phone?: string;
   consultationFee: number;
+  active?: boolean;
 };
 
 export type ClinicService = {
@@ -34,6 +35,8 @@ export type ClinicService = {
   code: string;
   name: string;
   description: string;
+  specialtyCode: string;
+  doctorIds: string[];
   priceFrom: number;
   durationMinutes: number;
   displayOrder: number;
@@ -43,12 +46,19 @@ export type WorkSchedule = { id: string; weekday: number; startTime: string; end
 export type SlotDurationPolicy = { id: string; doctorId: string; effectiveFrom: string; slotMinutes: number };
 export type LeaveStatus = "PENDING" | "APPROVED" | "REJECTED";
 export type LeavePeriod = { id: string; doctorId?: string; doctorName?: string; startAt: string; endAt: string; reason?: string; status?: LeaveStatus; requestedBy?: string; reviewedBy?: string; reviewedAt?: string; reviewNote?: string };
-export type Appointment = { id: string; patientId: string; doctorId?: string; doctorIdentityId?: string; doctorName?: string; startAt: string; endAt: string; status: string; reason?: string; followUpReason?: string; followUpNotBefore?: string; holdExpiresAt?: string; checkedInAt?: string; consultationFeeSnapshot?: number; createdAt: string; updatedAt?: string };
+  export type Appointment = { id: string; patientId: string; doctorId?: string; doctorIdentityId?: string; doctorName?: string; startAt: string; endAt: string; status: string; reason?: string; followUpReason?: string; followUpNotBefore?: string; holdExpiresAt?: string; checkedInAt?: string; servicesConfirmedAt?: string; servicesConfirmedBy?: string; consultationFeeSnapshot?: number; cancellationInitiator?: string; createdAt: string; updatedAt?: string };
+  export type PerformedServiceItem = { serviceId: string; serviceCode: string; serviceName: string; unitPrice: number };
+  export type AppointmentPerformedServices = { appointmentId: string; confirmedAt?: string; confirmedBy?: string; items: PerformedServiceItem[] };
 export type MedicalRecord = { id: string; appointmentId: string; patientId: string; finalDiagnosis: string; clinicalNotes?: string; treatmentPlan?: string; severity: string; followUpAt?: string; signedAt: string };
-export type PrescriptionItem = { drugName: string; dosage?: string; frequency?: string; duration?: string; instructions?: string };
-export type Prescription = { id: string; recordId: string; patientId: string; instructions?: string; signedAt: string; items: PrescriptionItem[] };
+export type PrescriptionItem = { medicineId?: string; drugName: string; dosage?: string; frequency?: string; duration?: string; quantityRequested?: number; instructions?: string };
+export type Prescription = { id: string; recordId: string; appointmentId?: string; patientId: string; instructions?: string; signedAt: string; items: PrescriptionItem[] };
+export type Medicine = { id: string; sku: string; name: string; unit: string; salePrice: number; stockQuantity: number; active: boolean; updatedAt: string };
+export type InvoiceServiceItem = { serviceId: string; serviceCode: string; serviceName: string; unitPrice: number };
+export type InvoiceItem = { medicineId: string; medicineName: string; unit: string; unitPrice: number; prescribedQuantity: number; dispensedQuantity: number; lineTotal: number };
+export type MedicineFulfillment = "CLINIC_PHARMACY" | "OUTSIDE_PHARMACY" | "NO_PRESCRIPTION";
+export type Invoice = { id: string; appointmentId: string; patientId: string; patientIdentityId: string; prescriptionId?: string; consultationFee: number; serviceFee: number; medicineTotal: number; depositApplied: number; totalAmount: number; remainingAmount: number; medicineFulfillment: MedicineFulfillment; status: "AWAITING_PAYMENT" | "PAID" | "DISPENSED" | "CANCELLED"; createdAt: string; paidAt?: string; dispensedAt?: string; serviceItems: InvoiceServiceItem[]; items: InvoiceItem[] };
 export type Recommendation = { doctorId: string; doctorIdentityId: string; doctorName: string; specialtyCode: string; startAt: string; endAt: string; score: number; reasons: string[] };
-export type AvailabilitySlot = { doctorId: string; doctorIdentityId: string; doctorName: string; specialtyCode: string; startAt: string; endAt: string; status: "AVAILABLE" | "BOOKED" | "ON_LEAVE" | "HELD_BY_YOU" | "HELD_BY_OTHER"; holdId?: string; holdExpiresAt?: string };
+export type AvailabilitySlot = { doctorId: string; doctorIdentityId: string; doctorName: string; specialtyCode: string; startAt: string; endAt: string; status: "AVAILABLE" | "BOOKED" | "ON_LEAVE" | "HELD_BY_YOU" | "HELD_BY_OTHER" | "PAYMENT_PENDING_BY_YOU" | "PAYMENT_PENDING_BY_OTHER"; holdId?: string; holdExpiresAt?: string };
 export type PatientNotification = { id: string; appointmentId?: string; notificationType: string; title: string; body: string; createdAt: string; readAt?: string };
 export type AvailabilityResponse = { items: AvailabilitySlot[]; timezone: string; status?: "OPEN" | "CLINIC_CLOSED"; closureReason?: string | null };
 export type ClinicClosure = { id: string; closureDate: string; reason: string };
@@ -56,11 +66,11 @@ export type ReminderAction = { id: string; appointmentId: string; actionType: "C
 export type ReminderItem = { appointment: Appointment; latestAction?: ReminderAction };
 export type RecommendationResult = { items: Recommendation[]; algorithmVersion: string; timezone: string };
 export type ClinicReview = { id: string; appointmentId: string; displayName: string; rating: number; comment: string; status: "PENDING" | "APPROVED" | "HIDDEN"; createdAt: string };
-export type StaffAccount = { identityId: string; displayName?: string; email: string; role: "RECEPTIONIST" | "DOCTOR" | "ADMIN"; status: "ACTIVE" | "LOCKED"; createdAt: string; hasAvatar?: boolean };
-export type AccountProfile = { identityId: string; displayName?: string; email: string; role: "PATIENT" | "RECEPTIONIST" | "DOCTOR" | "ADMIN"; status: "PENDING" | "ACTIVE" | "LOCKED" | "DISABLED"; createdAt: string; hasAvatar?: boolean };
+export type StaffAccount = { identityId: string; displayName?: string; email: string; role: "RECEPTIONIST" | "DOCTOR" | "PHARMACIST" | "ADMIN"; status: "ACTIVE" | "LOCKED"; createdAt: string; hasAvatar?: boolean };
+export type AccountProfile = { identityId: string; displayName?: string; email: string; role: "PATIENT" | "RECEPTIONIST" | "DOCTOR" | "PHARMACIST" | "ADMIN"; status: "PENDING" | "ACTIVE" | "LOCKED" | "DISABLED"; createdAt: string; hasAvatar?: boolean };
 export type StaffAccountEvent = { id: string; staffIdentityId: string; actorIdentityId: string; actionType: string; createdAt: string };
 export type AppointmentActionLog = { id: string; appointmentId: string; actorIdentityId: string; actorRole: string; actionType: string; createdAt: string };
-export type SupportMessage = { id: string; patientIdentityId: string; senderIdentityId: string; senderRole: string; body: string; sentAt: string; readAt?: string };
+export type SupportMessage = { id: string; patientIdentityId: string; senderIdentityId: string; senderRole: string; body: string; sentAt: string; readAt?: string; attachmentContentType?: string; attachmentOriginalName?: string; attachmentSizeBytes?: number };
 export type SupportConversation = { patientIdentityId: string; assignedReceptionistIdentityId?: string | null; assignedAt?: string | null; channelStatus: "AI_ACTIVE" | "WAITING_RECEPTIONIST" | "ASSIGNED"; aiFailureCount: number; lastIntent?: string | null; lastIntentConfidence?: number | null; aiSummary?: string | null; escalationReason?: string | null; escalatedAt?: string | null; resolvedAt?: string | null; resolvedByIdentityId?: string | null; updatedAt: string };
 export type StaffDirectoryEntry = { identityId: string; displayName?: string | null; status: "ACTIVE" | "LOCKED" };
 export type AiRankedPrediction = { label: string; probability: number };
