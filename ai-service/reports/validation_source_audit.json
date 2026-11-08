@@ -1,0 +1,104 @@
+{
+  "scope": "Descriptive source-stratified validation audit; labels are not newly verified.",
+  "validation_count": 892,
+  "validation_fingerprint_sha256": "c72f976f72d3fa407bab74b1956d2132d89e544d559d5953350938cadfa3df5e",
+  "sources": {
+    "SkinDisease_original": {
+      "images": 730,
+      "split_groups_not_verified_patients": 725,
+      "recorded_label_counts": {
+        "Candidiasis": 33,
+        "Acne": 93,
+        "SkinCancer": 102,
+        "Psoriasis": 123,
+        "Tinea": 127,
+        "Warts": 80,
+        "Eczema": 130,
+        "Lupus": 42
+      },
+      "any_model_disagreement_with_recorded_label": 140,
+      "models": {
+        "regularized": {
+          "accuracy": 0.8205479452054795,
+          "macro_f1_present_classes": 0.7966768832404472,
+          "macro_f1_all_eight_classes": 0.7966768832404472,
+          "per_class_recall": {
+            "Acne": 0.9139784946236559,
+            "Candidiasis": 0.7272727272727273,
+            "Eczema": 0.8,
+            "Lupus": 0.5952380952380952,
+            "Psoriasis": 0.7317073170731707,
+            "SkinCancer": 0.9313725490196079,
+            "Tinea": 0.7952755905511811,
+            "Warts": 0.9375
+          }
+        },
+        "supcon": {
+          "accuracy": 0.8178082191780822,
+          "macro_f1_present_classes": 0.7930052115364733,
+          "macro_f1_all_eight_classes": 0.7930052115364733,
+          "per_class_recall": {
+            "Acne": 0.8924731182795699,
+            "Candidiasis": 0.7272727272727273,
+            "Eczema": 0.7923076923076923,
+            "Lupus": 0.5476190476190477,
+            "Psoriasis": 0.7398373983739838,
+            "SkinCancer": 0.9411764705882353,
+            "Tinea": 0.8031496062992126,
+            "Warts": 0.9375
+          }
+        }
+      }
+    },
+    "SCIN_train_pool": {
+      "images": 162,
+      "split_groups_not_verified_patients": 78,
+      "recorded_label_counts": {
+        "Acne": 7,
+        "Eczema": 108,
+        "Lupus": 5,
+        "Warts": 6,
+        "Psoriasis": 12,
+        "Tinea": 21,
+        "Candidiasis": 3
+      },
+      "any_model_disagreement_with_recorded_label": 42,
+      "models": {
+        "regularized": {
+          "accuracy": 0.7407407407407407,
+          "macro_f1_present_classes": 0.42044650027843306,
+          "macro_f1_all_eight_classes": 0.36789068774362893,
+          "per_class_recall": {
+            "Acne": 0.7142857142857143,
+            "Candidiasis": 0.3333333333333333,
+            "Eczema": 0.9722222222222222,
+            "Lupus": 0.0,
+            "Psoriasis": 0.4166666666666667,
+            "Tinea": 0.09523809523809523,
+            "Warts": 0.3333333333333333
+          }
+        },
+        "supcon": {
+          "accuracy": 0.7716049382716049,
+          "macro_f1_present_classes": 0.4972208564928625,
+          "macro_f1_all_eight_classes": 0.4350682494312547,
+          "per_class_recall": {
+            "Acne": 0.7142857142857143,
+            "Candidiasis": 0.3333333333333333,
+            "Eczema": 0.9722222222222222,
+            "Lupus": 0.0,
+            "Psoriasis": 0.4166666666666667,
+            "Tinea": 0.3333333333333333,
+            "Warts": 0.3333333333333333
+          }
+        }
+      }
+    }
+  },
+  "limitations": [
+    "SkinDisease_original has unverified source, label basis, and patient IDs.",
+    "SCIN labels are mapped from retrospective dermatologist differentials, not pathological confirmation.",
+    "SCIN_train_pool contains no SkinCancer, so it cannot assess eight-class performance alone.",
+    "Both sources contributed to model training; neither source stratum is a new external test."
+  ]
+}

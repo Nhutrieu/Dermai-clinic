@@ -1,0 +1,35 @@
+{
+  "date": "2026-11-08",
+  "analysis": "Retrospective fixed-checkpoint component removal on previously inspected development OOF",
+  "images": 5937,
+  "new_fits": 0,
+  "new_selections": 0,
+  "definition_E": "Validation-selected protected B0/ConvNeXt classwise plus ResNet25 fusion from original_fusion",
+  "definition_G": "Already locked Macro-F1 utility gate, folds0/3 only",
+  "definition_S": "Already locked Dropout specialist, folds1/2 only; same checkpoint/scaler/threshold=.8",
+  "limitations": [
+    "No fresh independent patient test.",
+    "No refitting or reselection after removing a component.",
+    "E+S is a new descriptive recomputation, not a newly validated selection.",
+    "Existing CNN/ensemble choices used inner validation; not fully nested end-to-end training.",
+    "No final calibrated probability distribution is produced by label routing."
+  ],
+  "frozen_sha256": {
+    "ai-service/reports/teacher_dropout_specialist_seed42_20261023/oof_decisions.json": "3ae9029d95b5de06fc7d8a646b00115076faf17c08ea99ec15c84810c927ad4a",
+    "ai-service/reports/teacher_dropout_specialist_seed42_20261023/results.json": "474cdab8d062e8d883ba9d043eeacea3525e10bb478de11af8aaf093a6229d56",
+    "ai-service/reports/teacher_dropout_specialist_seed42_20261023/protocol.json": "d5b788d7ce5e534d9d288155dfed94418a7bbddeff7a140f112f9562e65e6e0b",
+    "ai-service/reports/teacher_dropout_specialist_seed42_20261023/all_selections_locked.json": "4095963024f92cb685badfff12135489009623895595f4e48e5504664d6adf97",
+    "ai-service/reports/scene_grouped_oof_classwise_fusion_seed42.json": "3f2638066e5176de9938d3b20fe6b27b247eacf8cc307be0349bac84a7582a6b",
+    "ai-service/reports/teacher_pipeline_explanation_20261108/build_ablation.py": "379973cca29a991af51cad488e08af70fb15eb9e02a7eee9246f362814df257f",
+    "ai-service/reports/teacher_dropout_specialist_seed42_20261023/fold_0/selection_locked.json": "8d61c1220ebcc638cb2cd913a0bc4285c590d41dbb4b59cbda78f277d80c1e9c",
+    "ai-service/reports/teacher_dropout_specialist_seed42_20261023/fold_0/outer_probabilities.npz": "3d0184a3e0e98a747adf30ed961a50b427ef24a75f3a44a5409ee6a5bbf1124d",
+    "ai-service/reports/teacher_dropout_specialist_seed42_20261023/fold_1/selection_locked.json": "3c8a96822cd5a423a03aece2e99c3606cc6f721950c9e782c6b45deef0003cff",
+    "ai-service/reports/teacher_dropout_specialist_seed42_20261023/fold_1/outer_probabilities.npz": "5e40ab51be26b89c9ad0a155927323ed9eff60af817b168dab2915b6b0a45baa",
+    "ai-service/reports/teacher_dropout_specialist_seed42_20261023/fold_2/selection_locked.json": "c42268d5aba7db1905dd7f7696ad781d5d524f15883df2823e64d88595a990ba",
+    "ai-service/reports/teacher_dropout_specialist_seed42_20261023/fold_2/outer_probabilities.npz": "b8fa9239d6d2070967a38bd422a28ace726d0d68de25e013cbb50fde21abf721",
+    "ai-service/reports/teacher_dropout_specialist_seed42_20261023/fold_3/selection_locked.json": "c8898e548e9cfbec9771c690d2c7b1813ba85d10be3c9cdef060c5d0ef4fb2bf",
+    "ai-service/reports/teacher_dropout_specialist_seed42_20261023/fold_3/outer_probabilities.npz": "f31f2f4780410f6caf4381502a509445354968eafa0e084fa60bc18d531c00dc",
+    "ai-service/reports/teacher_dropout_specialist_seed42_20261023/fold_4/selection_locked.json": "ef0c02d8c84a35499118b99e75a7de3b54e1e92c495699761822ce57a976f78b",
+    "ai-service/reports/teacher_dropout_specialist_seed42_20261023/fold_4/outer_probabilities.npz": "d7bb129a4b0c72c61d2d94f4892bf84ae50b796235c2b7371d39c2f8b568ea75"
+  }
+}

@@ -213,7 +213,7 @@ export default function DoctorProfileScreen({ token, doctor, work, leave, saved 
             <span className="doctor-profile-visibility"><BadgeCheck aria-hidden="true" /> Hồ sơ hiển thị với bệnh nhân</span>
             <h2 id="doctor-profile-title">{displayName}</h2>
             <p>{profile.specialtyCode || "Chưa cập nhật chuyên môn"}</p>
-            <small>{editingPersonal ? "Chọn ảnh để thay đổi. JPG, PNG hoặc WebP, tối đa 2 MB." : "Thông tin hồ sơ bác sĩ tại DermAI Clinic."}</small>
+            <small>{editingPersonal ? "Chọn ảnh để thay đổi. JPG, PNG hoặc WebP, tối đa 2 MB." : "Thông tin hồ sơ bác sĩ tại Derm Clinic."}</small>
           </div>
         </div>
         <dl className="doctor-profile-facts">

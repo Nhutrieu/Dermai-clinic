@@ -217,11 +217,12 @@ không tự sinh slot và không thực hiện đặt, đổi, hủy hoặc xác
 
 - Không gửi ảnh/PII bệnh nhân tới Gemini hoặc provider ngoài nếu chưa có consent
   và thiết kế bảo vệ dữ liệu phù hợp.
-- Ảnh gốc hiện được lưu dạng BLOB trong Patient Service. Patient có quyền
+- Ảnh gốc được mã hóa AES-256-GCM rồi lưu dạng BLOB trong Patient Service; có
+  consent và nhật ký truy cập. Patient có quyền
   đọc/xóa; Doctor chỉ đọc khi Patient đã chia sẻ với đúng appointment mà Doctor
   phụ trách. Endpoint ảnh trả `Cache-Control: no-store`.
-- Cần bổ sung chính sách retention, xóa tự động và giám sát dung lượng trước khi
-  triển khai công khai.
+- Job xóa byte ảnh theo thời hạn cấu hình (mặc định 180 ngày) đã có trong mã;
+  cần kiểm chứng khi triển khai và giám sát dung lượng trước khi mở công khai.
 - Không cho nút tự sao chép output AI thành final diagnosis.
 - Bệnh nhân phải chủ động chọn chia sẻ. Ảnh không được chép sang hồ sơ y khoa;
   Doctor chỉ xem qua endpoint chia sẻ có kiểm tra quyền của appointment.

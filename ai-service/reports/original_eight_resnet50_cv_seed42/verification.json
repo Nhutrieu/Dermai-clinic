@@ -1,0 +1,68 @@
+{
+  "status": "PASS",
+  "verifier_code_sha256": "14ba76adcac4d3c3e4c54ae4ecab7d7bd24023818285bd88c78bf3d48f873975",
+  "protocol_sha256": "ddc3416a932d1a739a8298fe55a752cf7f80eef8c53df38b8c53b734d41f356c",
+  "results_sha256": "18f9f62dcd11b603f6b3ac49885d19f3a687cf837c4ee7f26773dc8eea1dcfe2",
+  "predictions_sha256": "0689afb20d9090e2793856a4c14cd1d37ea270a2c6275faa68ae90c0f74347b8",
+  "comparisons_sha256": "97b911bd41fb72cb834a20fd59743b1fedde86a3f1e3c6bb8b4df9b72a135755",
+  "per_source_sha256": "15ff2ef58285db071d794dc1d4189dda790be9895da375f449d37f487722b64d",
+  "validation_fixed25_audit_sha256": "ad3a8acea57c840ad0f5baf32e67587ddbdf8912a208f614ef3028cf68a70df6",
+  "images": 5937,
+  "replication_images": 4761,
+  "architectures": 3,
+  "resnet_models": 5,
+  "new_resnet_models": 4,
+  "reused_resnet_models": 1,
+  "model_training": [
+    {
+      "fold": 0,
+      "epochs": 24,
+      "best_epoch": 17,
+      "updates": 6070,
+      "skipped": 2
+    },
+    {
+      "fold": 1,
+      "epochs": 23,
+      "best_epoch": 16,
+      "updates": 5795,
+      "skipped": 1
+    },
+    {
+      "fold": 2,
+      "epochs": 24,
+      "best_epoch": 22,
+      "updates": 6046,
+      "skipped": 2
+    },
+    {
+      "fold": 3,
+      "epochs": 24,
+      "best_epoch": 18,
+      "updates": 6046,
+      "skipped": 2
+    },
+    {
+      "fold": 4,
+      "epochs": 24,
+      "best_epoch": 21,
+      "updates": 6094,
+      "skipped": 2
+    }
+  ],
+  "actual_optimizer_updates": 30051,
+  "amp_skipped_updates": 9,
+  "serving_checkpoint_sha256": "975e4852023ebb9d3af544b819bec0b887cf75b1467447c87c40591da90b7a17",
+  "checks": [
+    "Registered code, sources, manifests, ImageNet cache and checkpoints unchanged",
+    "All five group-disjoint train/inner validation/outer roles reconstructed",
+    "Raw/EMA choice, checkpoint ranking, actual optimizer updates reconstructed",
+    "Nine candidate recipes, validation guard and selector reconstructed for each fold",
+    "Choice artifact predates outer predictions in every fold",
+    "All parent probabilities and new fusion probabilities independently reconstructed",
+    "Independent NumPy Accuracy, precision, recall, F1 and confusion matrices",
+    "All 5937 unique outer identities and fold1-4 subset verified",
+    "Old B0/ConvNeXt classwise benchmark reproduced exactly",
+    "Original serving checkpoint unchanged"
+  ]
+}

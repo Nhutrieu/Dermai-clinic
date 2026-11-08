@@ -1,0 +1,1051 @@
+{
+  "scope": "Development validation reused for checkpoint selection; not independent accuracy.",
+  "split_fingerprint_sha256": "922f900cfed05bca4c5e9ea6b3ae65b4f64381363bed22ca2e007c23c7e6f9c4",
+  "validation_count": 890,
+  "ensemble_rule": "Uncalibrated softmax probabilities, fixed 50:50 mean; no weight search.",
+  "checkpoint_sha256": {
+    "efficientnet_b0": "12006432294e98fd7fd8fbe53fc7b321e3c153cad473497e59fed7feb6a3d6fc",
+    "convnext_tiny": "9249b2cdd165ba8eca1bbb105aa530bbb5dfebe74a2cccfd0d2436133a65e836"
+  },
+  "selected_epochs": {
+    "efficientnet_b0": 22,
+    "convnext_tiny": 15
+  },
+  "results": {
+    "efficientnet_b0": {
+      "count": 890,
+      "accuracy": 0.7606741573033707,
+      "macro_f1_all_classes": 0.7580152748910869,
+      "macro_f1_present_classes": 0.7580152748910869,
+      "weighted_f1": 0.7593628588902765,
+      "top3_accuracy": 0.946067415730337,
+      "per_class": {
+        "Acne": {
+          "precision": 0.9080459770114943,
+          "recall": 0.797979797979798,
+          "f1": 0.8494623655913979,
+          "support": 99
+        },
+        "Candidiasis": {
+          "precision": 0.7428571428571429,
+          "recall": 0.7222222222222222,
+          "f1": 0.732394366197183,
+          "support": 36
+        },
+        "Eczema": {
+          "precision": 0.7394636015325671,
+          "recall": 0.8143459915611815,
+          "f1": 0.7751004016064257,
+          "support": 237
+        },
+        "Lupus": {
+          "precision": 0.6976744186046512,
+          "recall": 0.6382978723404256,
+          "f1": 0.6666666666666666,
+          "support": 47
+        },
+        "Psoriasis": {
+          "precision": 0.6580645161290323,
+          "recall": 0.7555555555555555,
+          "f1": 0.7034482758620689,
+          "support": 135
+        },
+        "SkinCancer": {
+          "precision": 0.8181818181818182,
+          "recall": 0.7941176470588235,
+          "f1": 0.8059701492537314,
+          "support": 102
+        },
+        "Tinea": {
+          "precision": 0.7652173913043478,
+          "recall": 0.5945945945945946,
+          "f1": 0.6692015209125476,
+          "support": 148
+        },
+        "Warts": {
+          "precision": 0.8210526315789474,
+          "recall": 0.9069767441860465,
+          "f1": 0.861878453038674,
+          "support": 86
+        }
+      },
+      "calibration": {
+        "sample_count": 890,
+        "class_count": 8,
+        "binning": {
+          "method": "equal_width_top1_confidence",
+          "bins": 15,
+          "interval": "[lower, upper), except final bin includes 1.0"
+        },
+        "accuracy": 0.7606741573033707,
+        "mean_confidence": 0.7423688173294067,
+        "expected_calibration_error": 0.03875400177883298,
+        "maximum_calibration_error": 0.10170146697004079,
+        "negative_log_likelihood": 0.7532407641410828,
+        "multiclass_brier_score": 0.3445507126715308,
+        "per_class_one_vs_rest_brier": {
+          "Acne": 0.025068234587317086,
+          "Candidiasis": 0.014836095728358693,
+          "Eczema": 0.0839000921408175,
+          "Lupus": 0.028753983998756727,
+          "Psoriasis": 0.06340772055728015,
+          "SkinCancer": 0.03162099767957359,
+          "Tinea": 0.07429711201123369,
+          "Warts": 0.022666475968193354
+        },
+        "uncertainty_policy": {
+          "accept_when_top1_confidence_at_least": 0.55,
+          "accepted": 705,
+          "rejected": 185,
+          "coverage": 0.7921348314606742,
+          "accepted_accuracy": 0.849645390070922,
+          "rejected_accuracy": 0.42162162162162165,
+          "accepted_errors": 106,
+          "rejected_errors": 107
+        },
+        "reliability": [
+          {
+            "index": 0,
+            "lower": 0.0,
+            "upper": 0.06666666666666667,
+            "right_edge_inclusive": false,
+            "count": 0,
+            "fraction": 0.0,
+            "accuracy": null,
+            "mean_confidence": null,
+            "absolute_gap": null
+          },
+          {
+            "index": 1,
+            "lower": 0.06666666666666667,
+            "upper": 0.13333333333333333,
+            "right_edge_inclusive": false,
+            "count": 0,
+            "fraction": 0.0,
+            "accuracy": null,
+            "mean_confidence": null,
+            "absolute_gap": null
+          },
+          {
+            "index": 2,
+            "lower": 0.13333333333333333,
+            "upper": 0.2,
+            "right_edge_inclusive": false,
+            "count": 0,
+            "fraction": 0.0,
+            "accuracy": null,
+            "mean_confidence": null,
+            "absolute_gap": null
+          },
+          {
+            "index": 3,
+            "lower": 0.2,
+            "upper": 0.26666666666666666,
+            "right_edge_inclusive": false,
+            "count": 3,
+            "fraction": 0.0033707865168539327,
+            "accuracy": 0.3333333333333333,
+            "mean_confidence": 0.2403729408979416,
+            "absolute_gap": 0.09296039243539173
+          },
+          {
+            "index": 4,
+            "lower": 0.26666666666666666,
+            "upper": 0.3333333333333333,
+            "right_edge_inclusive": false,
+            "count": 29,
+            "fraction": 0.03258426966292135,
+            "accuracy": 0.3103448275862069,
+            "mean_confidence": 0.31382688879966736,
+            "absolute_gap": 0.0034820612134604523
+          },
+          {
+            "index": 5,
+            "lower": 0.3333333333333333,
+            "upper": 0.4,
+            "right_edge_inclusive": false,
+            "count": 34,
+            "fraction": 0.038202247191011236,
+            "accuracy": 0.35294117647058826,
+            "mean_confidence": 0.36454451084136963,
+            "absolute_gap": 0.01160333437078137
+          },
+          {
+            "index": 6,
+            "lower": 0.4,
+            "upper": 0.4666666666666667,
+            "right_edge_inclusive": false,
+            "count": 44,
+            "fraction": 0.04943820224719101,
+            "accuracy": 0.4772727272727273,
+            "mean_confidence": 0.433680921792984,
+            "absolute_gap": 0.043591805479743284
+          },
+          {
+            "index": 7,
+            "lower": 0.4666666666666667,
+            "upper": 0.5333333333333333,
+            "right_edge_inclusive": false,
+            "count": 60,
+            "fraction": 0.06741573033707865,
+            "accuracy": 0.4666666666666667,
+            "mean_confidence": 0.5040614604949951,
+            "absolute_gap": 0.03739479382832844
+          },
+          {
+            "index": 8,
+            "lower": 0.5333333333333333,
+            "upper": 0.6,
+            "right_edge_inclusive": false,
+            "count": 64,
+            "fraction": 0.07191011235955057,
+            "accuracy": 0.65625,
+            "mean_confidence": 0.5648370981216431,
+            "absolute_gap": 0.09141290187835693
+          },
+          {
+            "index": 9,
+            "lower": 0.6,
+            "upper": 0.6666666666666666,
+            "right_edge_inclusive": false,
+            "count": 71,
+            "fraction": 0.07977528089887641,
+            "accuracy": 0.7323943661971831,
+            "mean_confidence": 0.6306928992271423,
+            "absolute_gap": 0.10170146697004079
+          },
+          {
+            "index": 10,
+            "lower": 0.6666666666666666,
+            "upper": 0.7333333333333333,
+            "right_edge_inclusive": false,
+            "count": 77,
+            "fraction": 0.08651685393258426,
+            "accuracy": 0.6363636363636364,
+            "mean_confidence": 0.7014438509941101,
+            "absolute_gap": 0.06508021463047375
+          },
+          {
+            "index": 11,
+            "lower": 0.7333333333333333,
+            "upper": 0.8,
+            "right_edge_inclusive": false,
+            "count": 85,
+            "fraction": 0.09550561797752809,
+            "accuracy": 0.788235294117647,
+            "mean_confidence": 0.7671987414360046,
+            "absolute_gap": 0.021036552681642395
+          },
+          {
+            "index": 12,
+            "lower": 0.8,
+            "upper": 0.8666666666666667,
+            "right_edge_inclusive": false,
+            "count": 77,
+            "fraction": 0.08651685393258426,
+            "accuracy": 0.8701298701298701,
+            "mean_confidence": 0.8327525854110718,
+            "absolute_gap": 0.03737728471879831
+          },
+          {
+            "index": 13,
+            "lower": 0.8666666666666667,
+            "upper": 0.9333333333333333,
+            "right_edge_inclusive": false,
+            "count": 149,
+            "fraction": 0.16741573033707866,
+            "accuracy": 0.9395973154362416,
+            "mean_confidence": 0.9029725193977356,
+            "absolute_gap": 0.03662479603850599
+          },
+          {
+            "index": 14,
+            "lower": 0.9333333333333333,
+            "upper": 1.0,
+            "right_edge_inclusive": true,
+            "count": 197,
+            "fraction": 0.22134831460674156,
+            "accuracy": 0.9593908629441624,
+            "mean_confidence": 0.9662401080131531,
+            "absolute_gap": 0.00684924506899065
+          }
+        ]
+      },
+      "correct": 677,
+      "confusion_matrix": [
+        [
+          79,
+          0,
+          4,
+          4,
+          3,
+          4,
+          1,
+          4
+        ],
+        [
+          0,
+          26,
+          2,
+          0,
+          5,
+          0,
+          2,
+          1
+        ],
+        [
+          3,
+          2,
+          193,
+          2,
+          20,
+          3,
+          9,
+          5
+        ],
+        [
+          1,
+          1,
+          5,
+          30,
+          5,
+          1,
+          3,
+          1
+        ],
+        [
+          0,
+          3,
+          15,
+          3,
+          102,
+          3,
+          8,
+          1
+        ],
+        [
+          1,
+          1,
+          9,
+          0,
+          4,
+          81,
+          3,
+          3
+        ],
+        [
+          1,
+          0,
+          32,
+          4,
+          15,
+          6,
+          88,
+          2
+        ],
+        [
+          2,
+          2,
+          1,
+          0,
+          1,
+          1,
+          1,
+          78
+        ]
+      ]
+    },
+    "convnext_tiny": {
+      "count": 890,
+      "accuracy": 0.8404494382022472,
+      "macro_f1_all_classes": 0.8294103073231064,
+      "macro_f1_present_classes": 0.8294103073231064,
+      "weighted_f1": 0.8405668930222223,
+      "top3_accuracy": 0.9382022471910112,
+      "per_class": {
+        "Acne": {
+          "precision": 0.9473684210526315,
+          "recall": 0.9090909090909091,
+          "f1": 0.9278350515463918,
+          "support": 99
+        },
+        "Candidiasis": {
+          "precision": 0.6744186046511628,
+          "recall": 0.8055555555555556,
+          "f1": 0.7341772151898734,
+          "support": 36
+        },
+        "Eczema": {
+          "precision": 0.8360655737704918,
+          "recall": 0.8607594936708861,
+          "f1": 0.8482328482328484,
+          "support": 237
+        },
+        "Lupus": {
+          "precision": 0.8,
+          "recall": 0.6808510638297872,
+          "f1": 0.7356321839080461,
+          "support": 47
+        },
+        "Psoriasis": {
+          "precision": 0.8148148148148148,
+          "recall": 0.8148148148148148,
+          "f1": 0.8148148148148148,
+          "support": 135
+        },
+        "SkinCancer": {
+          "precision": 0.9263157894736842,
+          "recall": 0.8627450980392157,
+          "f1": 0.8934010152284264,
+          "support": 102
+        },
+        "Tinea": {
+          "precision": 0.7876712328767124,
+          "recall": 0.777027027027027,
+          "f1": 0.782312925170068,
+          "support": 148
+        },
+        "Warts": {
+          "precision": 0.8695652173913043,
+          "recall": 0.9302325581395349,
+          "f1": 0.898876404494382,
+          "support": 86
+        }
+      },
+      "calibration": {
+        "sample_count": 890,
+        "class_count": 8,
+        "binning": {
+          "method": "equal_width_top1_confidence",
+          "bins": 15,
+          "interval": "[lower, upper), except final bin includes 1.0"
+        },
+        "accuracy": 0.8404494382022472,
+        "mean_confidence": 0.6960941553115845,
+        "expected_calibration_error": 0.14435523416888846,
+        "maximum_calibration_error": 0.24786994142352414,
+        "negative_log_likelihood": 0.6685256361961365,
+        "multiclass_brier_score": 0.27864284981609333,
+        "per_class_one_vs_rest_brier": {
+          "Acne": 0.017647406897265714,
+          "Candidiasis": 0.01811070111105059,
+          "Eczema": 0.07482891323427521,
+          "Lupus": 0.022797554207191654,
+          "Psoriasis": 0.04879891257229929,
+          "SkinCancer": 0.022500888772703807,
+          "Tinea": 0.0580499110590649,
+          "Warts": 0.015908561962242218
+        },
+        "uncertainty_policy": {
+          "accept_when_top1_confidence_at_least": 0.55,
+          "accepted": 666,
+          "rejected": 224,
+          "coverage": 0.748314606741573,
+          "accepted_accuracy": 0.9264264264264265,
+          "rejected_accuracy": 0.5848214285714286,
+          "accepted_errors": 49,
+          "rejected_errors": 93
+        },
+        "reliability": [
+          {
+            "index": 0,
+            "lower": 0.0,
+            "upper": 0.06666666666666667,
+            "right_edge_inclusive": false,
+            "count": 0,
+            "fraction": 0.0,
+            "accuracy": null,
+            "mean_confidence": null,
+            "absolute_gap": null
+          },
+          {
+            "index": 1,
+            "lower": 0.06666666666666667,
+            "upper": 0.13333333333333333,
+            "right_edge_inclusive": false,
+            "count": 0,
+            "fraction": 0.0,
+            "accuracy": null,
+            "mean_confidence": null,
+            "absolute_gap": null
+          },
+          {
+            "index": 2,
+            "lower": 0.13333333333333333,
+            "upper": 0.2,
+            "right_edge_inclusive": false,
+            "count": 0,
+            "fraction": 0.0,
+            "accuracy": null,
+            "mean_confidence": null,
+            "absolute_gap": null
+          },
+          {
+            "index": 3,
+            "lower": 0.2,
+            "upper": 0.26666666666666666,
+            "right_edge_inclusive": false,
+            "count": 21,
+            "fraction": 0.02359550561797753,
+            "accuracy": 0.47619047619047616,
+            "mean_confidence": 0.24351981282234192,
+            "absolute_gap": 0.23267066336813425
+          },
+          {
+            "index": 4,
+            "lower": 0.26666666666666666,
+            "upper": 0.3333333333333333,
+            "right_edge_inclusive": false,
+            "count": 41,
+            "fraction": 0.046067415730337076,
+            "accuracy": 0.4878048780487805,
+            "mean_confidence": 0.30209770798683167,
+            "absolute_gap": 0.1857071700619488
+          },
+          {
+            "index": 5,
+            "lower": 0.3333333333333333,
+            "upper": 0.4,
+            "right_edge_inclusive": false,
+            "count": 38,
+            "fraction": 0.04269662921348315,
+            "accuracy": 0.5526315789473685,
+            "mean_confidence": 0.37042883038520813,
+            "absolute_gap": 0.18220274856216034
+          },
+          {
+            "index": 6,
+            "lower": 0.4,
+            "upper": 0.4666666666666667,
+            "right_edge_inclusive": false,
+            "count": 65,
+            "fraction": 0.07303370786516854,
+            "accuracy": 0.6307692307692307,
+            "mean_confidence": 0.4357035458087921,
+            "absolute_gap": 0.19506568496043863
+          },
+          {
+            "index": 7,
+            "lower": 0.4666666666666667,
+            "upper": 0.5333333333333333,
+            "right_edge_inclusive": false,
+            "count": 44,
+            "fraction": 0.04943820224719101,
+            "accuracy": 0.6136363636363636,
+            "mean_confidence": 0.4956786334514618,
+            "absolute_gap": 0.11795773018490185
+          },
+          {
+            "index": 8,
+            "lower": 0.5333333333333333,
+            "upper": 0.6,
+            "right_edge_inclusive": false,
+            "count": 53,
+            "fraction": 0.05955056179775281,
+            "accuracy": 0.8113207547169812,
+            "mean_confidence": 0.563450813293457,
+            "absolute_gap": 0.24786994142352414
+          },
+          {
+            "index": 9,
+            "lower": 0.6,
+            "upper": 0.6666666666666666,
+            "right_edge_inclusive": false,
+            "count": 73,
+            "fraction": 0.08202247191011236,
+            "accuracy": 0.8082191780821918,
+            "mean_confidence": 0.6344305276870728,
+            "absolute_gap": 0.17378865039511904
+          },
+          {
+            "index": 10,
+            "lower": 0.6666666666666666,
+            "upper": 0.7333333333333333,
+            "right_edge_inclusive": false,
+            "count": 90,
+            "fraction": 0.10112359550561797,
+            "accuracy": 0.8333333333333334,
+            "mean_confidence": 0.7001102566719055,
+            "absolute_gap": 0.13322307666142785
+          },
+          {
+            "index": 11,
+            "lower": 0.7333333333333333,
+            "upper": 0.8,
+            "right_edge_inclusive": false,
+            "count": 101,
+            "fraction": 0.11348314606741573,
+            "accuracy": 0.900990099009901,
+            "mean_confidence": 0.7710450887680054,
+            "absolute_gap": 0.12994501024189564
+          },
+          {
+            "index": 12,
+            "lower": 0.8,
+            "upper": 0.8666666666666667,
+            "right_edge_inclusive": false,
+            "count": 124,
+            "fraction": 0.1393258426966292,
+            "accuracy": 0.9919354838709677,
+            "mean_confidence": 0.8342393040657043,
+            "absolute_gap": 0.1576961798052634
+          },
+          {
+            "index": 13,
+            "lower": 0.8666666666666667,
+            "upper": 0.9333333333333333,
+            "right_edge_inclusive": false,
+            "count": 213,
+            "fraction": 0.2393258426966292,
+            "accuracy": 0.9906103286384976,
+            "mean_confidence": 0.8997727632522583,
+            "absolute_gap": 0.09083756538623933
+          },
+          {
+            "index": 14,
+            "lower": 0.9333333333333333,
+            "upper": 1.0,
+            "right_edge_inclusive": true,
+            "count": 27,
+            "fraction": 0.030337078651685393,
+            "accuracy": 1.0,
+            "mean_confidence": 0.9502949118614197,
+            "absolute_gap": 0.04970508813858032
+          }
+        ]
+      },
+      "correct": 748,
+      "confusion_matrix": [
+        [
+          90,
+          1,
+          1,
+          1,
+          0,
+          3,
+          1,
+          2
+        ],
+        [
+          0,
+          29,
+          3,
+          0,
+          0,
+          0,
+          4,
+          0
+        ],
+        [
+          0,
+          2,
+          204,
+          2,
+          9,
+          1,
+          14,
+          5
+        ],
+        [
+          0,
+          4,
+          2,
+          32,
+          6,
+          0,
+          3,
+          0
+        ],
+        [
+          1,
+          4,
+          11,
+          4,
+          110,
+          2,
+          1,
+          2
+        ],
+        [
+          2,
+          0,
+          5,
+          0,
+          0,
+          88,
+          7,
+          0
+        ],
+        [
+          0,
+          1,
+          17,
+          1,
+          10,
+          1,
+          115,
+          3
+        ],
+        [
+          2,
+          2,
+          1,
+          0,
+          0,
+          0,
+          1,
+          80
+        ]
+      ]
+    },
+    "equal_probability_ensemble": {
+      "count": 890,
+      "accuracy": 0.8269662921348314,
+      "macro_f1_all_classes": 0.8211852129236465,
+      "macro_f1_present_classes": 0.8211852129236465,
+      "weighted_f1": 0.8269621430497013,
+      "top3_accuracy": 0.9561797752808989,
+      "per_class": {
+        "Acne": {
+          "precision": 0.9263157894736842,
+          "recall": 0.8888888888888888,
+          "f1": 0.9072164948453608,
+          "support": 99
+        },
+        "Candidiasis": {
+          "precision": 0.717948717948718,
+          "recall": 0.7777777777777778,
+          "f1": 0.7466666666666666,
+          "support": 36
+        },
+        "Eczema": {
+          "precision": 0.8112449799196787,
+          "recall": 0.8523206751054853,
+          "f1": 0.831275720164609,
+          "support": 237
+        },
+        "Lupus": {
+          "precision": 0.7727272727272727,
+          "recall": 0.723404255319149,
+          "f1": 0.7472527472527473,
+          "support": 47
+        },
+        "Psoriasis": {
+          "precision": 0.7794117647058824,
+          "recall": 0.7851851851851852,
+          "f1": 0.7822878228782287,
+          "support": 135
+        },
+        "SkinCancer": {
+          "precision": 0.9166666666666666,
+          "recall": 0.8627450980392157,
+          "f1": 0.888888888888889,
+          "support": 102
+        },
+        "Tinea": {
+          "precision": 0.7872340425531915,
+          "recall": 0.75,
+          "f1": 0.768166089965398,
+          "support": 148
+        },
+        "Warts": {
+          "precision": 0.8777777777777778,
+          "recall": 0.9186046511627907,
+          "f1": 0.8977272727272728,
+          "support": 86
+        }
+      },
+      "calibration": {
+        "sample_count": 890,
+        "class_count": 8,
+        "binning": {
+          "method": "equal_width_top1_confidence",
+          "bins": 15,
+          "interval": "[lower, upper), except final bin includes 1.0"
+        },
+        "accuracy": 0.8269662921348314,
+        "mean_confidence": 0.695560872554779,
+        "expected_calibration_error": 0.13443323822503675,
+        "maximum_calibration_error": 0.2343603334119243,
+        "negative_log_likelihood": 0.6445571780204773,
+        "multiclass_brier_score": 0.2790229506427079,
+        "per_class_one_vs_rest_brier": {
+          "Acne": 0.019601722927407306,
+          "Candidiasis": 0.014480607036424372,
+          "Eczema": 0.07133171941482326,
+          "Lupus": 0.022904113912480067,
+          "Psoriasis": 0.050018581237880125,
+          "SkinCancer": 0.023835766083297582,
+          "Tinea": 0.06027872961729222,
+          "Warts": 0.016571710413102944
+        },
+        "uncertainty_policy": {
+          "accept_when_top1_confidence_at_least": 0.55,
+          "accepted": 655,
+          "rejected": 235,
+          "coverage": 0.7359550561797753,
+          "accepted_accuracy": 0.9312977099236641,
+          "rejected_accuracy": 0.5361702127659574,
+          "accepted_errors": 45,
+          "rejected_errors": 109
+        },
+        "reliability": [
+          {
+            "index": 0,
+            "lower": 0.0,
+            "upper": 0.06666666666666667,
+            "right_edge_inclusive": false,
+            "count": 0,
+            "fraction": 0.0,
+            "accuracy": null,
+            "mean_confidence": null,
+            "absolute_gap": null
+          },
+          {
+            "index": 1,
+            "lower": 0.06666666666666667,
+            "upper": 0.13333333333333333,
+            "right_edge_inclusive": false,
+            "count": 0,
+            "fraction": 0.0,
+            "accuracy": null,
+            "mean_confidence": null,
+            "absolute_gap": null
+          },
+          {
+            "index": 2,
+            "lower": 0.13333333333333333,
+            "upper": 0.2,
+            "right_edge_inclusive": false,
+            "count": 0,
+            "fraction": 0.0,
+            "accuracy": null,
+            "mean_confidence": null,
+            "absolute_gap": null
+          },
+          {
+            "index": 3,
+            "lower": 0.2,
+            "upper": 0.26666666666666666,
+            "right_edge_inclusive": false,
+            "count": 10,
+            "fraction": 0.011235955056179775,
+            "accuracy": 0.1,
+            "mean_confidence": 0.23473477363586426,
+            "absolute_gap": 0.13473477363586425
+          },
+          {
+            "index": 4,
+            "lower": 0.26666666666666666,
+            "upper": 0.3333333333333333,
+            "right_edge_inclusive": false,
+            "count": 36,
+            "fraction": 0.04044943820224719,
+            "accuracy": 0.4444444444444444,
+            "mean_confidence": 0.30357444286346436,
+            "absolute_gap": 0.14087000158098006
+          },
+          {
+            "index": 5,
+            "lower": 0.3333333333333333,
+            "upper": 0.4,
+            "right_edge_inclusive": false,
+            "count": 45,
+            "fraction": 0.05056179775280899,
+            "accuracy": 0.4,
+            "mean_confidence": 0.36377325654029846,
+            "absolute_gap": 0.03622674345970156
+          },
+          {
+            "index": 6,
+            "lower": 0.4,
+            "upper": 0.4666666666666667,
+            "right_edge_inclusive": false,
+            "count": 65,
+            "fraction": 0.07303370786516854,
+            "accuracy": 0.6,
+            "mean_confidence": 0.4322454035282135,
+            "absolute_gap": 0.16775459647178648
+          },
+          {
+            "index": 7,
+            "lower": 0.4666666666666667,
+            "upper": 0.5333333333333333,
+            "right_edge_inclusive": false,
+            "count": 64,
+            "fraction": 0.07191011235955057,
+            "accuracy": 0.65625,
+            "mean_confidence": 0.49622881412506104,
+            "absolute_gap": 0.16002118587493896
+          },
+          {
+            "index": 8,
+            "lower": 0.5333333333333333,
+            "upper": 0.6,
+            "right_edge_inclusive": false,
+            "count": 72,
+            "fraction": 0.08089887640449438,
+            "accuracy": 0.7638888888888888,
+            "mean_confidence": 0.5708903670310974,
+            "absolute_gap": 0.19299852185779143
+          },
+          {
+            "index": 9,
+            "lower": 0.6,
+            "upper": 0.6666666666666666,
+            "right_edge_inclusive": false,
+            "count": 62,
+            "fraction": 0.0696629213483146,
+            "accuracy": 0.8709677419354839,
+            "mean_confidence": 0.6366074085235596,
+            "absolute_gap": 0.2343603334119243
+          },
+          {
+            "index": 10,
+            "lower": 0.6666666666666666,
+            "upper": 0.7333333333333333,
+            "right_edge_inclusive": false,
+            "count": 79,
+            "fraction": 0.08876404494382023,
+            "accuracy": 0.8734177215189873,
+            "mean_confidence": 0.6984495520591736,
+            "absolute_gap": 0.17496816945981375
+          },
+          {
+            "index": 11,
+            "lower": 0.7333333333333333,
+            "upper": 0.8,
+            "right_edge_inclusive": false,
+            "count": 98,
+            "fraction": 0.1101123595505618,
+            "accuracy": 0.9285714285714286,
+            "mean_confidence": 0.7681039571762085,
+            "absolute_gap": 0.1604674713952201
+          },
+          {
+            "index": 12,
+            "lower": 0.8,
+            "upper": 0.8666666666666667,
+            "right_edge_inclusive": false,
+            "count": 122,
+            "fraction": 0.13707865168539327,
+            "accuracy": 0.9590163934426229,
+            "mean_confidence": 0.8334190845489502,
+            "absolute_gap": 0.1255973088936727
+          },
+          {
+            "index": 13,
+            "lower": 0.8666666666666667,
+            "upper": 0.9333333333333333,
+            "right_edge_inclusive": false,
+            "count": 167,
+            "fraction": 0.18764044943820224,
+            "accuracy": 0.9940119760479041,
+            "mean_confidence": 0.902194082736969,
+            "absolute_gap": 0.09181789331093515
+          },
+          {
+            "index": 14,
+            "lower": 0.9333333333333333,
+            "upper": 1.0,
+            "right_edge_inclusive": true,
+            "count": 70,
+            "fraction": 0.07865168539325842,
+            "accuracy": 0.9714285714285714,
+            "mean_confidence": 0.9454240798950195,
+            "absolute_gap": 0.026004491533551888
+          }
+        ]
+      },
+      "correct": 736,
+      "confusion_matrix": [
+        [
+          88,
+          1,
+          2,
+          3,
+          0,
+          3,
+          1,
+          1
+        ],
+        [
+          0,
+          28,
+          2,
+          0,
+          2,
+          0,
+          3,
+          1
+        ],
+        [
+          2,
+          2,
+          202,
+          2,
+          11,
+          1,
+          13,
+          4
+        ],
+        [
+          1,
+          1,
+          2,
+          34,
+          6,
+          0,
+          2,
+          1
+        ],
+        [
+          1,
+          3,
+          12,
+          2,
+          106,
+          2,
+          6,
+          3
+        ],
+        [
+          1,
+          1,
+          6,
+          0,
+          2,
+          88,
+          4,
+          0
+        ],
+        [
+          0,
+          1,
+          21,
+          3,
+          9,
+          2,
+          111,
+          1
+        ],
+        [
+          2,
+          2,
+          2,
+          0,
+          0,
+          0,
+          1,
+          79
+        ]
+      ]
+    }
+  },
+  "paired_correctness": {
+    "b0_only": 37,
+    "convnext_only": 108,
+    "both_correct": 640,
+    "both_wrong": 105
+  }
+}

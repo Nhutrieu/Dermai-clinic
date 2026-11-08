@@ -65,7 +65,7 @@ export default function AdminStaffCreateForm(props: Props) {
         <div className="admin-staff-create-fields">
           <label>
             <span>Email</span>
-            <input type="email" autoComplete="off" required value={props.email} onChange={event => props.onEmailChange(event.target.value)} placeholder="tennhanvien@dermai.vn" />
+            <input type="email" autoComplete="off" required value={props.email} onChange={event => props.onEmailChange(event.target.value)} placeholder="tennhanvien@dermclinic.vn" />
           </label>
           <label>
             <span>Mật khẩu ban đầu</span>

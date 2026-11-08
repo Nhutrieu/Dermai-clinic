@@ -146,7 +146,7 @@ function LegacyPatientAiScreen({ token, patient, openBooking }: { token: string;
 
   async function analyze() {
     if (!file || fileError || analysisStage !== "idle") return;
-    const consentAccepted = window.confirm("Bạn đồng ý gửi ảnh da để DermAI phân tích và lưu ảnh đã mã hóa tối đa 180 ngày? Bạn có thể xóa ảnh khỏi tài khoản bất cứ lúc nào.");
+    const consentAccepted = window.confirm("Bạn đồng ý gửi ảnh da để AI của Derm Clinic phân tích và lưu ảnh đã mã hóa tối đa 180 ngày? Bạn có thể xóa ảnh khỏi tài khoản bất cứ lúc nào.");
     if (!consentAccepted) return;
     let failedStage: AiAnalysisStage = "analyzing";
     setAnalysisStage("analyzing");

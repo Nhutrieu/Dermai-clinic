@@ -41,9 +41,15 @@ mục con ở cùng nhóm khi metadata cấu trúc thư mục có mặt; **khôn
 patient-level split cho nguồn này**. Trước khi triển khai rộng hơn, nhóm phải có manifest
 `image_id, patient_id/case_id, source, label, split` và split theo `patient_id`/`case_id`.
 
+Audit bổ sung ngày 09/10/2026 đã xác nhận bằng mắt **19 ảnh fixed test cùng cảnh với ảnh
+trong nguồn train cũ**: 18 ảnh đối ứng thuộc train thực tế, một thuộc validation. Những ảnh
+này khác nội dung byte nên đã lọt qua bước SHA-256. Xem [báo cáo audit](47-audit-anh-trung-gan-test-cu.md).
+
 ### 1.3. Chia train, validation và test
 
-Test gốc được giữ cố định, không dùng chọn tham số. Phần train sạch được chia stratified,
+Trong thí nghiệm B0 ban đầu, test gốc được giữ cố định và không dùng chọn tham số. Sau đó,
+nhiều biến thể model và ensemble đã được so sánh lặp lại trên test này; vì vậy không thể
+xem đây là phép kiểm định độc lập cho các lựa chọn model về sau. Phần train sạch được chia stratified,
 seed 42, thành train 85% và validation 15%; checkpoint được chọn theo Macro F1 trên validation.
 
 | Tập | Acne | Candidiasis | Eczema | Lupus | Psoriasis | SkinCancer | Tinea | Warts | Tổng |
@@ -53,9 +59,11 @@ seed 42, thành train 85% và validation 15%; checkpoint được chọn theo Ma
 | Fixed test | 65 | 27 | 111 | 34 | 88 | 77 | 98 | 64 | 564 |
 | SCIN external test | 19 | 1 | 156 | 4 | 22 | 0 | 31 | 7 | 240 |
 
-External test SCIN được giữ hoàn toàn ngoài train/validation và case-disjoint, nhưng lệch lớp
-mạnh (đặc biệt chỉ có 1 Candida, 4 Lupus, không có SkinCancer). Vì thế chỉ dùng nó để đánh giá
-khả năng tổng quát hóa ban đầu, không suy diễn hiệu năng riêng từng lớp thiếu mẫu.
+Các ca trong SCIN external test được giữ ngoài train/validation và tách theo `case_id`, nhưng
+model đã học từ 977 ảnh train của **cùng nguồn SCIN**. Vì vậy đây là holdout theo ca của SCIN,
+không phải kiểm định trên một nguồn dữ liệu hoàn toàn mới. Tập này còn lệch lớp mạnh
+(chỉ có 1 Candida, 4 Lupus, không có SkinCancer), nên không suy diễn hiệu năng riêng các lớp
+thiếu mẫu hoặc hiệu năng lâm sàng ở nguồn ảnh khác.
 
 ### 1.4. Tiền xử lý và augmentation
 
@@ -86,9 +94,10 @@ như nhau; Weighted F1 phản ánh hiệu năng theo số lượng mẫu thực 
 | SCIN external, 240 ảnh | Baseline EfficientNet-B0 | 22,50% | 22,68% | 24,07% | 38,75% |
 | SCIN external, 240 ảnh | EfficientNet-B0 + SCIN | **67,92%** | **41,57%** | **65,94%** | **92,92%** |
 
-Model mới cải thiện 2,30 điểm % Accuracy và 3,04 điểm % Macro F1 trên fixed test;
-hiệu năng trên SCIN external tăng đáng kể. Đổi lại Top-3 trên fixed test giảm 1,59 điểm %,
-nên không chỉ báo cáo các chỉ số tăng.
+Trong phép so sánh lịch sử này, model mới cải thiện 2,30 điểm % Accuracy và 3,04 điểm %
+Macro F1 trên fixed test; hiệu năng trên SCIN external tăng đáng kể. Top-3 trên fixed test
+giảm 1,59 điểm %. Vì test gốc có ảnh cùng cảnh qua split và đã được xem lặp lại, các mức
+tăng này không chứng minh độ chính xác trên bệnh nhân mới.
 
 ### 2.3. Kết quả chi tiết trên fixed test
 
@@ -131,8 +140,11 @@ decode ảnh, RAG và frontend.
 ### 3.1. Tiêu chí và test end-to-end
 
 Đánh giá hệ thống không dùng Accuracy của model mà kiểm tra toàn bộ quy trình nghiệp vụ,
-phân quyền, tính toàn vẹn dữ liệu và phản hồi người dùng. Lượt chạy E2E gần nhất trên Docker
-Compose cô lập với PostgreSQL 16 cho kết quả **5/5 PASS, 0 fail, 0 skip trong 38,798 giây**.
+phân quyền, tính toàn vẹn dữ liệu và phản hồi người dùng. Bảng dưới là snapshot
+E2E ngày 14/08/2026 trên Docker Compose cô lập với PostgreSQL 16: **5/5 PASS,
+0 fail, 0 skip trong 38,798 giây**. Lượt 06/09/2026 có thêm một scenario đề nghị
+lịch (6/6 PASS); xem [bằng chứng E2E](e2e-test-evidence.md). Cả hai lượt đều
+trước các luồng thanh toán và kho hiện tại.
 
 | Mã E2E | Nghiệp vụ được kiểm tra | Kết quả quan sát |
 |---|---|---|

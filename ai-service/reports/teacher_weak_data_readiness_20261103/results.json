@@ -1,0 +1,334 @@
+{
+  "completed_utc": "2026-11-03T09:26:39.414699+00:00",
+  "protocol_sha256": "8cc891435dad39308d8aa845cff66aaa8708bf6692e1e1ad2a4746e51d2e3063",
+  "jobs": {
+    "fold1_cv0": {
+      "fit_images": 2699,
+      "query_images": 1332,
+      "coverage": [
+        {
+          "disease": "Lupus",
+          "source": "original_train",
+          "images": 138,
+          "proxy_groups": 129,
+          "known_source_cases": 0,
+          "confirmed_patient_ids": 0,
+          "equal_top_annotation_images": 0,
+          "annotation_weight_below075_images": 0,
+          "source_diagnostic_evidence_unknown_images": 138
+        },
+        {
+          "disease": "Lupus",
+          "source": "SCIN",
+          "images": 1,
+          "proxy_groups": 1,
+          "known_source_cases": 1,
+          "confirmed_patient_ids": 0,
+          "equal_top_annotation_images": 0,
+          "annotation_weight_below075_images": 1,
+          "source_diagnostic_evidence_unknown_images": 0
+        },
+        {
+          "disease": "Psoriasis",
+          "source": "original_train",
+          "images": 363,
+          "proxy_groups": 355,
+          "known_source_cases": 0,
+          "confirmed_patient_ids": 0,
+          "equal_top_annotation_images": 0,
+          "annotation_weight_below075_images": 0,
+          "source_diagnostic_evidence_unknown_images": 363
+        },
+        {
+          "disease": "Psoriasis",
+          "source": "SCIN",
+          "images": 53,
+          "proxy_groups": 26,
+          "known_source_cases": 26,
+          "confirmed_patient_ids": 0,
+          "equal_top_annotation_images": 15,
+          "annotation_weight_below075_images": 39,
+          "source_diagnostic_evidence_unknown_images": 0
+        },
+        {
+          "disease": "Tinea",
+          "source": "original_train",
+          "images": 406,
+          "proxy_groups": 395,
+          "known_source_cases": 0,
+          "confirmed_patient_ids": 0,
+          "equal_top_annotation_images": 0,
+          "annotation_weight_below075_images": 0,
+          "source_diagnostic_evidence_unknown_images": 406
+        },
+        {
+          "disease": "Tinea",
+          "source": "SCIN",
+          "images": 52,
+          "proxy_groups": 24,
+          "known_source_cases": 24,
+          "confirmed_patient_ids": 0,
+          "equal_top_annotation_images": 8,
+          "annotation_weight_below075_images": 46,
+          "source_diagnostic_evidence_unknown_images": 0
+        },
+        {
+          "disease": "Eczema",
+          "source": "original_train",
+          "images": 434,
+          "proxy_groups": 428,
+          "known_source_cases": 0,
+          "confirmed_patient_ids": 0,
+          "equal_top_annotation_images": 0,
+          "annotation_weight_below075_images": 0,
+          "source_diagnostic_evidence_unknown_images": 434
+        },
+        {
+          "disease": "Eczema",
+          "source": "SCIN",
+          "images": 306,
+          "proxy_groups": 137,
+          "known_source_cases": 137,
+          "confirmed_patient_ids": 0,
+          "equal_top_annotation_images": 37,
+          "annotation_weight_below075_images": 195,
+          "source_diagnostic_evidence_unknown_images": 0
+        }
+      ],
+      "fit_query_overlap": {
+        "sha256": [],
+        "pixel_sha256": [],
+        "group": [],
+        "source_case_id": []
+      },
+      "own_fit_multi_label_clusters": [],
+      "fit_review_images": 60,
+      "fit_review_case_ids": 28,
+      "review_reason_counts": {
+        "equal_top_differential_annotations": 60
+      }
+    },
+    "fold1_cv1": {
+      "fit_images": 2697,
+      "query_images": 1334,
+      "coverage": [
+        {
+          "disease": "Lupus",
+          "source": "original_train",
+          "images": 132,
+          "proxy_groups": 127,
+          "known_source_cases": 0,
+          "confirmed_patient_ids": 0,
+          "equal_top_annotation_images": 0,
+          "annotation_weight_below075_images": 0,
+          "source_diagnostic_evidence_unknown_images": 132
+        },
+        {
+          "disease": "Lupus",
+          "source": "SCIN",
+          "images": 8,
+          "proxy_groups": 4,
+          "known_source_cases": 4,
+          "confirmed_patient_ids": 0,
+          "equal_top_annotation_images": 0,
+          "annotation_weight_below075_images": 8,
+          "source_diagnostic_evidence_unknown_images": 0
+        },
+        {
+          "disease": "Psoriasis",
+          "source": "original_train",
+          "images": 360,
+          "proxy_groups": 354,
+          "known_source_cases": 0,
+          "confirmed_patient_ids": 0,
+          "equal_top_annotation_images": 0,
+          "annotation_weight_below075_images": 0,
+          "source_diagnostic_evidence_unknown_images": 360
+        },
+        {
+          "disease": "Psoriasis",
+          "source": "SCIN",
+          "images": 58,
+          "proxy_groups": 25,
+          "known_source_cases": 25,
+          "confirmed_patient_ids": 0,
+          "equal_top_annotation_images": 10,
+          "annotation_weight_below075_images": 38,
+          "source_diagnostic_evidence_unknown_images": 0
+        },
+        {
+          "disease": "Tinea",
+          "source": "original_train",
+          "images": 392,
+          "proxy_groups": 384,
+          "known_source_cases": 0,
+          "confirmed_patient_ids": 0,
+          "equal_top_annotation_images": 0,
+          "annotation_weight_below075_images": 0,
+          "source_diagnostic_evidence_unknown_images": 392
+        },
+        {
+          "disease": "Tinea",
+          "source": "SCIN",
+          "images": 59,
+          "proxy_groups": 26,
+          "known_source_cases": 26,
+          "confirmed_patient_ids": 0,
+          "equal_top_annotation_images": 7,
+          "annotation_weight_below075_images": 50,
+          "source_diagnostic_evidence_unknown_images": 0
+        },
+        {
+          "disease": "Eczema",
+          "source": "original_train",
+          "images": 412,
+          "proxy_groups": 406,
+          "known_source_cases": 0,
+          "confirmed_patient_ids": 0,
+          "equal_top_annotation_images": 0,
+          "annotation_weight_below075_images": 0,
+          "source_diagnostic_evidence_unknown_images": 412
+        },
+        {
+          "disease": "Eczema",
+          "source": "SCIN",
+          "images": 288,
+          "proxy_groups": 139,
+          "known_source_cases": 139,
+          "confirmed_patient_ids": 0,
+          "equal_top_annotation_images": 46,
+          "annotation_weight_below075_images": 197,
+          "source_diagnostic_evidence_unknown_images": 0
+        }
+      ],
+      "fit_query_overlap": {
+        "sha256": [],
+        "pixel_sha256": [],
+        "group": [],
+        "source_case_id": []
+      },
+      "own_fit_multi_label_clusters": [],
+      "fit_review_images": 63,
+      "fit_review_case_ids": 32,
+      "review_reason_counts": {
+        "equal_top_differential_annotations": 63
+      }
+    },
+    "fold1_cv2": {
+      "fit_images": 2666,
+      "query_images": 1365,
+      "coverage": [
+        {
+          "disease": "Lupus",
+          "source": "original_train",
+          "images": 146,
+          "proxy_groups": 140,
+          "known_source_cases": 0,
+          "confirmed_patient_ids": 0,
+          "equal_top_annotation_images": 0,
+          "annotation_weight_below075_images": 0,
+          "source_diagnostic_evidence_unknown_images": 146
+        },
+        {
+          "disease": "Lupus",
+          "source": "SCIN",
+          "images": 9,
+          "proxy_groups": 5,
+          "known_source_cases": 5,
+          "confirmed_patient_ids": 0,
+          "equal_top_annotation_images": 0,
+          "annotation_weight_below075_images": 9,
+          "source_diagnostic_evidence_unknown_images": 0
+        },
+        {
+          "disease": "Psoriasis",
+          "source": "original_train",
+          "images": 337,
+          "proxy_groups": 331,
+          "known_source_cases": 0,
+          "confirmed_patient_ids": 0,
+          "equal_top_annotation_images": 0,
+          "annotation_weight_below075_images": 0,
+          "source_diagnostic_evidence_unknown_images": 337
+        },
+        {
+          "disease": "Psoriasis",
+          "source": "SCIN",
+          "images": 47,
+          "proxy_groups": 21,
+          "known_source_cases": 21,
+          "confirmed_patient_ids": 0,
+          "equal_top_annotation_images": 7,
+          "annotation_weight_below075_images": 29,
+          "source_diagnostic_evidence_unknown_images": 0
+        },
+        {
+          "disease": "Tinea",
+          "source": "original_train",
+          "images": 382,
+          "proxy_groups": 371,
+          "known_source_cases": 0,
+          "confirmed_patient_ids": 0,
+          "equal_top_annotation_images": 0,
+          "annotation_weight_below075_images": 0,
+          "source_diagnostic_evidence_unknown_images": 382
+        },
+        {
+          "disease": "Tinea",
+          "source": "SCIN",
+          "images": 35,
+          "proxy_groups": 20,
+          "known_source_cases": 20,
+          "confirmed_patient_ids": 0,
+          "equal_top_annotation_images": 3,
+          "annotation_weight_below075_images": 32,
+          "source_diagnostic_evidence_unknown_images": 0
+        },
+        {
+          "disease": "Eczema",
+          "source": "original_train",
+          "images": 428,
+          "proxy_groups": 420,
+          "known_source_cases": 0,
+          "confirmed_patient_ids": 0,
+          "equal_top_annotation_images": 0,
+          "annotation_weight_below075_images": 0,
+          "source_diagnostic_evidence_unknown_images": 428
+        },
+        {
+          "disease": "Eczema",
+          "source": "SCIN",
+          "images": 262,
+          "proxy_groups": 122,
+          "known_source_cases": 122,
+          "confirmed_patient_ids": 0,
+          "equal_top_annotation_images": 47,
+          "annotation_weight_below075_images": 182,
+          "source_diagnostic_evidence_unknown_images": 0
+        }
+      ],
+      "fit_query_overlap": {
+        "sha256": [],
+        "pixel_sha256": [],
+        "group": [],
+        "source_case_id": []
+      },
+      "own_fit_multi_label_clusters": [],
+      "fit_review_images": 57,
+      "fit_review_case_ids": 28,
+      "review_reason_counts": {
+        "equal_top_differential_annotations": 57
+      }
+    }
+  },
+  "unique_current_images": 4031,
+  "fit_memberships": 8062,
+  "unique_review_images": 90,
+  "labels_changed": 0,
+  "images_removed": 0,
+  "new_CNN_fits": 0,
+  "new_metrics_computed": false,
+  "selected": null,
+  "serving_changed": false,
+  "global_5937_score_changed": false
+}

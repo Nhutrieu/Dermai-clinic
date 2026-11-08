@@ -1,0 +1,729 @@
+{
+  "completed_utc": "2026-11-05T12:55:37.664307+00:00",
+  "protocol_sha256": "845f27e18b202d305524fa53e8a0a8bdad80b66a75942931cdeddbaca1908309",
+  "rows": 2699,
+  "groups": 2407,
+  "model_metrics": {
+    "parent288": {
+      "accuracy": 0.6654316413486476,
+      "macro_f1": 0.654476423162212,
+      "Lupus_precision": 0.6138613861386139,
+      "Lupus_recall": 0.4460431654676259,
+      "Lupus_f1": 0.5166666666666667,
+      "Psoriasis_precision": 0.6064356435643564,
+      "Psoriasis_recall": 0.5889423076923077,
+      "Psoriasis_f1": 0.5975609756097561,
+      "Tinea_precision": 0.5613636363636364,
+      "Tinea_recall": 0.5393013100436681,
+      "Tinea_f1": 0.5501113585746102,
+      "SkinCancer_recall": 0.73
+    },
+    "ce42": {
+      "accuracy": 0.6617265653945906,
+      "macro_f1": 0.6470093668799374,
+      "Lupus_precision": 0.5894736842105263,
+      "Lupus_recall": 0.4028776978417266,
+      "Lupus_f1": 0.47863247863247865,
+      "Psoriasis_precision": 0.6069651741293532,
+      "Psoriasis_recall": 0.5865384615384616,
+      "Psoriasis_f1": 0.5965770171149144,
+      "Tinea_precision": 0.5609195402298851,
+      "Tinea_recall": 0.5327510917030568,
+      "Tinea_f1": 0.5464725643896976,
+      "SkinCancer_recall": 0.73
+    },
+    "cb42": {
+      "accuracy": 0.662467580585402,
+      "macro_f1": 0.655177554874007,
+      "Lupus_precision": 0.5803571428571429,
+      "Lupus_recall": 0.4676258992805755,
+      "Lupus_f1": 0.5179282868525896,
+      "Psoriasis_precision": 0.5882352941176471,
+      "Psoriasis_recall": 0.6009615384615384,
+      "Psoriasis_f1": 0.5945303210463734,
+      "Tinea_precision": 0.5754060324825986,
+      "Tinea_recall": 0.5414847161572053,
+      "Tinea_f1": 0.5579302587176603,
+      "SkinCancer_recall": 0.72
+    },
+    "ce43": {
+      "accuracy": 0.6698777324935161,
+      "macro_f1": 0.6551900607665255,
+      "Lupus_precision": 0.5698924731182796,
+      "Lupus_recall": 0.381294964028777,
+      "Lupus_f1": 0.45689655172413796,
+      "Psoriasis_precision": 0.5824175824175825,
+      "Psoriasis_recall": 0.6370192307692307,
+      "Psoriasis_f1": 0.6084959816303099,
+      "Tinea_precision": 0.5710900473933649,
+      "Tinea_recall": 0.5262008733624454,
+      "Tinea_f1": 0.5477272727272727,
+      "SkinCancer_recall": 0.74
+    },
+    "cb43": {
+      "accuracy": 0.6643201185624306,
+      "macro_f1": 0.6502986194803977,
+      "Lupus_precision": 0.55,
+      "Lupus_recall": 0.39568345323741005,
+      "Lupus_f1": 0.4602510460251046,
+      "Psoriasis_precision": 0.5891647855530474,
+      "Psoriasis_recall": 0.6274038461538461,
+      "Psoriasis_f1": 0.6076833527357393,
+      "Tinea_precision": 0.5758354755784062,
+      "Tinea_recall": 0.4890829694323144,
+      "Tinea_f1": 0.5289256198347108,
+      "SkinCancer_recall": 0.7433333333333333
+    },
+    "confirmed42": {
+      "accuracy": 0.6658021489440533,
+      "macro_f1": 0.6551292253494372,
+      "Lupus_precision": 0.6116504854368932,
+      "Lupus_recall": 0.45323741007194246,
+      "Lupus_f1": 0.5206611570247934,
+      "Psoriasis_precision": 0.6064356435643564,
+      "Psoriasis_recall": 0.5889423076923077,
+      "Psoriasis_f1": 0.5975609756097561,
+      "Tinea_precision": 0.5639269406392694,
+      "Tinea_recall": 0.5393013100436681,
+      "Tinea_f1": 0.5513392857142857,
+      "SkinCancer_recall": 0.73
+    },
+    "confirmed43": {
+      "accuracy": 0.6654316413486476,
+      "macro_f1": 0.654476423162212,
+      "Lupus_precision": 0.6138613861386139,
+      "Lupus_recall": 0.4460431654676259,
+      "Lupus_f1": 0.5166666666666667,
+      "Psoriasis_precision": 0.6064356435643564,
+      "Psoriasis_recall": 0.5889423076923077,
+      "Psoriasis_f1": 0.5975609756097561,
+      "Tinea_precision": 0.5613636363636364,
+      "Tinea_recall": 0.5393013100436681,
+      "Tinea_f1": 0.5501113585746102,
+      "SkinCancer_recall": 0.73
+    }
+  },
+  "coverage": {
+    "Lupus": {
+      "support": 139,
+      "parent_correct": 62,
+      "parent_errors": 77,
+      "any_top1_correct": 12,
+      "none_top1_correct": 65,
+      "per_expert_correct": {
+        "ce42": 0,
+        "cb42": 6,
+        "ce43": 6,
+        "cb43": 7,
+        "CNN6": 2
+      },
+      "both_CB_correct": 1,
+      "either_CB_correct": 12,
+      "by_source": {
+        "SCIN": {
+          "errors": 1,
+          "any_top1_correct": 0,
+          "none_top1_correct": 1
+        },
+        "original_train": {
+          "errors": 76,
+          "any_top1_correct": 12,
+          "none_top1_correct": 64
+        }
+      }
+    },
+    "Psoriasis": {
+      "support": 416,
+      "parent_correct": 245,
+      "parent_errors": 171,
+      "any_top1_correct": 42,
+      "none_top1_correct": 129,
+      "per_expert_correct": {
+        "ce42": 0,
+        "cb42": 7,
+        "ce43": 39,
+        "cb43": 38,
+        "CNN6": 3
+      },
+      "both_CB_correct": 6,
+      "either_CB_correct": 39,
+      "by_source": {
+        "SCIN": {
+          "errors": 42,
+          "any_top1_correct": 2,
+          "none_top1_correct": 40
+        },
+        "original_train": {
+          "errors": 129,
+          "any_top1_correct": 40,
+          "none_top1_correct": 89
+        }
+      }
+    },
+    "Tinea": {
+      "support": 458,
+      "parent_correct": 247,
+      "parent_errors": 211,
+      "any_top1_correct": 38,
+      "none_top1_correct": 173,
+      "per_expert_correct": {
+        "ce42": 0,
+        "cb42": 8,
+        "ce43": 31,
+        "cb43": 26,
+        "CNN6": 8
+      },
+      "both_CB_correct": 2,
+      "either_CB_correct": 32,
+      "by_source": {
+        "SCIN": {
+          "errors": 46,
+          "any_top1_correct": 7,
+          "none_top1_correct": 39
+        },
+        "original_train": {
+          "errors": 165,
+          "any_top1_correct": 31,
+          "none_top1_correct": 134
+        }
+      }
+    }
+  },
+  "funnels": {
+    "42": {
+      "stages": {
+        "weak_change": {
+          "proposals": 74,
+          "repairs": 21,
+          "harms": 32,
+          "neutral": 21,
+          "repairs_by_class": {
+            "Lupus": 6,
+            "Psoriasis": 7,
+            "Tinea": 8
+          }
+        },
+        "CE_CB_disagreement": {
+          "proposals": 70,
+          "repairs": 21,
+          "harms": 30,
+          "neutral": 19,
+          "repairs_by_class": {
+            "Lupus": 6,
+            "Psoriasis": 7,
+            "Tinea": 8
+          }
+        },
+        "Cancer_and_positive_margin": {
+          "proposals": 68,
+          "repairs": 20,
+          "harms": 30,
+          "neutral": 18,
+          "repairs_by_class": {
+            "Lupus": 5,
+            "Psoriasis": 7,
+            "Tinea": 8
+          }
+        },
+        "margin_gain_above_ln2": {
+          "proposals": 33,
+          "repairs": 10,
+          "harms": 18,
+          "neutral": 5,
+          "repairs_by_class": {
+            "Lupus": 3,
+            "Psoriasis": 5,
+            "Tinea": 2
+          }
+        },
+        "only_Lupus": {
+          "proposals": 6,
+          "repairs": 3,
+          "harms": 2,
+          "neutral": 1,
+          "repairs_by_class": {
+            "Lupus": 3,
+            "Psoriasis": 0,
+            "Tinea": 0
+          }
+        },
+        "CNN6_confirmation": {
+          "proposals": 2,
+          "repairs": 1,
+          "harms": 0,
+          "neutral": 1,
+          "repairs_by_class": {
+            "Lupus": 1,
+            "Psoriasis": 0,
+            "Tinea": 0
+          }
+        }
+      },
+      "first_failure_by_class": {
+        "Lupus": {
+          "CB_not_correct": 71,
+          "CE_CB_agree_on_correct_label": 0,
+          "Cancer_parent_protected": 1,
+          "new_margin_not_positive": 0,
+          "margin_gain_not_above_ln2": 2,
+          "only_Lupus_policy": 0,
+          "CNN6_rejects_Lupus": 2,
+          "accepted_correct": 1
+        },
+        "Psoriasis": {
+          "CB_not_correct": 164,
+          "CE_CB_agree_on_correct_label": 0,
+          "Cancer_parent_protected": 0,
+          "new_margin_not_positive": 0,
+          "margin_gain_not_above_ln2": 2,
+          "only_Lupus_policy": 5,
+          "CNN6_rejects_Lupus": 0,
+          "accepted_correct": 0
+        },
+        "Tinea": {
+          "CB_not_correct": 203,
+          "CE_CB_agree_on_correct_label": 0,
+          "Cancer_parent_protected": 0,
+          "new_margin_not_positive": 0,
+          "margin_gain_not_above_ln2": 6,
+          "only_Lupus_policy": 2,
+          "CNN6_rejects_Lupus": 0,
+          "accepted_correct": 0
+        }
+      }
+    },
+    "43": {
+      "stages": {
+        "weak_change": {
+          "proposals": 225,
+          "repairs": 71,
+          "harms": 89,
+          "neutral": 65,
+          "repairs_by_class": {
+            "Lupus": 7,
+            "Psoriasis": 38,
+            "Tinea": 26
+          }
+        },
+        "CE_CB_disagreement": {
+          "proposals": 20,
+          "repairs": 2,
+          "harms": 8,
+          "neutral": 10,
+          "repairs_by_class": {
+            "Lupus": 1,
+            "Psoriasis": 1,
+            "Tinea": 0
+          }
+        },
+        "Cancer_and_positive_margin": {
+          "proposals": 19,
+          "repairs": 2,
+          "harms": 8,
+          "neutral": 9,
+          "repairs_by_class": {
+            "Lupus": 1,
+            "Psoriasis": 1,
+            "Tinea": 0
+          }
+        },
+        "margin_gain_above_ln2": {
+          "proposals": 5,
+          "repairs": 0,
+          "harms": 3,
+          "neutral": 2,
+          "repairs_by_class": {
+            "Lupus": 0,
+            "Psoriasis": 0,
+            "Tinea": 0
+          }
+        },
+        "only_Lupus": {
+          "proposals": 2,
+          "repairs": 0,
+          "harms": 1,
+          "neutral": 1,
+          "repairs_by_class": {
+            "Lupus": 0,
+            "Psoriasis": 0,
+            "Tinea": 0
+          }
+        },
+        "CNN6_confirmation": {
+          "proposals": 0,
+          "repairs": 0,
+          "harms": 0,
+          "neutral": 0,
+          "repairs_by_class": {
+            "Lupus": 0,
+            "Psoriasis": 0,
+            "Tinea": 0
+          }
+        }
+      },
+      "first_failure_by_class": {
+        "Lupus": {
+          "CB_not_correct": 70,
+          "CE_CB_agree_on_correct_label": 6,
+          "Cancer_parent_protected": 0,
+          "new_margin_not_positive": 0,
+          "margin_gain_not_above_ln2": 1,
+          "only_Lupus_policy": 0,
+          "CNN6_rejects_Lupus": 0,
+          "accepted_correct": 0
+        },
+        "Psoriasis": {
+          "CB_not_correct": 133,
+          "CE_CB_agree_on_correct_label": 37,
+          "Cancer_parent_protected": 0,
+          "new_margin_not_positive": 0,
+          "margin_gain_not_above_ln2": 1,
+          "only_Lupus_policy": 0,
+          "CNN6_rejects_Lupus": 0,
+          "accepted_correct": 0
+        },
+        "Tinea": {
+          "CB_not_correct": 185,
+          "CE_CB_agree_on_correct_label": 26,
+          "Cancer_parent_protected": 0,
+          "new_margin_not_positive": 0,
+          "margin_gain_not_above_ln2": 0,
+          "only_Lupus_policy": 0,
+          "CNN6_rejects_Lupus": 0,
+          "accepted_correct": 0
+        }
+      }
+    }
+  },
+  "comparisons": {
+    "CB_minus_CE_seed42": {
+      "accuracy": {
+        "point": 0.0007410151908113782,
+        "lower": -0.006683995544002899,
+        "upper": 0.008213797238225063
+      },
+      "macro_f1": {
+        "point": 0.008168187994069598,
+        "lower": -0.0009274352741522328,
+        "upper": 0.017843134177366958
+      },
+      "Lupus_precision": {
+        "point": -0.009116541353383356,
+        "lower": -0.055021022532542777,
+        "upper": 0.0357424977141271
+      },
+      "Lupus_recall": {
+        "point": 0.0647482014388489,
+        "lower": 0.022723000683526978,
+        "upper": 0.1119417910447761
+      },
+      "Lupus_f1": {
+        "point": 0.03929580822011097,
+        "lower": -0.0007551399928189387,
+        "upper": 0.08487433124373223
+      },
+      "Psoriasis_precision": {
+        "point": -0.018729880011706168,
+        "lower": -0.039862487749436765,
+        "upper": 0.0020573299562636235
+      },
+      "Psoriasis_recall": {
+        "point": 0.014423076923076872,
+        "lower": 0.0,
+        "upper": 0.030304948216340694
+      },
+      "Psoriasis_f1": {
+        "point": -0.0020466960685410207,
+        "lower": -0.016145455907415913,
+        "upper": 0.011803565575391004
+      },
+      "Tinea_precision": {
+        "point": 0.014486492252713479,
+        "lower": -0.0022259583103937525,
+        "upper": 0.03269454353104736
+      },
+      "Tinea_recall": {
+        "point": 0.008733624454148492,
+        "lower": -0.008949551315888721,
+        "upper": 0.027779264810849396
+      },
+      "Tinea_f1": {
+        "point": 0.01145769432796273,
+        "lower": -0.0031236444343852475,
+        "upper": 0.027551449455469706
+      },
+      "SkinCancer_recall": {
+        "point": -0.010000000000000009,
+        "lower": -0.02518327110463523,
+        "upper": 0.003597773954749219
+      }
+    },
+    "CB_minus_CE_seed43": {
+      "accuracy": {
+        "point": -0.005557613931085559,
+        "lower": -0.012044235817646243,
+        "upper": 0.000742404286229617
+      },
+      "macro_f1": {
+        "point": -0.00489144128612784,
+        "lower": -0.013635179113426418,
+        "upper": 0.004686057338718691
+      },
+      "Lupus_precision": {
+        "point": -0.019892473118279574,
+        "lower": -0.06514843263460654,
+        "upper": 0.02597660276231704
+      },
+      "Lupus_recall": {
+        "point": 0.01438848920863306,
+        "lower": -0.02308593750000003,
+        "upper": 0.055555555555555525
+      },
+      "Lupus_f1": {
+        "point": 0.003354494300966626,
+        "lower": -0.03373624150275236,
+        "upper": 0.04366112331220112
+      },
+      "Psoriasis_precision": {
+        "point": 0.006747203135464952,
+        "lower": -0.009436305629023123,
+        "upper": 0.023261691657515134
+      },
+      "Psoriasis_recall": {
+        "point": -0.009615384615384581,
+        "lower": -0.024331034816872266,
+        "upper": 0.004889975550122272
+      },
+      "Psoriasis_f1": {
+        "point": -0.0008126288945706772,
+        "lower": -0.01352305370627005,
+        "upper": 0.01219083831461512
+      },
+      "Tinea_precision": {
+        "point": 0.004745428185041312,
+        "lower": -0.010446714849461754,
+        "upper": 0.0204317404370897
+      },
+      "Tinea_recall": {
+        "point": -0.03711790393013098,
+        "lower": -0.05532197952540456,
+        "upper": -0.021004026610644207
+      },
+      "Tinea_f1": {
+        "point": -0.01880165289256197,
+        "lower": -0.03460714957495223,
+        "upper": -0.0045605675360299225
+      },
+      "SkinCancer_recall": {
+        "point": 0.0033333333333332993,
+        "lower": 0.0,
+        "upper": 0.010830324909747228
+      }
+    },
+    "confirmed42_minus_parent288": {
+      "accuracy": {
+        "point": 0.0003705075954056891,
+        "lower": 0.0,
+        "upper": 0.0011194029850746245
+      },
+      "macro_f1": {
+        "point": 0.0006528021872251877,
+        "lower": -0.0005878187897350284,
+        "upper": 0.0025651395682344093
+      },
+      "Lupus_precision": {
+        "point": -0.002210900701720697,
+        "lower": -0.0194444389792029,
+        "upper": 0.010622551742554455
+      },
+      "Lupus_recall": {
+        "point": 0.0071942446043165575,
+        "lower": 0.0,
+        "upper": 0.02307692307692305
+      },
+      "Lupus_f1": {
+        "point": 0.003994490358126712,
+        "lower": -0.006493945107910651,
+        "upper": 0.018466152033755963
+      },
+      "Psoriasis_precision": {
+        "point": 0.0,
+        "lower": 0.0,
+        "upper": 0.0
+      },
+      "Psoriasis_recall": {
+        "point": 0.0,
+        "lower": 0.0,
+        "upper": 0.0
+      },
+      "Psoriasis_f1": {
+        "point": 0.0,
+        "lower": 0.0,
+        "upper": 0.0
+      },
+      "Tinea_precision": {
+        "point": 0.002563304275633005,
+        "lower": 0.0,
+        "upper": 0.006518580966989677
+      },
+      "Tinea_recall": {
+        "point": 0.0,
+        "lower": 0.0,
+        "upper": 0.0
+      },
+      "Tinea_f1": {
+        "point": 0.0012279271396754554,
+        "lower": 0.0,
+        "upper": 0.0031278230213868364
+      },
+      "SkinCancer_recall": {
+        "point": 0.0,
+        "lower": 0.0,
+        "upper": 0.0
+      }
+    },
+    "confirmed43_minus_parent288": {
+      "accuracy": {
+        "point": 0.0,
+        "lower": 0.0,
+        "upper": 0.0
+      },
+      "macro_f1": {
+        "point": 0.0,
+        "lower": 0.0,
+        "upper": 0.0
+      },
+      "Lupus_precision": {
+        "point": 0.0,
+        "lower": 0.0,
+        "upper": 0.0
+      },
+      "Lupus_recall": {
+        "point": 0.0,
+        "lower": 0.0,
+        "upper": 0.0
+      },
+      "Lupus_f1": {
+        "point": 0.0,
+        "lower": 0.0,
+        "upper": 0.0
+      },
+      "Psoriasis_precision": {
+        "point": 0.0,
+        "lower": 0.0,
+        "upper": 0.0
+      },
+      "Psoriasis_recall": {
+        "point": 0.0,
+        "lower": 0.0,
+        "upper": 0.0
+      },
+      "Psoriasis_f1": {
+        "point": 0.0,
+        "lower": 0.0,
+        "upper": 0.0
+      },
+      "Tinea_precision": {
+        "point": 0.0,
+        "lower": 0.0,
+        "upper": 0.0
+      },
+      "Tinea_recall": {
+        "point": 0.0,
+        "lower": 0.0,
+        "upper": 0.0
+      },
+      "Tinea_f1": {
+        "point": 0.0,
+        "lower": 0.0,
+        "upper": 0.0
+      },
+      "SkinCancer_recall": {
+        "point": 0.0,
+        "lower": 0.0,
+        "upper": 0.0
+      }
+    },
+    "CB_effect43_minus_effect42": {
+      "accuracy": {
+        "point": -0.006298629121896937,
+        "lower": -0.01634594304922899,
+        "upper": 0.002614407445436254
+      },
+      "macro_f1": {
+        "point": -0.013059629280197438,
+        "lower": -0.025663150584221788,
+        "upper": -0.0006307259648841629
+      },
+      "Lupus_precision": {
+        "point": -0.010775931764896218,
+        "lower": -0.07180097023439615,
+        "upper": 0.05441032810761994
+      },
+      "Lupus_recall": {
+        "point": -0.05035971223021585,
+        "lower": -0.11208679025149074,
+        "upper": 0.008136913301906079
+      },
+      "Lupus_f1": {
+        "point": -0.035941313919144346,
+        "lower": -0.0930793273806608,
+        "upper": 0.020992246350854935
+      },
+      "Psoriasis_precision": {
+        "point": 0.02547708314717112,
+        "lower": -0.0007262141048419155,
+        "upper": 0.05153573950020964
+      },
+      "Psoriasis_recall": {
+        "point": -0.024038461538461453,
+        "lower": -0.0459502099186565,
+        "upper": -0.0026368267189396453
+      },
+      "Psoriasis_f1": {
+        "point": 0.0012340671739703435,
+        "lower": -0.017700264367440217,
+        "upper": 0.020623006466703283
+      },
+      "Tinea_precision": {
+        "point": -0.009741064067672167,
+        "lower": -0.03334893081068734,
+        "upper": 0.013247737172862012
+      },
+      "Tinea_recall": {
+        "point": -0.04585152838427947,
+        "lower": -0.07301011233684897,
+        "upper": -0.021173374613003167
+      },
+      "Tinea_f1": {
+        "point": -0.0302593472205247,
+        "lower": -0.05307654591674982,
+        "upper": -0.010108272633288236
+      },
+      "SkinCancer_recall": {
+        "point": 0.013333333333333308,
+        "lower": 0.0028761061946902047,
+        "upper": 0.02758859324662932
+      }
+    }
+  },
+  "bootstrap_draws": 2000,
+  "bootstrap_group_draws_sha256": "52d5d41e251f1e96fb3454c2b2bced8328c30e52fe0c2aeef93728cd78a25fcf",
+  "weak_error_cases": 459,
+  "diagnostic_only": true,
+  "oracle_is_not_ensemble": true,
+  "labels_used_for_routing": false,
+  "new_predictions_selected": false,
+  "CNN_fits": 0,
+  "CNN_updates": 0,
+  "fusion_fits": 0,
+  "new_oof_image_forwards": 0,
+  "new_query_image_forwards": 0,
+  "selected": null,
+  "promotion_eligible": false,
+  "query_evaluated": false,
+  "serving_changed": false,
+  "research_registry_changed": false,
+  "global_5937_score_changed": false,
+  "all_three_evaluated": false
+}

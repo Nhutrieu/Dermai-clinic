@@ -1,0 +1,20 @@
+{
+  "status": "PASS",
+  "completed_utc": "2026-10-24T16:08:06.848656+00:00",
+  "checks": [
+    "All5937 OOF metadata match frozen manifest",
+    "Every fold outer equals recorded OOF membership",
+    "Train/inner/outer group sets disjoint in all five folds",
+    "All eight sklearn P/R/F1 and CM match retained results",
+    "Source1709 metadata match source protocol; five predictions each",
+    "All717 weak errors partitioned exactly",
+    "Train-only review queue images match original SHA and open successfully",
+    "Frozen inputs/config/serving/ensemble manifest unchanged"
+  ],
+  "weak_errors": 717,
+  "training_images_verified": 1533,
+  "training_review_queue_images": 29,
+  "model_fits": 0,
+  "labels_changed": 0,
+  "scope": "Technical consistency, not medical label verification."
+}

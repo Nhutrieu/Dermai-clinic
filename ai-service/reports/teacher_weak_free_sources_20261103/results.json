@@ -1,0 +1,29 @@
+{
+  "completed_utc": "2026-11-03T09:43:28.666504+00:00",
+  "protocol_sha256": "6355d3f0eb52c043a5fe2d95ac4fab829e37e4632028ad8611f6c8a218ee238f",
+  "archive_images": 1594,
+  "archive_class_counts": {
+    "Vitiligo": 705,
+    "Psoriasis": 889
+  },
+  "psoriasis_frames": 889,
+  "psoriasis_distinct_bytes": 889,
+  "psoriasis_distinct_pixels": 889,
+  "filename_families": 31,
+  "conservative_components": 29,
+  "protected_reference_rows": 19635,
+  "protected_reference_physical_paths_present": 19438,
+  "protected_reference_missing_or_archive_paths": 197,
+  "crossclass_reference_images": 705,
+  "direct_hit_images": 12,
+  "quarantined_components": 4,
+  "provisional_representatives": 25,
+  "images_admitted_to_training": 0,
+  "images_admitted_to_evaluation": 0,
+  "known_new_patient_count": null,
+  "new_CNN_fits": 0,
+  "new_model_metrics": false,
+  "selected": null,
+  "serving_changed": false,
+  "global_5937_score_changed": false
+}

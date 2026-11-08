@@ -7,7 +7,7 @@ from PIL import Image, UnidentifiedImageError
 
 from .config import settings
 from .image_quality import assess_image_quality
-from .model import DISCLAIMER, OutOfScopeImageError, load_bundle, predict
+from .model import DISCLAIMER, OutOfScopeImageError, load_bundle, load_ensemble, predict
 from .rag import NO_EVIDENCE, RagStore
 from .schemas import ChatRequest, ChatResponse, PredictionResponse, SupportChatRequest, SupportChatResponse
 from .support_assistant import SupportDecision, classify_support_request, polish_safe_answer, rag_disease_key
@@ -17,7 +17,11 @@ state: dict = {}
 
 @asynccontextmanager
 async def lifespan(_app: FastAPI):
-    state["model"] = load_bundle(settings.model_path, settings.ood_profile_path)
+    state["model"] = (
+        load_ensemble(settings.ensemble_manifest_path, settings.ood_profile_path)
+        if settings.ensemble_manifest_path is not None
+        else load_bundle(settings.model_path, settings.ood_profile_path)
+    )
     store = RagStore(settings.rag_index_path)
     store.load()
     state["rag"] = store

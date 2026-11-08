@@ -1,0 +1,68 @@
+{
+  "name": "original_eight_cancer_locked_resnet_fusion_seed42_20261021",
+  "date": "2026-10-21",
+  "classes": [
+    "Acne",
+    "Candidiasis",
+    "Eczema",
+    "Lupus",
+    "Psoriasis",
+    "SkinCancer",
+    "Tinea",
+    "Warts"
+  ],
+  "images": 5937,
+  "folds": 5,
+  "parent_model_architectures": [
+    "efficientnet_b0",
+    "convnext_tiny",
+    "resnet50"
+  ],
+  "newly_trained_models": 0,
+  "code_sha256": "014d7eb08bca5b7cdebca9f7157debb0945261a3e0d50d00abc952ebefbcbd6d",
+  "source_sha256": {
+    "ai-service/reports/original_eight_resnet50_cv_seed42/protocol.json": "ddc3416a932d1a739a8298fe55a752cf7f80eef8c53df38b8c53b734d41f356c",
+    "ai-service/reports/original_eight_resnet50_cv_seed42/verification.json": "28cdb688a6106e843bf9dd276810b1bee69382c05123e312c770ba93f9e61960",
+    "ai-service/reports/scene_grouped_oof_folds_seed42.json": "e82ddec86fec6ee13d24ede36fafb0e78536723c621729e648b64a4e0389c2d0",
+    "ai-service/reports/scene_grouped_oof_classwise_fusion_seed42.json": "3f2638066e5176de9938d3b20fe6b27b247eacf8cc307be0349bac84a7582a6b",
+    "ai-service/models/best_model.pth": "975e4852023ebb9d3af544b819bec0b887cf75b1467447c87c40591da90b7a17",
+    "ai-service/reports/original_eight_resnet50_pilot_fold0_seed42/validation_predictions.npz": "b3e516a942a460a1e4c1b5c249970bf543cc23bdb2f546b14502b33cb3635917",
+    "ai-service/reports/original_eight_resnet50_pilot_fold0_seed42/test_predictions.json": "478d77f31908c886fd32c7c1aa8284fd83e358cc04c232028b768ec939960ad1",
+    "ai-service/reports/original_eight_resnet50_pilot_fold0_seed42/selection_locked.json": "fa3e14029b569af06ff2794cb99b24a4c8e35fdb43ce0b577caf30b1b8b050ab",
+    "ai-service/candidates/original_eight_resnet50_pilot_fold0_seed42/best_model.pth": "a7e4069cdef19705708e598db7b812f732843ce320feb7c5b52535d518875703",
+    "ai-service/reports/original_eight_resnet50_cv_seed42/fold_1/validation_predictions.npz": "fa87f76fce79cd9a8eed5446ff621555bd1c209a2a7aef046c272938338f8ebd",
+    "ai-service/reports/original_eight_resnet50_cv_seed42/fold_1/test_predictions.json": "69eadc31398357e718088fb753400977f181aed706b43dacf34ce4b94f167ea5",
+    "ai-service/reports/original_eight_resnet50_cv_seed42/fold_1/selection_locked.json": "d95eea1f03fdbbb234c0e211d34d32401c3717c24061a41c179c56d9881c6937",
+    "ai-service/candidates/original_eight_resnet50_cv_fold1_seed42/best_model.pth": "a0704a4dda236a5d076b99d8acdae01e81f5d7569e278be31a42dd0abcb07522",
+    "ai-service/reports/original_eight_resnet50_cv_seed42/fold_2/validation_predictions.npz": "e9bce9de7db0d04546186e1da9afcc599e91f1b5aac0bafa6d282c790e953fd0",
+    "ai-service/reports/original_eight_resnet50_cv_seed42/fold_2/test_predictions.json": "db579290588048102571e8bdc7eda4a1543bfc7aec638d2df8c1fd86b61410eb",
+    "ai-service/reports/original_eight_resnet50_cv_seed42/fold_2/selection_locked.json": "55d8a1f4a2fc91500a0e57b1a675f0d7b02e9ae24c45139fa4b2eb7d3cb5d350",
+    "ai-service/candidates/original_eight_resnet50_cv_fold2_seed42/best_model.pth": "a1a70c8f1721b79ec13bf173fecc562d9b5f31b8ca4eb0b44d048c861a8c3ab3",
+    "ai-service/reports/original_eight_resnet50_cv_seed42/fold_3/validation_predictions.npz": "0377adbb3e84b876426180bab3a2be59926403773ae7aa8d952d5e18a1e87294",
+    "ai-service/reports/original_eight_resnet50_cv_seed42/fold_3/test_predictions.json": "b64c7eb5c986dfc61774b3fbf20f5022b36131e14bf40805dbb44bcdb0b76c86",
+    "ai-service/reports/original_eight_resnet50_cv_seed42/fold_3/selection_locked.json": "4182ddda984792e2d0eae668a7426f94c16eba4b2169eed592a23a4283da2d03",
+    "ai-service/candidates/original_eight_resnet50_cv_fold3_seed42/best_model.pth": "b47aeaef8b836e98efa7c4ad332ee2f0b425cbc7ee10a3738b5491657f4e26c5",
+    "ai-service/reports/original_eight_resnet50_cv_seed42/fold_4/validation_predictions.npz": "ba7cdfbf52f21257f5847889fb2932ab01bf1eed0bfce758e1301ef9d2b498d0",
+    "ai-service/reports/original_eight_resnet50_cv_seed42/fold_4/test_predictions.json": "c50a724ed33071cff26f6a3fe661e9b6f33fb63eeb0ce45817df9aa87d6e7e5c",
+    "ai-service/reports/original_eight_resnet50_cv_seed42/fold_4/selection_locked.json": "86c532f211fdc5a45f4cf5bc58a1018204f7f2f6f4bd3640e86a3cf0f99383aa",
+    "ai-service/candidates/original_eight_resnet50_cv_fold4_seed42/best_model.pth": "9788c9058597f1ad190a03d5722bff45d47ef4c428437a060053f7d3cd116116"
+  },
+  "fixed_weight": 0.25,
+  "candidates": [
+    "old_classwise",
+    "cancer_locked_resnet25",
+    "validation_protected_resnet25"
+  ],
+  "decision_rule": "Reference argmax SkinCancer mask is unchanged. Lock protected reference-class predictions and prohibit other rows entering protected classes. On remaining rows choose largest 75% reference +25% original ResNet score among unprotected labels.",
+  "adaptive_rule": "Start protected={SkinCancer}; add all labels violating non-focus recall>=reference-.02 or Lupus/Psoriasis/Tinea precision>=reference-.02 on inner validation; repeat until no new labels, at most8 evaluations. No weight/threshold grid.",
+  "guard": "Inner validation Accuracy and MacroF1 cannot decline; exact reference SkinCancer recall AND precision; nonfocus recall loss<=.02; focus precision loss<=.02.",
+  "selection": "Within passing candidates maximize MacroF1, then Accuracy, prefer original on exact tie. Save all5 selections before reading outer prediction arrays.",
+  "probabilities": "Hard hierarchical decisions only. Raw component probabilities are retained separately; no final confidence, calibration or Top3 claim.",
+  "limitations": [
+    "Exploratory follow-up informed by already-studied OOF scores and weaknesses; not a fresh independent test or clinical validation.",
+    "Existing inner validation was used by parent checkpoints; layer selection is not fully nested retraining.",
+    "Holding the entire SkinCancer mask preserves its existing false positives and false negatives as well as recall/precision.",
+    "Class-specific validation locks can overfit; one seed and incomplete patient IDs. Known scene/case groups only.",
+    "No new images, labels, checkpoint training or API deployment. Original Word report and benchmark remain intact."
+  ]
+}

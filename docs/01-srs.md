@@ -1,6 +1,7 @@
 # Đặc tả yêu cầu phần mềm — DermAI Clinic
 
-> Phiên bản 2.0 · Đồng bộ với mã nguồn và SRS Word ngày 11/08/2026.
+> Cập nhật theo phạm vi mã nguồn ngày 07/10/2026. Đây là đặc tả prototype,
+> không phải cam kết sử dụng lâm sàng hoặc phát hành production.
 
 ## 1. Mục tiêu và phạm vi
 
@@ -13,11 +14,12 @@ thuốc, thông báo, chat và dashboard tạo thành quy trình khám liên t�
 cung cấp thông tin tham khảo, không tự tạo chẩn đoán cuối cùng, không kê thuốc
 và không thay bác sĩ.
 
-Phạm vi hiện tại gồm ứng dụng web bốn vai trò, các dịch vụ Spring Boot, dịch vụ
-AI FastAPI và hạ tầng Docker Compose. Giá khám cố định theo từng bác sĩ được
-hiển thị trước khi đặt và sao chụp vào lịch; Patient thanh toán trực tiếp tại
-phòng khám. Gói dịch vụ, thanh toán online, hóa đơn điện tử, bảo hiểm, SMS
-thương mại, kết nối bệnh viện và AI thay bác sĩ nằm ngoài phạm vi.
+Phạm vi hiện tại gồm ứng dụng web năm vai trò, các dịch vụ Spring Boot, AI và
+kho thuốc FastAPI, cùng hạ tầng Docker Compose. Giá khám theo bác sĩ được sao
+chụp vào lịch. Hệ thống hỗ trợ cọc và thanh toán hóa đơn qua PayOS, thu tiền mặt
+tại quầy, yêu cầu hoàn cọc, danh mục dịch vụ, hóa đơn sau khám và cấp thuốc
+theo lô. Bảo hiểm, hóa đơn điện tử theo chuẩn thuế, SMS thương mại, kết nối
+bệnh viện và AI thay bác sĩ nằm ngoài phạm vi.
 
 ### 1.1. Trạng thái phạm vi AI
 
@@ -38,8 +40,8 @@ thương mại, kết nối bệnh viện và AI thay bác sĩ nằm ngoài ph�
 
 ### 1.2. Ngoài phạm vi
 
-- Gói dịch vụ nhiều mức giá, hóa đơn và xác nhận thanh toán trong hệ thống.
-- Thanh toán trực tuyến, bảo hiểm, quản lý kho và SMS thương mại.
+- Bảo hiểm, hóa đơn điện tử theo chuẩn thuế, SMS thương mại và kết nối bệnh viện.
+- Gói dịch vụ theo hợp đồng/bảo hiểm hoặc tích hợp thanh toán ngoài PayOS.
 - AI tự chẩn đoán cuối, tự kê đơn hoặc tự lập phác đồ cá nhân.
 
 ## 2. Tác nhân và quyền chính
@@ -49,10 +51,12 @@ thương mại, kết nối bệnh viện và AI thay bác sĩ nằm ngoài ph�
 | Bệnh nhân | Đăng ký OTP, đăng nhập mật khẩu/Google; hồ sơ và avatar; AI; chủ động chia sẻ ảnh/kết quả; xem bác sĩ/giá; giữ/đặt/đổi/hủy trong thời hạn; notification; chat; hồ sơ/đơn; đánh giá |
 | Bác sĩ | Hồ sơ nghề nghiệp, avatar, mô tả; ca làm/nghỉ phép; xem lịch và AI được chia sẻ; bắt đầu/hoàn tất; hồ sơ/đơn/tái khám khi cần; không sửa giá khám |
 | Lễ tân | Tra cứu và đặt hotline; xác nhận/đề nghị/đổi/hủy; reminder; check-in; hàng đợi; no-show; nhận phụ trách support conversation |
+| Dược sĩ | Xem đơn của hóa đơn đã thanh toán; nhập lô, xuất thuốc theo FEFO; theo dõi tồn kho và cảnh báo |
 | Quản trị viên | Nhân sự và tài khoản; bác sĩ/giá; bệnh nhân; ngày đóng cửa; review; dashboard; audit; giám sát chat và sửa ca bị quên trạng thái |
 
-Phân quyền sử dụng RBAC với bốn role: `PATIENT`, `DOCTOR`, `RECEPTIONIST` và
-`ADMIN`. Gateway xác thực JWT và truyền danh tính/role cho dịch vụ phía sau.
+Phân quyền sử dụng RBAC với năm role: `PATIENT`, `DOCTOR`, `RECEPTIONIST`,
+`PHARMACIST` và `ADMIN`. Gateway xác thực JWT và truyền danh tính/role cho
+dịch vụ phía sau.
 
 ## 3. Yêu cầu chức năng
 
@@ -64,7 +68,7 @@ Phân quyền sử dụng RBAC với bốn role: `PATIENT`, `DOCTOR`, `RECEPTION
   rotate khi dùng; frontend tự refresh một lần khi nhận 401; logout thu hồi token.
 - **FR-AUTH-03:** quên/đặt lại mật khẩu bằng OTP email; reset thu hồi phiên cũ.
 - **FR-AUTH-04:** Admin tạo, đổi tên, đặt lại mật khẩu, khóa/mở và xem audit
-  Doctor/Receptionist; khóa/mở tài khoản Patient.
+  Doctor/Receptionist/Pharmacist; khóa/mở tài khoản Patient.
 - **FR-PAT-01:** Patient tạo/cập nhật họ tên, ngày sinh, điện thoại, tiền sử và
   dị ứng. Điện thoại được chuẩn hóa về dạng bắt đầu bằng `0` và là duy nhất.
 - **FR-PAT-02:** Lễ tân/Admin tạo hồ sơ khách hotline. Khi bệnh nhân đăng ký bằng
@@ -97,9 +101,10 @@ Phân quyền sử dụng RBAC với bốn role: `PATIENT`, `DOCTOR`, `RECEPTION
 - **FR-APT-06:** Patient có tối đa ba lịch sắp tới, không được đặt hai Doctor
   trùng giờ hoặc cùng một Doctor hai lần trong một ngày. Nhân viên được vượt
   giới hạn ba lịch khi xử lý ngoại lệ nhưng vẫn phải tôn trọng overlap.
-- **FR-APT-07:** Patient chỉ tự đổi/hủy lịch `PENDING` hoặc `ASSIGNED` trong 30
-  phút đầu và trước khi lễ tân xác nhận; sau đó phải chat/gọi lễ tân. Lịch hủy
-  giải phóng slot ngay và có thể được Patient ẩn.
+- **FR-APT-07:** Patient tự đổi lịch `PENDING`/`ASSIGNED` trong 30 phút đầu;
+  tự hủy thêm được lịch `PENDING_CONFIRMATION`/`CONFIRMED` trong thời hạn này.
+  Lịch đã cọc/chờ xác nhận hoặc đã xác nhận không cho Patient tự đổi. Sau 30
+  phút phải liên hệ lễ tân. Lịch hủy giải phóng slot và có thể được Patient ẩn.
 - **FR-APT-08:** Lễ tân/Admin có thể tạo đề nghị lịch giữ 10 phút để Patient đồng ý
   hoặc từ chối.
 - **FR-APT-09:** Scheduling Engine đề xuất tối đa số lượng được yêu cầu, mặc
@@ -114,8 +119,9 @@ Phân quyền sử dụng RBAC với bốn role: `PATIENT`, `DOCTOR`, `RECEPTION
   tự động chuyển `CANCELLED`.
 - **FR-APT-14:** lễ tân/Admin chỉ check-in lịch `CONFIRMED` đúng ngày và chỉ ghi
   `NO_SHOW` sau giờ bắt đầu 30 phút.
-- **FR-APT-15:** Doctor phụ trách bắt đầu/hoàn tất. Hoàn tất không bắt buộc hồ
-  sơ/đơn; lễ tân/Admin chỉ hoàn tất ca `IN_PROGRESS` bị quên sau grace period.
+- **FR-APT-15:** Doctor phụ trách bắt đầu/hoàn tất và phải xác nhận danh sách
+  dịch vụ đã thực hiện trước khi hoàn tất; hồ sơ/đơn không bắt buộc. Lễ tân/Admin
+  chỉ hoàn tất ca `IN_PROGRESS` bị quên sau grace period.
 
 ### 3.3. Khám, hồ sơ và đơn thuốc
 
@@ -130,6 +136,17 @@ Phân quyền sử dụng RBAC với bốn role: `PATIENT`, `DOCTOR`, `RECEPTION
   quyền đối soát toàn phòng khám. Patient chỉ đọc dữ liệu thuộc identity của mình.
 - **FR-FUP-01:** Doctor đánh dấu cần tái khám và ngày sớm nhất; Patient/lễ tân
   chọn lịch mới liên kết lịch gốc.
+- **FR-PAY-01:** Patient hoặc nhân viên tạo giao dịch cọc qua PayOS; webhook
+  hợp lệ/đối soát chuyển lịch từ `PENDING_PAYMENT` sang `PENDING_CONFIRMATION`.
+  Chỉ lễ tân/Admin xác nhận tiếp thành `CONFIRMED`.
+- **FR-PAY-02:** Patient yêu cầu hoàn cọc cho lịch đã hủy đủ điều kiện; mức hoàn
+  theo thời điểm yêu cầu. Lễ tân hoàn tiền mặt/chuyển khoản và lưu bằng chứng;
+  Admin xem báo cáo.
+- **FR-BILL-01:** Admin quản lý danh mục dịch vụ; Doctor xác nhận dịch vụ đã
+  thực hiện. Lễ tân lập hóa đơn gồm phí khám, dịch vụ, thuốc và cọc khấu trừ,
+  thu tiền mặt hoặc mở thanh toán online; Patient xem hóa đơn của mình.
+- **FR-PHAR-01:** Dược sĩ nhập tồn theo lô và xuất đơn đã thanh toán theo FEFO,
+  ghi nhật ký biến động và cảnh báo tồn thấp/lô sắp hết hạn. Admin chỉ xem kho.
 
 ### 3.4. AI, tư vấn và tương tác
 
@@ -176,18 +193,22 @@ Phân quyền sử dụng RBAC với bốn role: `PATIENT`, `DOCTOR`, `RECEPTION
 
 Các trạng thái hiện có:
 
-`HELD`, `PROPOSED`, `PENDING`, `ASSIGNED`, `CONFIRMED`, `CHECKED_IN`, `IN_PROGRESS`,
-`COMPLETED`, `FOLLOW_UP_REQUIRED`, `NO_SHOW`, `CANCELLED`.
+`HELD`, `PROPOSED`, `PENDING`, `ASSIGNED`, `PENDING_PAYMENT`,
+`PENDING_CONFIRMATION`, `CONFIRMED`, `CHECKED_IN`, `IN_PROGRESS`, `COMPLETED`,
+`FOLLOW_UP_REQUIRED`, `NO_SHOW`, `CANCELLED`, `CANCELLED_EXPIRED`.
 
 Luồng chính:
 
 ```text
-HELD -> ASSIGNED -> CONFIRMED -> CHECKED_IN -> IN_PROGRESS -> COMPLETED
+HELD -> PENDING_PAYMENT -> PENDING_CONFIRMATION -> CONFIRMED
+        -> CHECKED_IN -> IN_PROGRESS -> COMPLETED
 PROPOSED -> CONFIRMED -> CHECKED_IN -> IN_PROGRESS -> COMPLETED
-PENDING -> ASSIGNED -> CONFIRMED -> CHECKED_IN -> IN_PROGRESS -> COMPLETED
+PENDING/ASSIGNED -> PENDING_PAYMENT -> PENDING_CONFIRMATION -> CONFIRMED
+PENDING_PAYMENT -> CANCELLED_EXPIRED khi giao dịch hết hạn
 COMPLETED -> FOLLOW_UP_REQUIRED -> tạo lịch mới liên kết lịch gốc
 CONFIRMED -> NO_SHOW
-HELD|PROPOSED|PENDING|ASSIGNED|CONFIRMED|CHECKED_IN -> CANCELLED
+HELD|PROPOSED|PENDING|ASSIGNED|PENDING_PAYMENT|PENDING_CONFIRMATION|
+CONFIRMED|CHECKED_IN -> CANCELLED theo quyền và điều kiện tương ứng
 ```
 
 Mọi chuyển trạng thái không hợp lệ trả lỗi 409. `HELD` và `PROPOSED` hết hạn
@@ -224,6 +245,10 @@ Mọi chuyển trạng thái không hợp lệ trả lỗi 409. `HELD` và `PROP
 9. Luồng hoàn chỉnh chạy được bằng Docker Compose và có test booking race.
 10. Giá lịch cũ không đổi khi Admin cập nhật giá Doctor.
 11. Doctor chỉ đọc ảnh AI được Patient chia sẻ với đúng appointment.
+12. Thanh toán cọc hợp lệ mới đưa lịch vào hàng đợi lễ tân xác nhận; webhook
+    trùng không tạo hai giao dịch hoặc hai lần chuyển trạng thái.
+13. Hóa đơn khấu trừ cọc một lần; chỉ đơn của hóa đơn đã thanh toán mới được
+    chuyển tới quầy dược và xuất kho theo lô.
 
 ## 7. Thuật toán đề xuất lịch
 
@@ -244,16 +269,19 @@ availability, Booking Policy hoặc database constraint.
 | ID | Use case | Actor | Luồng chính và ngoại lệ quan trọng |
 |---|---|---|---|
 | UC-01 | Đăng ký/xác minh | Patient | Nhập email/mật khẩu → OTP → tạo/nhận hồ sơ; OTP sai/hết hạn hoặc email/SĐT trùng bị từ chối |
-| UC-02 | Đặt lịch | Patient | Chọn Doctor/ngày/slot → hold 5 phút → lý do → xem giá → xác nhận; xung đột, quá 3 lịch hoặc hold hết hạn bị từ chối |
+| UC-02 | Đặt lịch/cọc | Patient | Chọn Doctor/ngày/slot → hold 5 phút → lý do → xem giá/cọc → PayOS → chờ lễ tân xác nhận; xung đột, quá 3 lịch, hold hoặc giao dịch hết hạn bị từ chối |
 | UC-03 | Đổi/hủy | Patient, Receptionist, Admin | Kiểm tra quyền/thời hạn → slot mới hoặc lý do → cập nhật/audit/realtime; Patient quá 30 phút hoặc đã xác nhận phải liên hệ hỗ trợ |
 | UC-04 | Đặt hotline | Receptionist | Tìm/tạo hồ sơ bằng SĐT → chọn Doctor/slot → đọc lại thông tin → tạo lịch và audit |
 | UC-05 | Xác nhận đồng thời | Receptionist, Admin | Khóa lịch → kiểm tra trạng thái → xác nhận; người bấm sau thấy lịch đã được nhân viên khác xử lý |
 | UC-06 | Check-in/no-show | Receptionist, Admin | Check-in đúng ngày; no-show chỉ sau giờ bắt đầu 30 phút |
-| UC-07 | Bắt đầu/hoàn tất | Doctor | Xem reason/AI được chia sẻ → bắt đầu → khám → hồ sơ/đơn nếu cần → hoàn tất |
+| UC-07 | Bắt đầu/hoàn tất | Doctor | Xem reason/AI được chia sẻ → bắt đầu → khám → hồ sơ/đơn nếu cần → xác nhận dịch vụ đã thực hiện → hoàn tất |
 | UC-08 | AI và chia sẻ | Patient, Doctor | Predict → Top-3/Grad-CAM/RAG → lưu assessment/ảnh → Patient chia sẻ → Doctor phụ trách đọc; ảnh lỗi 4xx, model thiếu 503 |
 | UC-09 | Trợ lý/chat/claim | Patient, Receptionist, Admin | Patient nhắn → bộ định tuyến theo luật xác định nhóm yêu cầu; RAG/Gemini hỗ trợ nội dung trong phạm vi cho phép hoặc Scheduling Engine tra lịch đọc-only → tự chuyển khi cần → Receptionist thấy transcript + summary, claim và phản hồi realtime; Admin chỉ giám sát |
 | UC-10 | Giá khám | Admin | Chọn Doctor → lưu giá không âm → profile update; lịch mới dùng giá mới, lịch cũ giữ snapshot |
 | UC-11 | Đánh giá | Patient, Admin | Patient đánh giá lịch hoàn tất → Admin duyệt/ẩn; lịch chưa hoàn tất hoặc đã review bị từ chối |
+| UC-12 | Hoàn cọc | Patient, Receptionist, Admin | Hủy lịch đủ điều kiện → yêu cầu hoàn → lễ tân đối chiếu mức hoàn và ghi phương thức/bằng chứng → Admin xem báo cáo |
+| UC-13 | Hóa đơn sau khám | Doctor, Receptionist, Patient, Admin | Doctor xác nhận dịch vụ → lễ tân lập hóa đơn khấu trừ cọc → thu tiền mặt hoặc PayOS → Patient xem, Admin đối soát |
+| UC-14 | Cấp thuốc | Pharmacist, Admin | Dược sĩ xem đơn đã thanh toán → chọn lô FEFO → xuất thuốc/ghi nhật ký; Admin xem tồn và cảnh báo |
 
 ## 9. Yêu cầu dữ liệu và riêng tư
 
@@ -266,6 +294,8 @@ availability, Booking Policy hoặc database constraint.
 | AI assessment | metadata, ảnh BLOB, MIME, share flag, appointmentId; owner/xóa/no-store; không lưu Grad-CAM |
 | Medical data | owner/phụ trách/role hợp lệ; không dùng dữ liệu bệnh nhân thật trong demo |
 | Chat/review | giữ lịch sử đối soát; review chỉ công khai sau duyệt |
+| Payment/invoice | Lưu trạng thái, mã giao dịch, số tiền cọc/khấu trừ, người thao tác và chứng từ hoàn; kiểm tra quyền theo vai trò |
+| Pharmacy | Lô, hạn dùng, số lượng tồn và nhật ký nhập/xuất; khóa hàng khi xuất để tránh trừ kho đồng thời |
 
 Không gửi ảnh hoặc PII Patient tới Gemini. Không commit `.env`, secret, API key,
 checkpoint, ảnh y khoa hoặc raw metadata SCIN.
@@ -285,6 +315,9 @@ checkpoint, ảnh y khoa hoặc raw metadata SCIN.
 | Chat | FR-SUP-01..03 | UC-09 | CHAT-001..005 và AI support policy tests |
 | Giá | FR-DOC-03 | UC-10 | ADM-001, BOOK-021 |
 | Review | FR-REV-01 | UC-11 | Review functional tests |
+| Đặt cọc/hoàn cọc | FR-PAY-01..02 | UC-02, UC-12 | `frontend/e2e/payment.spec.ts` và test Payment Service |
+| Hóa đơn | FR-BILL-01 | UC-13 | Test Billing Service và luồng cashier |
+| Kho thuốc | FR-PHAR-01 | UC-14 | Test Inventory Service và luồng pharmacy |
 
 ## 11. Baseline kiểm thử AI hiện tại
 

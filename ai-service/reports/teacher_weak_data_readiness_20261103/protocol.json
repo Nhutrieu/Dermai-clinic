@@ -1,0 +1,32 @@
+{
+  "registered_utc": "2026-11-03T09:26:30.941831+00:00",
+  "scope": "Current three historical TRAIN pools only; metadata/data-readiness audit, no training or diagnostic label correction.",
+  "sources_sha256": {
+    "ai-service/reports/teacher_ept_two_pool_repeat_20261103/protocol.json": "ecb7c57c7815a61c53c40445a7e4201231eb1e54439be58af6ce6331710ee21f",
+    "ai-service/reports/original_eight_weak_train_audit_20261021/image_inventory.json": "cf09031d6776014c89640c1dedbafc7ef2eeedabc90793937a2cc6fcb5a69d20",
+    "ai-service/reports/original_eight_weak_train_audit_20261021/protocol.json": "0cf8edc325ba5379b33fbf1642270abc5c5f6ce519065381961464c7752204e5",
+    "ai-service/reports/original_eight_weak_train_audit_20261021/verification.json": "5cca3c49b09e9e973be4e05ef6d803dd1f344b00c6fd9931f02b88c90d68d5fe",
+    "ai-service/reports/teacher_weak_data_readiness_20261103/run_audit.py": "eb06dd0168a83341074e71724b3ca57ac5e90222478a7f0c44c84d3a53dd637c",
+    "tmp/review_weak_data_readiness_20261103.py": "c8961bb30bc45c6f007526255923864bddd029678e668b3dfd88c004dfb4130d",
+    "tmp/finish_weak_data_readiness_20261103.py": "2bd133178236365f2d02056ffbac8c5f6bcf78dec7c39ad7e85862eaeb2387a1",
+    "ai-service/reports/teacher_six_cnn_two_stages_20261103/completion.json": "b8d996ebdb2b8a69ad4df16f553470d9c213883d3896416628ced56b2a5061ed",
+    "ai-service/reports/teacher_six_cnn_two_stages_20261103/status.json": "6d24cfee6dd2747b6fe6bf353e7dc281c8796705cd4e2988a9fc8a54fdca750a"
+  },
+  "design": "Reuse frozen5937legacy metadata, STRICTbind path/label/SHA/source/group tocurrent250roles. RecheckdecodedRGB andbytes ofcurrent4031unique images. Per-poolflags generatedONLYfromOWNfit rows. Query usedONLYforrole-separation, neverforreviewpriority. No predictions/errors/loss read.",
+  "review_rules": "FocusLupus/Psoriasis/Tinea/Eczema. Flag multipleequal-topsourceannotations, or own-fit SHA/pixel/group/knowncase containingmultiple datasetlabels. Co-scene/case multi-label is a review signal, not proof wronglabel. Reuseweightbelow075 flag onlyfor descriptivecounts, not clinicalconfidence/exclusion. No sourceannotations inoriginal_train => unknown, notzeroquality.",
+  "endpoint": "Reportperpoolfit coverage byfocusdisease/source, image/group/knowncase counts, metadata ambiguity, clinicalconfirmation unknown. ExportSEPARATE ownFITonly reviewqueue withreviewer/confirmed_label/evidence null. MissingSCINcells explicitlyzero; nojudgment ofadequacynumericthreshold. No labels changed, filesdeleted, modelsselected orscoresupdated.",
+  "limitations": [
+    "KnowncaseIDs/scenehash groups are not always verifiedpatientIDs.",
+    "Legacy source annotations are retrospective differential labels, not confirmedclinicaldiagnoses.",
+    "Trainingsets overlap:8062memberships are4031uniqueimages, notnewimages.",
+    "Nonewexpert/clinicalreview or independenttest; modelqualitymetrics notcomputed."
+  ],
+  "selected": null,
+  "labels_changed": 0,
+  "images_removed": 0,
+  "new_CNN_fits": 0,
+  "new_metrics_computed": false,
+  "global_5937_score_changed": false,
+  "serving_changed": false,
+  "research_registry_changed": false
+}

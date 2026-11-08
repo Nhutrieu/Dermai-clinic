@@ -1,0 +1,2430 @@
+{
+  "oof": {
+    "images": 5937,
+    "correct": 4687,
+    "accuracy": 0.7894559541856156,
+    "macro_f1": 0.7772871199866189,
+    "confusion_matrix": [
+      [
+        594,
+        4,
+        27,
+        10,
+        8,
+        9,
+        2,
+        9
+      ],
+      [
+        5,
+        177,
+        8,
+        3,
+        16,
+        2,
+        21,
+        11
+      ],
+      [
+        26,
+        12,
+        1327,
+        14,
+        80,
+        19,
+        68,
+        31
+      ],
+      [
+        19,
+        7,
+        19,
+        193,
+        28,
+        19,
+        21,
+        9
+      ],
+      [
+        14,
+        25,
+        140,
+        21,
+        619,
+        16,
+        37,
+        25
+      ],
+      [
+        7,
+        5,
+        23,
+        10,
+        6,
+        596,
+        22,
+        8
+      ],
+      [
+        26,
+        15,
+        160,
+        23,
+        45,
+        20,
+        672,
+        28
+      ],
+      [
+        10,
+        3,
+        23,
+        2,
+        8,
+        10,
+        11,
+        509
+      ]
+    ],
+    "per_class": {
+      "Acne": {
+        "precision": 0.8473609129814551,
+        "recall": 0.8959276018099548,
+        "f1": 0.870967741935484,
+        "support": 663
+      },
+      "Candidiasis": {
+        "precision": 0.7137096774193549,
+        "recall": 0.7283950617283951,
+        "f1": 0.7209775967413443,
+        "support": 243
+      },
+      "Eczema": {
+        "precision": 0.768384481760278,
+        "recall": 0.8414711477488903,
+        "f1": 0.8032687651331718,
+        "support": 1577
+      },
+      "Lupus": {
+        "precision": 0.6992753623188406,
+        "recall": 0.6126984126984127,
+        "f1": 0.6531302876480541,
+        "support": 315
+      },
+      "Psoriasis": {
+        "precision": 0.7641975308641975,
+        "recall": 0.6900780379041248,
+        "f1": 0.7252489748096076,
+        "support": 897
+      },
+      "SkinCancer": {
+        "precision": 0.8625180897250362,
+        "recall": 0.880354505169867,
+        "f1": 0.871345029239766,
+        "support": 677
+      },
+      "Tinea": {
+        "precision": 0.7868852459016393,
+        "recall": 0.679474216380182,
+        "f1": 0.7292457948996202,
+        "support": 989
+      },
+      "Warts": {
+        "precision": 0.807936507936508,
+        "recall": 0.8836805555555556,
+        "f1": 0.8441127694859039,
+        "support": 576
+      }
+    }
+  },
+  "slices": {
+    "all_oof": {
+      "Lupus": {
+        "images": 315,
+        "groups": 299,
+        "correct": 193,
+        "errors": 122,
+        "recall": 0.6126984126984127,
+        "confusion": {
+          "Psoriasis": 28,
+          "Tinea": 21,
+          "Eczema": 19,
+          "Acne": 19,
+          "SkinCancer": 19,
+          "Warts": 9,
+          "Candidiasis": 7
+        },
+        "errors_in_current_specialist_scope": 68,
+        "errors_locked_cancer": 19,
+        "errors_outside_scope_non_cancer": 35
+      },
+      "Psoriasis": {
+        "images": 897,
+        "groups": 823,
+        "correct": 619,
+        "errors": 278,
+        "recall": 0.6900780379041248,
+        "confusion": {
+          "Eczema": 140,
+          "Tinea": 37,
+          "Candidiasis": 25,
+          "Warts": 25,
+          "Lupus": 21,
+          "SkinCancer": 16,
+          "Acne": 14
+        },
+        "errors_in_current_specialist_scope": 198,
+        "errors_locked_cancer": 16,
+        "errors_outside_scope_non_cancer": 64
+      },
+      "Tinea": {
+        "images": 989,
+        "groups": 912,
+        "correct": 672,
+        "errors": 317,
+        "recall": 0.679474216380182,
+        "confusion": {
+          "Eczema": 160,
+          "Psoriasis": 45,
+          "Warts": 28,
+          "Acne": 26,
+          "Lupus": 23,
+          "SkinCancer": 20,
+          "Candidiasis": 15
+        },
+        "errors_in_current_specialist_scope": 228,
+        "errors_locked_cancer": 20,
+        "errors_outside_scope_non_cancer": 69
+      }
+    },
+    "original_train": {
+      "Lupus": {
+        "images": 304,
+        "groups": 293,
+        "correct": 193,
+        "errors": 111,
+        "recall": 0.6348684210526315,
+        "confusion": {
+          "Psoriasis": 27,
+          "Tinea": 21,
+          "SkinCancer": 19,
+          "Acne": 18,
+          "Eczema": 11,
+          "Warts": 8,
+          "Candidiasis": 7
+        },
+        "errors_in_current_specialist_scope": 59,
+        "errors_locked_cancer": 19,
+        "errors_outside_scope_non_cancer": 33
+      },
+      "Psoriasis": {
+        "images": 790,
+        "groups": 771,
+        "correct": 583,
+        "errors": 207,
+        "recall": 0.7379746835443038,
+        "confusion": {
+          "Eczema": 92,
+          "Tinea": 30,
+          "Warts": 22,
+          "Candidiasis": 19,
+          "Lupus": 19,
+          "SkinCancer": 16,
+          "Acne": 9
+        },
+        "errors_in_current_specialist_scope": 141,
+        "errors_locked_cancer": 16,
+        "errors_outside_scope_non_cancer": 50
+      },
+      "Tinea": {
+        "images": 886,
+        "groups": 864,
+        "correct": 657,
+        "errors": 229,
+        "recall": 0.7415349887133182,
+        "confusion": {
+          "Eczema": 100,
+          "Psoriasis": 36,
+          "Warts": 26,
+          "Acne": 20,
+          "SkinCancer": 19,
+          "Lupus": 16,
+          "Candidiasis": 12
+        },
+        "errors_in_current_specialist_scope": 152,
+        "errors_locked_cancer": 19,
+        "errors_outside_scope_non_cancer": 58
+      }
+    },
+    "SCIN": {
+      "Lupus": {
+        "images": 11,
+        "groups": 6,
+        "correct": 0,
+        "errors": 11,
+        "recall": 0.0,
+        "confusion": {
+          "Eczema": 8,
+          "Psoriasis": 1,
+          "Acne": 1,
+          "Warts": 1
+        },
+        "errors_in_current_specialist_scope": 9,
+        "errors_locked_cancer": 0,
+        "errors_outside_scope_non_cancer": 2
+      },
+      "Psoriasis": {
+        "images": 107,
+        "groups": 52,
+        "correct": 36,
+        "errors": 71,
+        "recall": 0.3364485981308411,
+        "confusion": {
+          "Eczema": 48,
+          "Tinea": 7,
+          "Candidiasis": 6,
+          "Acne": 5,
+          "Warts": 3,
+          "Lupus": 2
+        },
+        "errors_in_current_specialist_scope": 57,
+        "errors_locked_cancer": 0,
+        "errors_outside_scope_non_cancer": 14
+      },
+      "Tinea": {
+        "images": 103,
+        "groups": 49,
+        "correct": 15,
+        "errors": 88,
+        "recall": 0.14563106796116504,
+        "confusion": {
+          "Eczema": 60,
+          "Psoriasis": 9,
+          "Lupus": 7,
+          "Acne": 6,
+          "Candidiasis": 3,
+          "Warts": 2,
+          "SkinCancer": 1
+        },
+        "errors_in_current_specialist_scope": 76,
+        "errors_locked_cancer": 1,
+        "errors_outside_scope_non_cancer": 11
+      }
+    }
+  },
+  "false_positive_origins": {
+    "Lupus": {
+      "Tinea": 23,
+      "Psoriasis": 21,
+      "Eczema": 14,
+      "Acne": 10,
+      "SkinCancer": 10,
+      "Candidiasis": 3,
+      "Warts": 2
+    },
+    "Psoriasis": {
+      "Eczema": 80,
+      "Tinea": 45,
+      "Lupus": 28,
+      "Candidiasis": 16,
+      "Acne": 8,
+      "Warts": 8,
+      "SkinCancer": 6
+    },
+    "Tinea": {
+      "Eczema": 68,
+      "Psoriasis": 37,
+      "SkinCancer": 22,
+      "Candidiasis": 21,
+      "Lupus": 21,
+      "Warts": 11,
+      "Acne": 2
+    }
+  },
+  "per_fold": {
+    "0": {
+      "Lupus": {
+        "images": 73,
+        "groups": 67,
+        "correct": 42,
+        "errors": 31,
+        "recall": 0.5753424657534246,
+        "confusion": {
+          "Eczema": 9,
+          "Psoriasis": 7,
+          "Acne": 5,
+          "Tinea": 4,
+          "SkinCancer": 4,
+          "Warts": 2
+        },
+        "errors_in_current_specialist_scope": 20,
+        "errors_locked_cancer": 4,
+        "errors_outside_scope_non_cancer": 7
+      },
+      "Psoriasis": {
+        "images": 145,
+        "groups": 139,
+        "correct": 104,
+        "errors": 41,
+        "recall": 0.7172413793103448,
+        "confusion": {
+          "Eczema": 17,
+          "Tinea": 9,
+          "Lupus": 5,
+          "Candidiasis": 4,
+          "Warts": 3,
+          "SkinCancer": 3
+        },
+        "errors_in_current_specialist_scope": 31,
+        "errors_locked_cancer": 3,
+        "errors_outside_scope_non_cancer": 7
+      },
+      "Tinea": {
+        "images": 179,
+        "groups": 163,
+        "correct": 121,
+        "errors": 58,
+        "recall": 0.6759776536312849,
+        "confusion": {
+          "Eczema": 26,
+          "Psoriasis": 12,
+          "Acne": 5,
+          "Lupus": 5,
+          "SkinCancer": 4,
+          "Warts": 3,
+          "Candidiasis": 3
+        },
+        "errors_in_current_specialist_scope": 43,
+        "errors_locked_cancer": 4,
+        "errors_outside_scope_non_cancer": 11
+      }
+    },
+    "1": {
+      "Lupus": {
+        "images": 57,
+        "groups": 56,
+        "correct": 34,
+        "errors": 23,
+        "recall": 0.5964912280701754,
+        "confusion": {
+          "Psoriasis": 6,
+          "Acne": 5,
+          "Tinea": 3,
+          "Warts": 3,
+          "SkinCancer": 2,
+          "Eczema": 2,
+          "Candidiasis": 2
+        },
+        "errors_in_current_specialist_scope": 11,
+        "errors_locked_cancer": 2,
+        "errors_outside_scope_non_cancer": 10
+      },
+      "Psoriasis": {
+        "images": 181,
+        "groups": 169,
+        "correct": 126,
+        "errors": 55,
+        "recall": 0.6961325966850829,
+        "confusion": {
+          "Eczema": 36,
+          "Tinea": 6,
+          "Warts": 4,
+          "Acne": 3,
+          "SkinCancer": 2,
+          "Lupus": 2,
+          "Candidiasis": 2
+        },
+        "errors_in_current_specialist_scope": 44,
+        "errors_locked_cancer": 2,
+        "errors_outside_scope_non_cancer": 9
+      },
+      "Tinea": {
+        "images": 209,
+        "groups": 193,
+        "correct": 139,
+        "errors": 70,
+        "recall": 0.6650717703349283,
+        "confusion": {
+          "Eczema": 41,
+          "Psoriasis": 16,
+          "Acne": 5,
+          "Lupus": 3,
+          "SkinCancer": 3,
+          "Candidiasis": 1,
+          "Warts": 1
+        },
+        "errors_in_current_specialist_scope": 60,
+        "errors_locked_cancer": 3,
+        "errors_outside_scope_non_cancer": 7
+      }
+    },
+    "2": {
+      "Lupus": {
+        "images": 60,
+        "groups": 56,
+        "correct": 42,
+        "errors": 18,
+        "recall": 0.7,
+        "confusion": {
+          "SkinCancer": 6,
+          "Tinea": 4,
+          "Acne": 3,
+          "Psoriasis": 3,
+          "Candidiasis": 1,
+          "Warts": 1
+        },
+        "errors_in_current_specialist_scope": 7,
+        "errors_locked_cancer": 6,
+        "errors_outside_scope_non_cancer": 5
+      },
+      "Psoriasis": {
+        "images": 197,
+        "groups": 177,
+        "correct": 129,
+        "errors": 68,
+        "recall": 0.6548223350253807,
+        "confusion": {
+          "Eczema": 37,
+          "Candidiasis": 8,
+          "Tinea": 7,
+          "Acne": 5,
+          "Warts": 4,
+          "Lupus": 4,
+          "SkinCancer": 3
+        },
+        "errors_in_current_specialist_scope": 48,
+        "errors_locked_cancer": 3,
+        "errors_outside_scope_non_cancer": 17
+      },
+      "Tinea": {
+        "images": 196,
+        "groups": 183,
+        "correct": 135,
+        "errors": 61,
+        "recall": 0.6887755102040817,
+        "confusion": {
+          "Eczema": 28,
+          "Psoriasis": 11,
+          "Acne": 6,
+          "Warts": 6,
+          "Candidiasis": 5,
+          "Lupus": 3,
+          "SkinCancer": 2
+        },
+        "errors_in_current_specialist_scope": 42,
+        "errors_locked_cancer": 2,
+        "errors_outside_scope_non_cancer": 17
+      }
+    },
+    "3": {
+      "Lupus": {
+        "images": 58,
+        "groups": 56,
+        "correct": 38,
+        "errors": 20,
+        "recall": 0.6551724137931034,
+        "confusion": {
+          "Psoriasis": 6,
+          "Tinea": 4,
+          "SkinCancer": 4,
+          "Eczema": 3,
+          "Acne": 2,
+          "Candidiasis": 1
+        },
+        "errors_in_current_specialist_scope": 13,
+        "errors_locked_cancer": 4,
+        "errors_outside_scope_non_cancer": 3
+      },
+      "Psoriasis": {
+        "images": 180,
+        "groups": 164,
+        "correct": 119,
+        "errors": 61,
+        "recall": 0.6611111111111111,
+        "confusion": {
+          "Eczema": 20,
+          "Tinea": 12,
+          "Lupus": 9,
+          "Warts": 7,
+          "SkinCancer": 6,
+          "Acne": 4,
+          "Candidiasis": 3
+        },
+        "errors_in_current_specialist_scope": 41,
+        "errors_locked_cancer": 6,
+        "errors_outside_scope_non_cancer": 14
+      },
+      "Tinea": {
+        "images": 207,
+        "groups": 184,
+        "correct": 139,
+        "errors": 68,
+        "recall": 0.6714975845410628,
+        "confusion": {
+          "Eczema": 35,
+          "Warts": 9,
+          "SkinCancer": 8,
+          "Lupus": 6,
+          "Acne": 6,
+          "Psoriasis": 3,
+          "Candidiasis": 1
+        },
+        "errors_in_current_specialist_scope": 44,
+        "errors_locked_cancer": 8,
+        "errors_outside_scope_non_cancer": 16
+      }
+    },
+    "4": {
+      "Lupus": {
+        "images": 67,
+        "groups": 64,
+        "correct": 37,
+        "errors": 30,
+        "recall": 0.5522388059701493,
+        "confusion": {
+          "Psoriasis": 6,
+          "Tinea": 6,
+          "Eczema": 5,
+          "Acne": 4,
+          "Warts": 3,
+          "SkinCancer": 3,
+          "Candidiasis": 3
+        },
+        "errors_in_current_specialist_scope": 17,
+        "errors_locked_cancer": 3,
+        "errors_outside_scope_non_cancer": 10
+      },
+      "Psoriasis": {
+        "images": 194,
+        "groups": 174,
+        "correct": 141,
+        "errors": 53,
+        "recall": 0.7268041237113402,
+        "confusion": {
+          "Eczema": 30,
+          "Candidiasis": 8,
+          "Warts": 7,
+          "Tinea": 3,
+          "Acne": 2,
+          "SkinCancer": 2,
+          "Lupus": 1
+        },
+        "errors_in_current_specialist_scope": 34,
+        "errors_locked_cancer": 2,
+        "errors_outside_scope_non_cancer": 17
+      },
+      "Tinea": {
+        "images": 198,
+        "groups": 189,
+        "correct": 138,
+        "errors": 60,
+        "recall": 0.696969696969697,
+        "confusion": {
+          "Eczema": 30,
+          "Warts": 9,
+          "Lupus": 6,
+          "Candidiasis": 5,
+          "Acne": 4,
+          "Psoriasis": 3,
+          "SkinCancer": 3
+        },
+        "errors_in_current_specialist_scope": 39,
+        "errors_locked_cancer": 3,
+        "errors_outside_scope_non_cancer": 18
+      }
+    }
+  },
+  "fold_role_train_support": {
+    "0": {
+      "train": {
+        "Lupus": {
+          "original_train": {
+            "images": 201,
+            "groups": 193
+          },
+          "SCIN": {
+            "images": 5,
+            "groups": 4
+          }
+        },
+        "Psoriasis": {
+          "original_train": {
+            "images": 555,
+            "groups": 537
+          },
+          "SCIN": {
+            "images": 84,
+            "groups": 39
+          }
+        },
+        "Tinea": {
+          "original_train": {
+            "images": 625,
+            "groups": 608
+          },
+          "SCIN": {
+            "images": 63,
+            "groups": 29
+          }
+        }
+      },
+      "inner_validation": {
+        "Lupus": {
+          "original_train": {
+            "images": 36,
+            "groups": 35
+          },
+          "SCIN": {
+            "images": 0,
+            "groups": 0
+          }
+        },
+        "Psoriasis": {
+          "original_train": {
+            "images": 98,
+            "groups": 98
+          },
+          "SCIN": {
+            "images": 15,
+            "groups": 10
+          }
+        },
+        "Tinea": {
+          "original_train": {
+            "images": 107,
+            "groups": 104
+          },
+          "SCIN": {
+            "images": 15,
+            "groups": 9
+          }
+        }
+      },
+      "outer_holdout": {
+        "Lupus": {
+          "original_train": {
+            "images": 67,
+            "groups": 65
+          },
+          "SCIN": {
+            "images": 6,
+            "groups": 2
+          }
+        },
+        "Psoriasis": {
+          "original_train": {
+            "images": 137,
+            "groups": 136
+          },
+          "SCIN": {
+            "images": 8,
+            "groups": 3
+          }
+        },
+        "Tinea": {
+          "original_train": {
+            "images": 154,
+            "groups": 152
+          },
+          "SCIN": {
+            "images": 25,
+            "groups": 11
+          }
+        }
+      }
+    },
+    "1": {
+      "train": {
+        "Lupus": {
+          "original_train": {
+            "images": 208,
+            "groups": 198
+          },
+          "SCIN": {
+            "images": 11,
+            "groups": 6
+          }
+        },
+        "Psoriasis": {
+          "original_train": {
+            "images": 530,
+            "groups": 520
+          },
+          "SCIN": {
+            "images": 79,
+            "groups": 36
+          }
+        },
+        "Tinea": {
+          "original_train": {
+            "images": 590,
+            "groups": 575
+          },
+          "SCIN": {
+            "images": 73,
+            "groups": 35
+          }
+        }
+      },
+      "inner_validation": {
+        "Lupus": {
+          "original_train": {
+            "images": 39,
+            "groups": 39
+          },
+          "SCIN": {
+            "images": 0,
+            "groups": 0
+          }
+        },
+        "Psoriasis": {
+          "original_train": {
+            "images": 99,
+            "groups": 94
+          },
+          "SCIN": {
+            "images": 8,
+            "groups": 4
+          }
+        },
+        "Tinea": {
+          "original_train": {
+            "images": 105,
+            "groups": 104
+          },
+          "SCIN": {
+            "images": 12,
+            "groups": 5
+          }
+        }
+      },
+      "outer_holdout": {
+        "Lupus": {
+          "original_train": {
+            "images": 57,
+            "groups": 56
+          },
+          "SCIN": {
+            "images": 0,
+            "groups": 0
+          }
+        },
+        "Psoriasis": {
+          "original_train": {
+            "images": 161,
+            "groups": 157
+          },
+          "SCIN": {
+            "images": 20,
+            "groups": 12
+          }
+        },
+        "Tinea": {
+          "original_train": {
+            "images": 191,
+            "groups": 185
+          },
+          "SCIN": {
+            "images": 18,
+            "groups": 9
+          }
+        }
+      }
+    },
+    "2": {
+      "train": {
+        "Lupus": {
+          "original_train": {
+            "images": 206,
+            "groups": 201
+          },
+          "SCIN": {
+            "images": 11,
+            "groups": 6
+          }
+        },
+        "Psoriasis": {
+          "original_train": {
+            "images": 533,
+            "groups": 522
+          },
+          "SCIN": {
+            "images": 60,
+            "groups": 31
+          }
+        },
+        "Tinea": {
+          "original_train": {
+            "images": 601,
+            "groups": 586
+          },
+          "SCIN": {
+            "images": 73,
+            "groups": 34
+          }
+        }
+      },
+      "inner_validation": {
+        "Lupus": {
+          "original_train": {
+            "images": 38,
+            "groups": 36
+          },
+          "SCIN": {
+            "images": 0,
+            "groups": 0
+          }
+        },
+        "Psoriasis": {
+          "original_train": {
+            "images": 88,
+            "groups": 84
+          },
+          "SCIN": {
+            "images": 19,
+            "groups": 9
+          }
+        },
+        "Tinea": {
+          "original_train": {
+            "images": 110,
+            "groups": 105
+          },
+          "SCIN": {
+            "images": 9,
+            "groups": 5
+          }
+        }
+      },
+      "outer_holdout": {
+        "Lupus": {
+          "original_train": {
+            "images": 60,
+            "groups": 56
+          },
+          "SCIN": {
+            "images": 0,
+            "groups": 0
+          }
+        },
+        "Psoriasis": {
+          "original_train": {
+            "images": 169,
+            "groups": 165
+          },
+          "SCIN": {
+            "images": 28,
+            "groups": 12
+          }
+        },
+        "Tinea": {
+          "original_train": {
+            "images": 175,
+            "groups": 173
+          },
+          "SCIN": {
+            "images": 21,
+            "groups": 10
+          }
+        }
+      }
+    },
+    "3": {
+      "train": {
+        "Lupus": {
+          "original_train": {
+            "images": 210,
+            "groups": 203
+          },
+          "SCIN": {
+            "images": 8,
+            "groups": 5
+          }
+        },
+        "Psoriasis": {
+          "original_train": {
+            "images": 536,
+            "groups": 524
+          },
+          "SCIN": {
+            "images": 73,
+            "groups": 34
+          }
+        },
+        "Tinea": {
+          "original_train": {
+            "images": 596,
+            "groups": 584
+          },
+          "SCIN": {
+            "images": 69,
+            "groups": 34
+          }
+        }
+      },
+      "inner_validation": {
+        "Lupus": {
+          "original_train": {
+            "images": 36,
+            "groups": 34
+          },
+          "SCIN": {
+            "images": 3,
+            "groups": 1
+          }
+        },
+        "Psoriasis": {
+          "original_train": {
+            "images": 96,
+            "groups": 95
+          },
+          "SCIN": {
+            "images": 12,
+            "groups": 6
+          }
+        },
+        "Tinea": {
+          "original_train": {
+            "images": 109,
+            "groups": 107
+          },
+          "SCIN": {
+            "images": 8,
+            "groups": 4
+          }
+        }
+      },
+      "outer_holdout": {
+        "Lupus": {
+          "original_train": {
+            "images": 58,
+            "groups": 56
+          },
+          "SCIN": {
+            "images": 0,
+            "groups": 0
+          }
+        },
+        "Psoriasis": {
+          "original_train": {
+            "images": 158,
+            "groups": 152
+          },
+          "SCIN": {
+            "images": 22,
+            "groups": 12
+          }
+        },
+        "Tinea": {
+          "original_train": {
+            "images": 181,
+            "groups": 173
+          },
+          "SCIN": {
+            "images": 26,
+            "groups": 11
+          }
+        }
+      }
+    },
+    "4": {
+      "train": {
+        "Lupus": {
+          "original_train": {
+            "images": 205,
+            "groups": 197
+          },
+          "SCIN": {
+            "images": 6,
+            "groups": 2
+          }
+        },
+        "Psoriasis": {
+          "original_train": {
+            "images": 533,
+            "groups": 521
+          },
+          "SCIN": {
+            "images": 65,
+            "groups": 34
+          }
+        },
+        "Tinea": {
+          "original_train": {
+            "images": 591,
+            "groups": 576
+          },
+          "SCIN": {
+            "images": 81,
+            "groups": 38
+          }
+        }
+      },
+      "inner_validation": {
+        "Lupus": {
+          "original_train": {
+            "images": 37,
+            "groups": 36
+          },
+          "SCIN": {
+            "images": 0,
+            "groups": 0
+          }
+        },
+        "Psoriasis": {
+          "original_train": {
+            "images": 92,
+            "groups": 89
+          },
+          "SCIN": {
+            "images": 13,
+            "groups": 5
+          }
+        },
+        "Tinea": {
+          "original_train": {
+            "images": 110,
+            "groups": 107
+          },
+          "SCIN": {
+            "images": 9,
+            "groups": 3
+          }
+        }
+      },
+      "outer_holdout": {
+        "Lupus": {
+          "original_train": {
+            "images": 62,
+            "groups": 60
+          },
+          "SCIN": {
+            "images": 5,
+            "groups": 4
+          }
+        },
+        "Psoriasis": {
+          "original_train": {
+            "images": 165,
+            "groups": 161
+          },
+          "SCIN": {
+            "images": 29,
+            "groups": 13
+          }
+        },
+        "Tinea": {
+          "original_train": {
+            "images": 185,
+            "groups": 181
+          },
+          "SCIN": {
+            "images": 13,
+            "groups": 8
+          }
+        }
+      }
+    }
+  },
+  "historical_source_slices": {
+    "dermacon_all": {
+      "unique_images": 986,
+      "per_fold": {
+        "0": {
+          "Lupus": {
+            "images": 11,
+            "groups": 4,
+            "correct": 2,
+            "errors": 9,
+            "recall": 0.18181818181818182,
+            "confusion": {
+              "Psoriasis": 6,
+              "Tinea": 1,
+              "Eczema": 1,
+              "Warts": 1
+            },
+            "errors_in_current_specialist_scope": 8,
+            "errors_locked_cancer": 0,
+            "errors_outside_scope_non_cancer": 1
+          },
+          "Psoriasis": {
+            "images": 154,
+            "groups": 70,
+            "correct": 117,
+            "errors": 37,
+            "recall": 0.7597402597402597,
+            "confusion": {
+              "Eczema": 16,
+              "Acne": 7,
+              "SkinCancer": 5,
+              "Tinea": 4,
+              "Lupus": 4,
+              "Warts": 1
+            },
+            "errors_in_current_specialist_scope": 24,
+            "errors_locked_cancer": 5,
+            "errors_outside_scope_non_cancer": 8
+          },
+          "Tinea": {
+            "images": 319,
+            "groups": 242,
+            "correct": 17,
+            "errors": 302,
+            "recall": 0.05329153605015674,
+            "confusion": {
+              "Eczema": 165,
+              "Psoriasis": 111,
+              "SkinCancer": 9,
+              "Lupus": 8,
+              "Warts": 6,
+              "Candidiasis": 2,
+              "Acne": 1
+            },
+            "errors_in_current_specialist_scope": 284,
+            "errors_locked_cancer": 9,
+            "errors_outside_scope_non_cancer": 9
+          }
+        },
+        "1": {
+          "Lupus": {
+            "images": 11,
+            "groups": 4,
+            "correct": 1,
+            "errors": 10,
+            "recall": 0.09090909090909091,
+            "confusion": {
+              "Psoriasis": 6,
+              "Eczema": 2,
+              "SkinCancer": 1,
+              "Tinea": 1
+            },
+            "errors_in_current_specialist_scope": 9,
+            "errors_locked_cancer": 1,
+            "errors_outside_scope_non_cancer": 0
+          },
+          "Psoriasis": {
+            "images": 154,
+            "groups": 70,
+            "correct": 120,
+            "errors": 34,
+            "recall": 0.7792207792207793,
+            "confusion": {
+              "Eczema": 15,
+              "Acne": 5,
+              "SkinCancer": 5,
+              "Warts": 3,
+              "Tinea": 3,
+              "Lupus": 2,
+              "Candidiasis": 1
+            },
+            "errors_in_current_specialist_scope": 20,
+            "errors_locked_cancer": 5,
+            "errors_outside_scope_non_cancer": 9
+          },
+          "Tinea": {
+            "images": 319,
+            "groups": 242,
+            "correct": 14,
+            "errors": 305,
+            "recall": 0.0438871473354232,
+            "confusion": {
+              "Eczema": 160,
+              "Psoriasis": 121,
+              "SkinCancer": 8,
+              "Warts": 7,
+              "Lupus": 4,
+              "Acne": 3,
+              "Candidiasis": 2
+            },
+            "errors_in_current_specialist_scope": 285,
+            "errors_locked_cancer": 8,
+            "errors_outside_scope_non_cancer": 12
+          }
+        },
+        "2": {
+          "Lupus": {
+            "images": 11,
+            "groups": 4,
+            "correct": 1,
+            "errors": 10,
+            "recall": 0.09090909090909091,
+            "confusion": {
+              "Psoriasis": 5,
+              "Warts": 2,
+              "Eczema": 2,
+              "SkinCancer": 1
+            },
+            "errors_in_current_specialist_scope": 7,
+            "errors_locked_cancer": 1,
+            "errors_outside_scope_non_cancer": 2
+          },
+          "Psoriasis": {
+            "images": 154,
+            "groups": 70,
+            "correct": 107,
+            "errors": 47,
+            "recall": 0.6948051948051948,
+            "confusion": {
+              "Eczema": 21,
+              "Warts": 9,
+              "SkinCancer": 6,
+              "Tinea": 4,
+              "Acne": 4,
+              "Lupus": 3
+            },
+            "errors_in_current_specialist_scope": 28,
+            "errors_locked_cancer": 6,
+            "errors_outside_scope_non_cancer": 13
+          },
+          "Tinea": {
+            "images": 319,
+            "groups": 242,
+            "correct": 19,
+            "errors": 300,
+            "recall": 0.05956112852664577,
+            "confusion": {
+              "Eczema": 163,
+              "Psoriasis": 106,
+              "Warts": 14,
+              "SkinCancer": 6,
+              "Acne": 6,
+              "Lupus": 4,
+              "Candidiasis": 1
+            },
+            "errors_in_current_specialist_scope": 273,
+            "errors_locked_cancer": 6,
+            "errors_outside_scope_non_cancer": 21
+          }
+        },
+        "3": {
+          "Lupus": {
+            "images": 11,
+            "groups": 4,
+            "correct": 3,
+            "errors": 8,
+            "recall": 0.2727272727272727,
+            "confusion": {
+              "Psoriasis": 3,
+              "Eczema": 3,
+              "Tinea": 2
+            },
+            "errors_in_current_specialist_scope": 8,
+            "errors_locked_cancer": 0,
+            "errors_outside_scope_non_cancer": 0
+          },
+          "Psoriasis": {
+            "images": 154,
+            "groups": 70,
+            "correct": 113,
+            "errors": 41,
+            "recall": 0.7337662337662337,
+            "confusion": {
+              "Eczema": 19,
+              "SkinCancer": 6,
+              "Warts": 5,
+              "Acne": 5,
+              "Tinea": 4,
+              "Lupus": 2
+            },
+            "errors_in_current_specialist_scope": 25,
+            "errors_locked_cancer": 6,
+            "errors_outside_scope_non_cancer": 10
+          },
+          "Tinea": {
+            "images": 319,
+            "groups": 242,
+            "correct": 46,
+            "errors": 273,
+            "recall": 0.14420062695924765,
+            "confusion": {
+              "Eczema": 155,
+              "Psoriasis": 85,
+              "Warts": 14,
+              "Lupus": 10,
+              "SkinCancer": 6,
+              "Acne": 2,
+              "Candidiasis": 1
+            },
+            "errors_in_current_specialist_scope": 250,
+            "errors_locked_cancer": 6,
+            "errors_outside_scope_non_cancer": 17
+          }
+        },
+        "4": {
+          "Lupus": {
+            "images": 11,
+            "groups": 4,
+            "correct": 2,
+            "errors": 9,
+            "recall": 0.18181818181818182,
+            "confusion": {
+              "Psoriasis": 5,
+              "Eczema": 2,
+              "SkinCancer": 1,
+              "Warts": 1
+            },
+            "errors_in_current_specialist_scope": 7,
+            "errors_locked_cancer": 1,
+            "errors_outside_scope_non_cancer": 1
+          },
+          "Psoriasis": {
+            "images": 154,
+            "groups": 70,
+            "correct": 100,
+            "errors": 54,
+            "recall": 0.6493506493506493,
+            "confusion": {
+              "Eczema": 30,
+              "Warts": 5,
+              "SkinCancer": 5,
+              "Tinea": 4,
+              "Lupus": 4,
+              "Acne": 4,
+              "Candidiasis": 2
+            },
+            "errors_in_current_specialist_scope": 38,
+            "errors_locked_cancer": 5,
+            "errors_outside_scope_non_cancer": 11
+          },
+          "Tinea": {
+            "images": 319,
+            "groups": 242,
+            "correct": 40,
+            "errors": 279,
+            "recall": 0.12539184952978055,
+            "confusion": {
+              "Eczema": 185,
+              "Psoriasis": 56,
+              "Warts": 16,
+              "SkinCancer": 7,
+              "Acne": 6,
+              "Candidiasis": 6,
+              "Lupus": 3
+            },
+            "errors_in_current_specialist_scope": 244,
+            "errors_locked_cancer": 7,
+            "errors_outside_scope_non_cancer": 28
+          }
+        }
+      }
+    },
+    "dermacon_historical_aux_train": {
+      "unique_images": 590,
+      "per_fold": {
+        "0": {
+          "Lupus": {
+            "images": 6,
+            "groups": 2,
+            "correct": 1,
+            "errors": 5,
+            "recall": 0.16666666666666666,
+            "confusion": {
+              "Psoriasis": 3,
+              "Tinea": 1,
+              "Warts": 1
+            },
+            "errors_in_current_specialist_scope": 4,
+            "errors_locked_cancer": 0,
+            "errors_outside_scope_non_cancer": 1
+          },
+          "Psoriasis": {
+            "images": 92,
+            "groups": 38,
+            "correct": 70,
+            "errors": 22,
+            "recall": 0.7608695652173914,
+            "confusion": {
+              "Eczema": 9,
+              "Acne": 5,
+              "Lupus": 4,
+              "SkinCancer": 3,
+              "Tinea": 1
+            },
+            "errors_in_current_specialist_scope": 14,
+            "errors_locked_cancer": 3,
+            "errors_outside_scope_non_cancer": 5
+          },
+          "Tinea": {
+            "images": 200,
+            "groups": 152,
+            "correct": 8,
+            "errors": 192,
+            "recall": 0.04,
+            "confusion": {
+              "Eczema": 100,
+              "Psoriasis": 74,
+              "SkinCancer": 6,
+              "Warts": 5,
+              "Lupus": 5,
+              "Acne": 1,
+              "Candidiasis": 1
+            },
+            "errors_in_current_specialist_scope": 179,
+            "errors_locked_cancer": 6,
+            "errors_outside_scope_non_cancer": 7
+          }
+        },
+        "1": {
+          "Lupus": {
+            "images": 6,
+            "groups": 2,
+            "correct": 1,
+            "errors": 5,
+            "recall": 0.16666666666666666,
+            "confusion": {
+              "Psoriasis": 3,
+              "SkinCancer": 1,
+              "Eczema": 1
+            },
+            "errors_in_current_specialist_scope": 4,
+            "errors_locked_cancer": 1,
+            "errors_outside_scope_non_cancer": 0
+          },
+          "Psoriasis": {
+            "images": 92,
+            "groups": 38,
+            "correct": 71,
+            "errors": 21,
+            "recall": 0.7717391304347826,
+            "confusion": {
+              "Eczema": 8,
+              "Acne": 5,
+              "Warts": 2,
+              "Lupus": 2,
+              "SkinCancer": 2,
+              "Tinea": 1,
+              "Candidiasis": 1
+            },
+            "errors_in_current_specialist_scope": 11,
+            "errors_locked_cancer": 2,
+            "errors_outside_scope_non_cancer": 8
+          },
+          "Tinea": {
+            "images": 200,
+            "groups": 152,
+            "correct": 8,
+            "errors": 192,
+            "recall": 0.04,
+            "confusion": {
+              "Eczema": 100,
+              "Psoriasis": 78,
+              "Warts": 5,
+              "SkinCancer": 5,
+              "Acne": 2,
+              "Lupus": 2
+            },
+            "errors_in_current_specialist_scope": 180,
+            "errors_locked_cancer": 5,
+            "errors_outside_scope_non_cancer": 7
+          }
+        },
+        "2": {
+          "Lupus": {
+            "images": 6,
+            "groups": 2,
+            "correct": 0,
+            "errors": 6,
+            "recall": 0.0,
+            "confusion": {
+              "Psoriasis": 3,
+              "Warts": 2,
+              "SkinCancer": 1
+            },
+            "errors_in_current_specialist_scope": 3,
+            "errors_locked_cancer": 1,
+            "errors_outside_scope_non_cancer": 2
+          },
+          "Psoriasis": {
+            "images": 92,
+            "groups": 38,
+            "correct": 60,
+            "errors": 32,
+            "recall": 0.6521739130434783,
+            "confusion": {
+              "Eczema": 15,
+              "Warts": 6,
+              "Acne": 4,
+              "SkinCancer": 3,
+              "Lupus": 3,
+              "Tinea": 1
+            },
+            "errors_in_current_specialist_scope": 19,
+            "errors_locked_cancer": 3,
+            "errors_outside_scope_non_cancer": 10
+          },
+          "Tinea": {
+            "images": 200,
+            "groups": 152,
+            "correct": 14,
+            "errors": 186,
+            "recall": 0.07,
+            "confusion": {
+              "Eczema": 102,
+              "Psoriasis": 64,
+              "Warts": 11,
+              "Acne": 4,
+              "SkinCancer": 3,
+              "Lupus": 2
+            },
+            "errors_in_current_specialist_scope": 168,
+            "errors_locked_cancer": 3,
+            "errors_outside_scope_non_cancer": 15
+          }
+        },
+        "3": {
+          "Lupus": {
+            "images": 6,
+            "groups": 2,
+            "correct": 2,
+            "errors": 4,
+            "recall": 0.3333333333333333,
+            "confusion": {
+              "Psoriasis": 2,
+              "Tinea": 1,
+              "Eczema": 1
+            },
+            "errors_in_current_specialist_scope": 4,
+            "errors_locked_cancer": 0,
+            "errors_outside_scope_non_cancer": 0
+          },
+          "Psoriasis": {
+            "images": 92,
+            "groups": 38,
+            "correct": 67,
+            "errors": 25,
+            "recall": 0.7282608695652174,
+            "confusion": {
+              "Eczema": 13,
+              "Acne": 5,
+              "Warts": 3,
+              "SkinCancer": 2,
+              "Tinea": 1,
+              "Lupus": 1
+            },
+            "errors_in_current_specialist_scope": 15,
+            "errors_locked_cancer": 2,
+            "errors_outside_scope_non_cancer": 8
+          },
+          "Tinea": {
+            "images": 200,
+            "groups": 152,
+            "correct": 32,
+            "errors": 168,
+            "recall": 0.16,
+            "confusion": {
+              "Eczema": 93,
+              "Psoriasis": 50,
+              "Warts": 13,
+              "Lupus": 6,
+              "SkinCancer": 4,
+              "Acne": 2
+            },
+            "errors_in_current_specialist_scope": 149,
+            "errors_locked_cancer": 4,
+            "errors_outside_scope_non_cancer": 15
+          }
+        },
+        "4": {
+          "Lupus": {
+            "images": 6,
+            "groups": 2,
+            "correct": 1,
+            "errors": 5,
+            "recall": 0.16666666666666666,
+            "confusion": {
+              "Psoriasis": 2,
+              "SkinCancer": 1,
+              "Eczema": 1,
+              "Warts": 1
+            },
+            "errors_in_current_specialist_scope": 3,
+            "errors_locked_cancer": 1,
+            "errors_outside_scope_non_cancer": 1
+          },
+          "Psoriasis": {
+            "images": 92,
+            "groups": 38,
+            "correct": 62,
+            "errors": 30,
+            "recall": 0.6739130434782609,
+            "confusion": {
+              "Eczema": 15,
+              "Lupus": 4,
+              "Acne": 4,
+              "Warts": 3,
+              "SkinCancer": 2,
+              "Tinea": 1,
+              "Candidiasis": 1
+            },
+            "errors_in_current_specialist_scope": 20,
+            "errors_locked_cancer": 2,
+            "errors_outside_scope_non_cancer": 8
+          },
+          "Tinea": {
+            "images": 200,
+            "groups": 152,
+            "correct": 28,
+            "errors": 172,
+            "recall": 0.14,
+            "confusion": {
+              "Eczema": 115,
+              "Psoriasis": 32,
+              "Warts": 14,
+              "Candidiasis": 4,
+              "Acne": 3,
+              "SkinCancer": 3,
+              "Lupus": 1
+            },
+            "errors_in_current_specialist_scope": 148,
+            "errors_locked_cancer": 3,
+            "errors_outside_scope_non_cancer": 21
+          }
+        }
+      }
+    },
+    "dermacon_historical_validation": {
+      "unique_images": 213,
+      "per_fold": {
+        "0": {
+          "Lupus": {
+            "images": 5,
+            "groups": 2,
+            "correct": 1,
+            "errors": 4,
+            "recall": 0.2,
+            "confusion": {
+              "Psoriasis": 3,
+              "Eczema": 1
+            },
+            "errors_in_current_specialist_scope": 4,
+            "errors_locked_cancer": 0,
+            "errors_outside_scope_non_cancer": 0
+          },
+          "Psoriasis": {
+            "images": 29,
+            "groups": 13,
+            "correct": 24,
+            "errors": 5,
+            "recall": 0.8275862068965517,
+            "confusion": {
+              "Eczema": 2,
+              "Tinea": 1,
+              "SkinCancer": 1,
+              "Acne": 1
+            },
+            "errors_in_current_specialist_scope": 3,
+            "errors_locked_cancer": 1,
+            "errors_outside_scope_non_cancer": 1
+          },
+          "Tinea": {
+            "images": 69,
+            "groups": 49,
+            "correct": 4,
+            "errors": 65,
+            "recall": 0.057971014492753624,
+            "confusion": {
+              "Eczema": 36,
+              "Psoriasis": 23,
+              "SkinCancer": 3,
+              "Lupus": 2,
+              "Candidiasis": 1
+            },
+            "errors_in_current_specialist_scope": 61,
+            "errors_locked_cancer": 3,
+            "errors_outside_scope_non_cancer": 1
+          }
+        },
+        "1": {
+          "Lupus": {
+            "images": 5,
+            "groups": 2,
+            "correct": 0,
+            "errors": 5,
+            "recall": 0.0,
+            "confusion": {
+              "Psoriasis": 3,
+              "Tinea": 1,
+              "Eczema": 1
+            },
+            "errors_in_current_specialist_scope": 5,
+            "errors_locked_cancer": 0,
+            "errors_outside_scope_non_cancer": 0
+          },
+          "Psoriasis": {
+            "images": 29,
+            "groups": 13,
+            "correct": 23,
+            "errors": 6,
+            "recall": 0.7931034482758621,
+            "confusion": {
+              "Eczema": 5,
+              "SkinCancer": 1
+            },
+            "errors_in_current_specialist_scope": 5,
+            "errors_locked_cancer": 1,
+            "errors_outside_scope_non_cancer": 0
+          },
+          "Tinea": {
+            "images": 69,
+            "groups": 49,
+            "correct": 2,
+            "errors": 67,
+            "recall": 0.028985507246376812,
+            "confusion": {
+              "Eczema": 36,
+              "Psoriasis": 25,
+              "SkinCancer": 3,
+              "Candidiasis": 1,
+              "Lupus": 1,
+              "Acne": 1
+            },
+            "errors_in_current_specialist_scope": 62,
+            "errors_locked_cancer": 3,
+            "errors_outside_scope_non_cancer": 2
+          }
+        },
+        "2": {
+          "Lupus": {
+            "images": 5,
+            "groups": 2,
+            "correct": 1,
+            "errors": 4,
+            "recall": 0.2,
+            "confusion": {
+              "Psoriasis": 2,
+              "Eczema": 2
+            },
+            "errors_in_current_specialist_scope": 4,
+            "errors_locked_cancer": 0,
+            "errors_outside_scope_non_cancer": 0
+          },
+          "Psoriasis": {
+            "images": 29,
+            "groups": 13,
+            "correct": 21,
+            "errors": 8,
+            "recall": 0.7241379310344828,
+            "confusion": {
+              "Eczema": 5,
+              "SkinCancer": 1,
+              "Tinea": 1,
+              "Warts": 1
+            },
+            "errors_in_current_specialist_scope": 6,
+            "errors_locked_cancer": 1,
+            "errors_outside_scope_non_cancer": 1
+          },
+          "Tinea": {
+            "images": 69,
+            "groups": 49,
+            "correct": 1,
+            "errors": 68,
+            "recall": 0.014492753623188406,
+            "confusion": {
+              "Eczema": 35,
+              "Psoriasis": 26,
+              "SkinCancer": 3,
+              "Lupus": 2,
+              "Candidiasis": 1,
+              "Acne": 1
+            },
+            "errors_in_current_specialist_scope": 63,
+            "errors_locked_cancer": 3,
+            "errors_outside_scope_non_cancer": 2
+          }
+        },
+        "3": {
+          "Lupus": {
+            "images": 5,
+            "groups": 2,
+            "correct": 1,
+            "errors": 4,
+            "recall": 0.2,
+            "confusion": {
+              "Eczema": 2,
+              "Psoriasis": 1,
+              "Tinea": 1
+            },
+            "errors_in_current_specialist_scope": 4,
+            "errors_locked_cancer": 0,
+            "errors_outside_scope_non_cancer": 0
+          },
+          "Psoriasis": {
+            "images": 29,
+            "groups": 13,
+            "correct": 24,
+            "errors": 5,
+            "recall": 0.8275862068965517,
+            "confusion": {
+              "SkinCancer": 2,
+              "Eczema": 1,
+              "Warts": 1,
+              "Tinea": 1
+            },
+            "errors_in_current_specialist_scope": 2,
+            "errors_locked_cancer": 2,
+            "errors_outside_scope_non_cancer": 1
+          },
+          "Tinea": {
+            "images": 69,
+            "groups": 49,
+            "correct": 7,
+            "errors": 62,
+            "recall": 0.10144927536231885,
+            "confusion": {
+              "Eczema": 33,
+              "Psoriasis": 25,
+              "SkinCancer": 2,
+              "Candidiasis": 1,
+              "Lupus": 1
+            },
+            "errors_in_current_specialist_scope": 59,
+            "errors_locked_cancer": 2,
+            "errors_outside_scope_non_cancer": 1
+          }
+        },
+        "4": {
+          "Lupus": {
+            "images": 5,
+            "groups": 2,
+            "correct": 1,
+            "errors": 4,
+            "recall": 0.2,
+            "confusion": {
+              "Psoriasis": 3,
+              "Eczema": 1
+            },
+            "errors_in_current_specialist_scope": 4,
+            "errors_locked_cancer": 0,
+            "errors_outside_scope_non_cancer": 0
+          },
+          "Psoriasis": {
+            "images": 29,
+            "groups": 13,
+            "correct": 19,
+            "errors": 10,
+            "recall": 0.6551724137931034,
+            "confusion": {
+              "Eczema": 8,
+              "SkinCancer": 1,
+              "Warts": 1
+            },
+            "errors_in_current_specialist_scope": 8,
+            "errors_locked_cancer": 1,
+            "errors_outside_scope_non_cancer": 1
+          },
+          "Tinea": {
+            "images": 69,
+            "groups": 49,
+            "correct": 3,
+            "errors": 66,
+            "recall": 0.043478260869565216,
+            "confusion": {
+              "Eczema": 40,
+              "Psoriasis": 16,
+              "SkinCancer": 4,
+              "Acne": 2,
+              "Candidiasis": 2,
+              "Lupus": 2
+            },
+            "errors_in_current_specialist_scope": 58,
+            "errors_locked_cancer": 4,
+            "errors_outside_scope_non_cancer": 4
+          }
+        }
+      }
+    },
+    "dermacon_historical_official_test": {
+      "unique_images": 183,
+      "per_fold": {
+        "0": {
+          "Lupus": {
+            "images": 0,
+            "groups": 0,
+            "correct": 0,
+            "errors": 0,
+            "recall": null,
+            "confusion": {},
+            "errors_in_current_specialist_scope": 0,
+            "errors_locked_cancer": 0,
+            "errors_outside_scope_non_cancer": 0
+          },
+          "Psoriasis": {
+            "images": 33,
+            "groups": 19,
+            "correct": 23,
+            "errors": 10,
+            "recall": 0.696969696969697,
+            "confusion": {
+              "Eczema": 5,
+              "Tinea": 2,
+              "Acne": 1,
+              "Warts": 1,
+              "SkinCancer": 1
+            },
+            "errors_in_current_specialist_scope": 7,
+            "errors_locked_cancer": 1,
+            "errors_outside_scope_non_cancer": 2
+          },
+          "Tinea": {
+            "images": 50,
+            "groups": 41,
+            "correct": 5,
+            "errors": 45,
+            "recall": 0.1,
+            "confusion": {
+              "Eczema": 29,
+              "Psoriasis": 14,
+              "Lupus": 1,
+              "Warts": 1
+            },
+            "errors_in_current_specialist_scope": 44,
+            "errors_locked_cancer": 0,
+            "errors_outside_scope_non_cancer": 1
+          }
+        },
+        "1": {
+          "Lupus": {
+            "images": 0,
+            "groups": 0,
+            "correct": 0,
+            "errors": 0,
+            "recall": null,
+            "confusion": {},
+            "errors_in_current_specialist_scope": 0,
+            "errors_locked_cancer": 0,
+            "errors_outside_scope_non_cancer": 0
+          },
+          "Psoriasis": {
+            "images": 33,
+            "groups": 19,
+            "correct": 26,
+            "errors": 7,
+            "recall": 0.7878787878787878,
+            "confusion": {
+              "Eczema": 2,
+              "Tinea": 2,
+              "SkinCancer": 2,
+              "Warts": 1
+            },
+            "errors_in_current_specialist_scope": 4,
+            "errors_locked_cancer": 2,
+            "errors_outside_scope_non_cancer": 1
+          },
+          "Tinea": {
+            "images": 50,
+            "groups": 41,
+            "correct": 4,
+            "errors": 46,
+            "recall": 0.08,
+            "confusion": {
+              "Eczema": 24,
+              "Psoriasis": 18,
+              "Warts": 2,
+              "Lupus": 1,
+              "Candidiasis": 1
+            },
+            "errors_in_current_specialist_scope": 43,
+            "errors_locked_cancer": 0,
+            "errors_outside_scope_non_cancer": 3
+          }
+        },
+        "2": {
+          "Lupus": {
+            "images": 0,
+            "groups": 0,
+            "correct": 0,
+            "errors": 0,
+            "recall": null,
+            "confusion": {},
+            "errors_in_current_specialist_scope": 0,
+            "errors_locked_cancer": 0,
+            "errors_outside_scope_non_cancer": 0
+          },
+          "Psoriasis": {
+            "images": 33,
+            "groups": 19,
+            "correct": 26,
+            "errors": 7,
+            "recall": 0.7878787878787878,
+            "confusion": {
+              "Tinea": 2,
+              "Warts": 2,
+              "SkinCancer": 2,
+              "Eczema": 1
+            },
+            "errors_in_current_specialist_scope": 3,
+            "errors_locked_cancer": 2,
+            "errors_outside_scope_non_cancer": 2
+          },
+          "Tinea": {
+            "images": 50,
+            "groups": 41,
+            "correct": 4,
+            "errors": 46,
+            "recall": 0.08,
+            "confusion": {
+              "Eczema": 26,
+              "Psoriasis": 16,
+              "Warts": 3,
+              "Acne": 1
+            },
+            "errors_in_current_specialist_scope": 42,
+            "errors_locked_cancer": 0,
+            "errors_outside_scope_non_cancer": 4
+          }
+        },
+        "3": {
+          "Lupus": {
+            "images": 0,
+            "groups": 0,
+            "correct": 0,
+            "errors": 0,
+            "recall": null,
+            "confusion": {},
+            "errors_in_current_specialist_scope": 0,
+            "errors_locked_cancer": 0,
+            "errors_outside_scope_non_cancer": 0
+          },
+          "Psoriasis": {
+            "images": 33,
+            "groups": 19,
+            "correct": 22,
+            "errors": 11,
+            "recall": 0.6666666666666666,
+            "confusion": {
+              "Eczema": 5,
+              "Tinea": 2,
+              "SkinCancer": 2,
+              "Lupus": 1,
+              "Warts": 1
+            },
+            "errors_in_current_specialist_scope": 8,
+            "errors_locked_cancer": 2,
+            "errors_outside_scope_non_cancer": 1
+          },
+          "Tinea": {
+            "images": 50,
+            "groups": 41,
+            "correct": 7,
+            "errors": 43,
+            "recall": 0.14,
+            "confusion": {
+              "Eczema": 29,
+              "Psoriasis": 10,
+              "Lupus": 3,
+              "Warts": 1
+            },
+            "errors_in_current_specialist_scope": 42,
+            "errors_locked_cancer": 0,
+            "errors_outside_scope_non_cancer": 1
+          }
+        },
+        "4": {
+          "Lupus": {
+            "images": 0,
+            "groups": 0,
+            "correct": 0,
+            "errors": 0,
+            "recall": null,
+            "confusion": {},
+            "errors_in_current_specialist_scope": 0,
+            "errors_locked_cancer": 0,
+            "errors_outside_scope_non_cancer": 0
+          },
+          "Psoriasis": {
+            "images": 33,
+            "groups": 19,
+            "correct": 19,
+            "errors": 14,
+            "recall": 0.5757575757575758,
+            "confusion": {
+              "Eczema": 7,
+              "Tinea": 3,
+              "SkinCancer": 2,
+              "Warts": 1,
+              "Candidiasis": 1
+            },
+            "errors_in_current_specialist_scope": 10,
+            "errors_locked_cancer": 2,
+            "errors_outside_scope_non_cancer": 2
+          },
+          "Tinea": {
+            "images": 50,
+            "groups": 41,
+            "correct": 9,
+            "errors": 41,
+            "recall": 0.18,
+            "confusion": {
+              "Eczema": 30,
+              "Psoriasis": 8,
+              "Warts": 2,
+              "Acne": 1
+            },
+            "errors_in_current_specialist_scope": 38,
+            "errors_locked_cancer": 0,
+            "errors_outside_scope_non_cancer": 3
+          }
+        }
+      }
+    },
+    "skindisnet_transfer": {
+      "unique_images": 723,
+      "per_fold": {
+        "0": {
+          "Lupus": {
+            "images": 0,
+            "groups": 0,
+            "correct": 0,
+            "errors": 0,
+            "recall": null,
+            "confusion": {},
+            "errors_in_current_specialist_scope": 0,
+            "errors_locked_cancer": 0,
+            "errors_outside_scope_non_cancer": 0
+          },
+          "Psoriasis": {
+            "images": 0,
+            "groups": 0,
+            "correct": 0,
+            "errors": 0,
+            "recall": null,
+            "confusion": {},
+            "errors_in_current_specialist_scope": 0,
+            "errors_locked_cancer": 0,
+            "errors_outside_scope_non_cancer": 0
+          },
+          "Tinea": {
+            "images": 265,
+            "groups": 68,
+            "correct": 31,
+            "errors": 234,
+            "recall": 0.1169811320754717,
+            "confusion": {
+              "Eczema": 132,
+              "Psoriasis": 76,
+              "Warts": 9,
+              "Acne": 7,
+              "SkinCancer": 6,
+              "Candidiasis": 3,
+              "Lupus": 1
+            },
+            "errors_in_current_specialist_scope": 209,
+            "errors_locked_cancer": 6,
+            "errors_outside_scope_non_cancer": 19
+          }
+        },
+        "1": {
+          "Lupus": {
+            "images": 0,
+            "groups": 0,
+            "correct": 0,
+            "errors": 0,
+            "recall": null,
+            "confusion": {},
+            "errors_in_current_specialist_scope": 0,
+            "errors_locked_cancer": 0,
+            "errors_outside_scope_non_cancer": 0
+          },
+          "Psoriasis": {
+            "images": 0,
+            "groups": 0,
+            "correct": 0,
+            "errors": 0,
+            "recall": null,
+            "confusion": {},
+            "errors_in_current_specialist_scope": 0,
+            "errors_locked_cancer": 0,
+            "errors_outside_scope_non_cancer": 0
+          },
+          "Tinea": {
+            "images": 265,
+            "groups": 68,
+            "correct": 28,
+            "errors": 237,
+            "recall": 0.10566037735849057,
+            "confusion": {
+              "Eczema": 119,
+              "Psoriasis": 64,
+              "Warts": 16,
+              "Acne": 14,
+              "Candidiasis": 11,
+              "SkinCancer": 10,
+              "Lupus": 3
+            },
+            "errors_in_current_specialist_scope": 186,
+            "errors_locked_cancer": 10,
+            "errors_outside_scope_non_cancer": 41
+          }
+        },
+        "2": {
+          "Lupus": {
+            "images": 0,
+            "groups": 0,
+            "correct": 0,
+            "errors": 0,
+            "recall": null,
+            "confusion": {},
+            "errors_in_current_specialist_scope": 0,
+            "errors_locked_cancer": 0,
+            "errors_outside_scope_non_cancer": 0
+          },
+          "Psoriasis": {
+            "images": 0,
+            "groups": 0,
+            "correct": 0,
+            "errors": 0,
+            "recall": null,
+            "confusion": {},
+            "errors_in_current_specialist_scope": 0,
+            "errors_locked_cancer": 0,
+            "errors_outside_scope_non_cancer": 0
+          },
+          "Tinea": {
+            "images": 265,
+            "groups": 68,
+            "correct": 22,
+            "errors": 243,
+            "recall": 0.0830188679245283,
+            "confusion": {
+              "Eczema": 129,
+              "Psoriasis": 59,
+              "Warts": 20,
+              "Acne": 11,
+              "SkinCancer": 10,
+              "Lupus": 8,
+              "Candidiasis": 6
+            },
+            "errors_in_current_specialist_scope": 196,
+            "errors_locked_cancer": 10,
+            "errors_outside_scope_non_cancer": 37
+          }
+        },
+        "3": {
+          "Lupus": {
+            "images": 0,
+            "groups": 0,
+            "correct": 0,
+            "errors": 0,
+            "recall": null,
+            "confusion": {},
+            "errors_in_current_specialist_scope": 0,
+            "errors_locked_cancer": 0,
+            "errors_outside_scope_non_cancer": 0
+          },
+          "Psoriasis": {
+            "images": 0,
+            "groups": 0,
+            "correct": 0,
+            "errors": 0,
+            "recall": null,
+            "confusion": {},
+            "errors_in_current_specialist_scope": 0,
+            "errors_locked_cancer": 0,
+            "errors_outside_scope_non_cancer": 0
+          },
+          "Tinea": {
+            "images": 265,
+            "groups": 68,
+            "correct": 43,
+            "errors": 222,
+            "recall": 0.16226415094339622,
+            "confusion": {
+              "Eczema": 106,
+              "Psoriasis": 61,
+              "Warts": 27,
+              "Lupus": 12,
+              "SkinCancer": 7,
+              "Acne": 5,
+              "Candidiasis": 4
+            },
+            "errors_in_current_specialist_scope": 179,
+            "errors_locked_cancer": 7,
+            "errors_outside_scope_non_cancer": 36
+          }
+        },
+        "4": {
+          "Lupus": {
+            "images": 0,
+            "groups": 0,
+            "correct": 0,
+            "errors": 0,
+            "recall": null,
+            "confusion": {},
+            "errors_in_current_specialist_scope": 0,
+            "errors_locked_cancer": 0,
+            "errors_outside_scope_non_cancer": 0
+          },
+          "Psoriasis": {
+            "images": 0,
+            "groups": 0,
+            "correct": 0,
+            "errors": 0,
+            "recall": null,
+            "confusion": {},
+            "errors_in_current_specialist_scope": 0,
+            "errors_locked_cancer": 0,
+            "errors_outside_scope_non_cancer": 0
+          },
+          "Tinea": {
+            "images": 265,
+            "groups": 68,
+            "correct": 49,
+            "errors": 216,
+            "recall": 0.18490566037735848,
+            "confusion": {
+              "Eczema": 126,
+              "Candidiasis": 27,
+              "Psoriasis": 19,
+              "Warts": 18,
+              "Acne": 13,
+              "SkinCancer": 7,
+              "Lupus": 6
+            },
+            "errors_in_current_specialist_scope": 151,
+            "errors_locked_cancer": 7,
+            "errors_outside_scope_non_cancer": 58
+          }
+        }
+      }
+    }
+  },
+  "scin_source_annotations": {
+    "Lupus": {
+      "images": 11,
+      "source_mapping_mismatch_flags": 0,
+      "tied_top_images": 0,
+      "eczema_in_original_differential": 0,
+      "predicted_eczema": 8,
+      "predicted_eczema_with_eczema_in_original_differential": 0
+    },
+    "Psoriasis": {
+      "images": 107,
+      "source_mapping_mismatch_flags": 0,
+      "tied_top_images": 19,
+      "eczema_in_original_differential": 49,
+      "predicted_eczema": 48,
+      "predicted_eczema_with_eczema_in_original_differential": 25
+    },
+    "Tinea": {
+      "images": 103,
+      "source_mapping_mismatch_flags": 0,
+      "tied_top_images": 13,
+      "eczema_in_original_differential": 56,
+      "predicted_eczema": 60,
+      "predicted_eczema_with_eczema_in_original_differential": 33
+    }
+  },
+  "weak_errors": 717,
+  "mixed_label_train_groups_by_fold": {},
+  "fold0_train_images_verified": 1533,
+  "fold0_small_image_counts": {
+    "Lupus": 89,
+    "Psoriasis": 51,
+    "Tinea": 27
+  },
+  "labels_changed": 0,
+  "new_model_fits": 0,
+  "source_selection": false,
+  "serving_changed": false
+}

@@ -1,6 +1,6 @@
 # Thiết kế API — DermAI Clinic
 
-> Cập nhật theo mã nguồn runtime ngày 14/08/2026. Base path nghiệp vụ là
+> Đối chiếu với controller trong repository ngày 07/10/2026. Base path nghiệp vụ là
 > `/api/v1`; AI đi qua Gateway với base path `/ai`.
 
 ## 1. Quy ước chung
@@ -46,7 +46,7 @@ session bị xóa và người dùng quay về màn hình đăng nhập.
 | POST | `/api/v1/auth/me/avatar` | Authenticated | Upload avatar tài khoản |
 | GET | `/api/v1/auth/me/avatar` | Authenticated | Đọc avatar của tôi |
 | GET | `/api/v1/auth/accounts/{id}/avatar` | Staff | Đọc avatar tài khoản để hiển thị quản trị/hỗ trợ |
-| POST | `/api/v1/auth/staff` | Admin | Tạo Doctor, Receptionist hoặc Admin |
+| POST | `/api/v1/auth/staff` | Admin | Tạo Doctor, Receptionist, Pharmacist hoặc Admin |
 | GET | `/api/v1/auth/staff?role=` | Admin | Danh sách tài khoản nhân sự theo vai trò |
 | GET | `/api/v1/auth/staff/directory` | Staff | Danh bạ nhân sự tối thiểu phục vụ giao diện |
 | PATCH | `/api/v1/auth/staff/{id}/account` | Admin | Khóa hoặc mở tài khoản nhân sự |
@@ -67,8 +67,8 @@ session bị xóa và người dùng quay về màn hình đăng nhập.
 | GET | `/api/v1/patients/me` | Patient | Hồ sơ của tôi |
 | PATCH | `/api/v1/patients/me` | Patient | Cập nhật hồ sơ |
 | GET | `/api/v1/patients?query=&page=&size=` | Receptionist/Admin | Tìm theo tên hoặc số điện thoại; Doctor không được liệt kê toàn bộ bệnh nhân |
-| GET | `/api/v1/patients/{patientId}` | Doctor có quan hệ điều trị/Receptionist/Admin | Xem hồ sơ theo patient ID |
-| GET | `/api/v1/patients/identity/{identityId}` | Receptionist/Admin | Tìm hồ sơ theo identity |
+| GET | `/api/v1/patients/{patientId}` | Doctor có quan hệ điều trị/Receptionist/Admin | Doctor xem hồ sơ lâm sàng; Receptionist/Admin chỉ nhận DTO tối thiểu |
+| GET | `/api/v1/patients/identity/{identityId}` | Receptionist/Admin | Tìm DTO tối thiểu theo identity, không trả tiền sử/allergy |
 | POST | `/api/v1/patients/hotline` | Receptionist/Admin | Tạo hoặc lấy hồ sơ khách theo số điện thoại |
 
 Số điện thoại nhận các dạng `+84`, `84`, `0084`, khoảng trắng, dấu chấm hoặc dấu
@@ -79,15 +79,17 @@ gạch và được chuẩn hóa về `0...`. Số không hợp lệ trả HTTP 
 | Method | Endpoint | Quyền | Mô tả |
 |---|---|---|---|
 | GET | `/api/v1/patients/me/ai-assessments` | Patient | Lịch sử kết quả của tôi |
-| POST | `/api/v1/patients/me/ai-assessments` | Patient | Lưu metadata kết quả inference |
-| PUT | `/api/v1/patients/me/ai-assessments/{id}/image` | Patient sở hữu | Lưu ảnh gốc của lần kiểm tra |
+| POST | `/api/v1/patients/me/ai-assessments/analyze` | Patient | Consent + ảnh; backend gọi AI và tự lưu kết quả |
 | GET | `/api/v1/patients/me/ai-assessments/{id}/image` | Patient sở hữu | Đọc ảnh gốc của tôi |
 | PATCH | `/api/v1/patients/me/ai-assessments/{id}/sharing` | Patient sở hữu | Bật/tắt chia sẻ với lịch khám |
 | GET | `/api/v1/patients/appointments/{appointmentId}/shared-ai-assessment` | Doctor phụ trách | Đọc metadata đã được Patient chia sẻ |
 | GET | `/api/v1/patients/appointments/{appointmentId}/shared-ai-assessment/image` | Doctor phụ trách | Đọc ảnh đã chia sẻ |
-| DELETE | `/api/v1/patients/me/ai-assessments/{id}` | Patient sở hữu | Xóa kết quả và ảnh khỏi lịch sử |
+| DELETE | `/api/v1/patients/me/ai-assessments/{id}` | Patient sở hữu | Soft-delete metadata, tắt chia sẻ và xóa byte ảnh |
+| GET | `/api/v1/patients/audit/ai-access` | Admin | 200 sự kiện truy cập/chia sẻ/xóa gần nhất |
 
-Ảnh gốc được lưu dạng BLOB trong Patient Service và endpoint ảnh trả
+Ảnh gốc được mã hóa AES-256-GCM trước khi lưu BLOB; production bắt buộc cấu hình
+`DATA_ENCRYPTION_KEY`. Consent và audit là sự kiện bất biến ở tầng PostgreSQL.
+Ảnh mặc định hết hạn sau 180 ngày và job hằng ngày xóa byte ảnh. Endpoint ảnh trả
 `Cache-Control: no-store`. Doctor chỉ truy cập khi Patient đã chia sẻ và Doctor
 đúng là người phụ trách appointment. Grad-CAM không được lưu lâu dài.
 
@@ -135,11 +137,11 @@ Thay đổi ca/nghỉ xung đột trả HTTP 409 với
 | Method | Endpoint | Quyền | Mô tả |
 |---|---|---|---|
 | POST | `/api/v1/appointments/holds` | Patient | Giữ slot 5 phút và snapshot giá |
-| POST | `/api/v1/appointments/holds/{id}/confirm` | Patient | Xác nhận hold thành `ASSIGNED` |
+| POST | `/api/v1/appointments/holds/{id}/confirm` | Patient | Xác nhận hold; lịch chuyển sang bước chờ thanh toán cọc |
 | DELETE | `/api/v1/appointments/holds/{id}` | Patient sở hữu | Nhả hold |
 | POST | `/api/v1/appointments` | Patient/Receptionist/Admin | Tạo lịch trực tiếp sau kiểm tra availability |
 | POST | `/api/v1/appointments/{id}/assign` | Receptionist/Admin | Phân bác sĩ/slot và cập nhật snapshot giá |
-| POST | `/api/v1/appointments/{id}/confirm` | Receptionist/Admin | Xác nhận lịch |
+| POST | `/api/v1/appointments/{id}/confirm` | Receptionist/Admin | Xác nhận lịch sau khi cọc đã được đối soát (`PENDING_CONFIRMATION`) |
 | POST | `/api/v1/appointments/{id}/check-in` | Receptionist/Admin | Tiếp nhận bệnh nhân tại phòng khám |
 | POST | `/api/v1/appointments/{id}/start` | Doctor phụ trách | Bắt đầu lượt khám |
 | POST | `/api/v1/appointments/{id}/complete` | Doctor phụ trách hoặc Receptionist/Admin | Hoàn tất; nhân viên chỉ sửa ca `IN_PROGRESS` bị treo quá lâu |
@@ -155,8 +157,9 @@ Appointment Service đối chiếu `patientId` với `patientIdentityId` và `do
 với `doctorIdentityId` tại service nguồn trước khi ghi dữ liệu. Cặp sai trả 409;
 dịch vụ xác minh không sẵn sàng trả 503 và không tạo lịch.
 
-Patient chỉ tự đổi/hủy lịch ở trạng thái `PENDING` hoặc `ASSIGNED`, trong 30 phút
-từ lúc đặt và trước khi lễ tân xác nhận. Sau đó phải liên hệ hỗ trợ. Patient có
+Patient chỉ tự đổi lịch `PENDING`/`ASSIGNED` trong 30 phút từ lúc đặt. Trong
+thời hạn này Patient có thể tự hủy thêm lịch `PENDING_CONFIRMATION`/`CONFIRMED`,
+nhưng không tự đổi lịch đã cọc/đã xác nhận. Sau đó phải liên hệ hỗ trợ. Patient có
 tối đa ba lịch active, không được trùng thời gian và không đặt cùng Doctor hai lần
 trong cùng ngày. Nhân viên được phép vượt giới hạn ba lịch khi thật sự cần nhưng
 vẫn không thể tạo hai lịch chiếm cùng một slot.
@@ -228,11 +231,68 @@ chất là điểm khớp quy tắc định tuyến được gán deterministic,
 | GET | `/api/v1/prescriptions/mine` | Patient | Đơn của tôi |
 | GET | `/api/v1/prescriptions/patient/{patientId}` | Doctor/Admin | Doctor chỉ nhận đơn do mình ký; Admin xem toàn phòng khám |
 
-Việc tạo hồ sơ và kê đơn là chức năng bổ trợ, không phải điều kiện bắt buộc để
-Doctor hoàn tất một lượt khám. Hệ thống hiện không có thanh toán, hóa đơn hoặc
-chi phí phát sinh.
+Việc tạo hồ sơ và kê đơn không bắt buộc để Doctor hoàn tất lượt khám; xác nhận
+danh sách dịch vụ đã thực hiện là bắt buộc. Hóa đơn sau khám do Prescription
+Service quản lý và có thể gồm phí khám, dịch vụ, thuốc và khoản cọc đã khấu trừ.
 
-## 8. API nội bộ giữa service
+## 8. Thanh toán cọc và hoàn tiền
+
+| Method | Endpoint | Quyền | Mô tả |
+|---|---|---|---|
+| GET/PUT | `/api/v1/payments/deposit-setting` | Patient/Receptionist/Admin (GET), Admin (PUT) | Xem hoặc cấu hình mức cọc |
+| POST | `/api/v1/payments` | Patient/Receptionist/Admin | Tạo liên kết thanh toán cọc cho booking |
+| GET | `/api/v1/payments/booking/{bookingId}` | Patient sở hữu/Receptionist/Admin | Xem giao dịch cọc |
+| POST | `/api/v1/payments/{orderCode}/reconcile` | Người có quyền với giao dịch | Đối soát trạng thái khi quay về từ PayOS |
+| POST | `/api/v1/payments/{orderCode}/cancel` | Patient sở hữu | Hủy giao dịch đang chờ |
+| POST | `/api/v1/payments/booking/{bookingId}/refunds/request` | Patient sở hữu | Yêu cầu hoàn cọc cho lịch đã hủy đủ điều kiện |
+| GET | `/api/v1/payments/refunds` | Receptionist/Admin | Hàng đợi và lịch sử hoàn cọc |
+| POST | `/api/v1/payments/{paymentId}/refunds/complete` | Receptionist | Ghi hoàn tiền mặt/chuyển khoản và chứng từ tùy chọn (multipart) |
+| GET | `/api/v1/payments/{paymentId}/refunds/evidence` | Receptionist/Admin | Đọc ảnh chứng từ, `Cache-Control: no-store` |
+| GET | `/api/v1/payments/reports?from=&to=` | Admin | Báo cáo giao dịch cọc/hoàn |
+| POST | `/api/v1/payments/payos-webhook` | PayOS, xác thực payload | Nhận trạng thái thanh toán từ PayOS |
+
+Mức hoàn cọc theo thời điểm yêu cầu: trong 30 phút từ khi tạo giao dịch hoặc
+trước giờ khám ít nhất 24 giờ được hoàn 100%; trước ít nhất 6 giờ được hoàn 50%;
+muộn hơn không đủ điều kiện hoàn theo yêu cầu bệnh nhân. Hủy do phòng khám được
+hoàn toàn bộ. `PAYOS_FAKE_MODE` chỉ dành cho demo/kiểm thử.
+
+## 9. Dịch vụ khám, hóa đơn và đối soát
+
+| Method | Endpoint | Quyền | Mô tả |
+|---|---|---|---|
+| GET/POST | `/api/v1/services` | Công khai (GET), Admin (POST) | Xem/tạo danh mục dịch vụ |
+| GET | `/api/v1/services/admin` | Admin | Xem toàn bộ dịch vụ |
+| PUT | `/api/v1/services/{id}` | Admin | Cập nhật dịch vụ |
+| GET/PUT | `/api/v1/appointments/{appointmentId}/performed-services` | Theo lịch (GET), Doctor phụ trách (PUT) | Xem/xác nhận dịch vụ đã thực hiện |
+| GET/POST | `/api/v1/medicines` | Doctor/Receptionist/Admin (GET), Admin (POST) | Xem/tạo danh mục thuốc |
+| PUT | `/api/v1/medicines/{id}` | Admin | Cập nhật thuốc |
+| POST | `/api/v1/billing/invoices` | Receptionist | Lập hóa đơn cho ca khám |
+| GET | `/api/v1/billing/invoices` | Theo vai trò/quyền sở hữu | Danh sách hóa đơn |
+| GET | `/api/v1/billing/invoices/{id}` | Theo vai trò/quyền sở hữu | Chi tiết hóa đơn |
+| POST | `/api/v1/billing/invoices/{id}/cash` | Receptionist | Thu tiền mặt |
+| POST | `/api/v1/billing/invoices/{id}/online-payment` | Receptionist/Patient sở hữu | Tạo thanh toán hóa đơn qua PayOS |
+| POST | `/api/v1/billing/invoices/{id}/adjustments` | Admin | Điều chỉnh có lý do |
+| GET | `/api/v1/billing/reports/summary`, `/api/v1/billing/reports/cash-flow` | Admin | Tổng hợp và dòng tiền theo khoảng thời gian |
+| GET | `/api/v1/billing/reports/export.csv` | Admin | Xuất đối soát CSV |
+
+`POST /api/v1/billing/invoices/{id}/dispense` trả 409 theo luồng hiện hành;
+đơn của hóa đơn đã thanh toán được chuyển sang quầy dược để dược sĩ xuất kho.
+
+## 10. Kho thuốc và quầy dược
+
+| Method | Endpoint | Quyền | Mô tả |
+|---|---|---|---|
+| GET | `/api/v1/pharmacy/pending-prescriptions` | Pharmacist | Đơn đã thanh toán chờ xuất |
+| POST | `/api/v1/pharmacy/dispense` | Pharmacist | Xuất thuốc, trừ lô theo FEFO và ghi nhật ký |
+| GET | `/api/v1/inventory/products`, `/api/v1/inventory/batches`, `/api/v1/inventory/summary`, `/api/v1/inventory/logs` | Pharmacist/Admin | Xem danh mục, lô, tổng quan và lịch sử |
+| POST | `/api/v1/inventory/products`, `/api/v1/inventory/import-batch` | Pharmacist | Tạo thuốc và nhập lô |
+| PATCH | `/api/v1/inventory/products/{productId}/sale-status` | Pharmacist | Đổi trạng thái bán |
+| GET | `/api/v1/inventory/alerts/low-stock`, `/api/v1/inventory/alerts/expiring` | Pharmacist/Admin | Cảnh báo tồn thấp và lô sắp hết hạn |
+
+Inventory Service là FastAPI riêng sau Gateway, dùng schema PostgreSQL
+`pharmacy`. Admin chỉ xem; thao tác thay đổi kho yêu cầu `PHARMACIST`.
+
+## 11. API nội bộ giữa service
 
 | Method | Endpoint | Xác thực | Mô tả |
 |---|---|---|---|
@@ -242,17 +302,17 @@ Endpoint nội bộ không được expose trực tiếp trên production ingres
 hoặc sai trả 403; Doctor Service fail-closed và không ghi lịch làm/nghỉ khi chưa
 xác minh được xung đột.
 
-## 9. AI API
+## 12. AI API
 
 | Method | Endpoint | Quyền | Mô tả |
 |---|---|---|---|
 | GET | `/ai/health` | Public | Trả `modelReady` và `ragReady` |
-| POST | `/ai/predict` | Patient | Inference ảnh, Top-3, Grad-CAM và hướng dẫn RAG |
+| POST | `/api/v1/patients/me/ai-assessments/analyze` | Patient | Nhận consent + ảnh, Patient Service gọi AI nội bộ rồi lưu kết quả/ảnh trong một transaction |
 | POST | `/ai/chat` | Authenticated | RAG extractive từ index local |
 | POST | `/ai/public-chat` | Public | Gemini tư vấn kiến thức da liễu chung |
 | POST | `/ai/support-chat` | Patient | Trả FAQ/quy trình, tra cứu RAG an toàn hoặc yêu cầu chuyển lễ tân |
 
-Ví dụ rút gọn của `/ai/predict`:
+Ví dụ rút gọn của trường `prediction` trong response `/api/v1/patients/me/ai-assessments/analyze`:
 
 ```json
 {
@@ -276,8 +336,8 @@ Ví dụ rút gọn của `/ai/predict`:
 }
 ```
 
-Response không có `predictionId`; Grad-CAM là data URL tạm thời. Sau inference,
-frontend gọi Patient API để lưu metadata và ảnh gốc. `guidance` tối đa ba ý,
+Response gồm `assessment` đã lưu và `prediction`; Grad-CAM là data URL tạm thời.
+Trình duyệt không được tự gửi nhãn/confidence để lưu. `guidance` tối đa ba ý,
 không chứa liều hoặc tên thuốc kê đơn. Thiếu checkpoint trả HTTP 503; RAG chưa
 sẵn sàng trả `has_evidence=false` thay vì tự sinh nội dung không có nguồn.
 
@@ -317,7 +377,7 @@ gặp lễ tân lần đầu được AI hỏi vấn đề; nếu Patient tiếp
 liên tiếp không giải quyết được thì tự chuyển. WebSocket `CHAT_CHANGED` làm mới
 hộp thư lễ tân và cuộc trò chuyện của Patient.
 
-## 9. Recommendation response
+## 13. Recommendation response
 
 ```json
 {
@@ -336,7 +396,7 @@ hộp thư lễ tân và cuộc trò chuyện của Patient.
 }
 ```
 
-## 10. WebSocket
+## 14. WebSocket
 
 Endpoint: `/api/v1/appointments/ws/slots`.
 

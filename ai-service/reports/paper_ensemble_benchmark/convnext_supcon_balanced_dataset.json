@@ -1,0 +1,105 @@
+{
+  "classes": [
+    "Acne",
+    "Candidiasis",
+    "Eczema",
+    "Lupus",
+    "Psoriasis",
+    "SkinCancer",
+    "Tinea",
+    "Warts"
+  ],
+  "seed": 42,
+  "train": {
+    "Acne": 563,
+    "Candidiasis": 207,
+    "Eczema": 1339,
+    "Lupus": 268,
+    "Psoriasis": 762,
+    "SkinCancer": 575,
+    "Tinea": 841,
+    "Warts": 490
+  },
+  "validation": {
+    "Acne": 100,
+    "Candidiasis": 36,
+    "Eczema": 238,
+    "Lupus": 47,
+    "Psoriasis": 135,
+    "SkinCancer": 102,
+    "Tinea": 148,
+    "Warts": 86
+  },
+  "fixed_test_untouched": {
+    "Acne": 65,
+    "Candidiasis": 27,
+    "Eczema": 111,
+    "Lupus": 34,
+    "Psoriasis": 88,
+    "SkinCancer": 77,
+    "Tinea": 98,
+    "Warts": 64
+  },
+  "totals": {
+    "train": 5045,
+    "validation": 892,
+    "fixed_test_untouched": 564
+  },
+  "excluded": {
+    "label_conflicts": {
+      "Acne": 1,
+      "Candidiasis": 8,
+      "Eczema": 0,
+      "Lupus": 0,
+      "Psoriasis": 0,
+      "SkinCancer": 0,
+      "Tinea": 6,
+      "Warts": 0
+    },
+    "exact_duplicates": {
+      "Acne": 6,
+      "Candidiasis": 4,
+      "Eczema": 63,
+      "Lupus": 4,
+      "Psoriasis": 23,
+      "SkinCancer": 15,
+      "Tinea": 21,
+      "Warts": 23
+    },
+    "exact_cross_split": {
+      "Acne": 2,
+      "Candidiasis": 0,
+      "Eczema": 13,
+      "Lupus": 2,
+      "Psoriasis": 6,
+      "SkinCancer": 1,
+      "Tinea": 8,
+      "Warts": 2
+    },
+    "near_test": {
+      "Acne": 0,
+      "Candidiasis": 0,
+      "Eczema": 3,
+      "Lupus": 1,
+      "Psoriasis": 1,
+      "SkinCancer": 0,
+      "Tinea": 2,
+      "Warts": 3
+    },
+    "near_label_conflicts": {
+      "Acne": 0,
+      "Candidiasis": 0,
+      "Eczema": 0,
+      "Lupus": 0,
+      "Psoriasis": 0,
+      "SkinCancer": 0,
+      "Tinea": 0,
+      "Warts": 0
+    }
+  },
+  "near_duplicate_audit": {
+    "groups": 5392,
+    "multi_image_groups": 319,
+    "conflicting_groups": 0
+  }
+}

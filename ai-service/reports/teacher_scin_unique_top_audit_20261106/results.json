@@ -1,0 +1,122 @@
+{
+  "completed_utc": "2026-11-06T07:39:05.191826+00:00",
+  "protocol_sha256": "f0073c364f7353a8fd0543590259a29ee77cf17714ead7a56fe3c61152a4154b",
+  "pools": {
+    "fold1_cv0": {
+      "fit_images": 2699,
+      "query_images": 1332,
+      "scin_fit_images": 449,
+      "scin_source_cases": 205,
+      "tied_target_cases": 28,
+      "tied_target_images": 60,
+      "tied_by_class": {
+        "Eczema": {
+          "cases": 19,
+          "images": 37
+        },
+        "Lupus": {
+          "cases": 0,
+          "images": 0
+        },
+        "Psoriasis": {
+          "cases": 6,
+          "images": 15
+        },
+        "Tinea": {
+          "cases": 3,
+          "images": 8
+        }
+      },
+      "order_sensitive_target_cases": 28,
+      "overlaps": {
+        "path": 0,
+        "sha256": 0,
+        "group": 0,
+        "case_id": 0
+      },
+      "exact_matched_control": true,
+      "retained_images": 2639,
+      "lupus_scin_retained": 1
+    },
+    "fold1_cv1": {
+      "fit_images": 2697,
+      "query_images": 1334,
+      "scin_fit_images": 471,
+      "scin_source_cases": 219,
+      "tied_target_cases": 32,
+      "tied_target_images": 63,
+      "tied_by_class": {
+        "Eczema": {
+          "cases": 24,
+          "images": 46
+        },
+        "Lupus": {
+          "cases": 0,
+          "images": 0
+        },
+        "Psoriasis": {
+          "cases": 5,
+          "images": 10
+        },
+        "Tinea": {
+          "cases": 3,
+          "images": 7
+        }
+      },
+      "order_sensitive_target_cases": 32,
+      "overlaps": {
+        "path": 0,
+        "sha256": 0,
+        "group": 0,
+        "case_id": 0
+      },
+      "exact_matched_control": true,
+      "retained_images": 2634,
+      "lupus_scin_retained": 8
+    },
+    "fold1_cv2": {
+      "fit_images": 2666,
+      "query_images": 1365,
+      "scin_fit_images": 404,
+      "scin_source_cases": 190,
+      "tied_target_cases": 28,
+      "tied_target_images": 57,
+      "tied_by_class": {
+        "Eczema": {
+          "cases": 23,
+          "images": 47
+        },
+        "Lupus": {
+          "cases": 0,
+          "images": 0
+        },
+        "Psoriasis": {
+          "cases": 3,
+          "images": 7
+        },
+        "Tinea": {
+          "cases": 2,
+          "images": 3
+        }
+      },
+      "order_sensitive_target_cases": 28,
+      "overlaps": {
+        "path": 0,
+        "sha256": 0,
+        "group": 0,
+        "case_id": 0
+      },
+      "exact_matched_control": true,
+      "retained_images": 2609,
+      "lupus_scin_retained": 9
+    }
+  },
+  "unique_scin_fit_images_checked": 662,
+  "all_4031_image_integrity_audit_reused": true,
+  "fit_memberships": 8062,
+  "new_clinical_reviews": 0,
+  "new_images": 0,
+  "labels_changed": 0,
+  "CNN_fits": 0,
+  "selected": null
+}

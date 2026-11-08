@@ -1,0 +1,11 @@
+{
+  "state": "complete_verified_cnn8_gce_301",
+  "pid": null,
+  "updated_utc": "2026-11-05T17:42:03.164352+00:00",
+  "report": "ai-service/reports/teacher_cnn8_gce_20261106",
+  "selected": null,
+  "promotion_eligible": false,
+  "primary_full_pass": false,
+  "query_evaluated": true,
+  "all_three_evaluated": false
+}

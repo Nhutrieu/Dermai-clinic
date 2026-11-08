@@ -180,7 +180,7 @@ def evaluate_checkpoint(
 
 
 def main() -> None:
-    parser = argparse.ArgumentParser(description="Đánh giá checkpoint trên test độc lập.")
+    parser = argparse.ArgumentParser(description="Đánh giá checkpoint trên split được chỉ định; tính độc lập phụ thuộc nguồn dữ liệu.")
     parser.add_argument("--checkpoint", required=True, type=Path)
     parser.add_argument("--data", required=True, type=Path)
     parser.add_argument("--output", type=Path, default=Path("models"))

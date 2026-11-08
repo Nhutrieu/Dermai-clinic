@@ -1,0 +1,28 @@
+{
+  "status": "PASS",
+  "completed_utc": "2026-10-29T13:09:21.400575+00:00",
+  "protocol_sha256": "43b3ed90fba7f1fd24c0e4960043e3ba15fd3a8d3793791ebf87d10f22b829a3",
+  "results_sha256": "ec11d184e9efd4aef1ff113f36e5677a7e0447a294274a86dc63e2638d5b25ee",
+  "convex_pair_fits_checked": 20,
+  "reused_scalers_checked": 4,
+  "independent_coupling": "3-way logsumexp versus logaddexp",
+  "gradient_max": 4.3652471148902805e-06,
+  "selected_pair_Cs": {
+    "psoriasis": 0.01,
+    "tinea": 0.01
+  },
+  "CV_images": 4031,
+  "weak_selection_images": 1489,
+  "metric_sets_checked": 10,
+  "outside5_mask_entries_checked": 10695,
+  "validation_images": 713,
+  "existing_Lupus_preserved": true,
+  "primary_guard_pass": true,
+  "single_fold_only": true,
+  "all_six_jobs_complete": false,
+  "selected": null,
+  "global_5937_score_changed": false,
+  "serving_changed": false,
+  "research_registry_changed": false,
+  "independent_full_refits": false
+}

@@ -1,0 +1,26 @@
+{
+  "status": "PASS",
+  "checked_utc": "2026-11-06T07:50:42.626120+00:00",
+  "protocol_sha256": "d328d3b6db6e5c43ecb23948d2c300c7b982149ea140647b3b54397998b0a48a",
+  "checks": {
+    "matched_control": {
+      "first_update_parameter_max_abs": 0.0,
+      "loss": 2.6149849891662598,
+      "gradient_norm": 6.604651927947998,
+      "metrics_recomputed": true
+    },
+    "unique_top": {
+      "first_update_parameter_max_abs": 0.0,
+      "loss": 2.442955493927002,
+      "gradient_norm": 6.114963054656982,
+      "metrics_recomputed": true
+    }
+  },
+  "source_and_protected_hashes_unchanged": true,
+  "metrics_independently_recomputed": 2,
+  "source_masks_rebuilt": true,
+  "clinical_label_review_performed": false,
+  "full_training_independently_replayed": false,
+  "new_CNN_native_forwards_independently_repeated": false,
+  "selected": null
+}

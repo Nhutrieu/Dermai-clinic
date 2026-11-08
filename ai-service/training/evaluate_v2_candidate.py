@@ -28,7 +28,7 @@ from common import (
     seed_everything,
 )
 from evaluate_evidence import calibration_metrics
-from train_v2 import group_near_duplicates, remove_near_test_duplicates
+from train_v2 import group_near_duplicates, load_reviewed_scene_pairs, remove_near_test_duplicates
 
 
 if hasattr(sys.stdout, "reconfigure"):
@@ -50,11 +50,22 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--workers", type=int, default=0)
     parser.add_argument("--val-ratio", type=float, default=0.15)
     parser.add_argument("--near-duplicate-distance", type=int, default=3)
+    parser.add_argument(
+        "--near-test-distance", type=int, default=None,
+        help="Use the same fixed-test exclusion radius as the training run.",
+    )
+    parser.add_argument("--near-pixel-correlation", type=float, default=None)
+    parser.add_argument("--reviewed-scene-manifest", type=Path, default=None)
     parser.add_argument("--seed", type=int, default=42)
     return parser.parse_args()
 
 
 def cleaned_splits(args: argparse.Namespace) -> tuple[list[ImageSample], list[ImageSample], list[ImageSample]]:
+    near_test_distance = getattr(args, "near_test_distance", None)
+    if near_test_distance is None:
+        near_test_distance = args.near_duplicate_distance
+    if near_test_distance < 0 or args.near_duplicate_distance < 0:
+        raise ValueError("dHash radii cannot be negative")
     base_train = collect_samples(args.data, "train")
     extra_train = [
         sample
@@ -70,10 +81,14 @@ def cleaned_splits(args: argparse.Namespace) -> tuple[list[ImageSample], list[Im
     fixed_test, _ = deduplicate_samples(fixed_test)
     train_clean, _ = exclude_cross_split_duplicates(train_clean, fixed_test)
     train_clean, _, hashes = remove_near_test_duplicates(
-        train_clean, fixed_test, args.near_duplicate_distance
+        train_clean, fixed_test, near_test_distance
     )
+    reviewed_manifest = getattr(args, "reviewed_scene_manifest", None)
+    reviewed_pairs = load_reviewed_scene_pairs(reviewed_manifest) if reviewed_manifest else None
     grouped_train, _, _ = group_near_duplicates(
-        train_clean, hashes, args.near_duplicate_distance
+        train_clean, hashes, args.near_duplicate_distance,
+        pixel_correlation=getattr(args, "near_pixel_correlation", None),
+        reviewed_pairs=reviewed_pairs,
     )
     training, validation = grouped_stratified_split(
         grouped_train, args.val_ratio, args.seed, len(CLASSES)

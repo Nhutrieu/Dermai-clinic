@@ -1,0 +1,63 @@
+{
+  "status": "PASS",
+  "completed_utc": "2026-10-31T14:23:18.928678+00:00",
+  "protocol_sha256": "14626039fe6fa8e7dce2123ea8bf0a38cc0df2d9d4d63d7cbcda03309e8768cf",
+  "results_sha256": "4355ac69f854ce9e232c0c408f4f08eec5a250e0d8d558ec5527e3eab4ce6423",
+  "LDA_heads_independently_reconstructed": 8,
+  "reference": "Manual LedoitWolf second/fourth moment shrinkage + Cholesky covariance solve, not LDA.fit",
+  "maximum_errors": {
+    "coef": 6.417089082333405e-14,
+    "intercept": 8.881784197001252e-15,
+    "covariance": 4.440892098500626e-16
+  },
+  "analytic_shrinkages": {
+    "fold0_cv0": {
+      "3": 0.24716622343896388,
+      "4": 0.10162970897476553,
+      "6": 0.0956464338740245
+    },
+    "fold0_cv1": {
+      "3": 0.23522098358319307,
+      "4": 0.10785311202937954,
+      "6": 0.09025544920666267
+    },
+    "fold0_cv2": {
+      "3": 0.2455094574149621,
+      "4": 0.11115459785494504,
+      "6": 0.08916239695329344
+    },
+    "fold0_final": {
+      "3": 0.17594590940597898,
+      "4": 0.07401353242218679,
+      "6": 0.06323583603507349
+    },
+    "fold1_cv0": {
+      "3": 0.2279960340140416,
+      "4": 0.10958824059700972,
+      "6": 0.0940160474772338
+    },
+    "fold1_cv1": {
+      "3": 0.23753412329332302,
+      "4": 0.11351437163517884,
+      "6": 0.09361843689481358
+    },
+    "fold1_cv2": {
+      "3": 0.23633619981267706,
+      "4": 0.12460957042327857,
+      "6": 0.098689407902952
+    },
+    "fold1_final": {
+      "3": 0.17154266180029681,
+      "4": 0.08017518082965888,
+      "6": 0.06566516833405169
+    }
+  },
+  "metric_sets_checked": 20,
+  "protected_mask_entries_checked": 21465,
+  "fold_pass": {
+    "0": false,
+    "1": true
+  },
+  "primary_both_fold_pass": false,
+  "independent_CNN_training": false
+}

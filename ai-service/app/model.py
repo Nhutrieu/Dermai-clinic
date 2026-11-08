@@ -1,5 +1,7 @@
 import base64
+import hashlib
 import io
+import json
 import math
 from dataclasses import dataclass
 from pathlib import Path
@@ -48,6 +50,14 @@ class ModelBundle:
         return torch.nn.functional.normalize(features.flatten(1), dim=1)
 
 
+@dataclass
+class EnsembleBundle:
+    members: tuple[ModelBundle, ...]
+    version: str
+    classes: list[str]
+    device: torch.device
+
+
 class OutOfScopeImageError(ValueError):
     pass
 
@@ -84,6 +94,34 @@ def load_bundle(path: Path, ood_profile_path: Path | None = None) -> ModelBundle
             "Temperature calibration trong checkpoint phải là số dương hữu hạn."
         )
     return ModelBundle(model, target, version, classes, device, profile, temperature)
+
+
+def load_ensemble(manifest_path: Path, ood_profile_path: Path | None = None) -> EnsembleBundle:
+    """Load an explicit research ensemble, checking every checkpoint against its manifest."""
+    manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+    entries = manifest.get("members")
+    if not isinstance(entries, list) or len(entries) < 2:
+        raise ValueError("Ensemble cần ít nhất hai checkpoint.")
+    members: list[ModelBundle] = []
+    for index, entry in enumerate(entries):
+        path = (manifest_path.parent / entry["checkpoint"]).resolve()
+        expected_hash = entry["sha256"]
+        digest = hashlib.sha256()
+        with path.open("rb") as source:
+            for block in iter(lambda: source.read(1024 * 1024), b""):
+                digest.update(block)
+        if digest.hexdigest() != expected_hash:
+            raise ValueError(f"Checkpoint không khớp SHA-256: {path}")
+        member = load_bundle(path, ood_profile_path if index == 0 else None)
+        assert member is not None
+        if member.classes != CLASSES:
+            raise ValueError(f"Thứ tự lớp không khớp: {path}")
+        if members and member.device != members[0].device:
+            raise ValueError("Các model trong ensemble phải chạy cùng thiết bị.")
+        members.append(member)
+    if ood_profile_path is not None and members[0].ood_profile is None:
+        raise ValueError("Không nạp được OOD profile cho model đầu tiên của ensemble.")
+    return EnsembleBundle(tuple(members), str(manifest["name"]), CLASSES.copy(), members[0].device)
 
 
 SPATIAL_PREPROCESS = transforms.Compose([
@@ -140,7 +178,7 @@ def preprocess_image(image: Image.Image) -> tuple[torch.Tensor, np.ndarray]:
 
 
 def predict(
-    bundle: ModelBundle,
+    bundle: ModelBundle | EnsembleBundle,
     image: Image.Image,
     confidence_threshold: float = 0.70,
     confidence_margin_threshold: float = 0.20,
@@ -148,14 +186,21 @@ def predict(
 ) -> dict:
     tensor, base = preprocess_image(image)
     tensor = tensor.unsqueeze(0).to(bundle.device)
-    if bundle.ood_profile is not None:
-        embedding = bundle.extract_embeddings(tensor)[0].cpu().numpy()
-        rejected, _score = is_out_of_scope(embedding, bundle.ood_profile)
+    gate_member = bundle.members[0] if isinstance(bundle, EnsembleBundle) else bundle
+    if gate_member.ood_profile is not None:
+        embedding = gate_member.extract_embeddings(tensor)[0].cpu().numpy()
+        rejected, _score = is_out_of_scope(embedding, gate_member.ood_profile)
         if rejected:
             raise OutOfScopeImageError("Ảnh nằm ngoài 8 nhóm bệnh mà hệ thống hỗ trợ. Vui lòng chọn ảnh tổn thương da khác hoặc khám trực tiếp.")
     with torch.no_grad():
-        logits = bundle.model(tensor)
-        probabilities = torch.softmax(logits / bundle.temperature, dim=1)[0]
+        if isinstance(bundle, EnsembleBundle):
+            probabilities = torch.stack([
+                torch.softmax(member.model(tensor) / member.temperature, dim=1)[0]
+                for member in bundle.members
+            ]).mean(dim=0)
+        else:
+            logits = bundle.model(tensor)
+            probabilities = torch.softmax(logits / bundle.temperature, dim=1)[0]
     values, indices = probabilities.topk(min(3, len(bundle.classes)))
     top = [
         {"label": bundle.classes[i], "probability": round(float(v), 6)}
@@ -173,8 +218,15 @@ def predict(
         or normalized_entropy > normalized_entropy_threshold
     )
     best_idx = int(indices[0])
-    with GradCam(bundle.model, bundle.target_layer) as gradcam:
-        heat = gradcam.create(tensor, best_idx)
+    if isinstance(bundle, EnsembleBundle):
+        heatmaps = []
+        for member in bundle.members:
+            with GradCam(member.model, member.target_layer) as gradcam:
+                heatmaps.append(gradcam.create(tensor, best_idx))
+        heat = np.mean(heatmaps, axis=0)
+    else:
+        with GradCam(bundle.model, bundle.target_layer) as gradcam:
+            heat = gradcam.create(tensor, best_idx)
     heat = cv2.resize(heat, (224, 224))
     colored = cv2.applyColorMap(np.uint8(255 * heat), cv2.COLORMAP_JET)
     colored = cv2.cvtColor(colored, cv2.COLOR_BGR2RGB)

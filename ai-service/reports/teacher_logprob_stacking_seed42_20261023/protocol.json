@@ -1,0 +1,76 @@
+{
+  "name": "teacher_logprob_stacking_seed42_20261023",
+  "registered_utc": "2026-10-23T07:33:20.108623+00:00",
+  "classes": [
+    "Acne",
+    "Candidiasis",
+    "Eczema",
+    "Lupus",
+    "Psoriasis",
+    "SkinCancer",
+    "Tinea",
+    "Warts"
+  ],
+  "sklearn": "1.3.2",
+  "parent_protocol": "ai-service/reports/teacher_priorities_ensemble_specialist_seed42_20261022/protocol.json",
+  "images": 5937,
+  "frozen_sha256": {
+    "ai-service/training/run_teacher_logprob_stacking.py": "6bd390571ddebdcaa3af4f8f98d1b7fa3fb30c9e03610df1a6fb1573de8e2c63",
+    "ai-service/training/run_teacher_priorities_ensemble_specialist.py": "2615f0f6752f7f87760f19df0d0878b1340a3eb2be1cd259b556d2afe939b6cf",
+    "ai-service/training/evaluate_original_eight_cancer_locked_fusion.py": "014d7eb08bca5b7cdebca9f7157debb0945261a3e0d50d00abc952ebefbcbd6d",
+    "ai-service/reports/teacher_priorities_ensemble_specialist_seed42_20261022/protocol.json": "c85b6858feaf1af48348aa6c8cd61529bbf37d1e6f44c360c099dd9679c98110",
+    "ai-service/reports/original_eight_cancer_locked_resnet_fusion_seed42_20261021/oof_decisions.json": "d047de96ae83af951e842fc95c55b78da2be41a61c6df3087442ae5de62c0efb",
+    "ai-service/models/best_model.pth": "975e4852023ebb9d3af544b819bec0b887cf75b1467447c87c40591da90b7a17",
+    "ai-service/reports/original_eight_resnet50_pilot_fold0_seed42/validation_predictions.npz": "b3e516a942a460a1e4c1b5c249970bf543cc23bdb2f546b14502b33cb3635917",
+    "ai-service/reports/original_eight_resnet50_pilot_fold0_seed42/test_predictions.json": "478d77f31908c886fd32c7c1aa8284fd83e358cc04c232028b768ec939960ad1",
+    "ai-service/reports/original_eight_resnet50_cv_seed42/fold_1/validation_predictions.npz": "fa87f76fce79cd9a8eed5446ff621555bd1c209a2a7aef046c272938338f8ebd",
+    "ai-service/reports/original_eight_resnet50_cv_seed42/fold_1/test_predictions.json": "69eadc31398357e718088fb753400977f181aed706b43dacf34ce4b94f167ea5",
+    "ai-service/reports/original_eight_resnet50_cv_seed42/fold_2/validation_predictions.npz": "e9bce9de7db0d04546186e1da9afcc599e91f1b5aac0bafa6d282c790e953fd0",
+    "ai-service/reports/original_eight_resnet50_cv_seed42/fold_2/test_predictions.json": "db579290588048102571e8bdc7eda4a1543bfc7aec638d2df8c1fd86b61410eb",
+    "ai-service/reports/original_eight_resnet50_cv_seed42/fold_3/validation_predictions.npz": "0377adbb3e84b876426180bab3a2be59926403773ae7aa8d952d5e18a1e87294",
+    "ai-service/reports/original_eight_resnet50_cv_seed42/fold_3/test_predictions.json": "b64c7eb5c986dfc61774b3fbf20f5022b36131e14bf40805dbb44bcdb0b76c86",
+    "ai-service/reports/original_eight_resnet50_cv_seed42/fold_4/validation_predictions.npz": "ba7cdfbf52f21257f5847889fb2932ab01bf1eed0bfce758e1301ef9d2b498d0",
+    "ai-service/reports/original_eight_resnet50_cv_seed42/fold_4/test_predictions.json": "c50a724ed33071cff26f6a3fe661e9b6f33fb63eeb0ce45817df9aa87d6e7e5c"
+  },
+  "method": {
+    "parents": [
+      "efficientnet_b0",
+      "convnext_tiny",
+      "resnet50"
+    ],
+    "features": "Concatenate log(clip(p,1e-7,1)): 24 features, fixed order.",
+    "scaler": "Unweighted StandardScaler fitted only on each meta-fit subset.",
+    "head": "Unweighted eight-class multinomial logistic regression, L2.",
+    "C": 0.1,
+    "solver": "lbfgs",
+    "max_iter": 3000,
+    "tol": 1e-07,
+    "random_state": 42,
+    "meta_fit_role": "Only the target outer fold inner validation; no CNN training images and no cross-outer-fold pooling.",
+    "selection_predictions": "Three StratifiedGroupKFold(shuffle=True,random_state=42) cross-fits inside inner validation. Each held group excluded from both scaler and meta-head fit.",
+    "final_head": "Fit on entire inner validation after cross-fit selection. Never select by this in-sample score.",
+    "routing": "Keep exact baseline SkinCancer mask; for all remaining images choose maximal head score among the seven non-cancer classes. No confidence threshold.",
+    "candidates": [
+      "current_fusion",
+      "logprob_stack"
+    ],
+    "hyperparameter_search": false
+  },
+  "selection": "Same previous strict guards: Accuracy/MacroF1 and each Lupus/Psoriasis/Tinea Recall/F1 cannot decline; focus precision loss<=.02; other recall loss<=.02; exact SkinCancer Recall/Precision. Rank MacroF1, mean focus Recall, Accuracy, baseline wins ties. All5 choices locked before outer evaluation.",
+  "reporting": "Raw fixed stack AND cross-fit-validation-selected method; all classes, folds, sources, changed errors and paired 1000-group-bootstrap intervals.",
+  "limitations": [
+    "Exploratory development on repeatedly inspected data, not an untouched independent test.",
+    "CNN checkpoints previously used the entire inner validation for epoch selection. Meta cross-fitting does not undo that exposure or produce fully nested CNN training.",
+    "Baseline weights already selected on entire inner validation: baseline and meta cross-fit have different selection histories.",
+    "Cross-fit heads train on two-thirds of inner validation; final head trains on all inner images. Selection is a proxy, not a guarantee.",
+    "One parent training seed; scene/case groups are not verified patient IDs; SCIN Lupus only11 images.",
+    "Fixed cancer mask also retains existing cancer false positives and false negatives.",
+    "Head scores are not clinically calibrated confidence values. No API replacement."
+  ],
+  "references": [
+    "https://scikit-learn.org/1.3/modules/generated/sklearn.ensemble.StackingClassifier.html",
+    "https://scikit-learn.org/1.3/modules/generated/sklearn.linear_model.LogisticRegression.html",
+    "https://scikit-learn.org/1.3/modules/generated/sklearn.model_selection.StratifiedGroupKFold.html"
+  ],
+  "serving_changed": false
+}

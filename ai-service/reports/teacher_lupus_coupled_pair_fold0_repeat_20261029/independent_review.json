@@ -1,0 +1,38 @@
+{
+  "status": "PASS",
+  "completed_utc": "2026-10-29T14:02:24.859712+00:00",
+  "protocol_sha256": "f3934e787aee5e531c58d023a753086a1f745655344ff9188385ad542994107c",
+  "results_sha256": "e50b70ad40cefd30f4e2cced18dc5a5b371cedb835f967a71b465f5ae39a7831",
+  "convex_new_pair_fits_checked": 20,
+  "new_scalers_checked": 4,
+  "frozen_fold1_final_heads_replayed": 2,
+  "image_SHA_checked": 5937,
+  "gradient_max": 2.460535142745357e-06,
+  "selected_pair_Cs": {
+    "psoriasis": 0.01,
+    "tinea": 0.01
+  },
+  "metric_sets_checked": 14,
+  "outside5_mask_entries_checked": 14310,
+  "inner_overlap": {
+    "path": 74,
+    "sha256": 74,
+    "group": 70
+  },
+  "validation_counts": {
+    "0": 718,
+    "1": 713
+  },
+  "fold_pass": {
+    "0": false,
+    "1": true
+  },
+  "primary_both_fold_pass": false,
+  "pooled_metrics_computed": false,
+  "all_six_jobs_complete": false,
+  "selected": null,
+  "global_5937_score_changed": false,
+  "serving_changed": false,
+  "research_registry_changed": false,
+  "independent_full_refits": false
+}

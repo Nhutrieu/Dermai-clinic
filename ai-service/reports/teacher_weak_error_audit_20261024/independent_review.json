@@ -1,0 +1,28 @@
+{
+  "status": "PASS",
+  "completed_utc": "2026-10-24T16:08:41.449535+00:00",
+  "descriptive_cells_rebuilt": 99,
+  "full_oof_rows": 5937,
+  "weak_errors_checked": 717,
+  "source_unique_images": 1709,
+  "source_systems": 5,
+  "review_queue_train_only_checked": 29,
+  "local_links_checked": 36,
+  "figure_visually_reviewed": true,
+  "source_and_serving_hashes_unchanged": true,
+  "labels_changed": 0,
+  "new_model_fits": 0,
+  "artifacts_sha256": {
+    "fold0_training_inventory.json": "bc5cd46f28de4bce82c552c5353118b95bab2813abfd57849e1722067a4ee9c5",
+    "mixed_label_training_groups.json": "a5338d955b09046ec0b16f3a9625b7955c763aae07dc722e474e6078745f932f",
+    "oof_weak_errors.json": "37f6e8cfcc2d2d5a5d0f03c239e59a7416ced91f679be2f64a2a2ebf4561bb81",
+    "protocol.json": "1858208a01156d54b31880c1d4921d4f2cff3edee45e75d242b9537363869f53",
+    "results.json": "42cf985bf0993ca37800df782751ceb04dad800bdc4a906b33663b0248063a07",
+    "summary.md": "70ef4e34fd4ef640a1557edb991aac8491ef980ee96777d4c9932f1f1a251e65",
+    "training_review.md": "927a7d8c440e7d4b5a52ff554422d95db38d6ca72da5fa24fd8539531234f9a3",
+    "training_review_queue.json": "eb8ac0a7a34d55c4ee3d059beac849cfb68621614c21f23f568e3228a4c7d8c8",
+    "verification.json": "180dd13fbd4ed12fb8fcfed7ef464c8eafa8bf660377b009b35b460b0256364d",
+    "weak_confusion.png": "40931f88c482fc5d4372141f19abdaf1b43b33564a1ba5248b1afc97f5ea7cae"
+  },
+  "limitations": "Reconstructs arithmetic and membership; does not clinically adjudicate labels or establish causal source effects."
+}

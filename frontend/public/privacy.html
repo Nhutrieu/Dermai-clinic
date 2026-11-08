@@ -1,0 +1,30 @@
+<!doctype html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Thông tin về dữ liệu cá nhân và ảnh da trong bản demo Derm Clinic.">
+  <title>Chính sách bảo mật | Derm Clinic</title>
+  <link rel="stylesheet" href="legal.css">
+</head>
+<body>
+  <header><a class="brand" href="/">DERM CLINIC</a><nav aria-label="Điều hướng trang thông tin"><a href="/">Trang chủ</a><a href="/terms.html">Điều khoản sử dụng</a></nav></header>
+  <main>
+    <p class="eyebrow">Thông tin dữ liệu</p>
+    <h1>Chính sách bảo mật</h1>
+    <p class="updated">Cập nhật: 07/10/2026</p>
+    <p class="intro">Derm Clinic là bản demo phục vụ đồ án. Nội dung dưới đây mô tả các chức năng hiện có, không khẳng định hệ thống đã được thẩm định để lưu trữ hồ sơ bệnh án thật. Khi dùng môi trường demo công khai, vui lòng không nhập thông tin sức khỏe hoặc ảnh nhạy cảm của người thật.</p>
+
+    <nav class="toc" aria-label="Mục lục chính sách"><strong>Trong trang này</strong><a href="#data">Dữ liệu được xử lý</a><a href="#purpose">Mục đích sử dụng</a><a href="#ai-images">Ảnh da và AI</a><a href="#access">Ai có thể xem</a><a href="#retention">Lưu giữ và xóa</a><a href="#integrations">Trình duyệt và dịch vụ khác</a><a href="#requests">Yêu cầu của bạn</a></nav>
+
+    <section id="data"><h2>1. Dữ liệu được xử lý</h2><p>Loại dữ liệu phụ thuộc vào chức năng và vai trò bạn sử dụng:</p><ul><li><strong>Tài khoản:</strong> email, tên hiển thị, trạng thái xác minh, vai trò và thông tin dùng để xác thực. Mật khẩu được lưu dưới dạng giá trị băm trong hệ thống đăng nhập.</li><li><strong>Hồ sơ và lịch khám:</strong> họ tên, số điện thoại, ngày sinh nếu được cung cấp, lý do khám, bác sĩ, thời gian, trạng thái lịch và thông báo liên quan.</li><li><strong>Nội dung chuyên môn:</strong> tiền sử, dị ứng, hồ sơ khám, chẩn đoán do bác sĩ ký, đơn thuốc và thông tin dịch vụ đã thực hiện.</li><li><strong>Thanh toán và hỗ trợ:</strong> hóa đơn, trạng thái giao dịch, yêu cầu hoàn cọc, nội dung trò chuyện và ảnh bạn gửi trong cuộc trò chuyện.</li><li><strong>AI:</strong> ảnh da bạn chủ động tải lên, kết quả phân loại, mức độ tin cậy, phiên bản mô hình, lựa chọn chia sẻ và sự kiện đồng ý.</li></ul></section>
+    <section id="purpose"><h2>2. Mục đích sử dụng</h2><p>Hệ thống dùng dữ liệu để tạo tài khoản, xác minh đăng nhập, đặt và quản lý lịch, thông báo thay đổi, hỗ trợ trao đổi với lễ tân, ghi nhận buổi khám, lập hóa đơn và hiển thị thông tin cho đúng người có quyền truy cập. Ảnh da chỉ được phân tích khi bạn chọn dùng tính năng AI và xác nhận đồng ý. Kết quả AI giúp tham khảo trước buổi khám; bác sĩ đưa ra kết luận chuyên môn độc lập.</p></section>
+    <section id="ai-images"><h2>3. Ảnh da và quyền chia sẻ AI</h2><ul><li>Trước khi phân tích ảnh, ứng dụng yêu cầu bạn xác nhận đồng ý. Ảnh được xử lý bởi AI Service nội bộ; ảnh và thông tin định danh không được gửi sang Gemini trong luồng phân tích ảnh.</li><li>Ảnh gốc được mã hóa khi lưu trong Patient Service. Kết quả và ảnh thuộc tài khoản bệnh nhân; bác sĩ chỉ xem được khi bạn chủ động chia sẻ cho một lịch khám do bác sĩ đó phụ trách.</li><li>Bạn có thể tắt chia sẻ hoặc xóa kết quả AI trong tài khoản. Việc tắt chia sẻ ngăn truy cập tiếp theo qua luồng bác sĩ; thao tác xóa xóa byte ảnh và ẩn kết quả khỏi lịch sử của bạn.</li><li>Không tải ảnh của người khác khi chưa được phép. Tránh để lộ khuôn mặt, giấy tờ hoặc thông tin nhận dạng nếu chúng không cần thiết cho việc phân tích vùng da.</li></ul></section>
+    <section id="access"><h2>4. Ai có thể xem dữ liệu</h2><p>Bệnh nhân xem thông tin gắn với tài khoản của mình. Bác sĩ xem lịch và thông tin cần thiết cho ca khám được phân công; ảnh AI chỉ mở khi bệnh nhân đã chia sẻ theo đúng lịch. Lễ tân xử lý đặt lịch, thanh toán và yêu cầu hỗ trợ theo chức năng công việc. Quản trị viên quản lý vận hành và có thể xem nhật ký phục vụ kiểm tra. Các quyền này được kiểm tra ở API; việc một trang không hiển thị dữ liệu không thay thế cho kiểm soát quyền ở máy chủ.</p></section>
+    <section id="retention"><h2>5. Lưu giữ và xóa</h2><p>Mốc lưu ảnh AI mặc định của đồ án là 180 ngày; tác vụ định kỳ xóa byte ảnh đã quá hạn. Cấu hình triển khai có thể đặt mốc khác. Khi bạn xóa kết quả AI, hệ thống xóa byte ảnh ngay trong bản ghi và tắt chia sẻ, nhưng giữ dấu thời gian xóa cùng một số metadata. Sự kiện đồng ý và nhật ký truy cập AI được giữ để có thể kiểm tra thao tác. Hồ sơ khám đã ký, giao dịch và các bản ghi vận hành khác không tự biến mất khi bạn xóa ảnh AI.</p></section>
+    <section id="integrations"><h2>6. Dữ liệu trong trình duyệt và dịch vụ tích hợp</h2><p>Phiên bản web hiện lưu access token và refresh token trong <code>localStorage</code> để duy trì đăng nhập giữa các tab; bản nháp đặt lịch và một số lựa chọn tạm thời dùng <code>sessionStorage</code>. Đăng xuất sẽ xóa phiên ở trình duyệt và gửi yêu cầu thu hồi refresh token. Trên thiết bị dùng chung, hãy đăng xuất sau khi sử dụng.</p><p>Nếu bạn chọn đăng nhập Google, thanh toán qua PayOS hoặc nhận email, thông tin cần thiết được chuyển cho dịch vụ tương ứng để thực hiện thao tác. Chat kiến thức da liễu công khai có thể dùng Gemini để xử lý câu hỏi bạn gửi; không nhập thông tin sức khỏe riêng tư ở đó. Trợ lý hỗ trợ đặt lịch dùng luồng riêng và không gửi nguyên văn tin nhắn bệnh nhân sang Gemini theo thiết kế hiện tại.</p></section>
+    <section id="requests"><h2>7. Xem, sửa và yêu cầu hỗ trợ</h2><p>Bạn có thể xem hồ sơ, lịch sử AI và một số dữ liệu liên quan trong tài khoản; tự xóa kết quả AI hoặc thay đổi trạng thái chia sẻ. Để yêu cầu hỗ trợ xem, sửa hoặc xử lý dữ liệu khác, gửi email đến <a href="mailto:hello@dermclinic.vn">hello@dermclinic.vn</a> hoặc gọi <a href="tel:0352790904">0352 790 904</a>. Nêu tài khoản và nội dung cần xử lý; không gửi mật khẩu hoặc ảnh nhạy cảm qua email công khai. Yêu cầu liên quan đến hồ sơ đã ký hay giao dịch sẽ được xem xét theo tính chất bản ghi thay vì hứa xóa tự động toàn bộ.</p></section>
+  </main>
+  <footer><span>© 2026 Derm Clinic · Bản demo đồ án</span><a href="/terms.html">Điều khoản sử dụng</a></footer>
+</body>
+</html>

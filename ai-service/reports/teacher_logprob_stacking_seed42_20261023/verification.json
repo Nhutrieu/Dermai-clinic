@@ -1,0 +1,9 @@
+{
+  "status": "PASS",
+  "results_sha256": "3ca1a73ca6136a7b77245f73743661776288d86b854150c750b3d27988971f01",
+  "decisions_sha256": "cf6b83d4741db0074ef56e42cb0e1e0c1e3964721e1c61fc0e39fc820c7056bd",
+  "baseline_reproduced": true,
+  "cancer_mask_unchanged": true,
+  "all_choices_locked_before_outer": true,
+  "scope": "Technical consistency, not clinical validation"
+}

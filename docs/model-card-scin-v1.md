@@ -32,6 +32,11 @@ tính đại diện cho người Việt Nam chưa được xác minh. Không đ�
 kết quả để tuyên bố hiệu năng lâm sàng. Pipeline giữ test cố định, tự loại xung đột nhãn,
 exact duplicate và bản sao train–test khỏi phía train.
 
+[Audit ảnh cùng cảnh ngày 09/10/2026](47-audit-anh-trung-gan-test-cu.md) xác nhận ít nhất
+19 ảnh fixed test khác byte nhưng cùng cảnh với ảnh trong nguồn train cũ (18 thuộc train
+thực tế, một thuộc validation). Do thiếu mã bệnh nhân, điểm fixed test không phải ước lượng
+độc lập theo người.
+
 ### SCIN 1.0.0
 
 SCIN gồm ảnh do người trưởng thành tại Hoa Kỳ tự nguyện đóng góp có đồng thuận. Một đến ba
@@ -52,6 +57,9 @@ Quy tắc chọn của DermAI:
 Kết quả: 1.217 ảnh hợp lệ, gồm 977 ảnh train và 240 ảnh external test. Hai ảnh trùng bị loại;
 một object nguồn trả 404. External test lệch mạnh: Eczema 156, Tinea 31, Psoriasis 22,
 Acne 19, Warts 7, Lupus 4, Candidiasis 1 và SkinCancer 0.
+Tên `external_test` là tên split trong pipeline: 240 ảnh thuộc các ca SCIN không có trong
+train, nhưng model đã được huấn luyện với 977 ảnh khác từ SCIN. Đây là **holdout theo ca
+trong cùng nguồn SCIN**, không phải kiểm định bằng một nguồn ảnh hoàn toàn mới.
 
 Nguồn: [SCIN repository](https://github.com/google-research-datasets/scin) và bài báo
 [Creating an Empirical Dermatology Dataset Through Crowdsourcing With Web Search Advertisements](https://doi.org/10.1001/jamanetworkopen.2024.46615).

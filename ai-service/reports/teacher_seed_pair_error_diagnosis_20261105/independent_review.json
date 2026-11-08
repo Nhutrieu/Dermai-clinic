@@ -1,0 +1,23 @@
+{
+  "status": "PASS",
+  "completed_utc": "2026-11-05T12:55:58.085907+00:00",
+  "protocol_sha256": "845f27e18b202d305524fa53e8a0a8bdad80b66a75942931cdeddbaca1908309",
+  "results_sha256": "acd6d127826816de9210018eac3a8233c6a3c4d861b3972e6c681afb6dec479a",
+  "reviewer_sha256": "dfb587b7e96d4d7b3c1841a52c754789cb617a2c3fe1a735cc6daa697d73e9e8",
+  "source_native_cache_rows_reconstructed": 13495,
+  "scalar_funnel_rows_recomputed": 5398,
+  "weak_error_cases_checked": 459,
+  "group_confusions_reconstructed": 16849,
+  "bootstrap_group_draws_reconstructed": 2000,
+  "bootstrap_model_metric_vectors_checked": 14000,
+  "bootstrap_endpoint_values_checked": 168000,
+  "comparison_endpoint_intervals_checked": 60,
+  "max_bootstrap_vector_error": 2.220446049250313e-16,
+  "grouped_fold_ownership_verified": true,
+  "source290_292_labels_reproduced": true,
+  "oracle_not_selectable": true,
+  "diagnosis_only": true,
+  "new_image_forwards": 0,
+  "query_evaluated": false,
+  "selected": null
+}

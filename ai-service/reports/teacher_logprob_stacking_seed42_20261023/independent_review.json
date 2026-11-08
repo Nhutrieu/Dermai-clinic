@@ -1,0 +1,18 @@
+{
+  "status": "PASS",
+  "reviewed_utc": "2026-10-23T07:36:03.118265+00:00",
+  "refitted_heads": 20,
+  "validated_selections": 5,
+  "reconstructed_oof_images": 5937,
+  "metric_sets": 34,
+  "original96_sources_unchanged": true,
+  "all_parent_input_and_checkpoint_hashes": true,
+  "no_group_overlap": true,
+  "baseline_reproduced": true,
+  "exact_cancer_mask": true,
+  "all20_fits_inner_only": true,
+  "all_choices_locked_before_outer": true,
+  "results_sha256": "3ca1a73ca6136a7b77245f73743661776288d86b854150c750b3d27988971f01",
+  "reviewer_sha256": "3632b5a4e081e4c2fef5f82cd2929609b7087a840defe0ab223ca09f78b48021",
+  "scope": "Independent calculation and provenance review by another code path, not external clinical review."
+}

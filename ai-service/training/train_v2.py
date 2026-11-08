@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import argparse
 import copy
+import hashlib
 import json
 import math
 import sys
@@ -34,12 +35,16 @@ from common import (
     grouped_stratified_split,
     label_conflict_digests,
     save_json,
+    sha256_file,
     seed_everything,
 )
 
 
 if hasattr(sys.stdout, "reconfigure"):
     sys.stdout.reconfigure(encoding="utf-8")
+
+
+PROJECT = Path(__file__).resolve().parents[2]
 
 
 def parse_args() -> argparse.Namespace:
@@ -65,11 +70,85 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--ema-decay", type=float, default=0.995)
     parser.add_argument("--val-ratio", type=float, default=0.15)
     parser.add_argument("--near-duplicate-distance", type=int, default=3)
+    parser.add_argument(
+        "--near-test-distance", type=int, default=None,
+        help="Separate dHash radius for excluding old fixed-test neighbours; defaults to near-duplicate-distance.",
+    )
+    parser.add_argument("--near-pixel-correlation", type=float, default=None)
+    parser.add_argument("--reviewed-scene-manifest", type=Path, default=None)
     parser.add_argument("--patience", type=int, default=7)
     parser.add_argument("--output", type=Path, required=True)
+    parser.add_argument("--oof-fold", type=int, choices=range(5), default=None)
+    parser.add_argument("--oof-outer-manifest", type=Path, default=None)
+    parser.add_argument("--oof-inner-plan", type=Path, default=None)
     parser.add_argument("--seed", type=int, default=42)
     parser.add_argument("--amp", action=argparse.BooleanOptionalAction, default=True)
     return parser.parse_args()
+
+
+def assigned_oof_roles(grouped_samples, outer_manifest: Path, inner_plan: Path, fold: int):
+    """Return train, inner validation and untouched outer samples from locked roles."""
+    outer = json.loads(outer_manifest.read_text(encoding="utf-8"))
+    inner = json.loads(inner_plan.read_text(encoding="utf-8"))
+    rows = outer["images"]
+    canonical = "".join(
+        f"{row['fold']}\t{row['class']}\t{row['path']}\t{row['sha256']}\t{row['scene_or_case_group']}\n"
+        for row in rows
+    )
+    manifest_sha256 = hashlib.sha256(canonical.encode("utf-8")).hexdigest()
+    if (
+        outer["source_split_fingerprint_sha256"] != "922f900cfed05bca4c5e9ea6b3ae65b4f64381363bed22ca2e007c23c7e6f9c4"
+        or manifest_sha256 != outer["manifest_sha256"]
+        or inner["outer_manifest_sha256"] != manifest_sha256
+        or len(rows) != 5937
+    ):
+        raise ValueError("OOF manifests do not match the audited development pool")
+    plan = next((item for item in inner["folds"] if item["outer_fold"] == fold), None)
+    if plan is None:
+        raise ValueError(f"Missing inner plan for fold {fold}")
+    by_path = {row["path"]: row for row in rows}
+    inner_paths = set(plan["inner_validation_paths"])
+    if len(by_path) != len(rows) or len(inner_paths) != len(plan["inner_validation_paths"]):
+        raise ValueError("Repeated image path in OOF manifests")
+    roles = {"train": [], "inner_validation": [], "outer_holdout": []}
+    seen = set()
+    for sample in grouped_samples:
+        relative = sample.path.relative_to(PROJECT).as_posix()
+        row = by_path.get(relative)
+        if row is None or relative in seen:
+            raise ValueError(f"Grouped sample missing or repeated in OOF manifest: {relative}")
+        seen.add(relative)
+        if (
+            row["sha256"] != sample.digest
+            or row["class"] != CLASSES[sample.label]
+            or row["scene_or_case_group"] != (sample.group_id or sample.digest)
+        ):
+            raise ValueError(f"OOF sample label, hash or group changed: {relative}")
+        if row["fold"] == fold:
+            if relative in inner_paths:
+                raise ValueError("Outer fold image also appears in inner validation")
+            role = "outer_holdout"
+        elif relative in inner_paths:
+            role = "inner_validation"
+        else:
+            role = "train"
+        roles[role].append(sample)
+    if seen != set(by_path):
+        raise ValueError("OOF manifest contains an image absent from the grouped development pool")
+    groups = {
+        role: {sample.group_id or sample.digest for sample in values}
+        for role, values in roles.items()
+    }
+    if any(groups[left] & groups[right] for left, right in (
+        ("train", "inner_validation"), ("train", "outer_holdout"),
+        ("inner_validation", "outer_holdout"),
+    )):
+        raise ValueError("A case or scene crosses OOF training roles")
+    for role, values in roles.items():
+        expected = plan[f"{role}_images"]
+        if len(values) != expected or class_counts(values) != plan["class_images"][role]:
+            raise ValueError(f"OOF {role} count differs from locked inner plan")
+    return roles["train"], roles["inner_validation"], roles["outer_holdout"], manifest_sha256
 
 
 def dhash(path: Path) -> int:
@@ -81,6 +160,33 @@ def dhash(path: Path) -> int:
     for bit in bits.reshape(-1):
         result = (result << 1) | int(bit)
     return result
+
+
+def normalized_gray(path: Path) -> np.ndarray:
+    with Image.open(path) as image:
+        pixels = np.asarray(
+            image.convert("L").resize((96, 96), Image.Resampling.LANCZOS),
+            dtype=np.float32,
+        ).reshape(-1)
+    return (pixels - pixels.mean()) / (pixels.std() + 1e-6)
+
+
+def load_reviewed_scene_pairs(path: Path, project: Path = PROJECT) -> list[tuple[Path, Path]]:
+    review = json.loads(path.read_text(encoding="utf-8"))
+    pairs = []
+    for row in review["pairs"]:
+        if row["decision"] != "same_scene_or_lesion_by_visual_review":
+            raise ValueError("Reviewed manifest contains an unconfirmed pair")
+        resolved = []
+        for path_key, digest_key in (
+            ("validation_path", "validation_sha256"), ("train_path", "train_sha256")
+        ):
+            image = project.joinpath(*row[path_key].split("/")).resolve()
+            if not image.is_relative_to(project.resolve()) or sha256_file(image) != row[digest_key]:
+                raise ValueError(f"Reviewed image changed or left project: {row[path_key]}")
+            resolved.append(image)
+        pairs.append((resolved[0], resolved[1]))
+    return pairs
 
 
 class BkNode:
@@ -148,10 +254,17 @@ def remove_near_test_duplicates(
 
 
 def group_near_duplicates(
-    samples: list[ImageSample], hashes: dict[Path, int], radius: int
+    samples: list[ImageSample], hashes: dict[Path, int], radius: int,
+    pixel_correlation: float | None = None,
+    reviewed_pairs: list[tuple[Path, Path]] | None = None,
 ) -> tuple[list[ImageSample], list[ImageSample], dict]:
+    if pixel_correlation is not None and not -1 <= pixel_correlation <= 1:
+        raise ValueError("Pixel correlation must be in [-1, 1]")
     union = UnionFind(len(samples))
     trees: dict[int, BkNode] = {}
+    gray_cache: dict[Path, np.ndarray] = {}
+    candidate_pairs = 0
+    pixel_accepted_pairs = 0
     for index, sample in enumerate(samples):
         value = hashes.get(sample.path)
         if value is None:
@@ -164,8 +277,31 @@ def group_near_duplicates(
             matches: list[int] = []
             tree.query(value, radius, matches)
             for match in matches:
+                candidate_pairs += 1
+                if pixel_correlation is not None:
+                    left = gray_cache.get(sample.path)
+                    if left is None:
+                        left = normalized_gray(sample.path)
+                        gray_cache[sample.path] = left
+                    right_path = samples[match].path
+                    right = gray_cache.get(right_path)
+                    if right is None:
+                        right = normalized_gray(right_path)
+                        gray_cache[right_path] = right
+                    if float(np.mean(left * right)) < pixel_correlation:
+                        continue
+                pixel_accepted_pairs += 1
                 union.union(index, match)
             tree.add(value, index)
+
+    index_by_path = {sample.path: index for index, sample in enumerate(samples)}
+    for left_path, right_path in reviewed_pairs or []:
+        if left_path not in index_by_path or right_path not in index_by_path:
+            raise ValueError("Reviewed pair missing from training pool")
+        left, right = index_by_path[left_path], index_by_path[right_path]
+        if samples[left].label != samples[right].label:
+            raise ValueError("Reviewed pair has conflicting labels")
+        union.union(left, right)
 
     # Keep every image from a known SCIN case in the same split even when
     # viewpoints differ enough that dHash does not link them.
@@ -203,6 +339,10 @@ def group_near_duplicates(
         "groups": len(members),
         "multi_image_groups": multi_image_groups,
         "conflicting_groups": len(conflicting_roots),
+        "dhash_candidate_pairs": candidate_pairs,
+        "pixel_accepted_pairs": pixel_accepted_pairs,
+        "pixel_correlation_threshold": pixel_correlation,
+        "reviewed_pairs_linked": len(reviewed_pairs or []),
     }
 
 
@@ -313,6 +453,18 @@ def effective_number_weights(samples: list[ImageSample], beta: float, device: to
 
 def main() -> None:
     args = parse_args()
+    if args.oof_fold is not None:
+        if args.oof_outer_manifest is None:
+            args.oof_outer_manifest = PROJECT / "ai-service/reports/scene_grouped_oof_folds_seed42.json"
+        if args.oof_inner_plan is None:
+            args.oof_inner_plan = PROJECT / "ai-service/reports/scene_grouped_oof_inner_seed42.json"
+        if args.output.exists():
+            raise FileExistsError(f"Preserving prior OOF run: {args.output}")
+    elif args.oof_outer_manifest is not None or args.oof_inner_plan is not None:
+        raise ValueError("OOF manifest paths require --oof-fold")
+    near_test_distance = args.near_duplicate_distance if args.near_test_distance is None else args.near_test_distance
+    if args.near_duplicate_distance < 0 or near_test_distance < 0:
+        raise ValueError("dHash radii cannot be negative")
     if not 0 <= args.label_smoothing < 0.5:
         raise ValueError("label-smoothing phải nằm trong [0, 0.5).")
     if not 0 < args.ema_decay < 1:
@@ -333,14 +485,23 @@ def main() -> None:
 
     print("Đang kiểm tra near-duplicate bằng dHash...", flush=True)
     train_clean, near_test_duplicates, hashes = remove_near_test_duplicates(
-        train_clean, test_clean, args.near_duplicate_distance
+        train_clean, test_clean, near_test_distance
     )
+    reviewed_pairs = load_reviewed_scene_pairs(args.reviewed_scene_manifest) if args.reviewed_scene_manifest else None
     grouped_train, near_label_conflicts, near_audit = group_near_duplicates(
-        train_clean, hashes, args.near_duplicate_distance
+        train_clean, hashes, args.near_duplicate_distance,
+        pixel_correlation=args.near_pixel_correlation, reviewed_pairs=reviewed_pairs,
     )
-    train_samples, validation_samples = grouped_stratified_split(
-        grouped_train, args.val_ratio, args.seed, len(CLASSES)
-    )
+    outer_samples = []
+    oof_manifest_sha256 = None
+    if args.oof_fold is None:
+        train_samples, validation_samples = grouped_stratified_split(
+            grouped_train, args.val_ratio, args.seed, len(CLASSES)
+        )
+    else:
+        train_samples, validation_samples, outer_samples, oof_manifest_sha256 = assigned_oof_roles(
+            grouped_train, args.oof_outer_manifest, args.oof_inner_plan, args.oof_fold
+        )
     summary = {
         "classes": CLASSES,
         "seed": args.seed,
@@ -356,6 +517,8 @@ def main() -> None:
             "near_label_conflicts": class_counts(near_label_conflicts),
         },
         "near_duplicate_audit": near_audit,
+        "near_test_distance": near_test_distance,
+        "near_train_validation_group_distance": args.near_duplicate_distance,
         "train": class_counts(train_samples),
         "validation": class_counts(validation_samples),
         "fixed_test_untouched": class_counts(test_clean),
@@ -366,6 +529,14 @@ def main() -> None:
             "fixed_test_untouched": len(test_clean),
         },
     }
+    if args.oof_fold is not None:
+        summary["oof"] = {
+            "outer_fold": args.oof_fold,
+            "outer_manifest_sha256": oof_manifest_sha256,
+            "outer_holdout": class_counts(outer_samples),
+            "outer_holdout_images": len(outer_samples),
+            "checkpoint_selection_role": "inner_validation_only",
+        }
     save_json(args.output / "dataset_summary.json", summary)
     print(json.dumps(summary["totals"], ensure_ascii=False), flush=True)
 
@@ -503,12 +674,55 @@ def main() -> None:
     report = {
         "selection_policy": "Epoch/weights selected only by validation macro F1, then top-3, then loss.",
         "best": {**best, "objective": list(best["objective"])},
-        "configuration": vars(args) | {"data": str(args.data), "extra_data": [str(x) for x in args.extra_data], "output": str(args.output)},
+        "configuration": vars(args) | {
+            "data": str(args.data),
+            "extra_data": [str(x) for x in args.extra_data],
+            "output": str(args.output),
+            "reviewed_scene_manifest": (
+                str(args.reviewed_scene_manifest) if args.reviewed_scene_manifest else None
+            ),
+            "oof_outer_manifest": str(args.oof_outer_manifest) if args.oof_outer_manifest else None,
+            "oof_inner_plan": str(args.oof_inner_plan) if args.oof_inner_plan else None,
+        },
         "fixed_test_used_for_selection": False,
         "external_test_used_for_selection": False,
     }
     save_json(args.output / "selection_report.json", report)
     print(json.dumps(report["best"], ensure_ascii=False, indent=2), flush=True)
+
+    if args.oof_fold is not None:
+        checkpoint = torch.load(checkpoint_path, map_location="cpu", weights_only=False)
+        model.load_state_dict(checkpoint["model_state_dict"])
+        model.eval()
+        outer_loader = make_loader(
+            ImageSampleDataset(outer_samples, evaluation_transform()),
+            args.batch_size, False, args.workers, use_cuda,
+        )
+        probability_rows = []
+        with torch.inference_mode():
+            for inputs, _labels in outer_loader:
+                logits = model(inputs.to(device, non_blocking=True))
+                probability_rows.extend(torch.softmax(logits, dim=1).cpu().tolist())
+        if len(probability_rows) != len(outer_samples):
+            raise RuntimeError("OOF prediction count differs from outer fold size")
+        save_json(args.output / "oof_predictions.json", {
+            "scope": "Outer-fold predictions from a checkpoint chosen on separate inner validation; development data, not independent test.",
+            "outer_fold": args.oof_fold,
+            "outer_manifest_sha256": oof_manifest_sha256,
+            "architecture": args.model,
+            "classes": CLASSES,
+            "checkpoint_sha256": sha256_file(checkpoint_path),
+            "rows": [
+                {
+                    "path": sample.path.relative_to(PROJECT).as_posix(),
+                    "sha256": sample.digest,
+                    "class": CLASSES[sample.label],
+                    "probabilities": probabilities,
+                }
+                for sample, probabilities in zip(outer_samples, probability_rows)
+            ],
+        })
+        print(f"Saved {len(probability_rows)} OOF predictions for fold {args.oof_fold}.", flush=True)
 
 
 if __name__ == "__main__":

@@ -117,7 +117,7 @@ export default function PharmacyDashboard({ token }: { token: string }) {
   return <div className="pharmacy-dashboard">
     <header className="pharmacy-dashboard-header">
       <div className="pharmacy-title-block">
-        <span className="pharmacy-eyebrow"><ShieldCheck aria-hidden="true" /> Quầy thuốc DermAI</span>
+        <span className="pharmacy-eyebrow"><ShieldCheck aria-hidden="true" /> Quầy thuốc Derm Clinic</span>
         <h1>Xuất thuốc an toàn, đúng lô</h1>
         <p>Đơn đã thanh toán được cập nhật tự động. Hệ thống ưu tiên lô cận hạn theo nguyên tắc FEFO.</p>
       </div>

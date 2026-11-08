@@ -1,0 +1,28 @@
+{
+  "status": "PASS",
+  "verifier_code_sha256": "a789fd55a20f717a011d0ad1be87c3700b204725036944c97cfe04711a0e6def",
+  "protocol_sha256": "ff980305c2884e6fd274bdc1fbbdaadab0c51dfb674d72d5cb5bbe886ba2fbe9",
+  "results_sha256": "3fb9142657e1b8ea6636232585e64d93cac19b0f6ad74ec80ef539f1b24b589d",
+  "prediction_sha256": "478d77f31908c886fd32c7c1aa8284fd83e358cc04c232028b768ec939960ad1",
+  "epochs_completed": 24,
+  "actual_optimizer_updates": 6070,
+  "amp_skipped_updates": 2,
+  "images": 1176,
+  "accuracy_delta_ci95": [
+    0.0,
+    0.0
+  ],
+  "checks": [
+    "Original-eight classes only; sources/code/checkpoints hashed",
+    "Exact old4043/718/1176roles and group separation",
+    "Raw/EMA checkpoint rule independently reconstructed",
+    "Actual optimizer update counts",
+    "All9 candidates and guard/ranking reconstructed from validation",
+    "Choice locked before outer artifact",
+    "Old outer parents identical to verified fold0",
+    "All saved probability blends reconstructed",
+    "Independent NumPy Accuracy/precision/recall/F1/confusion",
+    "1176unique pilot holdout rows; separate from5937OOFbenchmark"
+  ],
+  "log_note": "PyTorch scheduler warning is caused by the optimizer-step counter wrapper installed after scheduler creation. Registered code calls scheduler.step only after training updates; counts confirm actual updates occurred."
+}

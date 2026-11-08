@@ -1,0 +1,17 @@
+{
+  "name": "efficientnet_b0_v2c_resnet50_equal_research",
+  "members": [
+    {
+      "checkpoint": "candidates/production_calibrated/best_model.pth",
+      "sha256": "975e4852023ebb9d3af544b819bec0b887cf75b1467447c87c40591da90b7a17"
+    },
+    {
+      "checkpoint": "candidates/classifier_v2c_seed42/evaluation/calibrated_model.pth",
+      "sha256": "2115f811e2319299bcd0b5c7597576ce4e7bec55bde7b2bdf597d4036dff169d"
+    },
+    {
+      "checkpoint": "candidates/resnet50_scin_seed42/best_model.pth",
+      "sha256": "da04cb9f74c8533c68ec64ae548c10afb1a8dea378739793042ecb2d66670da2"
+    }
+  ]
+}

@@ -1,0 +1,13 @@
+{
+  "status": "PASS",
+  "completed_utc": "2026-11-03T09:27:01.630655+00:00",
+  "protocol_sha256": "8cc891435dad39308d8aa845cff66aaa8708bf6692e1e1ad2a4746e51d2e3063",
+  "results_sha256": "992a92c5c8237b3dec62903f6dbd10debd60f126676e491bb331ac4b7b758f92",
+  "independent_RGB_and_SHA_images": 4031,
+  "coverage_cells": 24,
+  "review_memberships_checked": 180,
+  "unique_review_images": 90,
+  "train_only_queues": true,
+  "clinical_label_review_performed": false,
+  "model_metrics_computed": false
+}

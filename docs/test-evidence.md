@@ -24,15 +24,20 @@ không chép dữ liệu bệnh nhân thật, mật khẩu, OTP hoặc API key v
   per-image error theo SHA-256, latency, OOD probes và Grad-CAM metadata. Pytest
   PASS chỉ xác minh code đánh giá; metric model phải lấy từ chính các artifact này.
 
-## Bản chụp kết quả gần nhất
+## Bản chụp kết quả đã lưu
 
-- Playwright live: **5/5 PASS, 0 FAIL, 0 SKIP** trong 38,798 giây. HTML report có
-  9 ảnh PNG và 5 video. Lượt chạy dùng PostgreSQL trong stack/volume E2E cô lập;
-  stack và volume đã được tự động xóa sau khi hoàn tất, không dùng database local
-  chính. JUnit và JSON là nguồn máy đọc để đối chiếu kết quả này.
+- Manifest Playwright ngày **06/09/2026** ghi **6/6 PASS, 0 FAIL, 0 SKIP** trong
+  55,775 giây trên stack PostgreSQL E2E cô lập. Xem
+  [`e2e-test-evidence.md`](e2e-test-evidence.md) và
+  [`e2e-test-results.json`](e2e-test-results.json) để biết revision và sáu scenario.
+  Lượt này chưa kiểm chứng các luồng thanh toán, hóa đơn và kho hiện tại.
 - Manifest 81 test case ánh xạ bảo thủ **13 PASS, 1 FAIL, 67 NOT_RUN**. Năm
-  scenario Playwright không ánh xạ một-một với test case thủ công; chỉ case có đủ
-  assertion cho toàn bộ kết quả mong đợi mới được ghi PASS.
+  scenario Playwright thuộc snapshot ngày 14/08/2026 (`docs/test-results.json`),
+  không phải kết quả của lượt 6/6 ngày 06/09. Chỉ case có đủ assertion cho toàn
+  bộ kết quả mong đợi mới được ghi PASS.
+- Test case mở rộng cho đặt cọc, hóa đơn và kho trong
+  [`07-test-cases-extended.md`](07-test-cases-extended.md) vẫn `NOT_RUN` cho đến
+  khi có kết quả và artifact theo revision mới.
 - Checkpoint promoted có SHA-256
   `914f83a85c4dbff06424e0a48f1121950f10e3c0ce8d5a9f68369b38106cc3df`,
   khớp file model, evaluation manifest và model comparison report.

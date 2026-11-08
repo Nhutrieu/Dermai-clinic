@@ -13,44 +13,46 @@ PostgreSQL là nguồn dữ liệu chuẩn.
 ## 2. Sơ đồ thành phần
 
 ```text
-Browser / React
-  |-- HTTP + JWT --------------------------------------|
-  |-- WebSocket /api/v1/appointments/ws/slots --------|
-                                                        v
-                                                Spring Cloud Gateway
-       |-----------|------------|------------|-----------|----------|
-       v           v            v            v           v          v
-     Auth       Patient       Doctor     Appointment   Medical   Prescription
-                                            |           Record
-                                            | RabbitMQ
-                                            v
-                                      Notification
+Browser / React -> Nginx -> Spring Cloud Gateway (JWT, RBAC, WebSocket)
+                            |-- Auth / Patient / Doctor / Appointment
+                            |-- Payment (PayOS) / Medical Record
+                            |-- Prescription (hóa đơn) / Notification
+                            |-- Inventory FastAPI (kho và quầy dược)
+                            `-- AI FastAPI (predict, RAG, chat)
 
-Gateway ----------------------------------------------------------> AI FastAPI
-                         /ai/predict, /ai/chat, /ai/public-chat
-
-Spring services -> PostgreSQL (mỗi service sở hữu một schema logic)
-Frontend        -> Nginx
-Dev tools       -> Adminer
+Spring services + Inventory -> PostgreSQL (schema theo service)
+Appointment / Payment / Prescription -> RabbitMQ -> Notification
+Gateway -> Redis (rate limiter)
+Dev tools -> Adminer
 ```
 
 ## 3. Dịch vụ và quyền sở hữu dữ liệu
 
 | Dịch vụ | Schema/dữ liệu sở hữu | Trách nhiệm |
 |---|---|---|
-| Gateway | Không lưu nghiệp vụ | Route, xác thực JWT, CORS và security header |
+| Gateway | Không lưu nghiệp vụ | Route, xác thực JWT, CORS, security header và rate limit chọn lọc qua Redis |
 | Auth Service | `auth` | Identity, email, password hash, role, trạng thái, refresh token, OTP |
 | Patient Service | `patient` | Hồ sơ Patient, hotline relink, metadata và ảnh gốc AI assessment có kiểm soát truy cập |
-| Doctor Service | `doctor` | Hồ sơ Doctor, avatar, mô tả, `consultation_fee`, lịch làm và nghỉ phép |
-| Appointment Service | `appointment` | Lịch, giá snapshot, hold/proposal, Scheduling Engine, closures, notification, reminder, support chat/claim, review, audit và outbox |
+| Doctor Service | `doctor` | Hồ sơ Doctor, giá khám, lịch làm/nghỉ và danh mục dịch vụ phòng khám |
+| Appointment Service | `appointment` | Lịch, giá snapshot, hold/proposal, trạng thái cọc, dịch vụ đã thực hiện, Scheduling Engine, chat, review, audit và outbox |
+| Payment Service | `payment` | Giao dịch cọc/PayOS, webhook, đối soát, hết hạn và yêu cầu/ghi nhận hoàn tiền |
 | Medical Record Service | `medical_record` | Hồ sơ khám đã ký và chẩn đoán cuối |
-| Prescription Service | `prescription` | Đơn thuốc và mục thuốc đã ký |
+| Prescription Service | `prescription` | Danh mục thuốc, đơn thuốc, hóa đơn, thu tiền và báo cáo đối soát |
+| Inventory Service | `pharmacy` | Lô thuốc, cấp phát FEFO, nhật ký nhập/xuất và cảnh báo tồn |
 | Notification Service | `notification` | Trạng thái giao email, số lần thử và idempotency theo event ID |
 | AI Service | File/checkpoint/index | Inference ảnh, Grad-CAM, RAG, Gemini public chat và phân loại hỗ trợ |
 
 Môi trường hiện tại dùng **một PostgreSQL instance và schema-per-service**, không
-phải database/user vật lý riêng cho từng service. Service không truy cập
-repository của service khác; liên hệ đồng bộ qua REST hoặc bất đồng bộ qua event.
+phải database/user vật lý riêng cho từng service. Các service Spring liên hệ
+qua REST hoặc event; Inventory Service hiện đồng bộ trực tiếp danh mục thuốc,
+hóa đơn đã thanh toán trong schema `prescription` với schema `pharmacy`. Đây là
+phụ thuộc dữ liệu chéo cần tính đến khi đổi schema hoặc tách database.
+
+Luồng đặt lịch có cọc đi qua `PENDING_PAYMENT` → `PENDING_CONFIRMATION` sau
+webhook hoặc đối soát thanh toán hợp lệ → `CONFIRMED` khi lễ tân/Admin xác nhận.
+Sau khám, Doctor xác nhận dịch vụ thực hiện; Prescription Service lập hóa đơn,
+khấu trừ cọc và ghi thanh toán. Đơn có thuốc của hóa đơn đã thanh toán được
+chuyển tới Inventory Service để dược sĩ xuất theo lô FEFO.
 
 Thư mục `services/clinic-service` nếu xuất hiện trong workspace là mã thử nghiệm
 chưa được khai báo trong parent `pom.xml` và `docker-compose.yml`; nó không phải
@@ -137,8 +139,10 @@ Model code hỗ trợ EfficientNet-B0, ResNet50 và ConvNeXt Tiny. Output gồm 
 chính, confidence, Top-3, Grad-CAM data URL, model version, `uncertain` và
 disclaimer. Kết quả không được ghi tự động vào final diagnosis.
 
-Chỉ role `PATIENT` được gọi `/ai/predict`. Sau inference thành công, Patient
-Service lưu metadata và ảnh gốc trong `ai_assessments`; Grad-CAM không được lưu.
+Chỉ role `PATIENT` được gọi endpoint `/api/v1/patients/me/ai-assessments/analyze`.
+Patient Service kiểm tra ảnh/consent, gọi `/predict` qua mạng nội bộ rồi lưu metadata
+và ảnh gốc trong `ai_assessments`; trình duyệt không thể tự khai nhãn/confidence.
+Grad-CAM không được lưu.
 Patient sở hữu đọc/xóa ảnh, còn Doctor chỉ đọc qua appointment đã được Patient
 chia sẻ và phải là Doctor phụ trách. Endpoint ảnh dùng `Cache-Control: no-store`.
 Frontend vẫn đính kèm tóm tắt vào lý do khám; bác sĩ ghi kết luận độc lập. Không
@@ -150,7 +154,7 @@ ghi ảnh hoặc PII vào log và không gửi ảnh sang Gemini.
   phải RAG và hiện không trả citation.
 - `RagStore` đọc `chunks.json` được trích theo trang từ PDF trong `SkinDisease`,
   dựng chỉ mục TF-IDF unigram/bigram khi khởi động và không cần tải model embedding.
-- Sau `/ai/predict`, hệ thống giới hạn tìm kiếm vào các trang điều trị/phòng bệnh
+- Sau lần inference nội bộ, hệ thống giới hạn tìm kiếm vào các trang điều trị/phòng bệnh
   tương ứng với nhãn. Khi tìm thấy bằng chứng, API trả một bản tóm tắt kiểm soát
   tối đa ba ý, không có liều hoặc tên thuốc kê đơn.
 - `/ai/chat` tiếp tục dùng cùng chỉ mục ở chế độ extractive; nếu thiếu index hoặc
@@ -180,39 +184,35 @@ cảnh escalation hiện hành được xóa, nhưng transcript và metadata ng�
 
 ## 8. Triển khai hiện tại
 
-Hai sơ đồ được tách rõ để không trình bày nhầm thiết kế mục tiêu là hệ thống đã
-vận hành:
+Nguồn mô tả triển khai là [`docker-compose.yml`](../docker-compose.yml) cho local
+và [`docker-compose.production.yml`](../docker-compose.production.yml) cho bản
+single-host có giới hạn cổng. TLS, backup ngoài máy và observability vẫn phụ
+thuộc hạ tầng triển khai thực tế.
+- [`database-schema-reference.md`](database-schema-reference.md): tham chiếu 9 schema,
+  48 bảng, 417 cột, ràng buộc và chỉ mục lấy từ PostgreSQL local.
+- [`database-erd-guide.md`](database-erd-guide.md): quy ước nét nối, cardinality và
+  các liên kết UUID logic giữa service để vẽ ERD toàn hệ thống.
+- [`dermai_full_schema.sql`](../database/dermai_full_schema.sql): SQL tạo đầy đủ schema
+  trên một database mới, rỗng; các service cũng có migration riêng.
 
-- [`deployment.puml`](diagrams/deployment.puml) / [`deployment.png`](diagrams/deployment.png):
-  Docker Compose local hiện hành.
-- [`deployment-production.puml`](diagrams/deployment-production.puml) /
-  [`deployment-production.png`](diagrams/deployment-production.png): kiến trúc
-  production mục tiêu. Phần container single-host đã có overlay chạy được; TLS,
-  backup ngoài máy và observability vẫn phụ thuộc hạ tầng triển khai thực tế.
-- [`database-erd.puml`](diagrams/database-erd.puml): ERD nguồn chuẩn gồm đủ 24 bảng,
-  196 thuộc tính và phân biệt FK vật lý với tham chiếu logic giữa microservice.
-- [`database-class.puml`](diagrams/database-class.puml): class diagram persistence gồm
-  24 lớp dữ liệu và năm enum miền nghiệp vụ.
-- [`database-schema-reference.md`](database-schema-reference.md): bảng tra cứu thuộc tính,
-  cardinality và constraint dùng khi vẽ hoặc thuyết minh.
-
-- Docker Compose chạy PostgreSQL, RabbitMQ, Redis, tám tiến trình Spring (gồm
-  Gateway), AI, Frontend/Nginx và Adminer. Email được gửi qua Gmail SMTP.
+- Docker Compose chạy PostgreSQL, RabbitMQ, Redis, chín tiến trình Spring (gồm
+  Gateway), hai dịch vụ FastAPI (AI và Inventory), Frontend/Nginx và Adminer.
+  Email được gửi qua SMTP khi cấu hình hợp lệ.
 - PostgreSQL dùng named volume. RabbitMQ/Redis cần volume riêng nếu dữ liệu hàng
   đợi/cache phải tồn tại qua container recreation.
-- Các cổng 5432, 8000, 8080, 8081 và 15672 chỉ nên mở local; production
+- Các cổng 5432, 8000, 8010, 8080, 8081 và 15672 chỉ nên mở local; production
   chỉ công khai reverse proxy/TLS.
 - `docker-compose.production.yml` ghép với file Compose local để bỏ toàn bộ cổng
   hạ tầng/API, tắt Adminer mặc định và chỉ publish frontend reverse proxy. Cách
   chạy và hợp đồng biến môi trường nằm tại [`production-deployment.md`](production-deployment.md).
-- Redis hiện có trong hạ tầng nhưng chưa được ứng dụng dùng cho cache/rate limit.
+- Redis được Gateway dùng cho rate limiter trên một số route nhạy cảm.
 - Healthcheck chứng minh process phản hồi endpoint, không thay thế synthetic
   test cho booking, email và inference model.
 
 ## 9. Quyết định công nghệ
 
-- **React + TypeScript + Vite + CSS tự xây dựng:** giao diện bốn vai trò, lazy
-  loading và responsive. Dự án không dùng Tailwind CSS.
+- **React + TypeScript + Vite:** giao diện năm vai trò, lazy loading và
+  responsive; mã nguồn có Tailwind CSS 4 cho một phần giao diện.
 - **Java 21 + Spring Boot 3:** validation, transaction, JPA và security.
 - **PostgreSQL 16:** transaction và exclusion constraint cần cho lịch.
 - **RabbitMQ:** truyền event/outbox cho thông báo bất đồng bộ.
@@ -222,13 +222,14 @@ vận hành:
 
 ## 10. Hạng mục production còn thiếu
 
-1. Rate limit cho login, forgot-password, upload và Gemini public chat.
+1. Rà soát và mở rộng rate limit hiện có ở Gateway cho các route nhạy cảm.
 2. Secret mạnh, TLS, giới hạn CORS/WebSocket origin và CSP cho web.
 3. Xác minh routing RabbitMQ/email và thêm metric theo dõi dead-letter.
 4. Volume/backup, restore drill, metrics, tracing, log tập trung và alert.
-5. Chính sách retention/xóa ảnh AI và đánh giá dung lượng PostgreSQL BLOB.
-6. Browser E2E release gần nhất đã đạt 5/5 Pass, 0 Fail, 0 Skip trên stack
-   PostgreSQL cô lập và stack/volume đã được tự động xóa sau lượt chạy. Vẫn cần
-   bổ sung accessibility, load test, hotline, reconnect và các nhánh âm ngoài năm
-   scenario hiện tại. Checkpoint thật đã có checksum, calibration, error analysis,
-   latency và OOD sanity evidence.
+5. Kiểm chứng job retention ảnh AI trong triển khai thật và đánh giá dung lượng
+   PostgreSQL BLOB.
+6. E2E lịch sử ngày 06/09/2026 đạt 6/6 Pass trên stack PostgreSQL cô lập;
+   chưa bao gồm các luồng cọc, hóa đơn và kho hiện tại. Cần chạy lại trên revision
+   mới, bổ sung accessibility, load test, hotline, reconnect và các nhánh âm.
+   Checkpoint thật đã có checksum, calibration, error analysis, latency và OOD
+   sanity evidence.

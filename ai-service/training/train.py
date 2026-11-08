@@ -36,7 +36,7 @@ if hasattr(sys.stdout, "reconfigure"):
 
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(
-        description="Huấn luyện bộ phân loại tám nhóm bệnh da liễu và đánh giá trên test độc lập."
+        description="Huấn luyện bộ phân loại tám nhóm bệnh da liễu và đánh giá trên test cố định cũ."
     )
     parser.add_argument("--data", required=True, type=Path)
     parser.add_argument(
@@ -63,7 +63,12 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--pretrained", action=argparse.BooleanOptionalAction, default=True)
     parser.add_argument("--amp", action=argparse.BooleanOptionalAction, default=True)
     parser.add_argument("--class-weighted", action=argparse.BooleanOptionalAction, default=True)
-    parser.add_argument("--evaluate-test", action=argparse.BooleanOptionalAction, default=True)
+    parser.add_argument(
+        "--evaluate-test",
+        action=argparse.BooleanOptionalAction,
+        default=False,
+        help="Opt in to the historical fixed-test evaluation; omit it during model development.",
+    )
     return parser.parse_args()
 
 

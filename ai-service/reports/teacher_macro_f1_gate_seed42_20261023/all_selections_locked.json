@@ -1,0 +1,19 @@
+{
+  "locked_utc": "2026-10-23T16:03:37.024454+00:00",
+  "protocol_sha256": "d8c5a78ef754248c302844e1589618978a65a48911fb7fe2731621909ad6eb27",
+  "selections_sha256": {
+    "0": "ce0cabbb6094cd026eaf1939c65dd2ac31391ce2f8b923d24937dd08302f5aa7",
+    "1": "1b8bf6cccf64c5def48cc9d25d8dc9cf8914aade2ec74c1a210aa21b051b7239",
+    "2": "b514f246476cfce3acd31df5756ccc9a2af8d6fd2a295c63f3a42eacf232e9bd",
+    "3": "f69e3f9195bccd92201af5a573dea4065685eb3b5bc77ee072f9facce927a93b",
+    "4": "cd3c0b86a716d65c90a98dc1a4c89891a4578df060d49b9e6d3729cefe5b5a09"
+  },
+  "actual_gate_fits": {
+    "conservative_control": 20,
+    "macro_f1_gate": 20
+  },
+  "fallbacks": {
+    "conservative_control": 0,
+    "macro_f1_gate": 0
+  }
+}

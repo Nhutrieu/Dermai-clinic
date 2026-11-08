@@ -32,7 +32,7 @@ export default function AppFooter({ variant = "staff" }: AppFooterProps) {
               <address className="app-footer-public-address">
                 <span><strong>Địa chỉ:</strong> 32/2 Thống Nhất, phường Gò Vấp, TP. Hồ Chí Minh</span>
                 <span><strong>Điện thoại:</strong> <a href="tel:0352790904">0352 790 904</a></span>
-                <span><strong>Email:</strong> <a href="mailto:contact@dermai.clinic">contact@dermai.clinic</a></span>
+                <span><strong>Email:</strong> <a href="mailto:hello@dermclinic.vn">hello@dermclinic.vn</a></span>
               </address>
             </div>
 
@@ -60,7 +60,7 @@ export default function AppFooter({ variant = "staff" }: AppFooterProps) {
               <a href="#reviews">Cảm nhận bệnh nhân</a>
               <span className="app-footer-nav-subheading">Liên hệ phòng khám</span>
               <a href="tel:0352790904">Điện thoại đặt lịch</a>
-              <a href="mailto:contact@dermai.clinic">Email hỗ trợ</a>
+              <a href="mailto:hello@dermclinic.vn">Email hỗ trợ</a>
             </nav>
           </div>
         </div>

@@ -102,7 +102,11 @@ metadata. Nguồn và giấy phép dataset phải được bổ sung trước kh
 Checkpoint tốt nhất đạt validation Accuracy 79,76% và Macro F1 78,58% tại
 epoch 17. Metric test chỉ được tính sau khi chọn checkpoint này.
 
-## 7. Kết quả test độc lập
+## 7. Kết quả test cố định cũ
+
+Đây là phép đo lịch sử, chưa độc lập theo người. [Audit sau đó](47-audit-anh-trung-gan-test-cu.md)
+xác nhận ảnh cùng cảnh xuất hiện qua split train/validation và test; không dùng chỉ số này
+để suy ra độ chính xác trên người bệnh mới.
 
 | Metric | Kết quả |
 |---|---:|

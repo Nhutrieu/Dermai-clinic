@@ -1,0 +1,11 @@
+{
+  "status": "PASS",
+  "scope": "Technical consistency, not independent clinical validation",
+  "results_sha256": "35283ae8c6147e9dd1faa2a91d1fe6d5e82e923fa00d78e16f801321baac14f7",
+  "images": 5937,
+  "cancer_decision_masks_identical": true,
+  "all_folds_locked_before_outer_evaluation": true,
+  "original_benchmark_reproduced": true,
+  "sources_unchanged": true,
+  "serving_changed": false
+}

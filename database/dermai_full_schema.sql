@@ -1,10 +1,12 @@
 -- DermAI Clinic - Full PostgreSQL schema
--- Generated from active versioned microservice database migrations.
+-- Compiled from the active microservice database migrations.
 -- Target: a NEW/EMPTY PostgreSQL database (default Docker database: dermai).
 -- Legacy clinic-service/public tables are intentionally excluded to avoid duplicate domain tables.
 -- Do not run this file over an existing migrated database.
+-- This standalone SQL does not create Flyway schema history. To start the app on a
+-- new database, let the services apply their own migrations instead of importing
+-- this file first. Use this file for schema review, ERD import, or standalone SQL setup.
 
-\set ON_ERROR_STOP on
 BEGIN;
 SET client_encoding = 'UTF8';
 SET timezone = 'Asia/Ho_Chi_Minh';

@@ -1,0 +1,10 @@
+{
+  "status": "PASS",
+  "results_sha256": "474cdab8d062e8d883ba9d043eeacea3525e10bb478de11af8aaf093a6229d56",
+  "original_control_exactly_reproduced": true,
+  "same_initial_tensors_and_batches": true,
+  "dropout_rng_isolated": true,
+  "evaluation_dropout_disabled": true,
+  "all_five_locked_before_outer": true,
+  "exact_cancer_mask": true
+}

@@ -1,0 +1,18 @@
+{
+  "status": "PASS",
+  "completed_utc": "2026-11-03T09:45:13.560163+00:00",
+  "protocol_sha256": "6355d3f0eb52c043a5fe2d95ac4fab829e37e4632028ad8611f6c8a218ee238f",
+  "results_sha256": "b67d0a9cfb685ca3ed9e5996d0a49aed40fd17df1592f439631941fa3ecdd663",
+  "archive_images_independently_decoded": 1594,
+  "all_psoriasis_frames_checked": 889,
+  "protected_reference_rows": 19635,
+  "vector_popcount_overlap_rebuilt": true,
+  "BFS_components_rebuilt": true,
+  "provisional_copies_checked": 25,
+  "clinical_label_confirmation": false,
+  "patient_identity_verified": false,
+  "training_or_test_admission": false,
+  "reviewer_correction_protocol_sha256": "819df279c66e957800ff015e144a04ec2d8bb1035001e478b0566bf27e9696f3",
+  "corrected_reviewer_sha256": "a6e96e5a056e5eefc7e2397f66dff83665fbdf5d617e75d612dc0d96e45522eb",
+  "producer_results_unchanged_after_review_correction": true
+}

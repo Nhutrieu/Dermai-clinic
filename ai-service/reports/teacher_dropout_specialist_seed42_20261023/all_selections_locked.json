@@ -1,0 +1,13 @@
+{
+  "locked_utc": "2026-10-23T16:39:39.277427+00:00",
+  "actual_heads": 10,
+  "epochs_each": 20,
+  "protocol_sha256": "d5b788d7ce5e534d9d288155dfed94418a7bbddeff7a140f112f9562e65e6e0b",
+  "selections_sha256": {
+    "0": "8d61c1220ebcc638cb2cd913a0bc4285c590d41dbb4b59cbda78f277d80c1e9c",
+    "1": "3c8a96822cd5a423a03aece2e99c3606cc6f721950c9e782c6b45deef0003cff",
+    "2": "c42268d5aba7db1905dd7f7696ad781d5d524f15883df2823e64d88595a990ba",
+    "3": "c8898e548e9cfbec9771c690d2c7b1813ba85d10be3c9cdef060c5d0ef4fb2bf",
+    "4": "ef0c02d8c84a35499118b99e75a7de3b54e1e92c495699761822ce57a976f78b"
+  }
+}

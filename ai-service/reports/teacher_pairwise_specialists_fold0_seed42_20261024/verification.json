@@ -1,0 +1,6 @@
+{
+  "status": "PASS",
+  "results_sha256": "01ff333bad0eb22d6df53c600c57681120cad89e3fb7841ff0a6bc54d698707a",
+  "pairs_locked_before_inner": true,
+  "selection_locked_before_held": true
+}

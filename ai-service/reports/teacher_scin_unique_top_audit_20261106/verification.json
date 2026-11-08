@@ -1,0 +1,22 @@
+{
+  "status": "PASS",
+  "method": "Raw source CSV weights sorted independently; whole-case masks and exact matching strata rebuilt without importing producer. Frozen input hashes rechecked.",
+  "pools": {
+    "fold1_cv0": {
+      "source_ties_rebuilt": 60,
+      "cases": 28,
+      "matched_strata_exact": true
+    },
+    "fold1_cv1": {
+      "source_ties_rebuilt": 63,
+      "cases": 32,
+      "matched_strata_exact": true
+    },
+    "fold1_cv2": {
+      "source_ties_rebuilt": 57,
+      "cases": 28,
+      "matched_strata_exact": true
+    }
+  },
+  "clinical_review_performed": false
+}

@@ -1,0 +1,12 @@
+{
+  "protocol_sha256": "b07bd6bd8566483f0293a7d08b4d58b539553aeb67c8ecf9e77a2d1e5ddede88",
+  "selections_sha256": {
+    "0": "e0f5697d8af4f27cd0a8fe5374e0aa985744246920a7ae03ce6ebdb5d3e80de5",
+    "1": "a56b614b1fd27ff75c4c5154b6138759097b463e550a370b617f34fe35266234",
+    "2": "12f93203a47d5b7de1dc766091cd01b404115717ea29516bdf4f84bbd91e6ff4",
+    "3": "c1765c768b9d8b2b4be0f1a77115ec9f968b53a04b2dd97aecedca8471f95f85",
+    "4": "824163a27bc1ea59021a27c250d0d76720d0fc693fba5bc8246d5f7c4ef42a4e"
+  },
+  "outer_array_evaluation_started": false,
+  "scope": "These outer data have been studied in prior experiments."
+}

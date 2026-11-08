@@ -1,0 +1,28 @@
+{
+  "completed_utc": "2026-11-06T08:06:23.800238+00:00",
+  "protocol_sha256": "ae98a101b4b7d6dc3201d87114e5d0b6d0b819241774d192921efe11dadefeab",
+  "searched_articles": 24,
+  "accepted_source_articles": 12,
+  "source_search_counts": {
+    "Lupus": 201,
+    "Psoriasis": 153,
+    "Tinea": 27
+  },
+  "figures_screened": 47,
+  "downloaded_original_figure_files": 0,
+  "download_bytes": 0,
+  "downloaded_by_class": {},
+  "provisional_candidates": 0,
+  "provisional_by_class": {},
+  "provisional_article_groups": 0,
+  "direct_protected_hits": 0,
+  "quarantined_components": 0,
+  "protected_reference_rows": 19635,
+  "images_admitted_to_training": 0,
+  "images_admitted_to_evaluation": 0,
+  "known_new_patient_count": null,
+  "CNN_fits": 0,
+  "new_model_metrics": false,
+  "serving_changed": false,
+  "global_5937_score_changed": false
+}

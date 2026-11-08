@@ -1,0 +1,20 @@
+{
+  "status": "PASS",
+  "verifier_code_sha256": "15e1d131e82470bac7803f73b467d4118ea78decf800e665c4bafc7e448cc8c9",
+  "protocol_sha256": "4b607e916dbb99d9e77cb0110a9d760b4922eb3bd4f9c6dd52712ef96754e31b",
+  "results_sha256": "3a43bb8215fd8eee9ceb723d960be10c4d4d2acb2a3b8cb521a34892af511d3c",
+  "predictions_sha256": "523239154a0c51ca5962f9b9ca86d88f5e650ff667e8f634bd6b6b7885c501d3",
+  "comparison_sha256": "f1c11a5b00adf9a83316c9e5d36f71eb3eb5772ece60f3364eb0a998e81c47b1",
+  "images": 1709,
+  "checkpoint_count": 15,
+  "checks": [
+    "Original eight classes, active track and serving SHA unchanged",
+    "Frozen15checkpoints/source labels/code hashes unchanged",
+    "Registered duplicate quarantine; exact disjointness from original5937pool",
+    "Source order, image SHA and published case identity verified",
+    "Each member probability artifact follows protocol registration",
+    "Five-fold reference and fixed75:25 reconstructed from raw member outputs",
+    "Independent NumPy confusion, Accuracy, precision, recall, eight-class and present-class Macro F1",
+    "Separate source scores; paired case bootstrap; no source-based fit or new-eight checkpoints"
+  ]
+}

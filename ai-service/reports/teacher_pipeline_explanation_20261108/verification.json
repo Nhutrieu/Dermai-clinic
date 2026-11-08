@@ -1,0 +1,18 @@
+{
+  "status": "PASS",
+  "images": 5937,
+  "method_sets": 4,
+  "sklearn_metrics_match": true,
+  "frozen_source_hashes_match": true,
+  "serving_and_registry_hashes_unchanged": true,
+  "exact_cancer_masks": true,
+  "new_fits": 0,
+  "new_selections": 0,
+  "results_sha256": "39f488d2543052f917cb280801eeac3ce6ebc592825aad4ee8f0f38f9af5d95d",
+  "verifier_sha256": "308cc5f033c7327f4358db70187656b2e3d76a710272ee1bac0de57e7a8714d1",
+  "protected_sha256": {
+    "ai-service/models/best_model.pth": "975e4852023ebb9d3af544b819bec0b887cf75b1467447c87c40591da90b7a17",
+    "ai-service/app/config.py": "bda739d518517f2967b30abf99f3dd8780c811b740792bfa2715b5ff436221e1",
+    "ai-service/reports/active_research_track.json": "231db2e97b6fee5bad69ba890ac9d8f12ac5825fb56f488209b77478d1cb8f19"
+  }
+}

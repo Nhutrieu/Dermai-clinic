@@ -1,0 +1,20 @@
+{
+  "status": "PASS",
+  "scope": "Independent decision formulas, source hashes, per-class/per-source/per-fold arithmetic; not clinical validation",
+  "images": 5937,
+  "metric_sets_checked": 32,
+  "correct_old": 4635,
+  "correct_selected": 4671,
+  "additional_correct": 36,
+  "results_sha256": "35283ae8c6147e9dd1faa2a91d1fe6d5e82e923fa00d78e16f801321baac14f7",
+  "decisions_sha256": "d047de96ae83af951e842fc95c55b78da2be41a61c6df3087442ae5de62c0efb",
+  "cancer_decision_masks_identical": true,
+  "selected_by_fold": {
+    "0": "validation_protected_resnet25",
+    "1": "validation_protected_resnet25",
+    "2": "old_classwise",
+    "3": "validation_protected_resnet25",
+    "4": "validation_protected_resnet25"
+  },
+  "serving_changed": false
+}

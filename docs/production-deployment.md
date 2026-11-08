@@ -16,6 +16,7 @@ Yêu cầu Docker Compose **v2.24.4 trở lên** vì overlay dùng các merge ta
 | PostgreSQL | host `5432` | chỉ mạng database nội bộ |
 | RabbitMQ management | host `15672` | không có host port |
 | FastAPI/Swagger | host `8000` | chỉ mạng application nội bộ |
+| Inventory FastAPI/Swagger | host `8010` | chỉ mạng application nội bộ |
 | Adminer | host `8081` | tắt mặc định; profile `maintenance`, không host port |
 | Bí mật | có giá trị local mặc định | bắt buộc lấy từ `.env.production` |
 
@@ -33,8 +34,11 @@ Copy-Item .env.production.example .env.production
 Sửa `.env.production` và điền toàn bộ giá trị bắt buộc đang để rỗng. Compose sẽ
 từ chối khởi động nếu còn thiếu. Có thể tạo chuỗi ngẫu nhiên bằng công cụ quản lý
 secret của nền tảng. Không ghi secret vào file
-Compose, tài liệu, ảnh chụp, log hoặc Git. Ba giá trị tối thiểu bắt buộc là mật
-khẩu PostgreSQL, JWT secret và service token; RabbitMQ cũng dùng tài khoản riêng.
+Compose, tài liệu, ảnh chụp, log hoặc Git. Overlay yêu cầu mật khẩu PostgreSQL,
+JWT secret, service token, khóa mã hóa ảnh, tài khoản RabbitMQ và thông tin PayOS
+(`PAYOS_CLIENT_ID`, `PAYOS_API_KEY`, `PAYOS_CHECKSUM_KEY`, return/cancel URL).
+Giữ `PAYOS_FAKE_MODE=false`; cấu hình webhook HTTPS công khai tương ứng với
+`/api/v1/payments/payos-webhook` trên cổng reverse proxy.
 
 `PUBLIC_ORIGIN` phải là origin HTTPS thật, ví dụ `https://clinic.example.com`,
 không có path và không có dấu `/` cuối. Khi dùng reverse proxy TLS trên cùng máy,
@@ -76,7 +80,7 @@ docker compose `
 ```
 
 `--wait` dựa trên healthcheck hiện có của PostgreSQL, RabbitMQ, Redis, các service
-Spring, FastAPI, gateway và frontend. Kiểm tra sau triển khai:
+Spring, AI, Inventory, gateway và frontend. Kiểm tra sau triển khai:
 
 ```powershell
 docker compose `
@@ -99,7 +103,7 @@ Không dùng `down -v` trong production vì tùy chọn `-v` xóa volume Postgre
 Overlay không tự cấp chứng chỉ TLS vì domain và nhà cung cấp của môi trường triển
 khai chưa được chốt. Trước khi mở Internet, đặt Caddy, Nginx, load balancer hoặc
 dịch vụ cloud ở phía trước frontend và bắt buộc HTTPS/WSS. Chỉ mở `80/443` ở
-firewall; không mở `5432`, `8000`, `8080`, `8081` hoặc `15672`.
+firewall; không mở `5432`, `8000`, `8010`, `8080`, `8081` hoặc `15672`.
 
 Để bảo trì database, ưu tiên `docker compose ... exec postgres psql` qua SSH.
 Nếu bắt buộc dùng Adminer, tạo một override tạm chỉ bind `127.0.0.1:8081:8080`,

@@ -5,6 +5,7 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 class Settings(BaseSettings):
     model_config = SettingsConfigDict(env_file=".env", extra="ignore")
     model_path: Path = Path("models/best_model.pth")
+    ensemble_manifest_path: Path | None = None
     ood_profile_path: Path = Path("models/ood_profile.json")
     rag_index_path: Path = Path("rag/index")
     gemini_api_key: str = ""

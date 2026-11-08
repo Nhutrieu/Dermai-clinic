@@ -1,0 +1,16 @@
+{
+  "locked_utc": "2026-10-23T10:52:24.301587+00:00",
+  "protocol_sha256": "b67c04f4e699a7c195102e84facb7c8584418945739f9cb4298c11627be19715",
+  "selections_sha256": {
+    "0": "6f84cf318d45f9dd8cf7e974b4eb93d49ea597418765f03cd49ea7fc3229e4dc",
+    "1": "57fb7b66c64f00191d8d0e78cc07557cabd875387d838a9a155857d9577dc203",
+    "2": "f01374ecb3823a4e7a7ef76363f43c4eb3ad3a0d44ee241da1aeb1ccff25d89b",
+    "3": "8641212a7477dd46b1d90b577062cb5d0960d43f1d5e171c38de03886cd301d8",
+    "4": "c49f626c3fec5273a19228f3fcad54e6687ebbb03c33c1bb977fe98cab641779"
+  },
+  "fits": {
+    "candidate_fits": 50,
+    "gate_fits": 20,
+    "always_keep_fallbacks": 0
+  }
+}

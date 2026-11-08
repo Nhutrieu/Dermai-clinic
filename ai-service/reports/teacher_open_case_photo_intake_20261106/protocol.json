@@ -1,0 +1,53 @@
+{
+  "registered_utc": "2026-11-06T08:05:09.952605+00:00",
+  "scope": "Bounded new free-source screening and provisional clinical-photo intake only. No model scoring, diagnosis by AI, training, deployment, contact or account creation.",
+  "frozen_sha256": {
+    "ai-service/reports/teacher_weak_free_sources_20261103/protected_union.jsonl": "82731f6569f690be42a8e5f50780aaf968140ff144b01cf2b72dde633e5a517b",
+    "ai-service/reports/teacher_open_case_photo_intake_20261106/intake.py": "553609f298c42c34477655c51f035dea7d11929c6abfaf64dcdf2ff3044b0065",
+    "ai-service/tests/test_open_case_photo_intake.py": "433d80b3258912713d6e3c4102636ffc8a4619e7e86b1f178a094b7faa8527a7",
+    "ai-service/reports/teacher_scin_unique_top_pilot_20261106/completion.json": "7c188583b7962ff79904cf87f8cdbd5d025057a9b608970cb6ea80abac303782",
+    "ai-service/models/best_model.pth": "975e4852023ebb9d3af544b819bec0b887cf75b1467447c87c40591da90b7a17",
+    "ai-service/app/config.py": "bda739d518517f2967b30abf99f3dd8780c811b740792bfa2715b5ff436221e1",
+    "ai-service/reports/active_research_track.json": "231db2e97b6fee5bad69ba890ac9d8f12ac5825fb56f488209b77478d1cb8f19"
+  },
+  "sources": {
+    "DDI": "https://ddi-dataset.github.io/",
+    "DDI2": "https://daneshjoulab.github.io/ddi2-dataset/",
+    "eSkinHealth": "https://raw.githubusercontent.com/janet-sw/eSkinHealth/main/README.md",
+    "PMC_developers": "https://pmc.ncbi.nlm.nih.gov/tools/developers/",
+    "PMC_cloud": "https://pmc.ncbi.nlm.nih.gov/tools/pmcaws/",
+    "PMC_cloud_readme": "https://pmc-oa-opendata.s3.amazonaws.com/README.txt"
+  },
+  "queries": {
+    "Lupus": "(\"discoid lupus\"[Title] OR \"cutaneous lupus\"[Title]) AND (\"case report\"[Title] OR \"case reports\"[Publication Type])",
+    "Psoriasis": "(\"plaque psoriasis\"[Title] OR \"psoriasis vulgaris\"[Title]) AND (\"case report\"[Title] OR \"case reports\"[Publication Type])",
+    "Tinea": "(\"tinea corporis\"[Title] OR \"tinea cruris\"[Title] OR \"tinea faciei\"[Title] OR \"tinea incognito\"[Title]) AND (\"case report\"[Title] OR \"case reports\"[Publication Type])"
+  },
+  "query_suffix": " AND open_access[filter] NOT pmc embargo[filter] AND 2016/01/01:2026/11/06[Publication Date]",
+  "per_class_article_limit": 8,
+  "sort": "pub date, as returned by NCBI ESearch; fixed first8 per query",
+  "source_version": "Use earliest numerically available non-manuscript/non-retracted OA article version with license in allowlist. Archive all metadata decisions, full JATS only after license passes.",
+  "allowed_licenses": [
+    "CC BY",
+    "CC BY-NC",
+    "CC BY-NC-SA",
+    "CC BY-SA",
+    "CC0"
+  ],
+  "rule": "Narrow exact source title and figure-caption disease names only; no broad alias mapping or mixing diagnoses. Exclude microscopy/dermoscopy/lab/chart, post-treatment or mixed before-after captions and third-party credits. No crops or generated images; keep original source bytes. Each article is a conservative proxy group, not verified patient identity. Each figure is one file, panels are not counted as separate patients.",
+  "retrieval": "NCBI ESearch <=2req/s and anonymous official PMC S3 metadata/JATS/media per current2026 docs. No HTML scraping or obsolete FTP/OA endpoint. Verify MD5 supplied in object URL, then byte/pixel/dHash and dimensions. Max20MB/object, at most3 graphic candidates/article, max72 images/24articles. All selected files remain provisional until visual modality/rights checks and a separate training protocol.",
+  "protection": "Historical cached union19635 rows, plus all new candidates. Connect samearticle, exact byte/pixel or dHashHamming<=3 transitively; any existing-source hit or cross-label component quarantines entire component. Do not redownload/restore deleted corpora. No model error/loss/accuracy used in search or candidate choice.",
+  "limitations": [
+    "Author-reported diagnoses and captions are not a new clinical review in this project.",
+    "Case reports can be atypical and source-shifted; new files need not improve model scores.",
+    "Article-level groups and hashes do not establish new or independent patients.",
+    "Search and copyright checks are bounded; figure-specific exceptions may require manual rejection.",
+    "Queries and three example source pages were inspected exploratorily before registration; no model output was used."
+  ],
+  "new_CNN_fits": 0,
+  "selected": null,
+  "images_admitted_to_training": 0,
+  "images_admitted_to_evaluation": 0,
+  "serving_changed": false,
+  "global_5937_score_changed": false
+}

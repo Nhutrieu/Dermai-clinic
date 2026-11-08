@@ -1,0 +1,40 @@
+{
+  "registered_utc": "2026-10-24T16:08:05.639078+00:00",
+  "purpose": "Descriptive audit, not a new model or hypothesis confirmation.",
+  "frozen_sha256": {
+    "ai-service/reports/teacher_dropout_specialist_seed42_20261023/oof_decisions.json": "3ae9029d95b5de06fc7d8a646b00115076faf17c08ea99ec15c84810c927ad4a",
+    "ai-service/reports/teacher_dropout_specialist_seed42_20261023/results.json": "474cdab8d062e8d883ba9d043eeacea3525e10bb478de11af8aaf093a6229d56",
+    "ai-service/reports/teacher_dropout_specialist_seed42_20261023/transfer_check/source_decisions.json": "2efaf427b75a36cb8232aa147dc9b8951d27501a35dec37f57c8ac9e6308f015",
+    "ai-service/reports/teacher_dropout_specialist_seed42_20261023/transfer_check/protocol.json": "f8a9b677fb024ac046f5915cebfb010b6ed54e655b93dbd59a3b5c40ac605e45",
+    "ai-service/reports/teacher_priorities_ensemble_specialist_seed42_20261022/protocol.json": "c85b6858feaf1af48348aa6c8cd61529bbf37d1e6f44c360c099dd9679c98110",
+    "ai-service/reports/original_eight_weak_train_audit_20261021/image_inventory.json": "cf09031d6776014c89640c1dedbafc7ef2eeedabc90793937a2cc6fcb5a69d20",
+    "ai-service/reports/original_eight_weak_train_audit_20261021/verification.json": "5cca3c49b09e9e973be4e05ef6d803dd1f344b00c6fd9931f02b88c90d68d5fe",
+    "ai-service/scripts/prepare_scin.py": "179f6424bc498589bd44b429d892b69bb0a3842453263e77d6b8e18c6eefdf85",
+    "ai-service/training/prepare_dermacon_holdout.py": "c54586fd6e0ac646cd7e65469a4fe07bd506d8de54d97eab4ef789419056daa5",
+    "ai-service/app/config.py": "bda739d518517f2967b30abf99f3dd8780c811b740792bfa2715b5ff436221e1",
+    "ai-service/models/best_model.pth": "975e4852023ebb9d3af544b819bec0b887cf75b1467447c87c40591da90b7a17",
+    "ai-service/ensemble_research.json": "53ba7df66e73479004c704a31a905f71757e2e9a8d64384168b3b5123702f785"
+  },
+  "classes": [
+    "Acne",
+    "Candidiasis",
+    "Eczema",
+    "Lupus",
+    "Psoriasis",
+    "SkinCancer",
+    "Tinea",
+    "Warts"
+  ],
+  "weak": [
+    "Lupus",
+    "Psoriasis",
+    "Tinea"
+  ],
+  "oof_method": "validation_selected",
+  "source_method": "Each of five retained fold systems separately; never pooled as independent photos.",
+  "image_review": "Only original fold-0 training weak-label images; deterministic metadata order. No relabeling.",
+  "small_image_flag": "Shortest side <224 pixels: descriptive resizing flag, not a quality diagnosis or exclusion.",
+  "train_new_models": false,
+  "select_thresholds": false,
+  "serving_changed": false
+}

@@ -1,0 +1,355 @@
+{
+  "status": "PASS",
+  "verified_utc": "2026-10-23T16:41:30.904303+00:00",
+  "heads_refit": 10,
+  "epoch_metric_sets_checked": 200,
+  "maximum_refit_parameter_abs_error": 0.0,
+  "metrics_sets_checked": 40,
+  "head_fit_diagnostics": [
+    {
+      "fold": 0,
+      "arm": "dropout_control",
+      "selected_epoch": 1,
+      "first_evaluation": {
+        "train": {
+          "cross_entropy": 0.1635022908449173,
+          "accuracy": 0.9777392745018005,
+          "mean_confidence": 0.8880156874656677,
+          "mean_true_class_probability": 0.8817670345306396
+        },
+        "inner": {
+          "cross_entropy": 0.7992662787437439,
+          "accuracy": 0.7311977744102478,
+          "mean_confidence": 0.7862538695335388,
+          "mean_true_class_probability": 0.6570912599563599
+        }
+      },
+      "last_evaluation": {
+        "train": {
+          "cross_entropy": 0.00056481669889763,
+          "accuracy": 1.0,
+          "mean_confidence": 0.999450147151947,
+          "mean_true_class_probability": 0.999450147151947
+        },
+        "inner": {
+          "cross_entropy": 1.485154390335083,
+          "accuracy": 0.7506963610649109,
+          "mean_confidence": 0.9530426859855652,
+          "mean_true_class_probability": 0.7476792335510254
+        }
+      }
+    },
+    {
+      "fold": 0,
+      "arm": "dropout_specialist",
+      "selected_epoch": 1,
+      "first_evaluation": {
+        "train": {
+          "cross_entropy": 0.20872004330158234,
+          "accuracy": 0.9621568322181702,
+          "mean_confidence": 0.8593400716781616,
+          "mean_true_class_probability": 0.852233350276947
+        },
+        "inner": {
+          "cross_entropy": 0.799323558807373,
+          "accuracy": 0.7284122705459595,
+          "mean_confidence": 0.7602226138114929,
+          "mean_true_class_probability": 0.6393225789070129
+        }
+      },
+      "last_evaluation": {
+        "train": {
+          "cross_entropy": 0.0006891823140904307,
+          "accuracy": 0.9997526407241821,
+          "mean_confidence": 0.9994158744812012,
+          "mean_true_class_probability": 0.999401867389679
+        },
+        "inner": {
+          "cross_entropy": 1.560291051864624,
+          "accuracy": 0.7548746466636658,
+          "mean_confidence": 0.9539324045181274,
+          "mean_true_class_probability": 0.7497634887695312
+        }
+      }
+    },
+    {
+      "fold": 1,
+      "arm": "dropout_control",
+      "selected_epoch": 1,
+      "first_evaluation": {
+        "train": {
+          "cross_entropy": 0.27390381693840027,
+          "accuracy": 0.9493921995162964,
+          "mean_confidence": 0.8283982276916504,
+          "mean_true_class_probability": 0.8206354379653931
+        },
+        "inner": {
+          "cross_entropy": 0.8359828591346741,
+          "accuracy": 0.7615708112716675,
+          "mean_confidence": 0.7662983536720276,
+          "mean_true_class_probability": 0.6549352407455444
+        }
+      },
+      "last_evaluation": {
+        "train": {
+          "cross_entropy": 0.0007216663798317313,
+          "accuracy": 1.0,
+          "mean_confidence": 0.999312162399292,
+          "mean_true_class_probability": 0.999312162399292
+        },
+        "inner": {
+          "cross_entropy": 1.448923110961914,
+          "accuracy": 0.7840112447738647,
+          "mean_confidence": 0.9499451518058777,
+          "mean_true_class_probability": 0.7733564376831055
+        }
+      }
+    },
+    {
+      "fold": 1,
+      "arm": "dropout_specialist",
+      "selected_epoch": 1,
+      "first_evaluation": {
+        "train": {
+          "cross_entropy": 0.2700706124305725,
+          "accuracy": 0.9270652532577515,
+          "mean_confidence": 0.8255200386047363,
+          "mean_true_class_probability": 0.8176958560943604
+        },
+        "inner": {
+          "cross_entropy": 0.7816788554191589,
+          "accuracy": 0.7601683139801025,
+          "mean_confidence": 0.7503412365913391,
+          "mean_true_class_probability": 0.6473170518875122
+        }
+      },
+      "last_evaluation": {
+        "train": {
+          "cross_entropy": 0.0008097456302493811,
+          "accuracy": 0.9997519254684448,
+          "mean_confidence": 0.9993237853050232,
+          "mean_true_class_probability": 0.9993166327476501
+        },
+        "inner": {
+          "cross_entropy": 1.516323208808899,
+          "accuracy": 0.7840112447738647,
+          "mean_confidence": 0.9540387392044067,
+          "mean_true_class_probability": 0.7747876644134521
+        }
+      }
+    },
+    {
+      "fold": 2,
+      "arm": "dropout_control",
+      "selected_epoch": 3,
+      "first_evaluation": {
+        "train": {
+          "cross_entropy": 0.16369092464447021,
+          "accuracy": 0.949999988079071,
+          "mean_confidence": 0.8968356847763062,
+          "mean_true_class_probability": 0.8914942145347595
+        },
+        "inner": {
+          "cross_entropy": 0.7858695387840271,
+          "accuracy": 0.7383966445922852,
+          "mean_confidence": 0.8102191090583801,
+          "mean_true_class_probability": 0.6789104342460632
+        }
+      },
+      "last_evaluation": {
+        "train": {
+          "cross_entropy": 0.0003402365546207875,
+          "accuracy": 1.0,
+          "mean_confidence": 0.9996609687805176,
+          "mean_true_class_probability": 0.9996609687805176
+        },
+        "inner": {
+          "cross_entropy": 1.5175082683563232,
+          "accuracy": 0.7580872178077698,
+          "mean_confidence": 0.9530033469200134,
+          "mean_true_class_probability": 0.7579938173294067
+        }
+      }
+    },
+    {
+      "fold": 2,
+      "arm": "dropout_specialist",
+      "selected_epoch": 1,
+      "first_evaluation": {
+        "train": {
+          "cross_entropy": 0.2005828469991684,
+          "accuracy": 0.9390547275543213,
+          "mean_confidence": 0.8677988052368164,
+          "mean_true_class_probability": 0.8616527915000916
+        },
+        "inner": {
+          "cross_entropy": 0.770596981048584,
+          "accuracy": 0.7341772317886353,
+          "mean_confidence": 0.776829183101654,
+          "mean_true_class_probability": 0.6583450436592102
+        }
+      },
+      "last_evaluation": {
+        "train": {
+          "cross_entropy": 0.00021599222964141518,
+          "accuracy": 1.0,
+          "mean_confidence": 0.999785840511322,
+          "mean_true_class_probability": 0.999785840511322
+        },
+        "inner": {
+          "cross_entropy": 1.653754472732544,
+          "accuracy": 0.7609001398086548,
+          "mean_confidence": 0.9579465389251709,
+          "mean_true_class_probability": 0.7578944563865662
+        }
+      }
+    },
+    {
+      "fold": 3,
+      "arm": "dropout_control",
+      "selected_epoch": 9,
+      "first_evaluation": {
+        "train": {
+          "cross_entropy": 0.15103034675121307,
+          "accuracy": 0.97365802526474,
+          "mean_confidence": 0.901980996131897,
+          "mean_true_class_probability": 0.8947175145149231
+        },
+        "inner": {
+          "cross_entropy": 0.7842601537704468,
+          "accuracy": 0.7556179761886597,
+          "mean_confidence": 0.8162711262702942,
+          "mean_true_class_probability": 0.6862844228744507
+        }
+      },
+      "last_evaluation": {
+        "train": {
+          "cross_entropy": 0.00048060520202852786,
+          "accuracy": 1.0,
+          "mean_confidence": 0.9995241165161133,
+          "mean_true_class_probability": 0.9995241165161133
+        },
+        "inner": {
+          "cross_entropy": 1.5076240301132202,
+          "accuracy": 0.7654494643211365,
+          "mean_confidence": 0.9534737467765808,
+          "mean_true_class_probability": 0.759053111076355
+        }
+      }
+    },
+    {
+      "fold": 3,
+      "arm": "dropout_specialist",
+      "selected_epoch": 2,
+      "first_evaluation": {
+        "train": {
+          "cross_entropy": 0.21130523085594177,
+          "accuracy": 0.9644632339477539,
+          "mean_confidence": 0.859761655330658,
+          "mean_true_class_probability": 0.8522307276725769
+        },
+        "inner": {
+          "cross_entropy": 0.7703603506088257,
+          "accuracy": 0.7471910119056702,
+          "mean_confidence": 0.7730560302734375,
+          "mean_true_class_probability": 0.656750500202179
+        }
+      },
+      "last_evaluation": {
+        "train": {
+          "cross_entropy": 0.0006098650628700852,
+          "accuracy": 1.0,
+          "mean_confidence": 0.9994807839393616,
+          "mean_true_class_probability": 0.9994807839393616
+        },
+        "inner": {
+          "cross_entropy": 1.595002293586731,
+          "accuracy": 0.7612359523773193,
+          "mean_confidence": 0.9575870633125305,
+          "mean_true_class_probability": 0.7567901611328125
+        }
+      }
+    },
+    {
+      "fold": 4,
+      "arm": "dropout_control",
+      "selected_epoch": 1,
+      "first_evaluation": {
+        "train": {
+          "cross_entropy": 0.1712915301322937,
+          "accuracy": 0.9783251285552979,
+          "mean_confidence": 0.8895897269248962,
+          "mean_true_class_probability": 0.8833299279212952
+        },
+        "inner": {
+          "cross_entropy": 0.7376168370246887,
+          "accuracy": 0.751396656036377,
+          "mean_confidence": 0.8087005615234375,
+          "mean_true_class_probability": 0.6859709024429321
+        }
+      },
+      "last_evaluation": {
+        "train": {
+          "cross_entropy": 0.000467500853119418,
+          "accuracy": 1.0,
+          "mean_confidence": 0.9995359182357788,
+          "mean_true_class_probability": 0.9995359182357788
+        },
+        "inner": {
+          "cross_entropy": 1.2885771989822388,
+          "accuracy": 0.7779329419136047,
+          "mean_confidence": 0.9525531530380249,
+          "mean_true_class_probability": 0.7702319622039795
+        }
+      }
+    },
+    {
+      "fold": 4,
+      "arm": "dropout_specialist",
+      "selected_epoch": 1,
+      "first_evaluation": {
+        "train": {
+          "cross_entropy": 0.18696950376033783,
+          "accuracy": 0.9751231670379639,
+          "mean_confidence": 0.8749763369560242,
+          "mean_true_class_probability": 0.8686175346374512
+        },
+        "inner": {
+          "cross_entropy": 0.724180281162262,
+          "accuracy": 0.751396656036377,
+          "mean_confidence": 0.7869940400123596,
+          "mean_true_class_probability": 0.6730618476867676
+        }
+      },
+      "last_evaluation": {
+        "train": {
+          "cross_entropy": 0.00042851542821154,
+          "accuracy": 1.0,
+          "mean_confidence": 0.9995865821838379,
+          "mean_true_class_probability": 0.9995865821838379
+        },
+        "inner": {
+          "cross_entropy": 1.3510794639587402,
+          "accuracy": 0.7779329419136047,
+          "mean_confidence": 0.95663982629776,
+          "mean_true_class_probability": 0.7698253393173218
+        }
+      }
+    }
+  ],
+  "deterministic_eval_diagnostic_sets_checked": 400,
+  "previous_relu_controls_reproduced_exactly": 5,
+  "routing_rows_checked": 11874,
+  "results_sha256": "474cdab8d062e8d883ba9d043eeacea3525e10bb478de11af8aaf093a6229d56",
+  "reviewer_sha256": "bea82e39975907d98240fa0b1a419f36035e96dc0656a25175397a46781a3a4e",
+  "images": 5937,
+  "all_five_selections_reconstructed": true,
+  "initial_tensors_equal": true,
+  "train_batches_identical": true,
+  "train_only_scaler_and_gradients": true,
+  "exact_cancer_mask": true,
+  "dropout_rng_isolated": true,
+  "evaluation_dropout_disabled": true,
+  "previous_relu_control_tensors_optimizer_history_probabilities_exact": true,
+  "scope": "Independent deterministic head refits and numerical audit, not clinical validation or new patient test."
+}

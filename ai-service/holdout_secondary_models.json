@@ -1,0 +1,16 @@
+{
+  "name": "secondary_locked_eight_class_holdout_models",
+  "interpretation": "Descriptive secondary comparisons only. Do not select a winner or tune weights on the new holdout.",
+  "members": [
+    {
+      "id": "convnext_regularized",
+      "checkpoint": "candidates/convnext_tiny_regularized_seed42/evaluation/calibrated_model.pth",
+      "sha256": "5f890bb5cd0994471fba00015c36f983ea3bb6e19fa60601b1414f9488ebed25"
+    },
+    {
+      "id": "convnext_supcon",
+      "checkpoint": "candidates/convnext_tiny_supcon_seed42/evaluation/calibrated_model.pth",
+      "sha256": "cdf8913cd660093b1ac4bd5e59e670c6f27466f4a5b4538bf7c00d3415413c1a"
+    }
+  ]
+}

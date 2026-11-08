@@ -1,6 +1,6 @@
 # Test case bổ sung cho chương kiểm thử
 
-Tài liệu này bổ sung **30 test case** cho các nhánh rủi ro chưa được mô tả đầy đủ
+Tài liệu này bổ sung **36 test case** cho các nhánh rủi ro chưa được mô tả đầy đủ
 trong catalog 81 test case trước đây. Tất cả case mới mặc định là `NOT_RUN` cho đến
 khi được thực thi trên một revision xác định và có bằng chứng đối chiếu.
 
@@ -60,7 +60,7 @@ khi được thực thi trên một revision xác định và có bằng chứng
 |---|---|---|---|---|---|---|
 | AI-012 | P1 | Từ chối file không phải ảnh dù đổi phần mở rộng | Chuẩn bị file văn bản/PDF đổi tên `.jpg` | 1. Upload file lên chức năng kiểm tra da. | API trả 4xx; không chạy inference; không lưu assessment hoặc ảnh. | NOT_RUN |
 | AI-013 | P1 | Từ chối ảnh vượt giới hạn dung lượng | Chuẩn bị JPEG/PNG lớn hơn giới hạn API | 1. Upload ảnh. | API trả 413/4xx với thông báo dung lượng; không lưu BLOB. | NOT_RUN |
-| AI-014 | P0 | Ảnh ngoài phạm vi không bị ép thành một trong tám bệnh | Chuẩn bị ảnh phong cảnh, đồ vật và vết thương WSeg held-out | 1. Gửi từng ảnh vào `/ai/predict`. | Ảnh được từ chối hoặc gắn trạng thái ngoài phạm vi/không chắc chắn; không hiển thị chẩn đoán chắc chắn. Nếu bị ép nhãn, ghi `FAIL` và Defect ID. | NOT_RUN |
+| AI-014 | P0 | Ảnh ngoài phạm vi không bị ép thành một trong tám bệnh | Chuẩn bị ảnh phong cảnh, đồ vật và vết thương WSeg held-out | 1. Gửi từng ảnh vào `/api/v1/patients/me/ai-assessments/analyze` với consent. | Ảnh được từ chối hoặc gắn trạng thái ngoài phạm vi/không chắc chắn; không hiển thị chẩn đoán chắc chắn. Nếu bị ép nhãn, ghi `FAIL` và Defect ID. | NOT_RUN |
 | AI-015 | P1 | Ảnh quá mờ/tối không được phân tích như ảnh hợp lệ | Chuẩn bị ảnh blur mạnh và ảnh gần như đen | 1. Upload từng ảnh. | Quality gate trả lỗi hướng dẫn chụp lại; không lưu kết quả dự đoán sai lệch. | NOT_RUN |
 | AI-016 | P0 | Không chia sẻ kết quả AI vào lịch của bệnh nhân khác | Bệnh nhân A có assessment; có appointment của B | 1. Đăng nhập A. 2. Gắn assessment của A vào appointment của B. | Patient Service trả conflict/forbidden; assessment không đổi `appointmentId`; bác sĩ của B không thấy ảnh. | NOT_RUN |
 
@@ -79,7 +79,18 @@ khi được thực thi trên một revision xác định và có bằng chứng
 | SEC-007 | P0 | Không thể tự nâng quyền bằng header từ trình duyệt | Đăng nhập Patient | 1. Gửi request kèm `X-User-Role: ADMIN`. 2. Gọi API chỉ dành cho Admin. | Gateway dùng role trong JWT; API trả 403; không thực hiện thao tác admin. | NOT_RUN |
 | SEC-008 | P0 | Endpoint nội bộ từ chối service token sai | Có endpoint `/internal/...` | 1. Gọi không token. 2. Gọi token sai. 3. Gọi token đúng trong môi trường test. | Hai lần đầu trả 403; lần cuối chỉ trả trường dữ liệu tối thiểu đúng thiết kế; không lộ dữ liệu dư. | NOT_RUN |
 
-## 9. Mẫu ghi kết quả sau khi chạy
+## 9. Đặt cọc, hóa đơn và kho thuốc
+
+| ID | Ưu tiên | Mục tiêu | Tiền điều kiện | Các bước chính | Kết quả mong đợi | Trạng thái |
+|---|---|---|---|---|---|---|
+| PAY-001 | P0 | Webhook/đối soát cọc không tạo hai lần chuyển trạng thái | Lịch `PENDING_PAYMENT`, giao dịch PayOS demo hợp lệ | 1. Gửi callback hợp lệ hai lần. 2. Gọi reconcile. 3. Đọc lịch và payment. | Một giao dịch được ghi nhận; lịch chỉ sang `PENDING_CONFIRMATION` một lần; lễ tân mới xác nhận `CONFIRMED`. | NOT_RUN |
+| PAY-002 | P0 | Hoàn cọc theo đúng thời điểm và quyền | Lịch đã hủy, đã cọc; có tài khoản Patient khác và Receptionist | 1. Yêu cầu hoàn ở các mốc 30 phút, 24 giờ, 6 giờ. 2. Thử bằng Patient khác. 3. Lễ tân hoàn và lưu chứng từ. | Mức hoàn 100%/50%/0% đúng chính sách; người khác bị từ chối; chỉ lễ tân hoàn và có audit/chứng từ. | NOT_RUN |
+| BILL-001 | P0 | Hóa đơn chỉ khấu trừ cọc một lần | Ca khám hoàn tất, dịch vụ đã xác nhận, có payment cọc thành công | 1. Lập hóa đơn. 2. Gọi lại thao tác lập/refresh cọc. 3. Đọc tổng tiền. | Tổng tiền gồm phí khám/dịch vụ/thuốc và cọc khấu trừ đúng một lần; retry không tạo trùng hóa đơn. | NOT_RUN |
+| BILL-002 | P0 | Không xuất thuốc qua API hóa đơn cũ | Hóa đơn đã thanh toán, có đơn thuốc | 1. Gọi `/api/v1/billing/invoices/{id}/dispense` bằng lễ tân. 2. Mở hàng đợi dược sĩ. | Endpoint cũ trả 409; đơn chuyển tới hàng đợi dược sĩ, chưa trừ kho. | NOT_RUN |
+| PHAR-001 | P0 | FEFO và chống trừ kho đồng thời | Hai lô cùng thuốc, hạn dùng khác nhau, đơn đã thanh toán | 1. Hai dược sĩ cùng thử xuất một đơn. 2. Xem lô và log. | Chỉ một lần cấp phát; lô hạn sớm được ưu tiên; tồn không âm; log ghi đúng người và số lượng. | NOT_RUN |
+| PHAR-002 | P0 | Quyền xem và sửa kho | Có Patient, Admin, Pharmacist | 1. Patient gọi API kho. 2. Admin xem danh mục rồi thử nhập lô. 3. Dược sĩ nhập lô hợp lệ. | Patient bị từ chối; Admin chỉ xem; dược sĩ nhập thành công và tồn/log cập nhật. | NOT_RUN |
+
+## 10. Mẫu ghi kết quả sau khi chạy
 
 | Trường | Nội dung cần ghi |
 |---|---|
@@ -92,7 +103,7 @@ khi được thực thi trên một revision xác định và có bằng chứng
 | Evidence | Log, JUnit/JSON report, ảnh/video đã loại dữ liệu nhạy cảm |
 | Defect ID | Bắt buộc nếu `FAIL` |
 
-## 10. Gợi ý chọn test case để trình bày trong báo cáo
+## 11. Gợi ý chọn test case để trình bày trong báo cáo
 
 Nếu chương kiểm thử chỉ đủ chỗ cho 10 case tiêu biểu, ưu tiên:
 

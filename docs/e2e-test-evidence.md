@@ -4,6 +4,10 @@
 
 Lượt chạy xác nhận ngày 06/09/2026 trên Chromium đạt **6/6 kịch bản PASS, 0 FAIL, 0 FLAKY và 0 SKIP** trong **55,775 giây**. Đây là kiểm thử E2E bằng Playwright qua giao diện và API thật của hệ thống; phần này độc lập với Postman Collection No E2E.
 
+Đây là bằng chứng lịch sử của snapshot nêu bên dưới. Sáu kịch bản chưa bao gồm
+đặt cọc PayOS, hoàn cọc, hóa đơn sau khám hoặc cấp thuốc theo lô trong phạm vi
+hiện tại; không dùng kết quả này để kết luận các luồng mới đã pass.
+
 ## Môi trường
 
 - Stack Docker Compose cô lập: Frontend '13000', API Gateway '18080', AI Service '18000'.
