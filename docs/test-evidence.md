@@ -6,6 +6,16 @@ báo cáo phải ghi rõ đây là snapshot chưa commit, không được gắn 
 commit cha. Không suy ra `PASS` từ việc chức năng xuất hiện trên giao diện và
 không chép dữ liệu bệnh nhân thật, mật khẩu, OTP hoặc API key vào báo cáo.
 
+## Pre-push checks - 2026-11-09
+
+Snapshot: base commit `be801397`, `workingTreeDirty=true` (pending AI runtime, E2E and Postman changes).
+
+- Frontend: `npm test -- --run` - 97 passed; `npx tsc --noEmit -p tsconfig.e2e.json` - PASS.
+- AI application scope: `.venv/Scripts/python.exe -m pytest -q tests/test_research_runtime.py tests/test_policy.py tests/test_support_assistant.py tests/test_uncertainty_policy.py tests/test_image_quality.py` - 63 passed.
+- Full AI research suite: collection stopped with 124 errors because archived experiment scripts referenced by historical tests are absent. This is not a full-suite PASS or a completed release gate.
+- Browser E2E was not rerun during this pre-push check; dated evidence below records its earlier execution.
+
+
 ## Nguồn bằng chứng
 
 - `tests/run-release-tests.ps1` chạy build frontend, Vitest, Maven, Pytest và xác
@@ -25,6 +35,10 @@ không chép dữ liệu bệnh nhân thật, mật khẩu, OTP hoặc API key v
   PASS chỉ xác minh code đánh giá; metric model phải lấy từ chính các artifact này.
 
 ## Bản chụp kết quả đã lưu
+
+- Lượt **09/11/2026** trên PostgreSQL sạch: **9/9 PASS, 0 FAIL, 0 FLAKY, 0 SKIP**, 102,608 giây. `E2E-FLOW-001` đã chạy trọn từ đặt lịch/cọc đến khám, hóa đơn, cấp thuốc và review. **Browser E2E gate PASS**, runner mã 0. Xem [báo cáo](e2e-test-evidence-20261109.md) và [manifest](e2e-test-results-20261109.json). Snapshot có `workingTreeDirty=true`; PayOS giả lập, AI/RAG thật. Đây không phải kết quả chạy lại toàn bộ release suite hoặc toàn bộ catalog 81 test case.
+
+- Lượt **08/11/2026** trên PostgreSQL sạch: **8 PASS, 0 FAIL, 0 FLAKY, 1 SKIP / 9 kịch bản**, 83,673 giây. Đã chạy cọc/hoàn cọc và ca fixture qua khám, hóa đơn/thu tiền/cấp thuốc. `E2E-FLOW-001` SKIP do hết slot cùng ngày; release gate **BLOCKED**, không suy thành PASS từ BILL. Xem [báo cáo](e2e-test-evidence-20261108.md) và [manifest](e2e-test-results-20261108.json). Snapshot có `workingTreeDirty=true`; PayOS giả lập, AI pipeline/RAG thật.
 
 - Manifest Playwright ngày **06/09/2026** ghi **6/6 PASS, 0 FAIL, 0 SKIP** trong
   55,775 giây trên stack PostgreSQL E2E cô lập. Xem

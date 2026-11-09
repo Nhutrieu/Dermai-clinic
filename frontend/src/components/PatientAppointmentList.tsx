@@ -46,12 +46,14 @@ export function statusDetails(status: string) {
         case "PROPOSED": return { label: "Chờ bạn xác nhận", className: "is-proposed" };
         case "PENDING": return { label: "Chờ tiếp nhận", className: "is-pending" };
         case "ASSIGNED": return { label: "Đã xếp bác sĩ", className: "is-assigned" };
+        case "PENDING_PAYMENT": return { label: "Chờ thanh toán cọc", className: "is-pending" };
         case "PENDING_CONFIRMATION": return { label: "Đã cọc · Chờ lễ tân xác nhận", className: "is-pending-confirmation" };
         case "CONFIRMED": return { label: "Đã xác nhận", className: "is-confirmed" };
         case "CHECKED_IN": return { label: "Đã đến phòng khám", className: "is-checked-in" };
         case "IN_PROGRESS": return { label: "Đang khám", className: "is-in-progress" };
         case "COMPLETED": return { label: "Đã hoàn thành", className: "is-completed" };
         case "CANCELLED": return { label: "Đã hủy", className: "is-cancelled" };
+        case "CANCELLED_EXPIRED": return { label: "Hết hạn thanh toán", className: "is-cancelled" };
         case "FOLLOW_UP_REQUIRED": return { label: "Cần tái khám", className: "is-follow-up" };
         case "NO_SHOW": return { label: "Không đến khám", className: "is-cancelled" };
         default: return { label: status, className: "is-default" };

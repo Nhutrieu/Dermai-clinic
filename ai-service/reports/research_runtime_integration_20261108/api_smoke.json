@@ -1,0 +1,66 @@
+{
+  "status": "PASS",
+  "checks": [
+    {
+      "source_label": "Lupus",
+      "status": 200,
+      "seconds": 1.1229669000022113,
+      "predicted_label": "Lupus",
+      "confidence": 0.8,
+      "uncertain": false,
+      "fold_decisions": [
+        "Lupus",
+        "Lupus",
+        "Lupus",
+        "Lupus",
+        "Psoriasis"
+      ],
+      "decision_policy_applied": false
+    },
+    {
+      "source_label": "Psoriasis",
+      "status": 200,
+      "seconds": 0.3140090000015334,
+      "predicted_label": "Psoriasis",
+      "confidence": 1.0,
+      "uncertain": false,
+      "fold_decisions": [
+        "Psoriasis",
+        "Psoriasis",
+        "Psoriasis",
+        "Psoriasis",
+        "Psoriasis"
+      ],
+      "decision_policy_applied": false
+    },
+    {
+      "source_label": "Tinea",
+      "status": 200,
+      "seconds": 0.29137080000145943,
+      "predicted_label": "Tinea",
+      "confidence": 0.6,
+      "uncertain": true,
+      "fold_decisions": [
+        "Tinea",
+        "Eczema",
+        "Tinea",
+        "Eczema",
+        "Tinea"
+      ],
+      "decision_policy_applied": false
+    }
+  ],
+  "health": {
+    "status": "up",
+    "modelReady": true,
+    "modelVersion": "dermai-eight-esg-v1-20261108",
+    "modelMode": "research_pipeline",
+    "ragReady": false
+  },
+  "startup_seconds": 8.722469100001035,
+  "accepted_clinical_smoke_samples": 3,
+  "accuracy_estimated": false,
+  "auth_403": true,
+  "invalid_image_422": true,
+  "unsupported_type_415": true
+}

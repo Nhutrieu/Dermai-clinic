@@ -219,10 +219,16 @@ powershell -ExecutionPolicy Bypass -File tests/run-release-tests.ps1 -IncludeE2E
 ```
 
 Catalog gốc có 81 test case; [test case mở rộng](docs/07-test-cases-extended.md)
-bao gồm nhánh đặt cọc, hóa đơn và kho. [Lượt Playwright ngày 06/09/2026](docs/e2e-test-evidence.md)
-đạt **6/6 kịch bản Pass** trên stack PostgreSQL E2E cô lập. Bằng chứng này thuộc
-revision cũ và không xác nhận các luồng thanh toán/kho hiện tại; cần chạy lại
-release suite để nghiệm thu phiên bản mới. Artifact trình duyệt được giữ cục bộ.
+bao gồm nhánh đặt cọc, hóa đơn và kho. [Lượt Playwright ngày 09/11/2026](docs/e2e-test-evidence-20261109.md)
+đạt **9/9 PASS, 0 FAIL, 0 SKIP** trên stack PostgreSQL sạch, gồm hành trình đặt
+lịch/cọc → khám → hóa đơn/thu tiền → cấp thuốc → review. PayOS dùng giả lập,
+AI/RAG nạp thật; snapshot có `workingTreeDirty=true`. Kết quả Browser E2E này
+không thay thế toàn bộ release suite hoặc kiểm thử PayOS thật. Artifact trình
+duyệt được giữ cục bộ. Chạy lại riêng bộ E2E với database cô lập:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File tests/run-isolated-e2e.ps1
+```
 
 
 

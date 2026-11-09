@@ -27,6 +27,11 @@ class PredictionResponse(BaseModel):
     uncertain: bool
     disclaimer: str
     guidance: DiseaseGuidance | None = None
+    score_type: str = "softmax_score"
+    confidence_is_calibrated: bool = False
+    decision_policy_applied: bool = False
+    gradcam_method: str = "single_model"
+    fold_decisions: list[str] | None = None
 
 
 class ChatRequest(BaseModel):

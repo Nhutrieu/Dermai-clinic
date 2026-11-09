@@ -1,7 +1,8 @@
 # Danh mục train model: từng file dùng để làm gì?
 
 Phạm vi: `ai-service/training/`. Hướng đang giữ gồm tám nhóm bệnh gốc với
-EfficientNet-B0, ConvNeXt-Tiny và ResNet50; API dùng EfficientNet-B0 đơn.
+EfficientNet-B0, ConvNeXt-Tiny và ResNet50; API mặc định dùng pipeline E/G/S
+năm fold theo [bản tích hợp ngày 08/11/2026](../docs/AP_DUNG_PIPELINE_AI_20261108.md).
 Các bảng dưới đây giải thích chức năng script, không yêu cầu chạy tất cả.
 
 Trạng thái kết quả hiện tại nằm trong [tổng hợp nghiên cứu](../docs/ai-research-summary.md).

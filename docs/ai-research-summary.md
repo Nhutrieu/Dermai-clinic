@@ -7,14 +7,17 @@ rút gọn; giao thức, kết quả máy đọc và bằng chứng gốc vẫn 
 
 ## Model ứng dụng và bản nghiên cứu đang giữ
 
-API nạp **EfficientNet-B0 đơn**. Cấu hình, dữ liệu và phép đo của checkpoint
-phục vụ được mô tả trong [model card](model-card-scin-v1.md).
+API mặc định được cấu hình nạp **pipeline E/G/S năm fold**, phiên bản
+`dermai-eight-esg-v1-20261108`. Xem [bản tích hợp và kiểm chứng](AP_DUNG_PIPELINE_AI_20261108.md).
+B0 cũ giữ cho cổng OOD và phương án quay lại; [model card B0](model-card-scin-v1.md)
+mô tả checkpoint cũ. Docker hiện chưa được khởi chạy lại sau tích hợp.
 
 Bản nghiên cứu tham chiếu có **4.687/5.937 ảnh đúng**, Accuracy **78,9456%**,
 Macro F1 **77,7287%**, Recall SkinCancer **88,0355%**. Ensemble kết hợp
 EfficientNet-B0, ConvNeXt-Tiny và ResNet50; một số fold có cổng chọn nhãn hoặc
-đầu specialist. Đây là đánh giá OOF phát triển, chưa được đóng gói để phục vụ
-ảnh mới. [Bản giải trình pipeline](GIAI_TRINH_PIPELINE_AI_CHO_THAY_20261108.md)
+đầu specialist. Đây là đánh giá OOF phát triển. Bản phục vụ gộp quyết định
+năm cấu hình bằng biểu quyết và chưa có điểm test độc lập riêng; không dùng
+điểm OOF làm điểm của bản phục vụ. [Bản giải trình pipeline](GIAI_TRINH_PIPELINE_AI_CHO_THAY_20261108.md)
 giữ công thức, lựa chọn theo fold, pseudocode và bảng bỏ từng thành phần.
 
 ## Những kết luận cần giữ
@@ -59,9 +62,19 @@ không đổi nhãn gốc, mốc OOF hoặc model phục vụ.
 
 Đợt thu nhận ảnh ca bệnh giữ 11 tệp ảnh lâm sàng ứng viên: bốn Lupus, sáu
 Psoriasis và một Tinea. Chỉ ba tệp Lupus là ảnh đơn nguyên khung; tám tệp còn
-lại là hình ghép cần xử lý và rà lại. Chưa đưa các ảnh này vào train/test.
+lại là hình ghép cần xử lý và rà lại. Ngày 08/11/2026 đã dùng ba ảnh đơn
+trong pilot train phụ 305; tám hình ghép chưa dùng, không đưa ảnh mới vào test.
 Nhóm bài báo chưa tương đương bệnh nhân độc lập được xác minh; nhãn tác giả
 chưa được chuyên môn của dự án xác nhận lại.
+
+[Pilot bổ sung ảnh Lupus 305](../ai-service/reports/teacher_new_case_lupus_pilot_20261106/summary.md)
+đã hoàn thành hai ConvNeXt-Tiny tám lớp, sáu epoch mỗi nhánh. Trên cùng
+1.332 query TRAIN lịch sử, nhánh thêm ba ảnh mới và đối chứng lặp ba ảnh cũ
+cùng đạt Accuracy 71,70%, nhận đúng 45/78 Lupus. Macro F1 lần lượt 70,09%
+và 70,25%; nhánh ảnh mới giảm precision/F1 Lupus và chưa bảo toàn các mốc.
+Không chọn cả hai nhánh; điểm OOF và API giữ nguyên. Kiểm chứng tensor cập
+nhật, chỉ số và hash đạt; lưu riêng sai khác một ULP FP32 của phép so loss
+trong checker gốc và cách đối chiếu lại. Đây chưa phải đánh giá lâm sàng mới.
 
 ## Nguồn dữ liệu và giao thức lịch sử
 

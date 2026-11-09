@@ -4,3 +4,10 @@ __pycache__/
 models/
 rag/index/
 *.pyc
+candidates/
+reports/
+training/
+tests/
+rag-data/
+.env
+.env.*

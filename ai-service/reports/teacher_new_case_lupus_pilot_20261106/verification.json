@@ -1,0 +1,69 @@
+{
+  "status": "PASS",
+  "checked_utc": "2026-11-08T13:05:50.759740+00:00",
+  "scope": "Source/protected hashes, split disjointness, six matched base streams, independent NumPy and sklearn metrics/routing, replay of first source-containing update after 61 updates per arm. Not clinical verification.",
+  "original_checker_status": "FAILED",
+  "checker_correction": {
+    "original_loss_tolerance": 1e-07,
+    "observed_independent_NLL_vs_native_CE_difference": 1.1920928955078125e-07,
+    "explanation": "One FP32 ULP difference from reduction order near loss 1.6. Native CE on identical logits matches saved loss; replayed parameters match saved tensors exactly in both arms. Original source/protocol/checkpoints/selection criteria and failed log remain unchanged.",
+    "measurements": [
+      {
+        "arm": "old_lupus_replay",
+        "parameter_max_abs": 0.0,
+        "formula_loss": 1.628720760345459,
+        "saved_loss": 1.6287208795547485,
+        "loss_abs_difference": 1.1920928955078125e-07
+      },
+      {
+        "arm": "new_case_lupus",
+        "parameter_max_abs": 0.0,
+        "formula_loss": 1.6141011714935303,
+        "saved_loss": 1.6141012907028198,
+        "loss_abs_difference": 1.1920928955078125e-07
+      }
+    ],
+    "diagnostic_protocol_sha256": "504974e0843ab8cfec4e31853e985fa1de03b393e9693c0d06c69ced4f09a257",
+    "diagnostic_checker_sha256": "cdc73c66cd168a4d4449d27f5c036eebf0e146b1be7442f9a76b921f22199130"
+  },
+  "replay_checks": {
+    "old_lupus_replay": {
+      "first_added_step_replayed_prefix_updates": 61,
+      "parameter_max_abs": 0.0,
+      "gradient_norm": 4.604595184326172,
+      "metrics_recomputed": true
+    },
+    "new_case_lupus": {
+      "first_added_step_replayed_prefix_updates": 61,
+      "parameter_max_abs": 0.0,
+      "gradient_norm": 4.639841079711914,
+      "metrics_recomputed": true
+    }
+  },
+  "sklearn_metrics_recomputed": true,
+  "source_and_protected_hashes_unchanged": true,
+  "fit_query_disjoint": true,
+  "matched_control_changes": {
+    "changed": 6,
+    "fixed": 2,
+    "harmed": 2
+  },
+  "arms": {
+    "old_lupus_replay": {
+      "correct": 955,
+      "query_images": 1332,
+      "SkinCancer_correct": 132,
+      "full_pass": false
+    },
+    "new_case_lupus": {
+      "correct": 955,
+      "query_images": 1332,
+      "SkinCancer_correct": 132,
+      "full_pass": false
+    }
+  },
+  "clinical_review_performed": false,
+  "full_training_independently_replayed": false,
+  "query_native_forwards_independently_repeated": false,
+  "selected": null
+}

@@ -1,5 +1,9 @@
 # Bằng chứng kiểm thử End-to-End DermAI Clinic
 
+Lượt mới nhất **09/11/2026** đạt **9/9 PASS, 0 FAIL, 0 SKIP**, 102,608 giây; đã chạy trọn bài đặt lịch cùng ngày đến khám/hóa đơn/cấp thuốc/review. **Browser E2E gate PASS**, runner mã 0. Xem [báo cáo mới nhất](e2e-test-evidence-20261109.md) và [manifest](e2e-test-results-20261109.json). PayOS giả lập, AI/RAG thật.
+
+Lượt lịch sử **08/11/2026**: **8 PASS, 0 FAIL, 1 SKIP / 9 kịch bản**, đã kiểm tra cọc/hoàn cọc và ca khám fixture qua hóa đơn/cấp thuốc. Gate của lượt đó BLOCKED vì ca đặt lịch cùng ngày hết slot. Xem [báo cáo ngày 08/11](e2e-test-evidence-20261108.md) và [manifest](e2e-test-results-20261108.json). Nội dung bên dưới là bằng chứng lịch sử ngày 06/09.
+
 ## Kết luận
 
 Lượt chạy xác nhận ngày 06/09/2026 trên Chromium đạt **6/6 kịch bản PASS, 0 FAIL, 0 FLAKY và 0 SKIP** trong **55,775 giây**. Đây là kiểm thử E2E bằng Playwright qua giao diện và API thật của hệ thống; phần này độc lập với Postman Collection No E2E.

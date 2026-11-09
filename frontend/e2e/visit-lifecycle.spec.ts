@@ -1,6 +1,7 @@
 import { expect, test, type Page, type Response } from "@playwright/test";
 import {
   activeUpcoming,
+  appointmentById,
   beginHoldInUi,
   browserApi,
   cleanupHold,
@@ -43,7 +44,16 @@ async function expectRoleNavigation(page: Page, roleLabel: string) {
 test.describe("complete clinic visit lifecycle", () => {
   test.skip(Boolean(missingReasons), missingReasons);
 
-  test("E2E-FLOW-001: booking through reception, consultation and patient review", async ({ browser, page, request }) => {
+  for (const scenario of [
+    { id: "E2E-FLOW-001", title: "booking through reception, consultation and patient review", fixture: "" },
+    { id: "E2E-BILL-001", title: "prepaid same-day fixture through consultation, billing and pharmacy", fixture: process.env.E2E_BILLING_APPOINTMENT_ID || "" },
+  ]) {
+  test(`${scenario.id}: ${scenario.title}`, async ({ browser, page, request }) => {
+    test.skip(scenario.id === "E2E-BILL-001" && !scenario.fixture, "Requires an isolated prepaid appointment fixture (E2E_BILLING_APPOINTMENT_ID).");
+    // The prepaid billing fixture belongs to Patient 2 so it cannot trigger
+    // Patient 1's same-doctor/day booking guard in the full browser journey.
+    const scenarioPatient = scenario.fixture ? credentialsFromEnvironment(2) : patient;
+    test.skip(!scenarioPatient, credentialsMissingReason([scenario.fixture ? 2 : 1]));
     test.setTimeout(240_000);
     const runtimeReason = await runtimeUnavailable(request);
     if (runtimeReason) {
@@ -65,7 +75,7 @@ test.describe("complete clinic visit lifecycle", () => {
 
     try {
       await Promise.all([
-        loginAs(page, patient!, "PATIENT"),
+        loginAs(page, scenarioPatient!, "PATIENT"),
         loginAs(receptionistPage, receptionist!, "RECEPTIONIST"),
         loginAs(doctorPage, doctor!, "DOCTOR"),
         loginAs(pharmacistPage, pharmacist!, "PHARMACIST"),
@@ -116,10 +126,30 @@ test.describe("complete clinic visit lifecycle", () => {
         return;
       }
 
-      const reason = "E2E-FLOW-001 - hành trình khám hoàn chỉnh";
+      const reason = scenario.fixture ? "E2E-BILL-001 - prepaid same-day fixture" : `${scenario.id} - hành trình khám hoàn chỉnh`;
       const rejectedStartAts: string[] = [];
       let candidate: BookingCandidate | null = null;
       let held: Appointment | null = null;
+      if (scenario.fixture) {
+        const fixture = await appointmentById(page, scenario.fixture);
+        expect(fixture.status, JSON.stringify(fixture.body)).toBe(200);
+        expect(fixture.body).toMatchObject({
+          patientId: patientState.patient.id,
+          doctorId: doctorResult.body.id,
+          status: "PENDING_CONFIRMATION",
+          reason,
+        });
+        appointmentId = fixture.body.id;
+        candidate = {
+          doctor: doctorResult.body,
+          date: new Intl.DateTimeFormat("en-CA", { timeZone: "Asia/Ho_Chi_Minh" }).format(new Date(fixture.body.startAt)),
+          slot: { ...fixture.body, doctorId: doctorResult.body.id, doctorIdentityId: doctorResult.body.identityId, doctorName: doctorResult.body.fullName, status: "AVAILABLE" },
+        };
+        await test.info().attach("same-day-fixture.json", {
+          body: Buffer.from(JSON.stringify({ appointmentId, source: "tests/e2e-billing-fixture.sql", bookingTestedHere: false })),
+          contentType: "application/json",
+        });
+      } else {
       await openBooking(page);
 
       // Availability is a snapshot. If another request claims a slot between the GET and
@@ -168,6 +198,7 @@ test.describe("complete clinic visit lifecycle", () => {
       appointmentId = booked!.id;
       holdId = null;
       expect(booked!.status).toBe("PENDING_PAYMENT");
+      }
 
       await receptionistPage.reload();
       await expectRoleNavigation(receptionistPage, "Lễ tân");
@@ -307,6 +338,11 @@ test.describe("complete clinic visit lifecycle", () => {
         status: "AWAITING_PAYMENT" | "PAID" | "DISPENSED";
         remainingAmount: number;
         medicineFulfillment: string;
+        totalAmount: number;
+        consultationFee: number;
+        serviceFee: number;
+        medicineTotal: number;
+        depositApplied: number;
         serviceItems: Array<{ serviceId: string; serviceName: string; unitPrice: number }>;
         items: Array<{ medicineName: string; prescribedQuantity: number }>;
       };
@@ -318,21 +354,40 @@ test.describe("complete clinic visit lifecycle", () => {
         items: [expect.objectContaining({ medicineName: "Hydrocortisone E2E", prescribedQuantity: 2 })],
       });
       invoiceId = invoice!.id;
+      expect(invoice!.consultationFee).toBe(150000);
+      expect(invoice!.serviceFee).toBe(confirmedServices!.items[0].unitPrice);
+      expect(invoice!.medicineTotal).toBe(70000);
+      expect(invoice!.depositApplied).toBe(100000);
+      expect(invoice!.totalAmount).toBe(invoice!.consultationFee + invoice!.serviceFee + invoice!.medicineTotal);
+      expect(invoice!.remainingAmount).toBe(invoice!.totalAmount - invoice!.depositApplied);
+
+      const beforeDispense = await browserApi<InventoryProduct[]>(pharmacistPage, "/api/v1/inventory/products");
+      expect(beforeDispense.status).toBe(200);
+      const stockBefore = beforeDispense.body.find(item => item.id === medicine!.id)!.currentQuantity;
+      const unpaidQueue = await browserApi<Array<{ id: string }>>(pharmacistPage, "/api/v1/pharmacy/pending-prescriptions");
+      expect(unpaidQueue.status).toBe(200);
+      expect(unpaidQueue.body.some(item => item.id === invoiceId)).toBe(false);
 
       const invoiceCard = receptionistPage.locator(".cashier-invoice")
         .filter({ hasText: `#${invoiceId.slice(0, 8).toUpperCase()}` });
       await expect(invoiceCard).toBeVisible({ timeout: 15_000 });
       await invoiceCard.getByRole("button", { name: "Xem chi tiết", exact: true }).click();
       if (invoice!.status === "AWAITING_PAYMENT") {
+        const underpaid = await browserApi(receptionistPage, `/api/v1/billing/invoices/${invoiceId}/cash`, {
+          method: "POST", body: { amountReceived: invoice!.remainingAmount - 1, cashierStation: "E2E" },
+        });
+        expect(underpaid.status, JSON.stringify(underpaid.body)).toBe(409);
         const cashInput = invoiceCard.locator("footer label").filter({ hasText: "Khách đưa" }).locator("input");
-        await cashInput.fill(String(invoice!.remainingAmount));
+        const amountDue = invoice!.remainingAmount;
+        await cashInput.fill(String(amountDue + 50000));
         const cashResponsePromise = receptionistPage.waitForResponse(response =>
           isApiResponse(response, "POST", `/api/v1/billing/invoices/${invoiceId}/cash`),
         );
-        await invoiceCard.getByRole("button", { name: "Thu tiền mặt", exact: true }).click();
+        await invoiceCard.getByRole("button", { name: /^Thu tiền mặt\b/ }).click();
         const cashResponse = await cashResponsePromise;
-        const receipt = await responseBody<{ invoice: Invoice }>(cashResponse);
+        const receipt = await responseBody<{ invoice: Invoice; cashPayment: { amountDue: number; amountReceived: number; changeAmount: number } }>(cashResponse);
         expect(cashResponse.status(), JSON.stringify(receipt)).toBe(200);
+        expect(receipt!.cashPayment).toMatchObject({ amountDue, amountReceived: amountDue + 50000, changeAmount: 50000 });
         invoice = receipt!.invoice;
       }
       expect(invoice!.status).toBe("PAID");
@@ -355,12 +410,19 @@ test.describe("complete clinic visit lifecycle", () => {
       const dispensed = await responseBody<{ prescriptionId: string; status: string }>(dispenseResponse);
       expect(dispenseResponse.status(), JSON.stringify(dispensed)).toBe(200);
       expect(dispensed).toMatchObject({ prescriptionId: invoiceId, status: "DISPENSED" });
+      const repeatDispense = await browserApi(pharmacistPage, "/api/v1/pharmacy/dispense", {
+        method: "POST", body: dispenseResponse.request().postDataJSON(),
+      });
+      expect(repeatDispense.status, JSON.stringify(repeatDispense.body)).toBe(409);
       const synchronizedInvoice = await browserApi<Invoice>(
         receptionistPage,
         `/api/v1/billing/invoices/${invoiceId}`,
       );
       expect(synchronizedInvoice.status, JSON.stringify(synchronizedInvoice.body)).toBe(200);
       expect(synchronizedInvoice.body.status).toBe("DISPENSED");
+      const afterDispense = await browserApi<InventoryProduct[]>(pharmacistPage, "/api/v1/inventory/products");
+      expect(afterDispense.status).toBe(200);
+      expect(afterDispense.body.find(item => item.id === medicine!.id)!.currentQuantity).toBe(stockBefore - 2);
 
       await page.reload();
       await expectRoleNavigation(page, "Bệnh nhân");
@@ -399,7 +461,8 @@ test.describe("complete clinic visit lifecycle", () => {
 
       await test.info().attach("visit-lifecycle-result.json", {
         body: Buffer.from(JSON.stringify({
-          testCase: "E2E-FLOW-001",
+          testCase: scenario.id,
+          bookingSource: scenario.fixture ? "prepaid synthetic same-day fixture" : "browser booking and deposit",
           appointmentId,
           medicalRecordId,
           prescriptionId,
@@ -408,6 +471,12 @@ test.describe("complete clinic visit lifecycle", () => {
           startAt: candidate!.slot.startAt,
           finalStatus: "COMPLETED",
           invoiceStatus: "DISPENSED",
+          depositApplied: invoice!.depositApplied,
+          totalAmount: invoice!.totalAmount,
+          stockBefore,
+          stockAfter: afterDispense.body.find(item => item.id === medicine!.id)!.currentQuantity,
+          unpaidInvoiceAbsentFromPharmacyQueue: true,
+          repeatDispenseStatus: repeatDispense.status,
           reviewSubmitted: true,
         }, null, 2)),
         contentType: "application/json",
@@ -433,4 +502,5 @@ test.describe("complete clinic visit lifecycle", () => {
       if (cleanupErrors.length) throw new AggregateError(cleanupErrors, "Không dọn sạch được dữ liệu lifecycle E2E.");
     }
   });
+  }
 });

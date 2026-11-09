@@ -184,6 +184,10 @@ def predict(
     confidence_margin_threshold: float = 0.20,
     normalized_entropy_threshold: float = 0.65,
 ) -> dict:
+    from .research_runtime import ResearchBundle, predict_research
+    if isinstance(bundle, ResearchBundle):
+        return predict_research(bundle, image, confidence_threshold,
+                                confidence_margin_threshold, normalized_entropy_threshold)
     tensor, base = preprocess_image(image)
     tensor = tensor.unsqueeze(0).to(bundle.device)
     gate_member = bundle.members[0] if isinstance(bundle, EnsembleBundle) else bundle

@@ -1,0 +1,7 @@
+{
+  "original_checker_sha256": "b3009c28a9c68d1b2d03f1cc0c97adb5cc9b5a2d7d21b56b08820f440f5ff0e9",
+  "original_checker_failed": true,
+  "failure": "Original assertion combining parameter max <2e-7 and independent loss absolute difference <1e-7 failed; exact component not yet known.",
+  "diagnostic_sha256": "cdc73c66cd168a4d4449d27f5c036eebf0e146b1be7442f9a76b921f22199130",
+  "purpose": "Measure parameter and loss differences; keep parameter tolerance unchanged; compare original native CE on identical saved logits separately. No metric, gate, training, selection or checkpoint changes."
+}

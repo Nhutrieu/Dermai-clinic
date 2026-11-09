@@ -1,0 +1,20 @@
+{
+  "status": "PASS",
+  "device": "cpu",
+  "health": {
+    "status": "up",
+    "modelReady": true,
+    "modelVersion": "dermai-eight-esg-v1-20261108",
+    "modelMode": "research_pipeline",
+    "ragReady": true
+  },
+  "startup_seconds": 4.812917400002334,
+  "inference_seconds": 0.6975593999995908,
+  "process_RSS_MiB": 1864.5,
+  "disease": "Lupus",
+  "confidence": 0.8,
+  "uncertain": false,
+  "gradcam_present": true,
+  "guidance_present": true,
+  "accuracy_estimated": false
+}

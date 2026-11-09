@@ -19,6 +19,16 @@ export function formatAiPercentage(value: number) {
   return `${(value * 100).toFixed(1).replace(".", ",")}%`;
 }
 
+export function isAiFoldVote(modelVersion: string) {
+  return modelVersion.startsWith("dermai-eight-esg-v1-");
+}
+
+export function aiScoreExplanation(modelVersion: string) {
+  return isAiFoldVote(modelVersion)
+    ? "Các tỷ lệ thể hiện mức đồng thuận giữa năm cấu hình mô hình, không phải xác suất mắc bệnh. Thứ tự đề xuất có thể ưu tiên quy tắc bảo toàn nhóm nghi ngờ ác tính."
+    : "Điểm mô hình dùng để tham khảo, không phải xác suất mắc bệnh đã được xác nhận.";
+}
+
 export function patientAiDoctorReviewState(assessment: AiAssessment) {
   if (assessment.sharedWithDoctor && assessment.appointmentId) {
     return {

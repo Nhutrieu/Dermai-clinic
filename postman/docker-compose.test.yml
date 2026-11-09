@@ -1,0 +1,25 @@
+services:
+  smtp-sink:
+    image: dermai-e2e-postman-20261109-ai-service:latest
+    command: ["python", "/fixture/smtp-sink.py"]
+    mem_limit: 64m
+    restart: unless-stopped
+    volumes:
+      - ./postman/smtp-sink.py:/fixture/smtp-sink.py:ro
+      - ./tmp/postman-local/mail:/mail
+  auth-service:
+    environment:
+      SMTP_HOST: smtp-sink
+      SMTP_PORT: "1025"
+      SMTP_AUTH: "false"
+      SMTP_STARTTLS: "false"
+  notification-service:
+    environment:
+      SMTP_HOST: smtp-sink
+      SMTP_PORT: "1025"
+      SMTP_AUTH: "false"
+      SMTP_STARTTLS: "false"
+  ai-service:
+    ports: !override ["127.0.0.1:58000:8000"]
+  inventory-service:
+    ports: !override ["127.0.0.1:58010:8010"]

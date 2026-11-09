@@ -7,7 +7,8 @@ lập trên máy có đủ dữ liệu; bản GitHub không kèm các đầu và
 
 Thư mục này giữ bằng chứng model phục vụ, pipeline nghiên cứu đang giữ,
 baseline so sánh và hồ sơ nguồn dữ liệu cần cho báo cáo đồ án.
-Model API vẫn là EfficientNet-B0 đơn; pipeline ensemble chưa được triển khai vào API.
+API đã được cấu hình nạp pipeline E/G/S năm fold; xem [bản tích hợp](../../docs/AP_DUNG_PIPELINE_AI_20261108.md).
+Các mô tả API B0 trong protocol cũ là trạng thái lịch sử tại lúc chạy.
 
 ## Đọc từ đâu
 
@@ -17,6 +18,7 @@ Model API vẫn là EfficientNet-B0 đơn; pipeline ensemble chưa được tri�
 - [Specialist đang giữ](teacher_dropout_specialist_seed42_20261023/summary.md).
 - [Cổng Macro F1](teacher_macro_f1_gate_seed42_20261023/summary.md).
 - [Ensemble có bảo vệ SkinCancer](original_eight_cancer_locked_resnet_fusion_seed42_20261021/summary.md).
+- [Pilot bổ sung ba ảnh Lupus, hoàn thành 08/11/2026](teacher_new_case_lupus_pilot_20261106/summary.md): đủ hai nhánh sáu epoch; chưa vượt đối chứng, chưa thay mốc OOF.
 
 Các báo cáo OOF, audit trùng cảnh, kiểm nhãn và nguồn ảnh được giữ ở đường dẫn cũ.
 `active_research_track.json` và các status là bản ghi lịch sử, giữ nguyên byte để

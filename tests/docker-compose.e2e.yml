@@ -1,0 +1,42 @@
+services:
+  postgres:
+    ports: !override ["127.0.0.1:55432:5432"]
+  rabbitmq:
+    ports: !reset []
+  auth-service:
+    environment:
+      SMTP_HOST: 127.0.0.1
+      SMTP_AUTH: "false"
+      SMTP_STARTTLS: "false"
+      MANAGEMENT_HEALTH_MAIL_ENABLED: "false"
+  notification-service:
+    environment:
+      SMTP_HOST: 127.0.0.1
+      SMTP_AUTH: "false"
+      SMTP_STARTTLS: "false"
+      MANAGEMENT_HEALTH_MAIL_ENABLED: "false"
+  appointment-service:
+    environment:
+      # Fixture doctor works daily, including Sunday, for same-day check-in.
+      CLINIC_WEEKLY_CLOSURE_DAY: NONE
+  payment-service:
+    environment:
+      PAYOS_FAKE_MODE: "true"
+      PAYOS_RETURN_URL: http://localhost:53000/payment/success
+      PAYOS_CANCEL_URL: http://localhost:53000/payment/cancel
+      PAYOS_WEBHOOK_URL: ""
+  inventory-service:
+    ports: !reset []
+  ai-service:
+    ports: !reset []
+    environment:
+      GEMINI_API_KEY: ""
+  gateway:
+    ports: !reset []
+    environment:
+      CORS_ORIGIN: http://localhost:53000
+  frontend:
+    ports: !override ["127.0.0.1:53000:80"]
+  adminer:
+    profiles: [maintenance]
+    ports: !reset []

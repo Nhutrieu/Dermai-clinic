@@ -156,10 +156,11 @@ services:
   ai-service:
     build: ./ai-service
     restart: unless-stopped
-    mem_limit: 768m
+    mem_limit: 4g
     ports: ["${AI_HOST_PORT:-8000}:8000"]
     environment:
       MODEL_PATH: /models/best_model.pth
+      RESEARCH_MANIFEST_PATH: ${AI_RESEARCH_MANIFEST_PATH:-/models/research_pipeline/manifest.json}
       OOD_PROFILE_PATH: /models/ood_profile.json
       RAG_INDEX_PATH: /rag-index
       GEMINI_API_KEY: ${GEMINI_API_KEY:-}
@@ -168,7 +169,7 @@ services:
       - ./ai-service/app:/app/app:ro
       - ./ai-service/models:/models:ro
       - ./ai-service/rag-data:/rag-index:ro
-    healthcheck: {test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/health', timeout=3)"], interval: 20s, timeout: 5s, retries: 10, start_period: 60s}
+    healthcheck: {test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/health', timeout=3)"], interval: 20s, timeout: 5s, retries: 10, start_period: 120s}
   gateway:
     build: {context: ., dockerfile: services/Dockerfile, args: {SERVICE: gateway}}
     restart: unless-stopped

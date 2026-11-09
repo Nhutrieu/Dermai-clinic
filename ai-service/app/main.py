@@ -1,6 +1,9 @@
 import io
 import httpx
+import torch
+from threading import RLock
 from contextlib import asynccontextmanager
+from starlette.concurrency import run_in_threadpool
 
 from fastapi import FastAPI, File, Header, HTTPException, UploadFile
 from PIL import Image, UnidentifiedImageError
@@ -8,17 +11,28 @@ from PIL import Image, UnidentifiedImageError
 from .config import settings
 from .image_quality import assess_image_quality
 from .model import DISCLAIMER, OutOfScopeImageError, load_bundle, load_ensemble, predict
+from .research_runtime import ResearchBundle, load_research
 from .rag import NO_EVIDENCE, RagStore
 from .schemas import ChatRequest, ChatResponse, PredictionResponse, SupportChatRequest, SupportChatResponse
 from .support_assistant import SupportDecision, classify_support_request, polish_safe_answer, rag_disease_key
 
 state: dict = {}
+prediction_lock = RLock()
+
+
+def serialized_predict(*args):
+    # Grad-CAM uses temporary hooks/gradients on shared modules.
+    with prediction_lock:
+        return predict(*args)
 
 
 @asynccontextmanager
 async def lifespan(_app: FastAPI):
+    torch.set_num_threads(settings.inference_threads)
     state["model"] = (
-        load_ensemble(settings.ensemble_manifest_path, settings.ood_profile_path)
+        load_research(settings.research_manifest_path)
+        if settings.research_manifest_path is not None
+        else load_ensemble(settings.ensemble_manifest_path, settings.ood_profile_path)
         if settings.ensemble_manifest_path is not None
         else load_bundle(settings.model_path, settings.ood_profile_path)
     )
@@ -42,6 +56,8 @@ def health():
     return {
         "status": "up",
         "modelReady": state.get("model") is not None,
+        "modelVersion": getattr(state.get("model"), "version", None),
+        "modelMode": "research_pipeline" if isinstance(state.get("model"), ResearchBundle) else "legacy",
         "ragReady": bool(state.get("rag") and state["rag"].ready),
     }
 
@@ -70,7 +86,8 @@ async def prediction(
     if not quality.accepted:
         raise HTTPException(422, quality.reason)
     try:
-        result = predict(
+        result = await run_in_threadpool(
+            serialized_predict,
             state["model"],
             source,
             settings.confidence_threshold,

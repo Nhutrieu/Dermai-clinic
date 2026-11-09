@@ -1,0 +1,264 @@
+{
+  "schema_version": 1,
+  "name": "dermai-eight-esg-v1-20261108",
+  "classes": [
+    "Acne",
+    "Candidiasis",
+    "Eczema",
+    "Lupus",
+    "Psoriasis",
+    "SkinCancer",
+    "Tinea",
+    "Warts"
+  ],
+  "aggregation": "protected_fold_vote_v1",
+  "assets": {
+    "ood_model": {
+      "path": "ood/model.pth",
+      "sha256": "975e4852023ebb9d3af544b819bec0b887cf75b1467447c87c40591da90b7a17"
+    },
+    "ood_profile": {
+      "path": "ood/profile.json",
+      "sha256": "35a9fa189e74d48617639aa45aec345c27a3c5936014b049590bc75ad66c3b61"
+    },
+    "fold0_efficientnet_b0": {
+      "path": "fold_0/efficientnet_b0.pth",
+      "sha256": "b0a19f2618c387effdf518cfb0203710be485b1a8e225bd75c15ca4b1ea20d56"
+    },
+    "fold0_convnext_tiny": {
+      "path": "fold_0/convnext_tiny.pth",
+      "sha256": "d4ee75a0a9366da9bca67e21387d796ae01c9ae8383795aeb6f34c712d7c1501"
+    },
+    "fold0_resnet50": {
+      "path": "fold_0/resnet50.pth",
+      "sha256": "a7e4069cdef19705708e598db7b812f732843ce320feb7c5b52535d518875703"
+    },
+    "fold0_stack": {
+      "path": "fold_0/stack.npz",
+      "sha256": "cf364a81026cea5663357db9e0e0d498f337bf8bab0dd0aa74177cb26a97a7c2"
+    },
+    "fold0_gate": {
+      "path": "fold_0/gate.npz",
+      "sha256": "d5cf5575652f96450f4b5ec571a5c8845d5364421595f648db8d0a132cddee48"
+    },
+    "fold1_efficientnet_b0": {
+      "path": "fold_1/efficientnet_b0.pth",
+      "sha256": "7b132a4e0d9250bce1954c9bbf2aba4254dd3cc6d5e0a9f299243d10785520ce"
+    },
+    "fold1_convnext_tiny": {
+      "path": "fold_1/convnext_tiny.pth",
+      "sha256": "4529f424aa4a4dc509ae4cf5fa3d1785866eb1e94013bb9ef0ef0b99a19d93d3"
+    },
+    "fold1_resnet50": {
+      "path": "fold_1/resnet50.pth",
+      "sha256": "a0704a4dda236a5d076b99d8acdae01e81f5d7569e278be31a42dd0abcb07522"
+    },
+    "fold1_specialist": {
+      "path": "fold_1/specialist.pth",
+      "sha256": "bea84fd2974ef8f8a0ddda072f5556419dc16f4cefbd7ae211bea34c53c66d59"
+    },
+    "fold1_scaler": {
+      "path": "fold_1/scaler.npz",
+      "sha256": "9abe150f2c3b5a4c7a91762027fcdd2943c8fc53914f21481b3384646367b960"
+    },
+    "fold2_efficientnet_b0": {
+      "path": "fold_2/efficientnet_b0.pth",
+      "sha256": "7c37aa5d5ef200dc94e9150ffa51837024055d1f2b7e91f430bfbb5119604706"
+    },
+    "fold2_convnext_tiny": {
+      "path": "fold_2/convnext_tiny.pth",
+      "sha256": "b29e172fbc34e6ce6c8a30c837891385f8b6b70f5156093e2d1bff88a9d2169f"
+    },
+    "fold2_resnet50": {
+      "path": "fold_2/resnet50.pth",
+      "sha256": "a1a70c8f1721b79ec13bf173fecc562d9b5f31b8ca4eb0b44d048c861a8c3ab3"
+    },
+    "fold2_specialist": {
+      "path": "fold_2/specialist.pth",
+      "sha256": "f04f22b5ac64cbdebaa462b96a4478100c02036dd7022d62953898e40767ee01"
+    },
+    "fold2_scaler": {
+      "path": "fold_2/scaler.npz",
+      "sha256": "c05a0040c8a3ecf44d15755abd48be8063655fdb5240a05ab56d70c9a9e66d3e"
+    },
+    "fold3_efficientnet_b0": {
+      "path": "fold_3/efficientnet_b0.pth",
+      "sha256": "750963085afa01e1e173ecc7f792e1abcee6290ff05a9b8b31eb8db26d6fd920"
+    },
+    "fold3_convnext_tiny": {
+      "path": "fold_3/convnext_tiny.pth",
+      "sha256": "10adbae3e352452c8336e071248edbec040107d997c31a291f6f2caf39fec85e"
+    },
+    "fold3_resnet50": {
+      "path": "fold_3/resnet50.pth",
+      "sha256": "b47aeaef8b836e98efa7c4ad332ee2f0b425cbc7ee10a3738b5491657f4e26c5"
+    },
+    "fold3_stack": {
+      "path": "fold_3/stack.npz",
+      "sha256": "f73ccdb5ae6e29f88f0328fc27b03f72f15ed5e1ebfc41432e78552ed3699b25"
+    },
+    "fold3_gate": {
+      "path": "fold_3/gate.npz",
+      "sha256": "7edb9feb6e0a002354d857cce7e6617c9af75d8d4cc299604a83732c17d9cab3"
+    },
+    "fold4_efficientnet_b0": {
+      "path": "fold_4/efficientnet_b0.pth",
+      "sha256": "48ef1c3842ac9b4d4d66e5f5930ecf8fe2dc81998f369df22b9620d0aabaa09f"
+    },
+    "fold4_convnext_tiny": {
+      "path": "fold_4/convnext_tiny.pth",
+      "sha256": "5e9d5932828cc5a377ea693396bb6322ef192f3654f48ac179e9487342aa6fc4"
+    },
+    "fold4_resnet50": {
+      "path": "fold_4/resnet50.pth",
+      "sha256": "9788c9058597f1ad190a03d5722bff45d47ef4c428437a060053f7d3cd116116"
+    },
+    "provenance": {
+      "path": "provenance.json",
+      "sha256": "a881886dc576a24b10a48641aa3da614aef729fd3096ff949ec5cb43c2c29a9f"
+    }
+  },
+  "folds": [
+    {
+      "fold": 0,
+      "members": [
+        "fold0_efficientnet_b0",
+        "fold0_convnext_tiny",
+        "fold0_resnet50"
+      ],
+      "convnext_weights": [
+        0.5,
+        0.75,
+        0.5,
+        0.5,
+        0.5,
+        0.5,
+        0.75,
+        0.75
+      ],
+      "protected": [
+        1,
+        3,
+        5
+      ],
+      "stack": "fold0_stack",
+      "gate": "fold0_gate"
+    },
+    {
+      "fold": 1,
+      "members": [
+        "fold1_efficientnet_b0",
+        "fold1_convnext_tiny",
+        "fold1_resnet50"
+      ],
+      "convnext_weights": [
+        0.75,
+        0.75,
+        0.75,
+        0.75,
+        0.25,
+        0.75,
+        0.75,
+        0.75
+      ],
+      "protected": [
+        1,
+        5
+      ],
+      "specialist": "fold1_specialist",
+      "scaler": "fold1_scaler"
+    },
+    {
+      "fold": 2,
+      "members": [
+        "fold2_efficientnet_b0",
+        "fold2_convnext_tiny",
+        "fold2_resnet50"
+      ],
+      "convnext_weights": [
+        0.5,
+        0.5,
+        0.5,
+        0.5,
+        0.5,
+        0.75,
+        0.75,
+        0.75
+      ],
+      "protected": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7
+      ],
+      "specialist": "fold2_specialist",
+      "scaler": "fold2_scaler"
+    },
+    {
+      "fold": 3,
+      "members": [
+        "fold3_efficientnet_b0",
+        "fold3_convnext_tiny",
+        "fold3_resnet50"
+      ],
+      "convnext_weights": [
+        0.5,
+        0.5,
+        0.75,
+        0.5,
+        0.5,
+        0.75,
+        0.75,
+        0.75
+      ],
+      "protected": [
+        1,
+        5
+      ],
+      "stack": "fold3_stack",
+      "gate": "fold3_gate"
+    },
+    {
+      "fold": 4,
+      "members": [
+        "fold4_efficientnet_b0",
+        "fold4_convnext_tiny",
+        "fold4_resnet50"
+      ],
+      "convnext_weights": [
+        0.75,
+        0.75,
+        0.5,
+        0.75,
+        0.5,
+        0.75,
+        0.75,
+        0.75
+      ],
+      "protected": [
+        1,
+        5
+      ]
+    }
+  ],
+  "score_type": "fold_vote_fraction",
+  "confidence_is_calibrated": false,
+  "research_OOF": {
+    "images": 5937,
+    "correct": 4687,
+    "accuracy": 0.7894559541856156,
+    "macro_f1": 0.7772871199866189,
+    "SkinCancer_recall": 0.880354505169867
+  },
+  "serving_evaluation": {
+    "accuracy": null,
+    "macro_f1": null,
+    "independent_test": false,
+    "note": "OOF evaluates one held-out branch per image, not five-branch serving votes. Do not assign OOF metrics to the deployed committee."
+  },
+  "gradcam_method": "illustrative_b0_fold0"
+}

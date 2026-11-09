@@ -27,6 +27,7 @@ type AiPrediction = {
   top3: Array<{ label: string; probability: number }>;
   gradcam_image: string;
   model_version: string;
+  uncertain: boolean;
 };
 type AiAnalysisResponse = { assessment: AiAssessment; prediction: AiPrediction };
 
@@ -67,7 +68,7 @@ test.describe("AI assessment persistence and sharing consent", () => {
       test.skip(true, `AI runtime không sẵn sàng (GET /ai/health trả HTTP ${health.status()}).`);
       return;
     }
-    const healthBody = await health.json() as { modelReady?: boolean };
+    const healthBody = await health.json() as { modelReady?: boolean; modelVersion?: string };
     if (!healthBody.modelReady) {
       test.skip(true, "AI runtime đang chạy nhưng checkpoint chưa được nạp (modelReady=false).");
       return;
@@ -97,6 +98,8 @@ test.describe("AI assessment persistence and sharing consent", () => {
       expect(analyzed).not.toBeNull();
       const prediction = analyzed!.prediction;
       const saved = analyzed!.assessment;
+      expect(prediction.model_version).toBe(healthBody.modelVersion);
+      expect(saved.modelVersion).toBe(prediction.model_version);
       expect(prediction.disease).not.toHaveLength(0);
       expect(prediction.confidence).toBeGreaterThanOrEqual(0);
       expect(prediction.confidence).toBeLessThanOrEqual(1);
@@ -111,13 +114,19 @@ test.describe("AI assessment persistence and sharing consent", () => {
       expect(saved.sharedWithDoctor).toBe(true);
 
       await expect(page.getByRole("heading", { name: "Đặt lịch với bác sĩ da liễu" })).toBeVisible({ timeout: 15_000 });
-      const predictionSummary = page.locator("article").filter({ hasText: "Top 3 từ mô hình" });
+      const predictionSummary = page.locator("article").filter({ hasText: "Các nhóm hình ảnh gần nhất" });
       await expect(predictionSummary.getByRole("listitem")).toHaveCount(3);
-      const confidenceLabel = new Intl.NumberFormat("vi-VN", {
-        minimumFractionDigits: 1,
-        maximumFractionDigits: 1,
-      }).format(prediction.confidence * 100) + "%";
-      await expect(predictionSummary.getByText(confidenceLabel, { exact: true })).toBeVisible();
+      for (const [index, item] of prediction.top3.entries()) {
+        const scoreLabel = new Intl.NumberFormat("vi-VN", {
+          minimumFractionDigits: 1,
+          maximumFractionDigits: 1,
+        }).format(item.probability * 100) + "%";
+        await expect(predictionSummary.getByRole("listitem").nth(index).locator("strong")).toHaveText(scoreLabel);
+      }
+      if (prediction.model_version.startsWith("dermai-eight-esg-")) {
+        await expect(predictionSummary.getByText("Mức đồng thuận", { exact: true })).toBeVisible();
+        await expect(predictionSummary).toContainText("không phải xác suất mắc bệnh");
+      }
       await expect(page.getByAltText("Ảnh Grad-CAM từ mô hình")).toBeVisible();
       const after = await browserApi<AiAssessment[]>(page, "/api/v1/patients/me/ai-assessments");
       expect(after.ok).toBeTruthy();

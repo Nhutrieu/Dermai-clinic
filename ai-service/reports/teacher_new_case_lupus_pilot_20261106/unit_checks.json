@@ -1,0 +1,5 @@
+{
+  "status": "PASS",
+  "command": "unittest discover -s ai-service/tests -p test_new_case_lupus_pilot.py -v",
+  "output": "test_match_class_visits_preserve_base_and_source_only_primary (test_new_case_lupus_pilot.SourceTrialTests) ... ok\ntest_no_other_disease_or_pending_visual_review (test_new_case_lupus_pilot.SourceTrialTests) ... ok\ntest_no_repeated_article_or_old_source_fingerprint (test_new_case_lupus_pilot.SourceTrialTests) ... ok\ntest_replay_comes_from_distinct_ownfit_groups_deterministically (test_new_case_lupus_pilot.SourceTrialTests) ... ok\n\n----------------------------------------------------------------------\nRan 4 tests in 0.000s\n\nOK\n"
+}

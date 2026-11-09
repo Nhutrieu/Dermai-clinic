@@ -610,7 +610,6 @@ function Dashboard({ session, logout }: { session: Tokens; logout: () => void })
     const [tab, setTab] = useState<AppNavItemId>(() => {
         if (session.role !== "PATIENT") return "profile";
         const intent = sessionStorage.getItem("derm-home-intent");
-        sessionStorage.removeItem("derm-home-intent");
         if (sessionStorage.getItem("derm-home-booking") || intent === "appointments") return "appointments";
         if (intent === "billing") return "billing";
         return intent === "ai" ? "ai" : "profile";
@@ -620,6 +619,10 @@ function Dashboard({ session, logout }: { session: Tokens; logout: () => void })
         records: { loading: true, error: "" },
         prescriptions: { loading: true, error: "" },
     });
+    useEffect(() => {
+        // Consume only after commit: lazy routes can suspend and retry the initializer.
+        if (session.role === "PATIENT") sessionStorage.removeItem("derm-home-intent");
+    }, []);
     const [accountProfile, setAccountProfile] = useState<AccountProfile | null>(null);
     const [accountAvatarSrc, setAccountAvatarSrc] = useState("");
     const [accountDialogOpen, setAccountDialogOpen] = useState(false);

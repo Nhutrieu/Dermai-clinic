@@ -95,8 +95,10 @@ test.describe("critical patient booking journey", () => {
         status: "PENDING_PAYMENT",
         reason,
       });
-      await expect(page.getByText("Đã cọc · Chờ lễ tân xác nhận", { exact: true })).toBeVisible();
-      await expect(page.getByText(reason, { exact: true })).toBeVisible();
+      await expect(page.getByRole("heading", { name: "Đặt lịch khám da liễu", exact: true })).toBeVisible();
+      const bookedRow = page.locator(`.patient-appointment-row[data-appointment-id="${appointmentId}"]`);
+      await expect(bookedRow.getByText("Đã cọc · Chờ lễ tân xác nhận", { exact: true })).toBeVisible();
+      await expect(bookedRow.getByText(reason, { exact: true })).toBeVisible();
 
       await test.info().attach("booking-result.json", {
         body: Buffer.from(JSON.stringify({

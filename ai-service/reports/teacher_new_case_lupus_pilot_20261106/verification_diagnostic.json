@@ -1,0 +1,26 @@
+{
+  "status": "PASS",
+  "checked_utc": "2026-11-08T13:02:55.606539+00:00",
+  "protocol_sha256": "42ec16285060757abe4b8bb2d31769b23460f853cd137c0e0d744f092449d9f5",
+  "source_and_protected_hashes_unchanged": true,
+  "checks": {
+    "old_lupus_replay": {
+      "first_added_step_replayed_prefix_updates": 61,
+      "parameter_max_abs": 0.0,
+      "gradient_norm": 4.604595184326172,
+      "metrics_recomputed": true
+    },
+    "new_case_lupus": {
+      "first_added_step_replayed_prefix_updates": 61,
+      "parameter_max_abs": 0.0,
+      "gradient_norm": 4.639841079711914,
+      "metrics_recomputed": true
+    }
+  },
+  "both_first_added_source_updates_independently_replayed": true,
+  "all_six_base_streams_match_across_arms": true,
+  "clinical_review_performed": false,
+  "full_training_independently_replayed": false,
+  "query_native_forwards_independently_repeated": false,
+  "selected": null
+}

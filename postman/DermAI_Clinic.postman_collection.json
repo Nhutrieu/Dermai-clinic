@@ -641,7 +641,8 @@
                   "  pm.expect(pm.response.code).to.not.eql(404);",
                   "  pm.expect(pm.response.code).to.not.eql(405);",
                   "});",
-                  "pm.test(\"Response time < 5s\", function () { pm.expect(pm.response.responseTime).to.be.below(5000); });"
+                  "pm.test(\"Response time < 5s\", function () { pm.expect(pm.response.responseTime).to.be.below(5000); });",
+                  "if (pm.response.code === 201) { const staff = pm.response.json(); if (staff.identityId) pm.environment.set(\"staff_identity_id\", staff.identityId); }"
                 ]
               }
             }
@@ -2472,7 +2473,8 @@
                   "if (__missingVariables.length) {",
                   "  console.log(\"Skipped: missing environment variables: \" + __missingVariables.join(\", \"));",
                   "  pm.execution.skipRequest();",
-                  "}"
+                  "}",
+                  "if (String(pm.variables.get(\"run_sse\") || \"false\").toLowerCase() !== \"true\") { console.log(\"Skipped: long-lived SSE; send manually with run_sse=true\"); pm.execution.skipRequest(); }"
                 ]
               }
             },
@@ -2830,7 +2832,7 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"fullName\": \"Bệnh nhân Postman\",\n  \"dob\": \"1995-05-20\",\n  \"phone\": \"0901234567\",\n  \"medicalHistory\": \"Không\",\n  \"allergies\": \"Không\"\n}",
+              "raw": "{\n  \"fullName\": \"Bệnh nhân Postman\",\n  \"dob\": \"1995-05-20\",\n  \"phone\": \"{{patient_phone}}\",\n  \"medicalHistory\": \"Không\",\n  \"allergies\": \"Không\"\n}",
               "options": {
                 "raw": {
                   "language": "json"
@@ -2984,7 +2986,7 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"fullName\": \"Bệnh nhân Postman\",\n  \"dob\": \"1995-05-20\",\n  \"phone\": \"0901234567\",\n  \"medicalHistory\": \"Không\",\n  \"allergies\": \"Không\"\n}",
+              "raw": "{\n  \"fullName\": \"Bệnh nhân Postman\",\n  \"dob\": \"1995-05-20\",\n  \"phone\": \"{{patient_phone}}\",\n  \"medicalHistory\": \"Không\",\n  \"allergies\": \"Không\"\n}",
               "options": {
                 "raw": {
                   "language": "json"
@@ -4465,7 +4467,7 @@
               "bearer": [
                 {
                   "key": "token",
-                  "value": "{{doctor_token}}",
+                  "value": "{{admin_token}}",
                   "type": "string"
                 }
               ]
@@ -4500,7 +4502,7 @@
                 "schedule"
               ]
             },
-            "description": "Doctor sá»Ÿ há»¯u/Admin thay toÃ n bá»™ lá»‹ch lÃ m Ä‘á»‹nh ká»³.\n\nLÆ°u Ã½: tÃ i liá»‡u API cÃ´ng khai cá»§a repository xÃ¡c nháº­n endpoint/method/role nhÆ°ng khÃ´ng cÃ´ng bá»‘ DTO body Ä‘áº§y Ä‘á»§ cho request nÃ y. Äá»ƒ trÃ¡nh tá»± bá»‹a field, request Ä‘Æ°á»£c Ä‘á»ƒ body `{}` hoáº·c khÃ´ng body. HÃ£y Ä‘á»‘i chiáº¿u Swagger runtime trÆ°á»›c khi cháº¡y happy-path. Test script á»Ÿ request template chá»‰ kiá»ƒm tra route/method khÃ´ng tráº£ 404/405/5xx."
+            "description": "Admin. Doctor sá»Ÿ há»¯u/Admin thay toÃ n bá»™ lá»‹ch lÃ m Ä‘á»‹nh ká»³.\n\nLÆ°u Ã½: tÃ i liá»‡u API cÃ´ng khai cá»§a repository xÃ¡c nháº­n endpoint/method/role nhÆ°ng khÃ´ng cÃ´ng bá»‘ DTO body Ä‘áº§y Ä‘á»§ cho request nÃ y. Äá»ƒ trÃ¡nh tá»± bá»‹a field, request Ä‘Æ°á»£c Ä‘á»ƒ body `{}` hoáº·c khÃ´ng body. HÃ£y Ä‘á»‘i chiáº¿u Swagger runtime trÆ°á»›c khi cháº¡y happy-path. Test script á»Ÿ request template chá»‰ kiá»ƒm tra route/method khÃ´ng tráº£ 404/405/5xx."
           },
           "response": []
         },
@@ -4543,7 +4545,7 @@
               "bearer": [
                 {
                   "key": "token",
-                  "value": "{{doctor_token}}",
+                  "value": "{{admin_token}}",
                   "type": "string"
                 }
               ]
@@ -4577,7 +4579,8 @@
                 "{{doctor_id}}",
                 "slot-duration"
               ]
-            }
+            },
+            "description": "Admin. "
           },
           "response": []
         },
@@ -6832,7 +6835,8 @@
                   "  pm.expect(pm.response.code).to.not.eql(404);",
                   "  pm.expect(pm.response.code).to.not.eql(405);",
                   "});",
-                  "pm.test(\"Response time < 5s\", function () { pm.expect(pm.response.responseTime).to.be.below(5000); });"
+                  "pm.test(\"Response time < 5s\", function () { pm.expect(pm.response.responseTime).to.be.below(5000); });",
+                  "if (pm.response.code >= 200 && pm.response.code < 300) { const moved = pm.response.json(); if (moved.id) pm.environment.set(\"appointment_id\", moved.id); }"
                 ]
               }
             }
@@ -10672,6 +10676,13 @@
                   "key": "recipientName",
                   "type": "text",
                   "value": "{{refund_recipient_name}}"
+                },
+                {
+                  "key": "evidence",
+                  "type": "file",
+                  "src": "",
+                  "disabled": true,
+                  "description": "Optional refund receipt image (JPEG/PNG/WebP, at most 5 MB). Enable and select a file to test the evidence download request."
                 }
               ]
             }
@@ -11281,7 +11292,7 @@
             },
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"amountReceived\": 200000,\n  \"cashierStation\": \"Quầy lễ tân 1\"\n}",
+              "raw": "{\n  \"amountReceived\": {{cash_amount_received}},\n  \"cashierStation\": \"Quầy lễ tân 1\"\n}",
               "options": {
                 "raw": {
                   "language": "json"
@@ -11719,7 +11730,7 @@
               "script": {
                 "type": "text/javascript",
                 "exec": [
-                  "const required = [\"batch_id\", \"pharmacist_token\", \"prescription_id\", \"prescription_item_id\"];",
+                  "const required = [\"batch_id\", \"pharmacist_token\", \"invoice_id\", \"prescription_item_id\"];",
                   "const missing = required.filter(k => { const v = pm.variables.get(k); return v === undefined || v === null || String(v).trim() === ''; });",
                   "if (missing.length) { console.log('Skipped: set ' + missing.join(', ')); pm.execution.skipRequest(); }"
                 ]
@@ -11769,7 +11780,7 @@
             },
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"prescriptionId\": \"{{prescription_id}}\",\n  \"items\": [\n    {\n      \"itemId\": \"{{prescription_item_id}}\",\n      \"batchId\": \"{{batch_id}}\"\n    }\n  ]\n}",
+              "raw": "{\n  \"prescriptionId\": \"{{invoice_id}}\",\n  \"items\": [\n    {\n      \"itemId\": \"{{prescription_item_id}}\",\n      \"batchId\": \"{{batch_id}}\"\n    }\n  ]\n}",
               "options": {
                 "raw": {
                   "language": "json"

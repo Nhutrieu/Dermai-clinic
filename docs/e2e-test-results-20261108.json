@@ -1,0 +1,303 @@
+﻿{
+    "metadata":  {
+                     "project":  "DermAI Clinic",
+                     "framework":  "Playwright",
+                     "browser":  "Chromium",
+                     "executedAt":  "2026-11-08T16:39:18.481Z",
+                     "durationMs":  83673.446,
+                     "baseCommit":  "be801397561f8cc0a3df9998241bc4fcc3f20177",
+                     "workingTreeDirty":  true,
+                     "environment":  {
+                                         "composeProject":  "dermai-e2e-20261108-final",
+                                         "weeklyClosure":  "NONE (isolated daily fixture)",
+                                         "baseUrl":  "http://localhost:53000",
+                                         "aiHealth":  {
+                                                          "status":  "up",
+                                                          "modelReady":  true,
+                                                          "modelVersion":  "dermai-eight-esg-v1-20261108",
+                                                          "modelMode":  "research_pipeline",
+                                                          "ragReady":  true
+                                                      },
+                                         "database":  "Fresh isolated PostgreSQL 16; synthetic identities only",
+                                         "paymentProvider":  "FakePayOSGateway (no external money movement)"
+                                     },
+                     "artifacts":  {
+                                       "sourceHashes":  "frontend/e2e-artifacts/dermai-e2e-20261108-final/source-hashes.json",
+                                       "root":  "frontend/e2e-artifacts/dermai-e2e-20261108-final",
+                                       "junit":  "frontend/e2e-artifacts/dermai-e2e-20261108-final/test-results/e2e-junit.xml",
+                                       "jsonSha256":  "30b02064bff4debad4b96f5f37b759ca233defcfdd2f46ebab17fc3601cae098",
+                                       "junitSha256":  "2a3d5bca3c0f6f6b0436fb07cdaceb6b49fb296f491e7d3ee3d2c417e4d15379",
+                                       "html":  "frontend/e2e-artifacts/dermai-e2e-20261108-final/playwright-report/index.html",
+                                       "json":  "frontend/e2e-artifacts/dermai-e2e-20261108-final/test-results/e2e-results.json"
+                                   }
+                 },
+    "summary":  {
+                    "passed":  8,
+                    "runnerExitCode":  2,
+                    "failed":  0,
+                    "total":  9,
+                    "flaky":  0,
+                    "skipped":  1,
+                    "status":  "BLOCKED"
+                },
+    "scenarios":  [
+                      {
+                          "id":  "E2E-AI-001",
+                          "title":  "E2E-AI-001: patient uploads a real image and opts in to appointment sharing",
+                          "status":  "PASS",
+                          "durationMs":  12552,
+                          "annotations":  [
+
+                                          ],
+                          "attachments":  [
+                                              {
+                                                  "name":  "ai-assessment-result.json",
+                                                  "path":  null,
+                                                  "storage":  "inline in Playwright JSON/report"
+                                              },
+                                              {
+                                                  "name":  "ai-assessment-completed.png",
+                                                  "path":  null,
+                                                  "storage":  "inline in Playwright JSON/report"
+                                              },
+                                              {
+                                                  "name":  "video",
+                                                  "path":  "frontend/e2e-artifacts/dermai-e2e-20261108-final/test-results/artifacts/ai-and-support-AI-assessme-ba1b2-s-in-to-appointment-sharing-chromium/video.webm",
+                                                  "storage":  "file"
+                                              }
+                                          ]
+                      },
+                      {
+                          "id":  "E2E-CHAT-001",
+                          "title":  "E2E-CHAT-001: assistant hands off, receptionist claims and replies",
+                          "status":  "PASS",
+                          "durationMs":  7503,
+                          "annotations":  [
+
+                                          ],
+                          "attachments":  [
+                                              {
+                                                  "name":  "support-handoff-receptionist.png",
+                                                  "path":  null,
+                                                  "storage":  "inline in Playwright JSON/report"
+                                              },
+                                              {
+                                                  "name":  "support-handoff-patient.png",
+                                                  "path":  null,
+                                                  "storage":  "inline in Playwright JSON/report"
+                                              },
+                                              {
+                                                  "name":  "support-handoff-result.json",
+                                                  "path":  null,
+                                                  "storage":  "inline in Playwright JSON/report"
+                                              },
+                                              {
+                                                  "name":  "video",
+                                                  "path":  "frontend/e2e-artifacts/dermai-e2e-20261108-final/test-results/artifacts/ai-and-support-support-ass-1e834-ptionist-claims-and-replies-chromium/video.webm",
+                                                  "storage":  "file"
+                                              }
+                                          ]
+                      },
+                      {
+                          "id":  "E2E-BOOK-001",
+                          "title":  "E2E-BOOK-001: patient holds and confirms a real available slot",
+                          "status":  "PASS",
+                          "durationMs":  7081,
+                          "annotations":  [
+
+                                          ],
+                          "attachments":  [
+                                              {
+                                                  "name":  "booking-result.json",
+                                                  "path":  null,
+                                                  "storage":  "inline in Playwright JSON/report"
+                                              },
+                                              {
+                                                  "name":  "booking-confirmed.png",
+                                                  "path":  null,
+                                                  "storage":  "inline in Playwright JSON/report"
+                                              },
+                                              {
+                                                  "name":  "video",
+                                                  "path":  "frontend/e2e-artifacts/dermai-e2e-20261108-final/test-results/artifacts/booking-critical-patient-b-361b0-firms-a-real-available-slot-chromium/video.webm",
+                                                  "storage":  "file"
+                                              }
+                                          ]
+                      },
+                      {
+                          "id":  "E2E-BOOK-002",
+                          "title":  "E2E-BOOK-002: exactly one of two patients can hold and book the same slot",
+                          "status":  "PASS",
+                          "durationMs":  8563,
+                          "annotations":  [
+
+                                          ],
+                          "attachments":  [
+                                              {
+                                                  "name":  "same-slot-race-result.json",
+                                                  "path":  null,
+                                                  "storage":  "inline in Playwright JSON/report"
+                                              },
+                                              {
+                                                  "name":  "same-slot-winner.png",
+                                                  "path":  null,
+                                                  "storage":  "inline in Playwright JSON/report"
+                                              },
+                                              {
+                                                  "name":  "same-slot-loser.png",
+                                                  "path":  null,
+                                                  "storage":  "inline in Playwright JSON/report"
+                                              },
+                                              {
+                                                  "name":  "video",
+                                                  "path":  "frontend/e2e-artifacts/dermai-e2e-20261108-final/test-results/artifacts/booking-same-slot-concurre-2f227-hold-and-book-the-same-slot-chromium/video.webm",
+                                                  "storage":  "file"
+                                              }
+                                          ]
+                      },
+                      {
+                          "id":  "E2E-PAY-001",
+                          "title":  "E2E-PAY-001: cancel return closes payment and releases appointment",
+                          "status":  "PASS",
+                          "durationMs":  5574,
+                          "annotations":  [
+
+                                          ],
+                          "attachments":  [
+                                              {
+                                                  "name":  "payment-cancel-result.json",
+                                                  "path":  null,
+                                                  "storage":  "inline in Playwright JSON/report"
+                                              },
+                                              {
+                                                  "name":  "video",
+                                                  "path":  "frontend/e2e-artifacts/dermai-e2e-20261108-final/test-results/artifacts/payment-payment-cancellati-5622b-nt-and-releases-appointment-chromium/video.webm",
+                                                  "storage":  "file"
+                                              }
+                                          ]
+                      },
+                      {
+                          "id":  "E2E-PAY-002",
+                          "title":  "E2E-PAY-002: patient refund request is completed by reception",
+                          "status":  "PASS",
+                          "durationMs":  7350,
+                          "annotations":  [
+
+                                          ],
+                          "attachments":  [
+                                              {
+                                                  "name":  "payment-refund-result.json",
+                                                  "path":  null,
+                                                  "storage":  "inline in Playwright JSON/report"
+                                              },
+                                              {
+                                                  "name":  "video",
+                                                  "path":  "frontend/e2e-artifacts/dermai-e2e-20261108-final/test-results/artifacts/payment-payment-cancellati-02631-t-is-completed-by-reception-chromium/video.webm",
+                                                  "storage":  "file"
+                                              }
+                                          ]
+                      },
+                      {
+                          "id":  "E2E-PROPOSAL-001",
+                          "title":  "E2E-PROPOSAL-001: patient accepts one proposal and declines another",
+                          "status":  "PASS",
+                          "durationMs":  6876,
+                          "annotations":  [
+
+                                          ],
+                          "attachments":  [
+                                              {
+                                                  "name":  "proposal-decisions-result.json",
+                                                  "path":  null,
+                                                  "storage":  "inline in Playwright JSON/report"
+                                              },
+                                              {
+                                                  "name":  "proposal-decisions-patient.png",
+                                                  "path":  null,
+                                                  "storage":  "inline in Playwright JSON/report"
+                                              },
+                                              {
+                                                  "name":  "video",
+                                                  "path":  "frontend/e2e-artifacts/dermai-e2e-20261108-final/test-results/artifacts/proposal-receptionist-appo-8808c-oposal-and-declines-another-chromium/video.webm",
+                                                  "storage":  "file"
+                                              }
+                                          ]
+                      },
+                      {
+                          "id":  "E2E-FLOW-001",
+                          "title":  "E2E-FLOW-001: booking through reception, consultation and patient review",
+                          "status":  "SKIP",
+                          "durationMs":  4478,
+                          "annotations":  [
+                                              {
+                                                  "type":  "skip",
+                                                  "description":  "Bác sĩ E2E không có slot còn trống trong hôm nay; không thể kiểm tra check-in thật."
+                                              }
+                                          ],
+                          "attachments":  [
+                                              {
+                                                  "name":  "video",
+                                                  "path":  "frontend/e2e-artifacts/dermai-e2e-20261108-final/test-results/artifacts/visit-lifecycle-complete-c-45aa4-ultation-and-patient-review-chromium/video.webm",
+                                                  "storage":  "file"
+                                              }
+                                          ]
+                      },
+                      {
+                          "id":  "E2E-BILL-001",
+                          "title":  "E2E-BILL-001: prepaid same-day fixture through consultation, billing and pharmacy",
+                          "status":  "PASS",
+                          "durationMs":  20634,
+                          "annotations":  [
+
+                                          ],
+                          "attachments":  [
+                                              {
+                                                  "name":  "same-day-fixture.json",
+                                                  "path":  null,
+                                                  "storage":  "inline in Playwright JSON/report"
+                                              },
+                                              {
+                                                  "name":  "visit-lifecycle-reception-check-in.png",
+                                                  "path":  null,
+                                                  "storage":  "inline in Playwright JSON/report"
+                                              },
+                                              {
+                                                  "name":  "visit-lifecycle-doctor-completed.png",
+                                                  "path":  null,
+                                                  "storage":  "inline in Playwright JSON/report"
+                                              },
+                                              {
+                                                  "name":  "visit-lifecycle-result.json",
+                                                  "path":  null,
+                                                  "storage":  "inline in Playwright JSON/report"
+                                              },
+                                              {
+                                                  "name":  "visit-lifecycle-completed.png",
+                                                  "path":  null,
+                                                  "storage":  "inline in Playwright JSON/report"
+                                              },
+                                              {
+                                                  "name":  "video",
+                                                  "path":  "frontend/e2e-artifacts/dermai-e2e-20261108-final/test-results/artifacts/visit-lifecycle-complete-c-42632-tation-billing-and-pharmacy-chromium/video.webm",
+                                                  "storage":  "file"
+                                              }
+                                          ]
+                      }
+                  ],
+    "billingEvidence":  {
+                            "cashReceived":  320000,
+                            "serviceFee":  150000,
+                            "bookingSource":  "Prepaid same-day synthetic fixture; not a browser booking assertion",
+                            "consultationFee":  150000,
+                            "remainingAmount":  270000,
+                            "invoiceStatus":  "DISPENSED",
+                            "depositApplied":  100000,
+                            "repeatDispenseStatus":  409,
+                            "totalAmount":  370000,
+                            "stockAfter":  98,
+                            "medicineTotal":  70000,
+                            "changeAmount":  50000,
+                            "underpaymentStatus":  409,
+                            "stockBefore":  100
+                        }
+}

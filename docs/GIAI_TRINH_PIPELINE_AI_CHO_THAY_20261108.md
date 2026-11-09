@@ -2,6 +2,10 @@
 
 Ngày đối chiếu mã nguồn và tính lại bảng thành phần: **08/11/2026**.
 
+**Cập nhật sau khi tích hợp:** mô tả API B0 bên dưới là trạng thái tại lúc giải trình.
+API hiện được cấu hình dùng bản E/G/S năm fold; quy tắc phục vụ ảnh mới,
+ý nghĩa mức đồng thuận và kết quả kiểm chứng nằm trong [bản tích hợp](AP_DUNG_PIPELINE_AI_20261108.md).
+
 Tài liệu trả lời năm câu hỏi của thầy bằng cơ chế có trong mã và dự đoán đã lưu. **Bản nghiên cứu tham chiếu đang giữ là 4.687/5.937 ảnh đúng, Accuracy 78,9456%, Macro F1 77,7287%, Recall SkinCancer 88,0355%. API hiện vẫn dùng EfficientNet-B0 đơn; chưa triển khai pipeline dưới đây vào API.** Cấu hình theo fold phục vụ đánh giá OOF, chưa phải một cấu hình phục vụ ảnh mới đã đóng gói.
 
 ## 1. Ba backbone được kết hợp như thế nào?

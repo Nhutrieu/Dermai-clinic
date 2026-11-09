@@ -1,0 +1,45 @@
+{
+  "status": "PASS",
+  "scope": "Serving branch implementation replays the 5937 historical OOF decisions exactly; this does NOT evaluate the five-branch serving vote.",
+  "images": 5937,
+  "folds": [
+    {
+      "fold": 0,
+      "images": 1176,
+      "exact_E": true,
+      "exact_final": true,
+      "cancer_mask_exact": true
+    },
+    {
+      "fold": 1,
+      "images": 1193,
+      "exact_E": true,
+      "exact_final": true,
+      "cancer_mask_exact": true
+    },
+    {
+      "fold": 2,
+      "images": 1206,
+      "exact_E": true,
+      "exact_final": true,
+      "cancer_mask_exact": true
+    },
+    {
+      "fold": 3,
+      "images": 1201,
+      "exact_E": true,
+      "exact_final": true,
+      "cancer_mask_exact": true
+    },
+    {
+      "fold": 4,
+      "images": 1161,
+      "exact_E": true,
+      "exact_final": true,
+      "cancer_mask_exact": true
+    }
+  ],
+  "manifest_sha256": "60c4927e479b2bb88c7778070715fba8876ac65420be1ff2affbd8c53fb89fed",
+  "serving_accuracy": null,
+  "independent_test": false
+}
