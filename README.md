@@ -1,8 +1,8 @@
-# DermAI Clinic
+# Derm Clinic
 
-**Hệ thống đặt lịch và hỗ trợ chẩn đoán y tế bằng AI cho phòng khám da liễu.**
+**Hệ thống đặt lịch, quản lý phòng khám da liễu và hỗ trợ tham khảo ảnh da bằng AI.**
 
-DermAI Clinic kết hợp quy trình đặt lịch khám an toàn, điều phối lễ tân theo thời
+Derm Clinic kết hợp quy trình đặt lịch khám an toàn, điều phối lễ tân theo thời
 gian thực và mô hình Computer Vision hỗ trợ bệnh nhân tham khảo ảnh da trước khi
 đến khám.
 
@@ -18,9 +18,11 @@ gian thực và mô hình Computer Vision hỗ trợ bệnh nhân tham khảo �
 - Xem hồ sơ, mô tả, chuyên môn, kinh nghiệm, lịch trống và giá khám của bác sĩ.
 - Chọn bác sĩ, ngày, khung giờ, nhập lý do, thanh toán cọc qua PayOS và theo dõi
   bước lễ tân xác nhận lịch. Có thể yêu cầu hoàn cọc cho lịch đủ điều kiện.
-- Xem lịch sắp tới/lịch sử và nhận thông báo. Trợ lý hỗ trợ tự động trả lời thủ
-  tục đơn giản; yêu cầu cần thao tác được chuyển sang lễ tân realtime.
-- Phân tích ảnh da bằng AI, xem Top-3, confidence, Grad-CAM và hướng dẫn RAG.
+- Xem lịch sắp tới và lịch sử trong mục **Lịch đã đặt**, nhận thông báo. Trợ lý
+  hỗ trợ tự động trả lời thủ tục đơn giản; yêu cầu cần thao tác được chuyển sang
+  lễ tân realtime.
+- Phân tích ảnh da bằng AI, xem ba nhóm gợi ý, mức đồng thuận giữa các bộ mô hình,
+  Grad-CAM minh họa và hướng dẫn tham khảo có nguồn từ RAG.
 - Lưu lịch sử assessment/ảnh, chủ động chia sẻ riêng cho bác sĩ phụ trách, xóa
   kết quả của mình và đánh giá sau buổi khám.
 - Xem hóa đơn sau khám và thanh toán phần còn lại qua kênh online khi được mở.
@@ -39,6 +41,7 @@ gian thực và mô hình Computer Vision hỗ trợ bệnh nhân tham khảo �
 ### Bác sĩ
 
 - Quản lý hồ sơ nghề nghiệp, ảnh đại diện, mô tả và lịch làm việc hằng tuần.
+- Tải và thay ảnh đại diện JPG, PNG hoặc WebP, tối đa 2 MB.
 - Khai báo nghỉ phép, độ dài slot và theo dõi lịch được phân công.
 - Xem lý do khám và kết quả AI mà bệnh nhân cho phép chia sẻ.
 - Bắt đầu lượt khám, lập hồ sơ và đơn thuốc; xác nhận dịch vụ đã thực hiện trước
@@ -68,22 +71,45 @@ gian thực và mô hình Computer Vision hỗ trợ bệnh nhân tham khảo �
 - Giá được lưu tại thời điểm đặt bằng `consultation_fee_snapshot`.
 - Lịch online chuyển qua `PENDING_PAYMENT` rồi `PENDING_CONFIRMATION` sau khi
   cọc thành công; lễ tân mới xác nhận thành `CONFIRMED`.
-- Bệnh nhân tự đổi lịch `PENDING`/`ASSIGNED` trong 30 phút đầu; tự hủy được cả
-  lịch đã cọc/chờ xác nhận hoặc đã xác nhận trong thời hạn này. Sau đó liên hệ lễ tân.
+- Trong 30 phút kể từ lúc đặt, bệnh nhân có thể tự đổi lịch `PENDING`/`ASSIGNED`
+  và tự hủy lịch `PENDING`/`ASSIGNED`/`PENDING_CONFIRMATION`.
+- Khi lễ tân đã xác nhận (`CONFIRMED`) hoặc hết thời hạn tự thao tác, bệnh nhân
+  liên hệ lễ tân để đổi hoặc hủy lịch. Lịch đã cọc đang chờ xác nhận cũng cần
+  lễ tân hỗ trợ nếu muốn đổi giờ.
 - Slot, yêu cầu đặt lịch, thông báo, avatar và chat được đồng bộ bằng WebSocket.
 
 ## AI Computer Vision
 
-API hiện dùng **EfficientNet-B0 đơn** (`efficientnet_b0-20260728T185742Z`),
-trả Top-3, confidence, Grad-CAM và hướng dẫn RAG. Phạm vi gồm tám nhóm:
-Acne, Candidiasis, Eczema, Lupus, Psoriasis, SkinCancer, Tinea và Warts.
-Xem [AI và RAG](docs/04-ai-rag.md) và [model card hiện tại](docs/model-card-scin-v1.md).
+API mặc định dùng **pipeline E/G/S biểu quyết năm fold**, phiên bản
+`dermai-eight-esg-v1-20261108`. Mỗi fold dùng EfficientNet-B0, ConvNeXt-Tiny và
+ResNet50; bộ chọn G hoạt động ở fold 0/3, specialist S ở fold 1/2, fold 4 dùng
+ensemble E. B0 cũ được giữ cho bước kiểm tra ảnh ngoài phạm vi (OOD).
 
-Bản nghiên cứu ensemble đang giữ trên 5.937 ảnh OOF đạt **78,9456% Accuracy,
-77,7287% Macro F1, 88,0355% Recall SkinCancer**. Đây là kết quả phát triển,
-chưa phải kiểm chứng bệnh nhân mới; pipeline này chưa được triển khai vào API.
-[Bản giải trình ngày 08/11/2026](docs/GIAI_TRINH_PIPELINE_AI_CHO_THAY_20261108.md)
-mô tả ensemble, cổng chọn dự đoán, specialist và đóng góp từng thành phần.
+Phạm vi gồm tám nhóm: Acne, Candidiasis, Eczema, Lupus, Psoriasis, SkinCancer,
+Tinea và Warts. Ảnh được kiểm tra chất lượng/OOD trước khi trả kết quả. Điểm
+trên từng ảnh thể hiện **mức đồng thuận, không phải xác suất mắc bệnh**.
+Grad-CAM minh họa từ B0 fold 0, không giải thích đầy đủ toàn bộ phép biểu quyết.
+Xem [cấu hình phục vụ hiện tại](docs/KHOI_PHUC_BIEU_QUYET_NAM_FOLD_20261111.md).
+
+Bản nghiên cứu trên **5.937 ảnh OOF** đạt **78,95% Accuracy, 77,73% Macro F1,
+88,04% Recall SkinCancer**. Mỗi ảnh OOF được chấm bằng nhánh không dùng ảnh đó
+để train; đây là kết quả phát triển, không phải điểm của bộ biểu quyết phục vụ.
+
+Đánh giá hồi cứu API Docker ngày **10/11/2026** báo riêng số ảnh nhận và từ chối:
+
+| Tập đánh giá | Tổng ảnh | Trả nhãn | Từ chối | Trả đúng | Độ đúng trên ảnh trả nhãn | Trả đúng / tổng ảnh |
+|---|---:|---:|---:|---:|---:|---:|
+| Test lịch sử sau rà trùng | 486 | 420 | 66 | 341 | 81,19% | 70,16% |
+| SCIN sau rà trùng | 237 | 184 | 53 | 142 | 77,17% | 59,92% |
+
+Các tập này đã được khảo sát trong lịch sử nghiên cứu, chưa phải test mù mới
+độc lập theo bệnh nhân. Lượt đánh giá có một timeout được thử lại; bảng dùng
+phản hồi cuối. [Báo cáo API và ma trận nhầm lẫn](ai-service/reports/application_evaluation_20261110/summary.md)
+giải thích đầy đủ điều kiện và giới hạn. [Đối chứng ngày 13/11/2026](ai-service/reports/frozen_test_comparison_20261113/summary.md)
+so sánh riêng bộ phân loại, không phải độ chính xác hoặc tốc độ toàn API.
+
+[Bản giải trình pipeline](docs/GIAI_TRINH_PIPELINE_AI_CHO_THAY_20261108.md) mô tả
+ensemble, bộ chọn dự đoán, specialist và đóng góp từng thành phần.
 
 Đọc [tổng hợp nghiên cứu](docs/ai-research-summary.md) để xem kết luận, giới hạn
 và đường dẫn báo cáo gốc. Mã train và kết quả từng lượt ở `ai-service/training/`
@@ -105,7 +131,7 @@ Browser
             ├─ Prescription Service — đơn thuốc / hóa đơn
             ├─ Inventory Service (FastAPI) — lô thuốc / cấp phát FEFO
             ├─ Notification Service — RabbitMQ / Gmail SMTP
-            └─ FastAPI AI Service — EfficientNet-B0 / Grad-CAM / RAG
+            └─ FastAPI AI Service — E/G/S năm fold / OOD / Grad-CAM / RAG
 
 PostgreSQL 16 · Redis 7 · RabbitMQ 3.13 · Docker Compose
 ```
@@ -119,7 +145,7 @@ PostgreSQL 16 · Redis 7 · RabbitMQ 3.13 · Docker Compose
 | Dữ liệu | PostgreSQL 16 với 9 schema và 48 bảng nghiệp vụ |
 | Realtime | WebSocket; dữ liệu được tải lại từ nguồn thật sau sự kiện |
 | Messaging | RabbitMQ và outbox event cho thông báo bất đồng bộ |
-| AI | FastAPI, PyTorch, EfficientNet-B0, Grad-CAM, TF-IDF RAG và Gemini public chat |
+| AI | FastAPI, PyTorch, EfficientNet-B0 + ConvNeXt-Tiny + ResNet50, E/G/S, Grad-CAM, TF-IDF RAG và trợ lý Gemini |
 | Hạ tầng | Docker Compose, healthcheck và giới hạn RAM từng container |
 
 ## Chạy bằng Docker
@@ -135,11 +161,22 @@ PostgreSQL 16 · Redis 7 · RabbitMQ 3.13 · Docker Compose
 Tạo file `.env` từ mẫu và điền secret cục bộ. Không commit `.env`, App Password,
 JWT secret hoặc API key lên GitHub.
 
+Trước khi khởi động, cần chuẩn bị đầy đủ package AI trong
+`ai-service/models/research_pipeline/` và chỉ mục RAG trong `ai-service/rag-data/`.
+GitHub chứa mã nguồn, manifest và báo cáo tổng hợp; checkpoint, tensor, dữ liệu
+ảnh và chỉ mục RAG được giữ cục bộ. Chỉ clone repo chưa đủ để chạy tính năng AI.
+Xem [chuẩn bị AI cục bộ](#chuẩn-bị-và-chạy-ai-cục-bộ).
+
 ```powershell
 Copy-Item .env.example .env
 docker compose up -d --build
 docker compose ps
+Invoke-RestMethod http://localhost:8000/health
 ```
+
+AI sẵn sàng khi `/health` có `modelReady=true`, `ragReady=true`,
+`modelVersion=dermai-eight-esg-v1-20261108` và
+`aggregation=protected_fold_vote_v1`.
 
 Các biến tích hợp quan trọng:
 
@@ -151,11 +188,13 @@ Các biến tích hợp quan trọng:
 - `DATA_ENCRYPTION_KEY` bảo vệ ảnh assessment lưu trong database.
 - `PAYOS_CLIENT_ID`, `PAYOS_API_KEY`, `PAYOS_CHECKSUM_KEY` và return/cancel URL
   cho thanh toán thật; `PAYOS_FAKE_MODE` chỉ dùng cho demo/kiểm thử.
-- For simultaneous localhost/tunnel testing, add the public frontend origin to
-  `PAYMENT_ALLOWED_RETURN_ORIGINS` (comma-separated). New deposit and invoice
-  checkouts return to the browser origin that created the link. Requests without
-  `Origin` use the configured return/cancel URLs. Keep `PAYOS_WEBHOOK_URL` public.
-  Existing PayOS links retain their original return URLs.
+- `PAYMENT_ALLOWED_RETURN_ORIGINS`: các origin frontend được phép nhận kết quả
+  thanh toán, cách nhau bằng dấu phẩy. Khi dùng localhost cùng tunnel, thêm origin
+  tunnel vào biến này. Liên kết cọc/hóa đơn mới quay về origin của trình duyệt tạo
+  liên kết; yêu cầu không có `Origin` dùng return/cancel URL đã cấu hình. Liên kết
+  PayOS cũ giữ URL ban đầu; `PAYOS_WEBHOOK_URL` cần truy cập được từ Internet.
+- `AI_RESEARCH_MANIFEST_PATH`: đường dẫn manifest trong container; mặc định là
+  `/models/research_pipeline/manifest.json`.
 
 ### Địa chỉ local
 
@@ -191,25 +230,64 @@ Invoke-RestMethod `
   -Body $body
 ```
 
-Sau khi đăng nhập, Admin dùng màn hình **Nhân sự** để tạo tài khoản bác sĩ hoặc
-lễ tân. Hệ thống không tự seed email, mật khẩu hoặc dữ liệu bệnh nhân giả.
+Sau khi đăng nhập, Admin dùng màn hình **Nhân sự** để tạo tài khoản bác sĩ,
+lễ tân hoặc dược sĩ. Hệ thống không tự seed email, mật khẩu hoặc dữ liệu bệnh nhân
+giả.
 
-## Huấn luyện và chạy AI cục bộ
+## Chuẩn bị và chạy AI cục bộ
 
-Dataset và `best_model.pth` không được đưa lên Git. Nếu thiếu checkpoint,
-`/predict` trả `503` thay vì tạo kết quả giả.
+Dùng Python 3.10 như môi trường Docker. Từ thư mục gốc dự án, tạo môi trường riêng:
 
 ```powershell
 Set-Location ai-service
-python -m pip install -r requirements.txt
-python scripts/validate_dataset.py --data ../SkinDisease
-python training/train.py --data ../SkinDisease --model efficientnet_b0 --epochs 20
-python training/evaluate.py --data ../SkinDisease --checkpoint models/best_model.pth
-python rag/ingest.py --pdf ../SkinDisease/Huong-dan-chan-doan-dieu-tri-Da-lieu.pdf
-uvicorn app.main:app --reload
+python -m venv .venv
+.\.venv\Scripts\python.exe -m pip install -r requirements.txt
 ```
 
+Chuẩn bị package đúng phiên bản với `models/research_pipeline/manifest.json`
+và toàn bộ tài sản được manifest tham chiếu. Nếu đã có checkpoint nghiên cứu gốc
+cùng các báo cáo/tệp phụ thuộc, có thể đóng gói bằng lệnh sau; lệnh không train lại
+và không ghi đè package đã có manifest:
+
+```powershell
+.\.venv\Scripts\python.exe training/export_research_runtime.py --output models/research_pipeline_export
+```
+
+Lệnh trên tạo một thư mục mới. Nếu chạy trực tiếp với package này, đặt
+`$env:RESEARCH_MANIFEST_PATH = 'models/research_pipeline_export/manifest.json'`
+trước khi khởi động API. Docker mặc định vẫn đọc `models/research_pipeline/`.
+
+Không chạy lệnh export chỉ từ bản clone thiếu checkpoint. API kiểm tra SHA-256
+của các tài sản trước khi nạp; package thiếu hoặc sai hash sẽ làm khởi động lỗi.
+Xem [hướng dẫn package và cấu hình](docs/AP_DUNG_PIPELINE_AI_20261108.md).
+
+Chuẩn bị chỉ mục RAG trong `ai-service/rag-data/`. Khi có tài liệu PDF nguồn tại
+đường dẫn dưới đây, tạo chỉ mục bằng:
+
+```powershell
+.\.venv\Scripts\python.exe rag/ingest.py --pdf ../SkinDisease/Huong-dan-chan-doan-dieu-tri-Da-lieu.pdf --output rag-data
+$env:RAG_INDEX_PATH = 'rag-data'
+.\.venv\Scripts\python.exe -m uvicorn app.main:app --host 127.0.0.1 --port 8000
+```
+
+Mã train và đánh giá nằm trong [danh mục script](ai-service/DANH_MUC_TRAIN_MODEL.md).
+Huấn luyện một B0 đơn không tạo ra package E/G/S năm fold đang phục vụ.
+
 ## Kiểm thử
+
+Kiểm tra mã nguồn ngày **14/11/2026**, trước khi đẩy commit
+[`b4bb3c08`](https://github.com/Nhutrieu/Dermai-clinic/commit/b4bb3c084525c4e2b9836075da7c865e0aaecf59):
+
+| Phạm vi | Kết quả |
+|---|---|
+| Frontend unit test | 112 test đạt |
+| Frontend build và kiểm tra kiểu E2E | Đạt |
+| AI runtime và bộ đánh giá ứng dụng | 16 test đạt |
+| Appointment, Doctor, Payment, Prescription service | 165 test đạt, không lỗi hoặc bỏ qua |
+| Giao diện ảnh đại diện, lịch đã đặt, xóa kết quả AI và đổi lịch | 15 test Playwright đạt với API giả lập |
+
+Lượt trên kiểm tra các phần thay đổi, chưa phải một lượt release suite đầy đủ
+hoặc kiểm thử thanh toán PayOS thật. Bộ kiểm thử tổng thể:
 
 ```powershell
 # Regression build/unit/integration. Nếu máy không có Maven, script tự dùng
@@ -249,7 +327,11 @@ Bắt đầu tại [mục lục tài liệu](docs/README.md).
 - [Triển khai production bằng Docker Compose](docs/production-deployment.md)
 - [Quy ước và nguồn bằng chứng kiểm thử](docs/test-evidence.md)
 - [Xác minh email và Gmail SMTP](docs/06-email-verification.md)
-- [Model Card hiện tại](docs/model-card-scin-v1.md)
+- [AI service và cách chạy](ai-service/README.md)
+- [Pipeline AI đang phục vụ](docs/KHOI_PHUC_BIEU_QUYET_NAM_FOLD_20261111.md)
+- [Tổng hợp nghiên cứu AI](docs/ai-research-summary.md)
+- [Tổng hợp chỉ số và giới hạn đánh giá](docs/TONG_HOP_CHI_SO_AI.md)
+- [Model card B0 nền / cấu hình cũ](docs/model-card-scin-v1.md)
 - [Tổng hợp các luồng thanh toán, hóa đơn và kho](docs/09-tong-hop-thay-doi-moi.md)
 - [Tham chiếu schema](docs/database-schema-reference.md) và [hướng dẫn ERD](docs/database-erd-guide.md)
 - [DBML ERD toàn hệ thống](database/dermai_erd.dbml)
