@@ -1,0 +1,17 @@
+{
+  "protocol_sha256": "38a25e98228ecabf66175cc6ab8651cdf370e9350445fd42d8a08b4e2557f3a1",
+  "predictions_sha256": "b46a2694d8464156a65d4ea97123697bd84bbbdf344091b3e33afabaa64f4b26",
+  "images": 723,
+  "methods": [
+    "efficientnet_b0",
+    "convnext_tiny",
+    "resnet50",
+    "E",
+    "E_S",
+    "E_G",
+    "E_G_S"
+  ],
+  "locked_before_scoring": true,
+  "device": "cuda",
+  "architecture": "NVIDIA GeForce RTX 4050 Laptop GPU"
+}

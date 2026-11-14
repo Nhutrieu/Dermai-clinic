@@ -521,6 +521,15 @@ coverage/
 # Serving head tensors/scalers are packaged locally with the CNN weights.
 /ai-service/models/research_pipeline/**/*.npz
 
+# Local image/case identities for the serving-API evaluation; publish aggregate results only.
+/ai-service/reports/application_evaluation_20261110/protocol.json
+/ai-service/reports/application_evaluation_20261110/audit.json
+/ai-service/reports/application_evaluation_20261110/protected_fingerprints.json
+/ai-service/reports/application_evaluation_20261110/evaluation_manifest.json
+/ai-service/reports/application_evaluation_20261110/predictions.jsonl
+/ai-service/reports/application_evaluation_20261110/native_attempts/
+/ai-service/reports/application_evaluation_20261110/error.json
+
 # Restored archived dependencies for the local pilot305 continuation.
 # The serving API is independent of these historical files.
 /ai-service/reports/original_eight_weak_train_audit_20261021/image_inventory.json
@@ -567,3 +576,7 @@ coverage/
 /ai-service/reports/teacher_source_aware_inner_design_20261025/training_contract.py
 /ai-service/reports/teacher_specialist_other_class_pilot_20261101/run_experiment.py
 /ai-service/reports/teacher_three_outcome_train_gate_20261101/run_experiment.py
+
+# Per-image identifiers from local evaluation runs; retain aggregate reports.
+/ai-service/reports/application_evaluation_20261110/execution_retries.json
+/ai-service/reports/frozen_test_comparison_20261113/protocol.json

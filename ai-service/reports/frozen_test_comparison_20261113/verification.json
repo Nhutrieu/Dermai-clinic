@@ -1,0 +1,11 @@
+{
+  "status": "PASS",
+  "results_sha256": "6155977b2e5afddd2ec29733ddd848eb9d3c958403381955229deff1afb48628",
+  "protocol_sha256": "38a25e98228ecabf66175cc6ab8651cdf370e9350445fd42d8a08b4e2557f3a1",
+  "predictions_sha256": "b46a2694d8464156a65d4ea97123697bd84bbbdf344091b3e33afabaa64f4b26",
+  "source_and_checkpoints_unchanged": true,
+  "samples": 723,
+  "sklearn_metric_check": true,
+  "label_lookup_only_in_scoring": true,
+  "historical_api_label_crosscheck_mismatches": 0
+}

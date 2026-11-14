@@ -106,6 +106,7 @@ services:
       PAYOS_RETURN_URL: ${PAYOS_RETURN_URL:-http://localhost:3000/payment/success}
       PAYOS_CANCEL_URL: ${PAYOS_CANCEL_URL:-http://localhost:3000/payment/cancel}
       PAYOS_WEBHOOK_URL: ${PAYOS_WEBHOOK_URL:-}
+      PAYMENT_ALLOWED_RETURN_ORIGINS: ${PAYMENT_ALLOWED_RETURN_ORIGINS:-}
     healthcheck: {test: ["CMD", "curl", "-fsS", "http://localhost:8089/actuator/health"], interval: 20s, timeout: 5s, retries: 10, start_period: 50s}
     depends_on: {postgres: {condition: service_healthy}, rabbitmq: {condition: service_healthy}, appointment-service: {condition: service_healthy}}
   medical-record-service:

@@ -50,6 +50,16 @@ public class AppointmentController{
  private void requireServicesConfirmed(Appointment appointment){if(appointment.servicesConfirmedAt==null)throw new ResponseStatusException(HttpStatus.CONFLICT,"Vui lòng xác nhận dịch vụ đã thực hiện trước khi hoàn tất ca khám.");}
  private void requirePatientOwner(UUID id,UUID identity){if(repo.findById(id).map(x->!identity.equals(x.patientIdentityId)).orElse(true))throw new Forbidden();}
  // Patients may self-manage for 30 minutes only before reception confirms the appointment.
- private Appointment requirePatientSelfServiceWindow(UUID id,UUID identity,boolean allowConfirmed){var appointment=repo.findById(id).orElseThrow(NoSuchElementException::new);if(!identity.equals(appointment.patientIdentityId))throw new Forbidden();if(!allowConfirmed&&appointment.status==AppointmentStatus.PENDING_CONFIRMATION)throw new ResponseStatusException(HttpStatus.CONFLICT,"Lịch đã thanh toán cọc và đang chờ lễ tân xác nhận. Vui lòng liên hệ lễ tân để được hỗ trợ đổi lịch.");if(!allowConfirmed&&appointment.status==AppointmentStatus.CONFIRMED)throw new ResponseStatusException(HttpStatus.CONFLICT,"Lịch đã được lễ tân xác nhận. Vui lòng liên hệ lễ tân để được hỗ trợ đổi lịch.");var allowed=EnumSet.of(AppointmentStatus.PENDING,AppointmentStatus.ASSIGNED);if(allowConfirmed)allowed.addAll(EnumSet.of(AppointmentStatus.PENDING_CONFIRMATION,AppointmentStatus.CONFIRMED));if(!allowed.contains(appointment.status))throw new ResponseStatusException(HttpStatus.CONFLICT,"Trạng thái lịch hiện tại không cho phép tự đổi hoặc hủy.");if(appointment.createdAt.plus(Duration.ofMinutes(30)).isBefore(Instant.now()))throw new ResponseStatusException(HttpStatus.CONFLICT,"Quá 30 phút kể từ lúc đặt lịch. Vui lòng liên hệ lễ tân để được hỗ trợ đổi hoặc hủy lịch.");return appointment;}
+ private Appointment requirePatientSelfServiceWindow(UUID id,UUID identity,boolean allowPaidPending){
+  var appointment=repo.findById(id).orElseThrow(NoSuchElementException::new);
+  if(!identity.equals(appointment.patientIdentityId))throw new Forbidden();
+  if(appointment.status==AppointmentStatus.CONFIRMED)throw new ResponseStatusException(HttpStatus.CONFLICT,"Lịch đã được lễ tân xác nhận. Vui lòng liên hệ lễ tân để được hỗ trợ đổi hoặc hủy lịch.");
+  if(!allowPaidPending&&appointment.status==AppointmentStatus.PENDING_CONFIRMATION)throw new ResponseStatusException(HttpStatus.CONFLICT,"Lịch đã thanh toán cọc và đang chờ lễ tân xác nhận. Vui lòng liên hệ lễ tân để được hỗ trợ đổi lịch.");
+  var allowed=EnumSet.of(AppointmentStatus.PENDING,AppointmentStatus.ASSIGNED);
+  if(allowPaidPending)allowed.add(AppointmentStatus.PENDING_CONFIRMATION);
+  if(!allowed.contains(appointment.status))throw new ResponseStatusException(HttpStatus.CONFLICT,"Trạng thái lịch hiện tại không cho phép tự đổi hoặc hủy.");
+  if(appointment.createdAt.plus(Duration.ofMinutes(30)).isBefore(Instant.now()))throw new ResponseStatusException(HttpStatus.CONFLICT,"Quá 30 phút kể từ lúc đặt lịch. Vui lòng liên hệ lễ tân để được hỗ trợ đổi hoặc hủy lịch.");
+  return appointment;
+ }
  @ResponseStatus(HttpStatus.FORBIDDEN) static class Forbidden extends RuntimeException{}
 }

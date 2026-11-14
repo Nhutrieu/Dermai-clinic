@@ -661,6 +661,51 @@ nav button.active{background:#d9f278;color:#143d34;font-weight:700}
   white-space: nowrap;
 }
 
+.appointment-group-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  margin-top: var(--space-5);
+  padding-bottom: var(--space-3);
+  border-bottom: 1px solid var(--color-border);
+}
+
+.appointment-group-tabs > button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: var(--control-min-height);
+  padding: 10px 16px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-control);
+  background: var(--color-surface);
+  color: var(--color-text-secondary);
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.appointment-group-tabs > button[aria-selected="true"] {
+  border-color: var(--color-primary);
+  background: var(--color-primary);
+  color: #fff;
+}
+
+.appointment-group-tabs > button:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 3px;
+}
+
+.appointment-group-tabs > button > span {
+  min-width: 24px;
+  padding: 2px 6px;
+  border-radius: 20px;
+  background: var(--color-surface-subtle);
+  color: var(--color-ink);
+  font-size: 13px;
+}
+
 .appointment-filters {
   display: grid;
   grid-template-columns: minmax(220px, 1fr) minmax(150px, 190px) minmax(150px, 190px) auto;
@@ -1147,6 +1192,10 @@ nav button.active{background:#d9f278;color:#143d34;font-weight:700}
   color: var(--color-danger);
   font-size: 14px;
   line-height: 1.45;
+}
+
+.appointment-inline-form .appointment-reschedule-message.is-info {
+  color: var(--color-text-secondary);
 }
 
 .appointment-review-control .appointment-review-feedback {

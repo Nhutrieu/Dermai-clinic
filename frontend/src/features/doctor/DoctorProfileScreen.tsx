@@ -1,6 +1,6 @@
 import { FormEvent, useMemo, useState } from "react";
 import { BadgeCheck, CalendarOff, Camera, Clock3, Pencil, Save, Trash2, X } from "lucide-react";
-import { request } from "../../core/api";
+import { ApiError, request } from "../../core/api";
 import type { Doctor, LeavePeriod, WorkSchedule } from "../../core/types";
 
 type Props = {
@@ -130,7 +130,12 @@ export default function DoctorProfileScreen({ token, doctor, work, leave, saved 
       setAvatarPreview("");
       setFeedback({ text: "Đã lưu thông tin cá nhân.", error: false });
     } catch (cause) {
-      setFeedback({ text: (cause as Error).message, error: true });
+      const text = cause instanceof ApiError && cause.status === 413
+        ? "Ảnh đại diện tối đa 2 MB. Vui lòng chọn ảnh nhỏ hơn."
+        : cause instanceof ApiError && cause.status === 415
+          ? "Chỉ nhận ảnh JPG, PNG hoặc WebP."
+          : (cause as Error).message;
+      setFeedback({ text, error: true });
     }
   }
 
@@ -147,7 +152,15 @@ export default function DoctorProfileScreen({ token, doctor, work, leave, saved 
     if (!file) return;
     setFeedbackScope("overview");
     if (file.size > 2 * 1024 * 1024) {
+      setPendingAvatar(null);
+      setAvatarPreview("");
       setFeedback({ text: "Ảnh đại diện tối đa 2 MB.", error: true });
+      return;
+    }
+    if (!["image/jpeg", "image/png", "image/webp"].includes(file.type)) {
+      setPendingAvatar(null);
+      setAvatarPreview("");
+      setFeedback({ text: "Chỉ nhận ảnh JPG, PNG hoặc WebP.", error: true });
       return;
     }
     const reader = new FileReader();
@@ -207,7 +220,11 @@ export default function DoctorProfileScreen({ token, doctor, work, leave, saved 
               ? <img src={avatarPreview || profile.avatarUrl} alt={`Ảnh đại diện của ${profile.fullName}`} />
               : <span aria-hidden="true">{initials(profile.fullName)}</span>}
             {editingPersonal && <b aria-hidden="true"><Camera /></b>}
-            <input disabled={!editingPersonal} type="file" accept="image/jpeg,image/png,image/webp" onChange={event => chooseAvatar(event.target.files?.[0])} />
+            <input disabled={!editingPersonal} type="file" accept="image/jpeg,image/png,image/webp" onChange={event => {
+              const file = event.currentTarget.files?.[0];
+              event.currentTarget.value = "";
+              chooseAvatar(file);
+            }} />
           </label>
           <div>
             <span className="doctor-profile-visibility"><BadgeCheck aria-hidden="true" /> Hồ sơ hiển thị với bệnh nhân</span>

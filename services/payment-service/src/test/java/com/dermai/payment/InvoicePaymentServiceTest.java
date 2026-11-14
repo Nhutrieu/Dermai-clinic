@@ -24,5 +24,15 @@ class InvoicePaymentServiceTest {
   var result=service.create(old.invoiceId,old.patientIdentityId,old.amount);
   assertThat(result.status()).isEqualTo(PaymentStatus.PENDING);assertThat(result.orderCode()).isEqualTo(987654L);}
 
+ @org.junit.jupiter.params.ParameterizedTest
+ @org.junit.jupiter.params.provider.ValueSource(strings={"http://localhost:3000","https://clinic-tunnel.example"})
+ void createsInvoiceProviderLinkWithTheBrowserReturnOrigin(String origin){
+  var payment=pending();payment.status=PaymentStatus.CANCELLED;
+  when(payments.findByInvoiceId(payment.invoiceId)).thenReturn(Optional.of(payment));
+  when(payOS.create(anyLong(),anyLong(),anyString(),anyString(),anyString(),any())).thenReturn(new PayOSGateway.PaymentLinkResult("invoice-link","https://checkout.example/invoice","qr"));
+  service.create(payment.invoiceId,payment.patientIdentityId,payment.amount,origin);
+  verify(payOS).create(payment.orderCode,payment.amount.longValueExact(),"DERMAI HD "+payment.orderCode,
+    origin+"/payment/success",origin+"/payment/cancel",payment.expiresAt);
+ }
  private InvoicePayment pending(){var payment=new InvoicePayment();payment.id=UUID.randomUUID();payment.invoiceId=UUID.randomUUID();payment.patientIdentityId=UUID.randomUUID();payment.amount=new BigDecimal("200000");payment.orderCode=123456L;payment.status=PaymentStatus.PENDING;payment.paymentLinkId="invoice-link";payment.expiresAt=Instant.parse("2026-09-28T04:00:00Z");payment.createdAt=Instant.parse("2026-09-28T02:00:00Z");payment.updatedAt=payment.createdAt;return payment;}
 }

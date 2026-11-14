@@ -46,6 +46,7 @@ const PharmacyModule = lazy(() => import("./features/pharmacy/PharmacyModule"));
 
 const PatientDashboard = lazy(() => import("./features/patient/PatientDashboard"));
 const PatientAppointments = lazy(() => import("./features/patient/PatientAppointmentsView"));
+const PatientAppointmentHistory = lazy(() => import("./features/patient/PatientAppointmentHistory"));
 const PatientMedicalRecords = lazy(() => import("./features/patient/PatientMedicalRecords"));
 const PatientInvoices = lazy(() => import("./features/patient/PatientInvoices"));
 const DoctorProfile = lazy(() => import("./features/doctor/DoctorProfileScreen"));
@@ -818,8 +819,9 @@ function Dashboard({ session, logout }: { session: Tokens; logout: () => void })
             {!loading && !error && session.role === "RECEPTIONIST" && <ReceptionWorkspace token={session.accessToken} tab={tab} onNavigate={setTab} />}
             {!loading && !error && session.role === "PHARMACIST" && <PharmacyModule token={session.accessToken} tab={tab} onNavigate={setTab} />}
 
-            {!loading && !error && session.role === "PATIENT" && patient && tab === "profile" && <PatientDashboard token={session.accessToken} patient={patient} appointments={appointments} records={records} prescriptions={prescriptions} resourceState={patientResourceState} savedPatient={setPatient} changedAppointments={setAppointments} openAppointments={() => setTab("appointments")} openAi={() => setTab("ai")} openRecords={() => setTab("records")} />}
+            {!loading && !error && session.role === "PATIENT" && patient && tab === "profile" && <PatientDashboard token={session.accessToken} patient={patient} appointments={appointments} records={records} prescriptions={prescriptions} resourceState={patientResourceState} savedPatient={setPatient} changedAppointments={setAppointments} openAppointments={() => setTab("appointments")} openAppointmentHistory={() => setTab("appointment_history")} openAi={() => setTab("ai")} openRecords={() => setTab("records")} />}
             {!loading && !error && session.role === "PATIENT" && patient && tab === "appointments" && <PatientAppointments token={session.accessToken} patient={patient} appointments={appointments} changed={setAppointments} />}
+            {!loading && !error && session.role === "PATIENT" && patient && tab === "appointment_history" && <PatientAppointmentHistory token={session.accessToken} patient={patient} appointments={appointments} changed={setAppointments} openBooking={() => setTab("appointments")} />}
             {!loading && !error && session.role === "PATIENT" && patient && tab === "records" && <PatientMedicalRecords token={session.accessToken} patient={patient} appointments={appointments} records={records} prescriptions={prescriptions} resourceState={patientResourceState} openAppointments={() => setTab("appointments")} recordHidden={id => setRecords(current => current.filter(record => record.id !== id))} />}
             {!loading && !error && session.role === "PATIENT" && patient && tab === "billing" && <PatientInvoices token={session.accessToken} />}
             {!loading && !error && session.role === "PATIENT" && patient && tab === "ai" && <PatientAiScreen token={session.accessToken} patient={patient} openBooking={() => setTab("appointments")} />}

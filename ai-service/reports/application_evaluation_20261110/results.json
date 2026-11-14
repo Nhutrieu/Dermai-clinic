@@ -1,0 +1,486 @@
+{
+  "completed_utc": "2026-11-10T16:50:20.030260+00:00",
+  "version": "dermai-eight-esg-v1-20261108",
+  "evaluation_type": "retrospective leakage-screened historical holdouts, NOT a new blind independent clinical test",
+  "primary_dataset": "historical_fixed_test",
+  "datasets": {
+    "historical_fixed_test": {
+      "metrics": {
+        "input_images": 486,
+        "returned_predictions": 420,
+        "rejected_images": 66,
+        "correct_returned": 341,
+        "coverage": 0.8641975308641975,
+        "accuracy_on_returned": 0.8119047619047619,
+        "correct_return_rate": 0.7016460905349794,
+        "macro_f1_8class_with_abstentions": 0.7115213135062455,
+        "macro_f1_present_classes_with_abstentions": 0.7115213135062455,
+        "macro_f1_8class_on_returned": 0.7973775258866873,
+        "all_8_classes_present": true,
+        "uncertain_returned": 71,
+        "per_class": {
+          "Acne": {
+            "support": 55,
+            "returned": 31,
+            "rejected": 24,
+            "correct": 28,
+            "precision": 0.875,
+            "recall": 0.509090909090909,
+            "f1": 0.6436781609195402,
+            "recall_on_returned": 0.9032258064516129
+          },
+          "Candidiasis": {
+            "support": 22,
+            "returned": 17,
+            "rejected": 5,
+            "correct": 11,
+            "precision": 0.9166666666666666,
+            "recall": 0.5,
+            "f1": 0.6470588235294118,
+            "recall_on_returned": 0.6470588235294118
+          },
+          "Eczema": {
+            "support": 94,
+            "returned": 92,
+            "rejected": 2,
+            "correct": 80,
+            "precision": 0.7547169811320755,
+            "recall": 0.851063829787234,
+            "f1": 0.8,
+            "recall_on_returned": 0.8695652173913043
+          },
+          "Lupus": {
+            "support": 31,
+            "returned": 17,
+            "rejected": 14,
+            "correct": 10,
+            "precision": 0.7142857142857143,
+            "recall": 0.3225806451612903,
+            "f1": 0.4444444444444444,
+            "recall_on_returned": 0.5882352941176471
+          },
+          "Psoriasis": {
+            "support": 77,
+            "returned": 74,
+            "rejected": 3,
+            "correct": 52,
+            "precision": 0.8253968253968254,
+            "recall": 0.6753246753246753,
+            "f1": 0.7428571428571429,
+            "recall_on_returned": 0.7027027027027027
+          },
+          "SkinCancer": {
+            "support": 73,
+            "returned": 64,
+            "rejected": 9,
+            "correct": 60,
+            "precision": 0.8333333333333334,
+            "recall": 0.821917808219178,
+            "f1": 0.8275862068965517,
+            "recall_on_returned": 0.9375
+          },
+          "Tinea": {
+            "support": 79,
+            "returned": 71,
+            "rejected": 8,
+            "correct": 54,
+            "precision": 0.7941176470588235,
+            "recall": 0.6835443037974683,
+            "f1": 0.7346938775510204,
+            "recall_on_returned": 0.7605633802816901
+          },
+          "Warts": {
+            "support": 55,
+            "returned": 54,
+            "rejected": 1,
+            "correct": 46,
+            "precision": 0.8679245283018868,
+            "recall": 0.8363636363636363,
+            "f1": 0.8518518518518519,
+            "recall_on_returned": 0.8518518518518519
+          }
+        },
+        "confusion_matrix_8x9": [
+          [
+            28,
+            0,
+            1,
+            0,
+            0,
+            0,
+            1,
+            1,
+            24
+          ],
+          [
+            0,
+            11,
+            1,
+            0,
+            3,
+            0,
+            1,
+            1,
+            5
+          ],
+          [
+            1,
+            0,
+            80,
+            2,
+            6,
+            3,
+            0,
+            0,
+            2
+          ],
+          [
+            0,
+            0,
+            1,
+            10,
+            1,
+            2,
+            3,
+            0,
+            14
+          ],
+          [
+            1,
+            1,
+            6,
+            0,
+            52,
+            3,
+            6,
+            5,
+            3
+          ],
+          [
+            0,
+            0,
+            3,
+            0,
+            0,
+            60,
+            1,
+            0,
+            9
+          ],
+          [
+            1,
+            0,
+            13,
+            1,
+            1,
+            1,
+            54,
+            0,
+            8
+          ],
+          [
+            1,
+            0,
+            1,
+            1,
+            0,
+            3,
+            2,
+            46,
+            1
+          ]
+        ],
+        "true_labels": [
+          "Acne",
+          "Candidiasis",
+          "Eczema",
+          "Lupus",
+          "Psoriasis",
+          "SkinCancer",
+          "Tinea",
+          "Warts"
+        ],
+        "predicted_labels": [
+          "Acne",
+          "Candidiasis",
+          "Eczema",
+          "Lupus",
+          "Psoriasis",
+          "SkinCancer",
+          "Tinea",
+          "Warts",
+          "API_rejected"
+        ],
+        "rejection_reasons": {
+          "Ảnh quá nhỏ. Vui lòng dùng ảnh có mỗi chiều tối thiểu 224 px.": 48,
+          "Ảnh nằm ngoài phạm vi tám nhóm bệnh được hỗ trợ. Vui lòng chọn ảnh tổn thương da khác hoặc khám trực tiếp.": 18
+        }
+      },
+      "bootstrap_95": {
+        "groups": 483,
+        "repetitions": 1000,
+        "seed": 42,
+        "limitations": "SCIN uses source case IDs; original-source groups use dHash connected components, not verified patient IDs. Intervals do not account for adaptive historical research exposure.",
+        "percentile_95": {
+          "coverage": [
+            0.8353909465020576,
+            0.8944099378881988
+          ],
+          "accuracy_on_returned": [
+            0.7743449196319443,
+            0.8492822966507177
+          ],
+          "correct_return_rate": [
+            0.6611413916070916,
+            0.7423812535576497
+          ],
+          "macro_f1_8class_with_abstentions": [
+            0.6622186371657616,
+            0.7558795786551175
+          ]
+        }
+      }
+    },
+    "SCIN_case_holdout": {
+      "metrics": {
+        "input_images": 237,
+        "returned_predictions": 184,
+        "rejected_images": 53,
+        "correct_returned": 142,
+        "coverage": 0.7763713080168776,
+        "accuracy_on_returned": 0.7717391304347826,
+        "correct_return_rate": 0.5991561181434599,
+        "macro_f1_8class_with_abstentions": 0.3598096348096348,
+        "macro_f1_present_classes_with_abstentions": 0.41121101121101117,
+        "macro_f1_8class_on_returned": 0.40048778870465807,
+        "all_8_classes_present": false,
+        "uncertain_returned": 30,
+        "per_class": {
+          "Acne": {
+            "support": 19,
+            "returned": 17,
+            "rejected": 2,
+            "correct": 17,
+            "precision": 0.8095238095238095,
+            "recall": 0.8947368421052632,
+            "f1": 0.85,
+            "recall_on_returned": 1.0
+          },
+          "Candidiasis": {
+            "support": 1,
+            "returned": 1,
+            "rejected": 0,
+            "correct": 0,
+            "precision": 0.0,
+            "recall": 0.0,
+            "f1": 0.0,
+            "recall_on_returned": 0.0
+          },
+          "Eczema": {
+            "support": 154,
+            "returned": 119,
+            "rejected": 35,
+            "correct": 108,
+            "precision": 0.8181818181818182,
+            "recall": 0.7012987012987013,
+            "f1": 0.7552447552447552,
+            "recall_on_returned": 0.907563025210084
+          },
+          "Lupus": {
+            "support": 4,
+            "returned": 3,
+            "rejected": 1,
+            "correct": 0,
+            "precision": 0.0,
+            "recall": 0.0,
+            "f1": 0.0,
+            "recall_on_returned": 0.0
+          },
+          "Psoriasis": {
+            "support": 22,
+            "returned": 19,
+            "rejected": 3,
+            "correct": 9,
+            "precision": 0.5,
+            "recall": 0.4090909090909091,
+            "f1": 0.45,
+            "recall_on_returned": 0.47368421052631576
+          },
+          "SkinCancer": {
+            "support": 0,
+            "returned": 0,
+            "rejected": 0,
+            "correct": 0,
+            "precision": 0.0,
+            "recall": null,
+            "f1": 0.0,
+            "recall_on_returned": null
+          },
+          "Tinea": {
+            "support": 30,
+            "returned": 18,
+            "rejected": 12,
+            "correct": 5,
+            "precision": 0.8333333333333334,
+            "recall": 0.16666666666666666,
+            "f1": 0.2777777777777778,
+            "recall_on_returned": 0.2777777777777778
+          },
+          "Warts": {
+            "support": 7,
+            "returned": 7,
+            "rejected": 0,
+            "correct": 3,
+            "precision": 0.75,
+            "recall": 0.42857142857142855,
+            "f1": 0.5454545454545454,
+            "recall_on_returned": 0.42857142857142855
+          }
+        },
+        "confusion_matrix_8x9": [
+          [
+            17,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            2
+          ],
+          [
+            0,
+            0,
+            0,
+            0,
+            1,
+            0,
+            0,
+            0,
+            0
+          ],
+          [
+            2,
+            0,
+            108,
+            2,
+            6,
+            0,
+            1,
+            0,
+            35
+          ],
+          [
+            2,
+            0,
+            1,
+            0,
+            0,
+            0,
+            0,
+            0,
+            1
+          ],
+          [
+            0,
+            1,
+            8,
+            0,
+            9,
+            0,
+            0,
+            1,
+            3
+          ],
+          [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          [
+            0,
+            0,
+            11,
+            0,
+            2,
+            0,
+            5,
+            0,
+            12
+          ],
+          [
+            0,
+            0,
+            4,
+            0,
+            0,
+            0,
+            0,
+            3,
+            0
+          ]
+        ],
+        "true_labels": [
+          "Acne",
+          "Candidiasis",
+          "Eczema",
+          "Lupus",
+          "Psoriasis",
+          "SkinCancer",
+          "Tinea",
+          "Warts"
+        ],
+        "predicted_labels": [
+          "Acne",
+          "Candidiasis",
+          "Eczema",
+          "Lupus",
+          "Psoriasis",
+          "SkinCancer",
+          "Tinea",
+          "Warts",
+          "API_rejected"
+        ],
+        "rejection_reasons": {
+          "Ảnh bị mờ. Vui lòng giữ máy ổn định và lấy nét vào vùng da.": 46,
+          "Ảnh nằm ngoài phạm vi tám nhóm bệnh được hỗ trợ. Vui lòng chọn ảnh tổn thương da khác hoặc khám trực tiếp.": 7
+        }
+      },
+      "bootstrap_95": {
+        "groups": 114,
+        "repetitions": 1000,
+        "seed": 42,
+        "limitations": "SCIN uses source case IDs; original-source groups use dHash connected components, not verified patient IDs. Intervals do not account for adaptive historical research exposure.",
+        "percentile_95": {
+          "coverage": [
+            0.7130782766645853,
+            0.8374063970902866
+          ],
+          "accuracy_on_returned": [
+            0.6999556213017751,
+            0.8421384901648059
+          ],
+          "correct_return_rate": [
+            0.5262531328320802,
+            0.6756810169853648
+          ],
+          "macro_f1_8class_with_abstentions": [
+            0.25269918457384083,
+            0.42443158726650765
+          ]
+        }
+      }
+    }
+  },
+  "independent_test": false,
+  "model_changed": false,
+  "protocol_sha256": "40cb05a2373651cc5b63ca4c4067c0ac946d4d14855085c8373d7faa8df8d683",
+  "predictions_sha256": "84d67bc95c853ed04d51360177fb713db49433a9a862eed749de0e68e5e98d6a"
+}

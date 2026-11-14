@@ -41,7 +41,7 @@ import {
 import PatientProfile from "./PatientProfile";
 
 const ACTIVE_APPOINTMENT_STATUSES = new Set(["PROPOSED", "PENDING", "ASSIGNED", "PENDING_PAYMENT", "PENDING_CONFIRMATION", "CONFIRMED", "CHECKED_IN", "IN_PROGRESS"]);
-const RESCHEDULABLE_STATUSES = new Set(["PENDING", "ASSIGNED", "CONFIRMED"]);
+const RESCHEDULABLE_STATUSES = new Set(["PENDING", "ASSIGNED"]);
 const IMPORTANT_NOTIFICATION_TYPES = new Set([
     "REQUEST_CREATED",
     "BOOKING_PROPOSAL",
@@ -88,6 +88,7 @@ type PatientDashboardProps = {
     savedPatient: (patient: Patient) => void;
     changedAppointments: (appointments: Appointment[]) => void;
     openAppointments: () => void;
+    openAppointmentHistory: () => void;
     openAi: () => void;
     openRecords: () => void;
 };
@@ -148,6 +149,7 @@ function AiThumbnail({ token, assessment }: { token: string; assessment: AiAsses
     const [source, setSource] = useState("");
 
     useEffect(() => {
+        setSource("");
         if (!assessment.imageAvailable) return;
         let active = true;
         let objectUrl = "";
@@ -181,6 +183,7 @@ export default function PatientDashboard({
     savedPatient,
     changedAppointments,
     openAppointments,
+    openAppointmentHistory,
     openAi,
     openRecords,
 }: PatientDashboardProps) {
@@ -192,6 +195,7 @@ export default function PatientDashboard({
     const [notificationState, setNotificationState] = useState<PatientDashboardResourceState>({ loading: true, error: "" });
     const [confirmDeleteAssessmentId, setConfirmDeleteAssessmentId] = useState("");
     const [deletingAssessmentId, setDeletingAssessmentId] = useState("");
+    const [recentAssessmentDeleted, setRecentAssessmentDeleted] = useState(false);
     const [aiActionFeedback, setAiActionFeedback] = useState<{ tone: "success" | "error"; text: string } | null>(null);
     const [feedback, setFeedback] = useState<{ tone: "success" | "error"; text: string } | null>(null);
     const [appointmentRefreshed, setAppointmentRefreshed] = useState(false);
@@ -280,8 +284,8 @@ export default function PatientDashboard({
         );
         return () => window.clearTimeout(timer);
     }, [nextAppointment, selfServiceNow]);
-    const latestAssessment = useMemo(() => [...assessments]
-        .sort((left, right) => new Date(right.createdAt).getTime() - new Date(left.createdAt).getTime())[0], [assessments]);
+    const latestAssessment = useMemo(() => recentAssessmentDeleted ? undefined : [...assessments]
+        .sort((left, right) => new Date(right.createdAt).getTime() - new Date(left.createdAt).getTime())[0], [assessments, recentAssessmentDeleted]);
     const latestRecord = useMemo(() => [...records]
         .sort((left, right) => new Date(right.signedAt).getTime() - new Date(left.signedAt).getTime())[0], [records]);
     const latestPrescription = useMemo(() => [...prescriptions]
@@ -347,21 +351,16 @@ export default function PatientDashboard({
         const startAt = new Date(value);
         const duration = Math.max(10 * 60_000, new Date(appointment.endAt).getTime() - new Date(appointment.startAt).getTime());
         const endAt = endValue ? new Date(endValue) : new Date(startAt.getTime() + duration);
-        try {
-            await request("/appointments/" + id + "/reschedule", token, {
-                method: "POST",
-                headers: { "Idempotency-Key": crypto.randomUUID() },
-                body: JSON.stringify({
-                    startAt: startAt.toISOString(),
-                    endAt: endAt.toISOString(),
-                }),
-            });
-            await refreshAppointments();
-            setFeedback({ tone: "success", text: "Đã gửi lịch khám sang khung giờ mới." });
-        } catch (cause) {
-            setFeedback({ tone: "error", text: (cause as Error).message });
-            throw cause;
-        }
+        await request("/appointments/" + id + "/reschedule", token, {
+            method: "POST",
+            headers: { "Idempotency-Key": crypto.randomUUID() },
+            body: JSON.stringify({
+                startAt: startAt.toISOString(),
+                endAt: endAt.toISOString(),
+            }),
+        });
+        await refreshAppointments();
+        setFeedback({ tone: "success", text: "Đã chuyển lịch khám sang khung giờ mới." });
     }
 
     async function deleteAssessment(assessment: AiAssessment) {
@@ -377,7 +376,7 @@ export default function PatientDashboard({
             await request(`/patients/me/ai-assessments/${assessment.id}`, token, { method: "DELETE" });
             setAssessments(items => items.filter(item => item.id !== assessment.id));
             setConfirmDeleteAssessmentId("");
-            setAiActionFeedback({ tone: "success", text: "Đã xóa kết quả phân tích khỏi tài khoản." });
+            setRecentAssessmentDeleted(true);
         } catch (cause) {
             setAiActionFeedback({ tone: "error", text: (cause as Error).message });
         } finally {
@@ -486,10 +485,7 @@ export default function PatientDashboard({
                         : "Thông tin quan trọng nhất cho lần thăm khám tiếp theo của bạn."}</p>
                 </div>
                 {((isAwaitingClinicUpdate && upcoming.length > 0) || (!isAwaitingClinicUpdate && upcoming.length > 1)) && (
-                    <button type="button" className="patient-dashboard-text-action" onClick={() => {
-                        sessionStorage.setItem("patient-appointments-focus", "history");
-                        openAppointments();
-                    }}>
+                    <button type="button" className="patient-dashboard-text-action" onClick={openAppointmentHistory}>
                         Xem {upcoming.length} lịch sắp tới
                     </button>
                 )}
@@ -532,15 +528,17 @@ export default function PatientDashboard({
                             )}
                             {RESCHEDULABLE_STATUSES.has(nextAppointment.status)
                                 && canSelfManageNextAppointment && (
-                                    <>
-                                        <RescheduleAppointmentControl token={token} appointment={nextAppointment} submit={(value, endAt) => rescheduleAppointment(nextAppointment.id, value, endAt)} />
-                                        <CancelAppointmentControl submit={reason => cancelAppointment(nextAppointment.id, reason)} />
-                                    </>
+                                    <RescheduleAppointmentControl token={token} appointment={nextAppointment} submit={(value, endAt) => rescheduleAppointment(nextAppointment.id, value, endAt)} />
                                 )}
-                            {!isAwaitingClinicUpdate && (RESCHEDULABLE_STATUSES.has(nextAppointment.status)
+                            {canSelfManageNextAppointment && <CancelAppointmentControl paid={["PENDING_CONFIRMATION", "CONFIRMED"].includes(nextAppointment.status)} submit={reason => cancelAppointment(nextAppointment.id, reason)} />}
+                            {!isAwaitingClinicUpdate && (canSelfManageNextAppointment && ["PENDING_CONFIRMATION", "CONFIRMED"].includes(nextAppointment.status) ? (
+                                    <button type="button" className="patient-dashboard-support-action" onClick={openSupport}>
+                                        <MessageCircle aria-hidden="true" />Liên hệ lễ tân để đổi lịch
+                                    </button>
+                                ) : ["PENDING", "ASSIGNED", "PENDING_CONFIRMATION", "CONFIRMED"].includes(nextAppointment.status)
                                 && !canSelfManageNextAppointment ? (
                                     <button type="button" className="patient-dashboard-support-action" onClick={openSupport}>
-                                        <MessageCircle aria-hidden="true" />Liên hệ hỗ trợ để đổi hoặc hủy lịch
+                                        <MessageCircle aria-hidden="true" />Liên hệ lễ tân để đổi hoặc hủy lịch
                                     </button>
                                 ) : (
                                     <button type="button" className="patient-dashboard-support-action" onClick={openSupport}>
@@ -576,10 +574,15 @@ export default function PatientDashboard({
                     <DashboardState tone="loading" title="Đang tải lần phân tích gần nhất..." />
                 ) : aiState.error ? (
                     <DashboardState tone="error" title="Chưa tải được dữ liệu phân tích" description={aiState.error} />
+                ) : recentAssessmentDeleted ? (
+                    <>
+                        <DashboardState tone="empty" title="Đã xóa kết quả phân tích" description="Bạn có thể tải ảnh mới để thực hiện lần phân tích khác." action={openAi} actionLabel="Phân tích ảnh mới" />
+                        {assessments.length > 0 && <button type="button" className="patient-dashboard-text-action" onClick={() => setRecentAssessmentDeleted(false)}>Xem kết quả trước đó</button>}
+                    </>
                 ) : !latestAssessment ? (
                     <DashboardState tone="empty" title="Chưa có lần phân tích da" description="Bạn có thể tải ảnh rõ nét để nhận gợi ý nhóm hình ảnh tham khảo." action={openAi} actionLabel="Kiểm tra da bằng AI" />
                 ) : <div className="patient-dashboard-ai-summary">
-                    <AiThumbnail token={token} assessment={latestAssessment} />
+                    <AiThumbnail key={latestAssessment.id} token={token} assessment={latestAssessment} />
                     <div>
                         <div className="patient-dashboard-status-line">
                             <span className={"patient-dashboard-ai-status is-" + aiStatus.tone}>{aiStatus.label}</span>

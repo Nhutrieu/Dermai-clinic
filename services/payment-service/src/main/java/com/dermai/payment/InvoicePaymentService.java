@@ -13,10 +13,13 @@ public class InvoicePaymentService {
  private final InvoicePaymentRepository payments;private final PaymentOutboxRepository outbox;private final OrderCodeGenerator codes;private final PayOSGateway gateway;private final ObjectMapper json;private final Clock clock;private final String returnUrl;private final String cancelUrl;
  InvoicePaymentService(InvoicePaymentRepository payments,PaymentOutboxRepository outbox,OrderCodeGenerator codes,PayOSGateway gateway,ObjectMapper json,Clock clock,@Value("${payment.invoice-return-url:${payment.return-url}}")String returnUrl,@Value("${payment.invoice-cancel-url:${payment.cancel-url}}")String cancelUrl){this.payments=payments;this.outbox=outbox;this.codes=codes;this.gateway=gateway;this.json=json;this.clock=clock;this.returnUrl=returnUrl;this.cancelUrl=cancelUrl;}
  @Transactional public Response create(UUID invoiceId,UUID patientIdentityId,BigDecimal amount){
+  return create(invoiceId,patientIdentityId,amount,null);
+ }
+ @Transactional public Response create(UUID invoiceId,UUID patientIdentityId,BigDecimal amount,String returnOrigin){
   if(amount==null||amount.signum()<=0)throw new PaymentConflict("INVALID_INVOICE_AMOUNT");
   var existing=payments.findByInvoiceId(invoiceId);if(existing.isPresent()&&!EnumSet.of(PaymentStatus.FAILED,PaymentStatus.EXPIRED,PaymentStatus.CANCELLED).contains(existing.get().status))return response(existing.get());
   var payment=existing.orElseGet(InvoicePayment::new);var now=clock.instant();payment.id=payment.id==null?UUID.randomUUID():payment.id;payment.invoiceId=invoiceId;payment.patientIdentityId=patientIdentityId;payment.amount=amount;payment.orderCode=codes.next();payment.status=PaymentStatus.CREATING;payment.createdAt=payment.createdAt==null?now:payment.createdAt;payment.updatedAt=now;payment.expiresAt=now.plus(Duration.ofMinutes(30));payments.save(payment);
-  try{var link=gateway.create(payment.orderCode,amount.longValueExact(),"DERMAI HD "+payment.orderCode,returnUrl,cancelUrl,payment.expiresAt);payment.paymentLinkId=link.paymentLinkId();payment.checkoutUrl=link.checkoutUrl();payment.qrCode=link.qrCode();payment.status=PaymentStatus.PENDING;payment.updatedAt=clock.instant();return response(payments.save(payment));}
+  try{var link=gateway.create(payment.orderCode,amount.longValueExact(),"DERMAI HD "+payment.orderCode,PaymentReturnOrigins.redirectUrl(returnUrl,returnOrigin),PaymentReturnOrigins.redirectUrl(cancelUrl,returnOrigin),payment.expiresAt);payment.paymentLinkId=link.paymentLinkId();payment.checkoutUrl=link.checkoutUrl();payment.qrCode=link.qrCode();payment.status=PaymentStatus.PENDING;payment.updatedAt=clock.instant();return response(payments.save(payment));}
   catch(RuntimeException error){payment.status=PaymentStatus.FAILED;payment.updatedAt=clock.instant();payments.save(payment);throw new PaymentProviderException(error);}
  }
  @Transactional public boolean handleWebhook(Map<String,Object> payload){

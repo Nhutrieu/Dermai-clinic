@@ -1,0 +1,9 @@
+{
+  "registered_utc": "2026-11-10T16:35:35.898344+00:00",
+  "original_protocol_sha256": "5dcb74ded1c4d1e8ee05c58823ca236c48da56596a8096bc3ca547fb90d61317",
+  "reason": "Windows native process access violations occurred during Pillow PNG/Grad-CAM encoding; evaluate the entire original manifest on the deployed Linux Docker API instead.",
+  "change": "Execution engine only; same original images, audit, thresholds, 26 package assets, app code, labels, metrics and all 723 inputs. Discard native partial outputs from final metrics; no outcome-based exclusion.",
+  "native_attempt_records": 225,
+  "runner_sha256": "c6429464b635868c6b5ee750db53dc4c9f37211eea8a62de18edb6e85b2ad84d",
+  "docker_snapshot_sha256": "8d337331b7405227a484e14beb84833657e335024964545b501115e7e1bf8751"
+}

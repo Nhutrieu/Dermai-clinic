@@ -19,6 +19,39 @@ import org.springframework.dao.CannotAcquireLockException;
 
 class AppointmentServiceTest {
   @Test
+  void patientCancellationRechecksReceptionConfirmationUnderTheAppointmentLock() {
+    var appointments = mock(AppointmentRepository.class);
+    var outbox = mock(OutboxRepository.class);
+    var updates = mock(SlotUpdateBroadcaster.class);
+    var notifications = mock(AppointmentNotificationRepository.class);
+    var service = new AppointmentService(appointments, outbox, updates, notifications, mock(BookingPolicy.class));
+    var appointment = new Appointment();
+    appointment.id = UUID.randomUUID();
+    appointment.status = AppointmentStatus.CONFIRMED;
+    when(appointments.findLocked(appointment.id)).thenReturn(Optional.of(appointment));
+
+    assertThatThrownBy(() -> service.cancel(appointment.id, "Đổi kế hoạch", UUID.randomUUID(), "PATIENT", "PATIENT_REQUEST"))
+        .isInstanceOfSatisfying(org.springframework.web.server.ResponseStatusException.class, error ->
+            assertThat(error.getStatusCode()).isEqualTo(org.springframework.http.HttpStatus.CONFLICT));
+    assertThat(appointment.status).isEqualTo(AppointmentStatus.CONFIRMED);
+    org.mockito.Mockito.verifyNoInteractions(outbox, updates, notifications);
+  }
+
+  @Test
+  void receptionistCanStillCancelAnAppointmentAfterConfirmation() {
+    var appointments = mock(AppointmentRepository.class);
+    var service = new AppointmentService(appointments, mock(OutboxRepository.class), mock(SlotUpdateBroadcaster.class), mock(AppointmentNotificationRepository.class), mock(BookingPolicy.class));
+    var appointment = new Appointment();
+    appointment.id = UUID.randomUUID();
+    appointment.status = AppointmentStatus.CONFIRMED;
+    when(appointments.findLocked(appointment.id)).thenReturn(Optional.of(appointment));
+
+    var result = service.cancel(appointment.id, "Bệnh nhân nhờ lễ tân hủy", UUID.randomUUID(), "RECEPTIONIST", "PATIENT_REQUEST");
+
+    assertThat(result.status).isEqualTo(AppointmentStatus.CANCELLED);
+  }
+
+  @Test
   void proposalNotificationShowsTimeDateAndDoctorForPatientReview() {
     var appointments = mock(AppointmentRepository.class);
     var outbox = mock(OutboxRepository.class);

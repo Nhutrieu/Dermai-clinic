@@ -1,5 +1,9 @@
 # Giải trình ensemble, specialist và bộ chọn dự đoán
 
+> **Trạng thái cuối 11/11/2026:** nhóm yêu cầu quay lại biểu quyết năm fold; API đã khôi phục bản đó. [Cấu hình đang dùng](KHOI_PHUC_BIEU_QUYET_NAM_FOLD_20261111.md). Cập nhật chuyển sang một fold bên dưới là lịch sử.
+
+> **Trạng thái mới 11/11/2026:** đã bỏ biểu quyết năm fold; API phục vụ một bộ cố định fold 4. Xem [cấu hình và giới hạn hiện tại](BO_BIEU_QUYET_NAM_FOLD_20261111.md). Các mô tả triển khai bên dưới là lịch sử; số liệu OOF vẫn mô tả nghiên cứu nhiều fold.
+
 Ngày đối chiếu mã nguồn và tính lại bảng thành phần: **08/11/2026**.
 
 **Cập nhật sau khi tích hợp:** mô tả API B0 bên dưới là trạng thái tại lúc giải trình.

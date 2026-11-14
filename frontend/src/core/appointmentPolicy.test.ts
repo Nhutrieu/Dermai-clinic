@@ -20,8 +20,8 @@ describe("patient appointment self-service policy", () => {
         expect(canPatientSelfManageAppointment("ASSIGNED", createdAt, createdAtMs + 5 * 60_000)).toBe(true);
     });
 
-    it("allows self-cancellation of a confirmed paid appointment within 30 minutes", () => {
-        expect(canPatientSelfManageAppointment("CONFIRMED", createdAt, createdAtMs + 5 * 60_000)).toBe(true);
+    it("requires reception support immediately after confirmation even within 30 minutes", () => {
+        expect(canPatientSelfManageAppointment("CONFIRMED", createdAt, createdAtMs + 5 * 60_000)).toBe(false);
     });
 
     it("allows self-cancellation while a paid appointment waits for reception", () => {

@@ -15,10 +15,11 @@
 
 ## Model phục vụ và nghiên cứu
 
-API mặc định nạp **pipeline E/G/S năm fold**, phiên bản `dermai-eight-esg-v1-20261108`.
-Xem [bản tích hợp, kiểm chứng và hướng dẫn quay lại B0](../docs/AP_DUNG_PIPELINE_AI_20261108.md).
+API mặc định dùng **biểu quyết năm fold**, phiên bản `dermai-eight-esg-v1-20261108`.
+Giữ ba CNN mỗi fold; G ở fold 0/3, S ở fold 1/2, E ở fold 4.
+Xem [khôi phục bản biểu quyết và giới hạn chỉ số](../docs/KHOI_PHUC_BIEU_QUYET_NAM_FOLD_20261111.md).
 `training/` chứa mã huấn luyện và đánh giá; `candidates/` giữ checkpoint nghiên cứu;
-`reports/` giữ bằng chứng cần dùng. Điểm API là mức đồng thuận, chưa phải xác suất bệnh.
+`reports/` giữ bằng chứng cần dùng. Điểm API là mức đồng thuận, chưa phải xác suất mắc bệnh đã hiệu chỉnh.
 
 Bản nghiên cứu đang giữ trên 5.937 ảnh OOF đạt **78,9456% Accuracy,
 77,7287% Macro F1 và 88,0355% Recall SkinCancer**. Đây là điểm phát triển,

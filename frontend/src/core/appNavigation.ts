@@ -1,11 +1,12 @@
 import { AlertTriangle, Banknote, Boxes, BrainCircuit, CalendarDays, History, LayoutDashboard, MessageSquareCheck, PackageCheck, ReceiptText, Settings2, Stethoscope, UserRound, type LucideIcon } from "lucide-react";
 import type { Tokens } from "./types";
 
-export type AppNavItemId = "profile" | "patients" | "appointments" | "records" | "services" | "billing" | "refunds" | "reviews" | "ai" | "pharmacy_queue" | "inventory" | "inventory_alerts" | "inventory_logs";
+export type AppNavItemId = "profile" | "patients" | "appointments" | "appointment_history" | "records" | "services" | "billing" | "refunds" | "reviews" | "ai" | "pharmacy_queue" | "inventory" | "inventory_alerts" | "inventory_logs";
 
 export type AppNavItem = {
   id: AppNavItemId;
   label: string;
+  menuLabel?: string;
   icon: LucideIcon;
   children?: { id: AppNavItemId; label: string; icon: LucideIcon }[];
 };
@@ -25,7 +26,9 @@ export const ROLE_NAMES: Record<Tokens["role"], string> = {
 export const NAVIGATION_BY_ROLE: Record<Tokens["role"], AppNavItem[]> = {
   PATIENT: [
     { id: "profile", label: "Tổng quan", icon: UserRound },
-    { id: "appointments", label: "Lịch khám", icon: CalendarDays },
+    { id: "appointments", label: "Lịch khám", menuLabel: "Đặt lịch", icon: CalendarDays, children: [
+      { id: "appointment_history", label: "Lịch đã đặt", icon: History },
+    ] },
     { id: "records", label: "Kết quả khám", icon: Stethoscope, children: [
       { id: "billing", label: "Hóa đơn", icon: ReceiptText },
     ] },

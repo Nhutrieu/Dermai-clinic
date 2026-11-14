@@ -1,0 +1,86 @@
+{
+  "schema_version": 2,
+  "name": "dermai-eight-single-fold4-v1-20261111",
+  "classes": [
+    "Acne",
+    "Candidiasis",
+    "Eczema",
+    "Lupus",
+    "Psoriasis",
+    "SkinCancer",
+    "Tinea",
+    "Warts"
+  ],
+  "aggregation": "single_fold_v1",
+  "serving_fold": 4,
+  "assets": {
+    "ood_model": {
+      "path": "ood/model.pth",
+      "sha256": "975e4852023ebb9d3af544b819bec0b887cf75b1467447c87c40591da90b7a17"
+    },
+    "ood_profile": {
+      "path": "ood/profile.json",
+      "sha256": "35a9fa189e74d48617639aa45aec345c27a3c5936014b049590bc75ad66c3b61"
+    },
+    "fold4_efficientnet_b0": {
+      "path": "fold_4/efficientnet_b0.pth",
+      "sha256": "48ef1c3842ac9b4d4d66e5f5930ecf8fe2dc81998f369df22b9620d0aabaa09f"
+    },
+    "fold4_convnext_tiny": {
+      "path": "fold_4/convnext_tiny.pth",
+      "sha256": "5e9d5932828cc5a377ea693396bb6322ef192f3654f48ac179e9487342aa6fc4"
+    },
+    "fold4_resnet50": {
+      "path": "fold_4/resnet50.pth",
+      "sha256": "9788c9058597f1ad190a03d5722bff45d47ef4c428437a060053f7d3cd116116"
+    },
+    "provenance": {
+      "path": "provenance.json",
+      "sha256": "a881886dc576a24b10a48641aa3da614aef729fd3096ff949ec5cb43c2c29a9f"
+    },
+    "serving_selection": {
+      "path": "single_fold_selection_20261111.json",
+      "sha256": "ca63d0173ca93c0a00b0645addb6072c5857f2ab9ccc421fd6e5fe44967cda8c"
+    }
+  },
+  "folds": [
+    {
+      "fold": 4,
+      "members": [
+        "fold4_efficientnet_b0",
+        "fold4_convnext_tiny",
+        "fold4_resnet50"
+      ],
+      "convnext_weights": [
+        0.75,
+        0.75,
+        0.5,
+        0.75,
+        0.5,
+        0.75,
+        0.75,
+        0.75
+      ],
+      "protected": [
+        1,
+        5
+      ]
+    }
+  ],
+  "score_type": "ensemble_evidence",
+  "confidence_is_calibrated": false,
+  "historical_research_OOF": {
+    "images": 5937,
+    "correct": 4687,
+    "accuracy": 0.7894559541856156,
+    "macro_f1": 0.7772871199866189,
+    "SkinCancer_recall": 0.880354505169867
+  },
+  "serving_evaluation": {
+    "accuracy": null,
+    "macro_f1": null,
+    "independent_test": false,
+    "note": "Historical pooled OOF and the retired voter evaluation are not scores of this fixed serving branch."
+  },
+  "gradcam_method": "illustrative_b0_fold4"
+}

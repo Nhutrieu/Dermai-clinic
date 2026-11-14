@@ -52,3 +52,13 @@ describe("admin overview menu", () => {
     expect(NAVIGATION_BY_ROLE.ADMIN.some(item => item.id === "patients" && item.label === "Bệnh nhân" )).toBe(true);
   });
 });
+
+describe("patient appointments menu", () => {
+  it("groups booked appointments under the patient appointments menu", () => {
+    const items = NAVIGATION_BY_ROLE.PATIENT;
+    expect(items.find(item => item.id === "appointments")?.children?.map(item => item.id)).toEqual(["appointment_history"]);
+    const html = renderToStaticMarkup(<AppHeader roleName="Bệnh nhân" displayName="Nguyễn An" activeItem="appointment_history" items={items} onNavigate={() => undefined} onLogout={() => undefined} />);
+    expect(html).toContain('aria-controls="app-nav-menu-desktop-appointments"');
+    expect(html).toContain('aria-current="page"');
+  });
+});

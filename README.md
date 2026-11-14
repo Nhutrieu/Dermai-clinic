@@ -151,6 +151,11 @@ Các biến tích hợp quan trọng:
 - `DATA_ENCRYPTION_KEY` bảo vệ ảnh assessment lưu trong database.
 - `PAYOS_CLIENT_ID`, `PAYOS_API_KEY`, `PAYOS_CHECKSUM_KEY` và return/cancel URL
   cho thanh toán thật; `PAYOS_FAKE_MODE` chỉ dùng cho demo/kiểm thử.
+- For simultaneous localhost/tunnel testing, add the public frontend origin to
+  `PAYMENT_ALLOWED_RETURN_ORIGINS` (comma-separated). New deposit and invoice
+  checkouts return to the browser origin that created the link. Requests without
+  `Origin` use the configured return/cancel URLs. Keep `PAYOS_WEBHOOK_URL` public.
+  Existing PayOS links retain their original return URLs.
 
 ### Địa chỉ local
 

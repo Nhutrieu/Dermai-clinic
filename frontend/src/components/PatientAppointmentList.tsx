@@ -1,6 +1,6 @@
 import { FormEvent, useEffect, useState } from "react";
 import { CalendarDays, CheckCircle2, ChevronDown, ChevronUp, CircleAlert, Clock3, MessageCircle, Search, Trash2, X } from "lucide-react";
-import { request } from "../core/api";
+import { ApiError, request } from "../core/api";
 import { formatVnd } from "../core/currency";
 import {
     canPatientSelfManageAppointment,
@@ -24,10 +24,17 @@ type AppointmentListProps = {
     hide?: (id: string) => Promise<void>;
     patientName?: string;
     onBookNew?: () => void;
+    grouped?: boolean;
 };
 
 const PATIENT_HIDEABLE_STATUSES = new Set(["CANCELLED", "COMPLETED", "NO_SHOW"]);
 const APPOINTMENT_PAGE_SIZE = 5;
+const UPCOMING_STATUSES = new Set(["PROPOSED", "PENDING", "ASSIGNED", "PENDING_PAYMENT", "PENDING_CONFIRMATION", "CONFIRMED", "CHECKED_IN", "IN_PROGRESS"]);
+const FILTER_STATUSES = ["PROPOSED", "PENDING", "ASSIGNED", "PENDING_PAYMENT", "PENDING_CONFIRMATION", "CONFIRMED", "CHECKED_IN", "IN_PROGRESS", "COMPLETED", "CANCELLED", "CANCELLED_EXPIRED", "NO_SHOW", "FOLLOW_UP_REQUIRED"];
+
+export function isUpcomingPatientAppointment(status: string) {
+    return UPCOMING_STATUSES.has(status);
+}
 
 export function canHideAppointmentFromHistory(status: string) {
     return PATIENT_HIDEABLE_STATUSES.has(status);
@@ -162,14 +169,37 @@ export function RescheduleAppointmentControl({
     const [open, setOpen] = useState(false);
     const [value, setValue] = useState("");
     const [slots, setSlots] = useState<Recommendation[]>([]);
-    const [message, setMessage] = useState("");
+    const [message, setMessage] = useState<{ text: string; tone: "info" | "error" } | null>(null);
+    const [busy, setBusy] = useState(false);
+
+    async function save(startAt: string, endAt?: string) {
+        if (busy) return;
+        setBusy(true);
+        setMessage(null);
+        try {
+            await submit(startAt, endAt);
+            setOpen(false);
+        } catch (cause) {
+            const text = cause instanceof ApiError && cause.status === 409
+                ? "Chưa thể đổi sang giờ này. Lịch hẹn hoặc khung giờ có thể đã thay đổi. Vui lòng kiểm tra lại lịch hoặc liên hệ lễ tân."
+                : cause instanceof ApiError && cause.message !== "Không thể kết nối dịch vụ."
+                    ? cause.message
+                    : "Chưa thể hoàn tất đổi lịch. Vui lòng kiểm tra lại lịch hẹn hoặc liên hệ lễ tân.";
+            setMessage({ text, tone: "error" });
+        } finally {
+            setBusy(false);
+        }
+    }
 
     async function find() {
+        if (busy) return;
         if (!appointment.doctorId) {
-            await submit(value);
-            setOpen(false);
+            await save(value);
             return;
         }
+        setBusy(true);
+        setSlots([]);
+        setMessage(null);
         try {
             const result = await request<RecommendationResult>("/appointments/recommendations", token, {
                 method: "POST",
@@ -182,9 +212,11 @@ export function RescheduleAppointmentControl({
                 })
             });
             setSlots(result.items);
-            setMessage(result.items.length ? "Chọn một giờ đã được kiểm tra." : "Không có giờ phù hợp trong 7 ngày.");
+            setMessage({ text: result.items.length ? "Chọn giờ khám mới phù hợp với bạn trong danh sách dưới đây." : "Chưa có giờ trống phù hợp trong 7 ngày tới. Bạn có thể chọn thời gian khác.", tone: "info" });
         } catch (cause) {
-            setMessage((cause as Error).message);
+            setMessage({ text: "Chưa thể tìm giờ khám lúc này. Vui lòng thử lại sau hoặc liên hệ lễ tân.", tone: "error" });
+        } finally {
+            setBusy(false);
         }
     }
 
@@ -193,23 +225,21 @@ export function RescheduleAppointmentControl({
         <div className="appointment-inline-form">
 <label>
                 Thời gian mong muốn
-                <input type="datetime-local" required value={value} onChange={event => {
+                <input type="datetime-local" required disabled={busy} value={value} onChange={event => {
                     setValue(event.target.value);
                     setSlots([]);
+                    setMessage(null);
                 }} />
             </label>
             <div>
-                <button type="button" disabled={!value} onClick={() => void find()}>
-                    {appointment.doctorId ? "Tìm giờ" : "Lưu"}
+                <button type="button" disabled={!value || busy} onClick={() => void find()}>
+                    {busy ? "Đang xử lý..." : appointment.doctorId ? "Tìm giờ khám" : "Lưu"}
                 </button>
-                <button type="button" onClick={() => setOpen(false)}>Đóng</button>
+                <button type="button" disabled={busy} onClick={() => { setOpen(false); setSlots([]); setMessage(null); }}>Đóng</button>
             </div>
-            {message && <small role="status">{message}</small>}
+            {message && <small className={"appointment-reschedule-message is-" + message.tone} role={message.tone === "error" ? "alert" : "status"}>{message.text}</small>}
             {slots.map(slot => (
-                <button type="button" className="appointment-recommended-slot" key={slot.startAt} onClick={async () => {
-                    await submit(slot.startAt, slot.endAt);
-                    setOpen(false);
-                }}>
+                <button type="button" disabled={busy} className="appointment-recommended-slot" key={slot.startAt} onClick={() => void save(slot.startAt, slot.endAt)}>
                     {formatAppointmentTime(slot.startAt)}
                 </button>
             ))}
@@ -451,7 +481,9 @@ export default function PatientAppointmentList({
     hide,
     patientName = "Bệnh nhân",
     onBookNew,
+    grouped = false,
 }: AppointmentListProps) {
+    const [group, setGroup] = useState<"upcoming" | "history">("upcoming");
     const [searchKw, setSearchKw] = useState("");
     const [statusFilter, setStatusFilter] = useState("ALL");
     const [dateFilter, setDateFilter] = useState("ALL");
@@ -474,7 +506,14 @@ export default function PatientAppointmentList({
         return () => window.clearTimeout(timer);
     }, [appointments, selfServiceNow]);
 
-    const filtered = appointments.filter(item => {
+    const upcomingCount = appointments.filter(item => isUpcomingPatientAppointment(item.status)).length;
+    const groupAppointments = grouped
+        ? appointments.filter(item => isUpcomingPatientAppointment(item.status) === (group === "upcoming"))
+            .sort((left, right) => group === "upcoming"
+                ? new Date(left.startAt).getTime() - new Date(right.startAt).getTime()
+                : new Date(right.startAt).getTime() - new Date(left.startAt).getTime())
+        : appointments;
+    const filtered = groupAppointments.filter(item => {
         const keyword = searchKw.trim().toLowerCase();
         if (keyword && !(item.reason || "").toLowerCase().includes(keyword)
             && !(item.followUpReason || "").toLowerCase().includes(keyword)) return false;
@@ -490,6 +529,14 @@ export default function PatientAppointmentList({
     // A new search or filter starts from a compact five-row view again.
     useEffect(() => setVisibleCount(APPOINTMENT_PAGE_SIZE), [searchKw, statusFilter, dateFilter]);
 
+    function selectGroup(nextGroup: "upcoming" | "history") {
+        setGroup(nextGroup);
+        setSearchKw("");
+        setStatusFilter("ALL");
+        setDateFilter("ALL");
+        setVisibleCount(APPOINTMENT_PAGE_SIZE);
+    }
+
     return (
         <section className="patient-appointment-history" aria-labelledby="appointment-history-title">
             <header className="appointment-history-heading">
@@ -500,7 +547,33 @@ export default function PatientAppointmentList({
                 <span aria-live="polite">{filtered.length} lịch</span>
             </header>
 
-            {appointments.length > 0 && (
+            {grouped && <div className="appointment-group-tabs" role="tablist" aria-label="Nhóm lịch đã đặt">
+                {(["upcoming", "history"] as const).map(value => <button
+                    key={value}
+                    type="button"
+                    role="tab"
+                    id={"appointment-tab-" + value}
+                    aria-selected={group === value}
+                    aria-controls="appointment-group-panel"
+                    tabIndex={group === value ? 0 : -1}
+                    onClick={() => selectGroup(value)}
+                    onKeyDown={event => {
+                        if (!["ArrowLeft", "ArrowRight", "Home", "End"].includes(event.key)) return;
+                        event.preventDefault();
+                        const nextGroup = event.key === "Home" ? "upcoming"
+                            : event.key === "End" ? "history"
+                            : value === "upcoming" ? "history" : "upcoming";
+                        selectGroup(nextGroup);
+                        document.getElementById("appointment-tab-" + nextGroup)?.focus();
+                    }}
+                >
+                    {value === "upcoming" ? "Lịch sắp tới" : "Lịch sử đặt lịch"}
+                    <span>{value === "upcoming" ? upcomingCount : appointments.length - upcomingCount}</span>
+                </button>)}
+            </div>}
+
+            <div role={grouped ? "tabpanel" : undefined} id={grouped ? "appointment-group-panel" : undefined} aria-labelledby={grouped ? "appointment-tab-" + group : undefined}>
+            {groupAppointments.length > 0 && (
                 <div className="appointment-filters" aria-label="Bộ lọc lịch khám">
                     <div className="appointment-search">
                         <Search aria-hidden="true" />
@@ -522,14 +595,8 @@ export default function PatientAppointmentList({
                         Trạng thái
                         <select value={statusFilter} onChange={event => setStatusFilter(event.target.value)}>
                             <option value="ALL">Tất cả</option>
-                            <option value="PENDING">Chờ tiếp nhận</option>
-                            <option value="PENDING_CONFIRMATION">Đã cọc · Chờ lễ tân xác nhận</option>
-                            <option value="CONFIRMED">Đã xác nhận</option>
-                            <option value="CHECKED_IN">Đã đến phòng khám</option>
-                            <option value="COMPLETED">Đã hoàn thành</option>
-                            <option value="CANCELLED">Đã hủy</option>
-                            <option value="NO_SHOW">Không đến khám</option>
-                            <option value="FOLLOW_UP_REQUIRED">Cần tái khám</option>
+                            {FILTER_STATUSES.filter(status => !grouped || isUpcomingPatientAppointment(status) === (group === "upcoming"))
+                                .map(status => <option key={status} value={status}>{statusDetails(status).label}</option>)}
                         </select>
                     </label>
                     <label>
@@ -556,14 +623,18 @@ export default function PatientAppointmentList({
             {filtered.length === 0 ? (
                 <EmptyState
                     compact
-                    icon={appointments.length === 0 ? CalendarDays : Search}
-                    title={appointments.length === 0 ? "Bạn chưa có lịch khám" : "Không tìm thấy lịch phù hợp"}
-                    description={appointments.length === 0
-                        ? "Chọn bác sĩ, ngày và khung giờ phù hợp để tạo lịch hẹn đầu tiên."
+                    icon={groupAppointments.length === 0 ? CalendarDays : Search}
+                    title={groupAppointments.length === 0
+                        ? grouped ? group === "upcoming" ? "Bạn chưa có lịch khám sắp tới" : "Chưa có lịch sử đặt lịch" : "Bạn chưa có lịch khám"
+                        : "Không tìm thấy lịch phù hợp"}
+                    description={groupAppointments.length === 0
+                        ? grouped && group === "history"
+                            ? "Các lịch đã kết thúc hoặc đã hủy sẽ xuất hiện tại đây."
+                            : "Chọn bác sĩ, ngày và khung giờ phù hợp để đặt lịch khám mới."
                         : "Hãy thay đổi từ khóa hoặc xóa các bộ lọc đang áp dụng."}
-                    action={appointments.length === 0 && onBookNew
+                    action={groupAppointments.length === 0 && onBookNew
                         ? { label: "Đặt lịch mới", onClick: onBookNew }
-                        : appointments.length > 0
+                        : groupAppointments.length > 0
                             ? { label: "Xóa bộ lọc", onClick: () => { setSearchKw(""); setStatusFilter("ALL"); setDateFilter("ALL"); } }
                             : undefined}
                 />
@@ -608,7 +679,7 @@ export default function PatientAppointmentList({
                                             onClick={() => window.dispatchEvent(new Event("open-support-chat"))}
                                         >
                                             <MessageCircle aria-hidden="true" />
-                                            Liên hệ hỗ trợ để đổi hoặc hủy lịch
+                                            Liên hệ lễ tân để đổi hoặc hủy lịch
                                         </button>
                                     )}
                                     {item.status === "CANCELLED" && refundPayment && requestRefund && (
@@ -655,6 +726,7 @@ export default function PatientAppointmentList({
                 )}
                 </>
             )}
+            </div>
         </section>
     );
 }

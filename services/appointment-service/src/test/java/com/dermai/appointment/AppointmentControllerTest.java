@@ -258,7 +258,7 @@ class AppointmentControllerTest {
   }
 
   @Test
-  void patientCanCancelAConfirmedPaidAppointmentInsideTheThirtyMinuteWindow() {
+  void patientCanCancelAPaidAppointmentWaitingForReceptionInsideTheThirtyMinuteWindow() {
     var service = mock(AppointmentService.class);
     var repository = mock(AppointmentRepository.class);
     var recommendations = mock(SchedulingRecommendationService.class);
@@ -269,7 +269,7 @@ class AppointmentControllerTest {
     var appointment = new Appointment();
     appointment.id = appointmentId;
     appointment.patientIdentityId = patientIdentity;
-    appointment.status = AppointmentStatus.CONFIRMED;
+    appointment.status = AppointmentStatus.PENDING_CONFIRMATION;
     appointment.createdAt = Instant.now().minusSeconds(5 * 60L);
     var cancelled = new Appointment();
     cancelled.id = appointmentId;
@@ -280,6 +280,29 @@ class AppointmentControllerTest {
 
     verify(service).cancel(appointmentId, "Đổi kế hoạch", patientIdentity, "PATIENT", "PATIENT_REQUEST");
     verify(audit).record(appointmentId, patientIdentity, "PATIENT", "CANCELLED");
+  }
+
+  @Test
+  void patientCannotCancelAfterReceptionConfirmationEvenInsideTheThirtyMinuteWindow() {
+    var service = mock(AppointmentService.class);
+    var repository = mock(AppointmentRepository.class);
+    var audit = mock(AppointmentActionAuditService.class);
+    var controller = new AppointmentController(service, repository, mock(SchedulingRecommendationService.class), audit, mock(PatientDirectoryClient.class));
+    var patientIdentity = UUID.randomUUID();
+    var appointmentId = UUID.randomUUID();
+    var appointment = new Appointment();
+    appointment.id = appointmentId;
+    appointment.patientIdentityId = patientIdentity;
+    appointment.status = AppointmentStatus.CONFIRMED;
+    appointment.createdAt = Instant.now().minusSeconds(5 * 60L);
+    when(repository.findById(appointmentId)).thenReturn(Optional.of(appointment));
+
+    assertThatThrownBy(() -> controller.cancel(appointmentId, patientIdentity, "PATIENT", new AppointmentController.Cancel("Đổi kế hoạch", null)))
+        .isInstanceOfSatisfying(ResponseStatusException.class, error -> {
+          org.assertj.core.api.Assertions.assertThat(error.getStatusCode()).isEqualTo(HttpStatus.CONFLICT);
+          org.assertj.core.api.Assertions.assertThat(error.getReason()).contains("lễ tân xác nhận");
+        });
+    org.mockito.Mockito.verifyNoInteractions(service, audit);
   }
 
   @Test

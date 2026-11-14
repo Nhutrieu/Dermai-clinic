@@ -134,7 +134,15 @@ export async function loginPatient(page: Page, credentials: PatientCredentials) 
 export async function openBooking(page: Page) {
   const navigation = page.getByRole("navigation", { name: "Điều hướng Bệnh nhân" });
   await navigation.getByRole("button", { name: "Lịch khám", exact: true }).click();
+  await navigation.getByRole("menuitem", { name: "Đặt lịch", exact: true }).click();
   await expect(page.getByRole("heading", { name: "Đặt lịch khám da liễu" })).toBeVisible();
+}
+
+export async function openAppointmentHistory(page: Page) {
+  const navigation = page.getByRole("navigation", { name: "Điều hướng Bệnh nhân" });
+  await navigation.getByRole("button", { name: "Lịch khám", exact: true }).click();
+  await navigation.getByRole("menuitem", { name: "Lịch đã đặt", exact: true }).click();
+  await expect(page.getByRole("heading", { name: "Lịch đã đặt", exact: true })).toBeVisible();
 }
 
 export async function browserApi<T>(

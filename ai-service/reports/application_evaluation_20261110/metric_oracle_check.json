@@ -1,0 +1,7 @@
+{
+  "status": "PASS",
+  "synthetic_cases": 100,
+  "seed": 123,
+  "oracle": "sklearn",
+  "real_evaluation_labels_used": false
+}

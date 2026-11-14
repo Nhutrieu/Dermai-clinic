@@ -1,7 +1,7 @@
-// Patients may self-cancel a confirmed, paid booking during the 30-minute policy window.
+// Patients may self-cancel within 30 minutes only before reception confirms the booking.
 export const PATIENT_APPOINTMENT_SELF_SERVICE_WINDOW_MS = 30 * 60_000;
 export const STALE_IN_PROGRESS_GRACE_MS = 60 * 60_000;
-const PATIENT_SELF_SERVICE_STATUSES = new Set(["PENDING", "ASSIGNED", "PENDING_CONFIRMATION", "CONFIRMED"]);
+const PATIENT_SELF_SERVICE_STATUSES = new Set(["PENDING", "ASSIGNED", "PENDING_CONFIRMATION"]);
 
 export function patientAppointmentSelfServiceClosesAt(createdAt: string) {
     const createdAtMs = new Date(createdAt).getTime();

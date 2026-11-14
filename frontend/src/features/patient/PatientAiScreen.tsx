@@ -14,7 +14,7 @@ const ACCEPTED_TYPES = new Set(["image/jpeg", "image/png", "image/webp"]);
 
 function bookingSummary(assessment: AiAssessment) {
   const top = assessment.top3.map(item => `${patientAiLabel(item.label)} ${formatAiPercentage(item.probability)}`).join("; ");
-  return `Kết quả kiểm tra da bằng AI (tham khảo): ${top}. Phiên bản mô hình ${assessment.modelVersion}.${assessment.uncertain ? " AI đánh dấu kết quả chưa chắc chắn." : ""}`;
+  return `Kết quả kiểm tra da bằng AI (tham khảo): ${top}.${assessment.uncertain ? " AI đánh dấu kết quả chưa chắc chắn." : ""}`;
 }
 
 export function validatePhoto(selected: File) {

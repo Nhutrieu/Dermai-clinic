@@ -25,6 +25,7 @@ payment:
   return-url: ${PAYOS_RETURN_URL:http://localhost:3000/payment/success}
   cancel-url: ${PAYOS_CANCEL_URL:http://localhost:3000/payment/cancel}
   webhook-url: ${PAYOS_WEBHOOK_URL:}
+  allowed-return-origins: ${PAYMENT_ALLOWED_RETURN_ORIGINS:}
   expiry-delay-ms: ${PAYMENT_EXPIRY_DELAY_MS:15000}
 payos:
   fake-mode: ${PAYOS_FAKE_MODE:false}

@@ -31,6 +31,10 @@ import org.springframework.transaction.support.TransactionTemplate;
  }
 
  public PaymentResponse create(UUID bookingId,UUID patientIdentityId,String recipientEmail){
+  return create(bookingId,patientIdentityId,recipientEmail,null);
+ }
+
+ public PaymentResponse create(UUID bookingId,UUID patientIdentityId,String recipientEmail,String returnOrigin){
   String normalizedEmail=recipientEmail==null||recipientEmail.isBlank()?null:recipientEmail.trim().toLowerCase(Locale.ROOT);
   var old=payments.findByBookingIdAndPatientIdentityId(bookingId,patientIdentityId);
   if(old.isPresent()&&old.get().status!=PaymentStatus.FAILED)return response(old.get());
@@ -49,7 +53,7 @@ import org.springframework.transaction.support.TransactionTemplate;
   }
   if(payment.status!=PaymentStatus.CREATING&&payment.status!=PaymentStatus.FAILED)return response(payment);
   try{
-   var link=payOS.create(payment.orderCode,payment.amount.longValueExact(),"DERMAI "+payment.orderCode,returnUrl,cancelUrl,payment.expiresAt);
+   var link=payOS.create(payment.orderCode,payment.amount.longValueExact(),"DERMAI "+payment.orderCode,PaymentReturnOrigins.redirectUrl(returnUrl,returnOrigin),PaymentReturnOrigins.redirectUrl(cancelUrl,returnOrigin),payment.expiresAt);
    UUID id=payment.id;
    return tx.execute(status->{
     var current=payments.findById(id).orElseThrow(PaymentNotFound::new);

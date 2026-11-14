@@ -23,10 +23,14 @@ export function isAiFoldVote(modelVersion: string) {
   return modelVersion.startsWith("dermai-eight-esg-v1-");
 }
 
+export function isAiResearchEnsemble(modelVersion: string) {
+  return isAiFoldVote(modelVersion) || modelVersion.startsWith("dermai-eight-single-fold");
+}
+
 export function aiScoreExplanation(modelVersion: string) {
   return isAiFoldVote(modelVersion)
-    ? "Các tỷ lệ thể hiện mức đồng thuận giữa năm cấu hình mô hình, không phải xác suất mắc bệnh. Thứ tự đề xuất có thể ưu tiên quy tắc bảo toàn nhóm nghi ngờ ác tính."
-    : "Điểm mô hình dùng để tham khảo, không phải xác suất mắc bệnh đã được xác nhận.";
+    ? "Các điểm thể hiện mức đồng thuận giữa năm bộ mô hình, không phải xác suất mắc bệnh. Nhãn đầu tiên có thể được ưu tiên theo quy tắc bảo vệ nhóm nghi ngờ ác tính."
+    : "Các điểm thể hiện mức đánh giá của mô hình, không phải xác suất mắc bệnh. Nhãn đầu tiên được chọn theo quy tắc của mô hình nên có thể không có điểm cao nhất.";
 }
 
 export function patientAiDoctorReviewState(assessment: AiAssessment) {

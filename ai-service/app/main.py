@@ -58,6 +58,8 @@ def health():
         "modelReady": state.get("model") is not None,
         "modelVersion": getattr(state.get("model"), "version", None),
         "modelMode": "research_pipeline" if isinstance(state.get("model"), ResearchBundle) else "legacy",
+        "servingFold": getattr(state.get("model"), "serving_fold", None),
+        "aggregation": getattr(state.get("model"), "aggregation", None),
         "ragReady": bool(state.get("rag") and state["rag"].ready),
     }
 

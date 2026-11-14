@@ -1,4 +1,6 @@
 package com.dermai.appointment;
+import org.springframework.http.HttpStatus;
+import org.springframework.web.server.ResponseStatusException;
 import com.fasterxml.jackson.databind.ObjectMapper;import org.springframework.dao.CannotAcquireLockException;import org.springframework.dao.DataIntegrityViolationException;import org.springframework.stereotype.Service;import org.springframework.transaction.annotation.Transactional;import java.math.BigDecimal;import java.time.*;import java.util.*;
 @Service @Transactional
 public class AppointmentService{
@@ -60,7 +62,9 @@ public class AppointmentService{
  public Appointment cancel(UUID id,String reason){return cancel(id,reason,null,null,"PATIENT_REQUEST");}
  public Appointment cancel(UUID id,String reason,UUID actorIdentityId,String actorRole,String initiator){
   if(reason==null||reason.isBlank())throw new IllegalArgumentException("CANCEL_REASON_REQUIRED");
-  var x=locked(id);x.transition(AppointmentStatus.CANCELLED);x.cancelReason=reason;x.cancellationInitiator="CLINIC".equals(initiator)?"CLINIC":"PATIENT_REQUEST";
+  var x=locked(id);
+  if("PATIENT".equals(actorRole)&&x.status==AppointmentStatus.CONFIRMED)throw new ResponseStatusException(HttpStatus.CONFLICT,"Lịch đã được lễ tân xác nhận. Vui lòng liên hệ lễ tân để được hỗ trợ hủy lịch.");
+  x.transition(AppointmentStatus.CANCELLED);x.cancelReason=reason;x.cancellationInitiator="CLINIC".equals(initiator)?"CLINIC":"PATIENT_REQUEST";
   var details=new LinkedHashMap<String,Object>();
   if(actorIdentityId!=null)details.put("actorIdentityId",actorIdentityId.toString());
   if(actorRole!=null)details.put("actorRole",actorRole);

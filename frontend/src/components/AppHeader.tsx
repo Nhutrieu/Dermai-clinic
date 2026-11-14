@@ -129,6 +129,7 @@ export default function AppHeader(props: AppHeaderProps) {
           <button
             type="button"
             className={groupActive ? "is-active" : ""}
+            aria-current={groupActive ? "page" : undefined}
             aria-expanded={navigationOpen === item.id}
             aria-haspopup="menu"
             aria-controls={menuId}
@@ -139,7 +140,7 @@ export default function AppHeader(props: AppHeaderProps) {
             <ChevronDown className="app-nav-chevron" aria-hidden="true" />
           </button>
           {navigationOpen === item.id && <div id={menuId} className="app-nav-submenu" role="menu">
-            <button type="button" role="menuitem" className={props.activeItem === item.id ? "is-active" : ""} onClick={() => navigate(item.id)}><Icon aria-hidden="true" /><span>{item.label}</span></button>
+            <button type="button" role="menuitem" className={props.activeItem === item.id ? "is-active" : ""} onClick={() => navigate(item.id)}><Icon aria-hidden="true" /><span>{item.menuLabel ?? item.label}</span></button>
             {children.map(child => {
               const ChildIcon = child.icon;
               return <button type="button" role="menuitem" key={child.id} className={props.activeItem === child.id ? "is-active" : ""} onClick={() => navigate(child.id)}><ChildIcon aria-hidden="true" /><span>{child.label}</span></button>;

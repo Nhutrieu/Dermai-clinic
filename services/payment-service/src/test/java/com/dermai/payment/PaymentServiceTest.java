@@ -47,6 +47,18 @@ class PaymentServiceTest{
   assertThat(event.getValue().routingKey).isEqualTo("payment.link_created");
   assertThat(event.getValue().payload).contains("patient@example.com").contains("https://checkout.example/123");
  }
+ @org.junit.jupiter.params.ParameterizedTest
+ @org.junit.jupiter.params.provider.ValueSource(strings={"http://localhost:3000","https://clinic-tunnel.example"})
+ void createsProviderLinkWithTheBrowserReturnOrigin(String origin){
+  var payment=pendingPayment();payment.status=PaymentStatus.FAILED;
+  when(payments.findByBookingIdAndPatientIdentityId(payment.bookingId,payment.patientIdentityId)).thenReturn(Optional.of(payment));
+  when(payments.findById(payment.id)).thenReturn(Optional.of(payment));
+  when(payments.save(any(Payment.class))).thenAnswer(call->call.getArgument(0));
+  when(payOS.create(anyLong(),anyLong(),anyString(),anyString(),anyString(),any())).thenReturn(new PayOSGateway.PaymentLinkResult("link-id","https://checkout.example/123","qr-data"));
+  service.create(payment.bookingId,payment.patientIdentityId,null,origin);
+  verify(payOS).create(payment.orderCode,payment.amount.longValueExact(),"DERMAI "+payment.orderCode,
+    origin+"/success",origin+"/cancel",payment.expiresAt);
+ }
  @Test void successfulWebhookIsIdempotentAndPublishesOnePaidEvent(){
   var payment=pendingPayment();
   when(payOS.verify(any())).thenReturn(new PayOSGateway.VerifiedWebhook(payment.orderCode,100000L,"bank-reference",payment.paymentLinkId,"00"));

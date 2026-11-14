@@ -1,0 +1,51 @@
+{
+  "schema_version": 1,
+  "date": "2026-11-11",
+  "selected_fold": 4,
+  "criterion": "max INNER Macro F1; tie: INNER Accuracy; tie: lower fold ID",
+  "candidates": [
+    {
+      "fold": 0,
+      "selected": "current_gate",
+      "accuracy": 0.7771587743732591,
+      "macro_f1": 0.7681573627798126,
+      "source": "reports/teacher_dropout_specialist_seed42_20261023/fold_0/selection_locked.json",
+      "source_sha256": "8d61c1220ebcc638cb2cd913a0bc4285c590d41dbb4b59cbda78f277d80c1e9c"
+    },
+    {
+      "fold": 1,
+      "selected": "dropout_specialist",
+      "accuracy": 0.8190743338008415,
+      "macro_f1": 0.8220062914702377,
+      "source": "reports/teacher_dropout_specialist_seed42_20261023/fold_1/selection_locked.json",
+      "source_sha256": "3c8a96822cd5a423a03aece2e99c3606cc6f721950c9e782c6b45deef0003cff"
+    },
+    {
+      "fold": 2,
+      "selected": "dropout_specialist",
+      "accuracy": 0.7763713080168776,
+      "macro_f1": 0.772320149142677,
+      "source": "reports/teacher_dropout_specialist_seed42_20261023/fold_2/selection_locked.json",
+      "source_sha256": "c42268d5aba7db1905dd7f7696ad781d5d524f15883df2823e64d88595a990ba"
+    },
+    {
+      "fold": 3,
+      "selected": "current_gate",
+      "accuracy": 0.797752808988764,
+      "macro_f1": 0.7888598344066036,
+      "source": "reports/teacher_dropout_specialist_seed42_20261023/fold_3/selection_locked.json",
+      "source_sha256": "c8898e548e9cfbec9771c690d2c7b1813ba85d10be3c9cdef060c5d0ef4fb2bf"
+    },
+    {
+      "fold": 4,
+      "selected": "current_gate",
+      "accuracy": 0.8324022346368715,
+      "macro_f1": 0.8367596218124898,
+      "source": "reports/teacher_dropout_specialist_seed42_20261023/fold_4/selection_locked.json",
+      "source_sha256": "ef0c02d8c84a35499118b99e75a7de3b54e1e92c495699761822ce57a976f78b"
+    }
+  ],
+  "source_manifest_sha256": "60c4927e479b2bb88c7778070715fba8876ac65420be1ff2affbd8c53fb89fed",
+  "test_used_for_selection": false,
+  "caveat": "Inner sets differ across folds. This is a serving choice, not a new OOF result or a claim of external superiority."
+}

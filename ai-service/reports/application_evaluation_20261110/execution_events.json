@@ -1,0 +1,9 @@
+[
+  {
+    "utc": "2026-11-10T16:31:09.128211+00:00",
+    "event": "native_Windows_process_exit",
+    "exit_code": -1073741819,
+    "prediction_records_preserved": 175,
+    "action": "Resume unchanged frozen API evaluation at index175 with faulthandler; no sample skipped or settings changed"
+  }
+]

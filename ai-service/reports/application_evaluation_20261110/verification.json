@@ -1,0 +1,11 @@
+{
+  "status": "PASS",
+  "checked_utc": "2026-11-10T16:50:26.688731+00:00",
+  "images": 723,
+  "exact_manifest_alignment": true,
+  "sklearn_metrics_and_8x9_confusion_match": true,
+  "all_frozen_hashes_match": true,
+  "API_vote_scores_match": true,
+  "independent_test": false,
+  "results_sha256": "3db15fd22cdb4d705e1f35ed12013c2841793c20ee69faf5425d82f2a526c97d"
+}

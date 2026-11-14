@@ -1,9 +1,20 @@
 # Danh mục train model: từng file dùng để làm gì?
 
 Phạm vi: `ai-service/training/`. Hướng đang giữ gồm tám nhóm bệnh gốc với
-EfficientNet-B0, ConvNeXt-Tiny và ResNet50; API mặc định dùng pipeline E/G/S
-năm fold theo [bản tích hợp ngày 08/11/2026](../docs/AP_DUNG_PIPELINE_AI_20261108.md).
+EfficientNet-B0, ConvNeXt-Tiny và ResNet50; API đã quay lại biểu quyết năm fold theo [cập nhật khôi phục ngày 11/11/2026](../docs/KHOI_PHUC_BIEU_QUYET_NAM_FOLD_20261111.md).
 Các bảng dưới đây giải thích chức năng script, không yêu cầu chạy tất cả.
+
+**Kiểm tra khôi phục bản biểu quyết:** `training/verify_restored_fold_vote.py` đối chiếu API với tám phản hồi lịch sử; không tính chỉ số chính xác mới.
+
+**Kiểm tra bản một fold trong giai đoạn trung gian (không train):** `training/select_single_fold_serving.py`
+chọn một bộ bằng inner validation đã lưu; `training/verify_single_fold_serving.py`
+đối chiếu nhánh đó với dự đoán nghiên cứu; `training/smoke_single_fold_serving.py`
+kiểm tra API Docker. Hai lượt kiểm tra sau không phải đánh giá độ chính xác mới.
+
+**Đánh giá hồi cứu bản biểu quyết ngày 10/11 (không train):** `training/evaluate_application_model.py`
+rà trùng và tính chỉ số có ảnh từ chối; `training/run_application_http_evaluation.py`
+gửi ảnh qua đúng API Docker; `training/report_application_evaluation.py` tạo bảng
+và ma trận. Xem [kết quả ngày 10/11/2026](reports/application_evaluation_20261110/summary.md).
 
 Trạng thái kết quả hiện tại nằm trong [tổng hợp nghiên cứu](../docs/ai-research-summary.md).
 Các lượt thử cũ được lưu trong [bản nén lịch sử và hướng dẫn khôi phục](reports/README.md).

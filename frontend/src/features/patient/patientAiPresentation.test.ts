@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import type { AiAssessment } from "../../core/types";
-import { aiScoreExplanation, isAiFoldVote, patientAiDoctorReviewState } from "./patientAiPresentation";
+import { aiScoreExplanation, isAiFoldVote, isAiResearchEnsemble, patientAiDoctorReviewState } from "./patientAiPresentation";
 
 function assessment(overrides: Partial<AiAssessment> = {}): AiAssessment {
   return {
@@ -19,11 +19,12 @@ function assessment(overrides: Partial<AiAssessment> = {}): AiAssessment {
 }
 
 describe("patient AI result presentation", () => {
-  it("explains vote shares without presenting a disease probability", () => {
+  it("identifies model versions that use vote-based scores", () => {
     expect(isAiFoldVote("dermai-eight-esg-v1-20261108")).toBe(true);
     expect(isAiFoldVote("efficientnet-test")).toBe(false);
-    expect(aiScoreExplanation("dermai-eight-esg-v1-20261108")).toContain("mức đồng thuận");
-    expect(aiScoreExplanation("dermai-eight-esg-v1-20261108")).toContain("không phải xác suất mắc bệnh");
+    expect(isAiFoldVote("dermai-eight-single-fold4-v1-20261111")).toBe(false);
+    expect(isAiResearchEnsemble("dermai-eight-single-fold4-v1-20261111")).toBe(true);
+    expect(aiScoreExplanation("dermai-eight-single-fold4-v1-20261111")).not.toContain("đồng thuận");
   });
   it("does not claim a doctor reviewed an unshared result", () => {
     expect(patientAiDoctorReviewState(assessment()).label).toBe("Chưa gửi bác sĩ xem xét");

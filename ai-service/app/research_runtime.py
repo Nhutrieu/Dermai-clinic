@@ -1,7 +1,7 @@
-"""Frozen eight-class E/G/S branches, with an explicitly separate serving vote.
+"""Frozen research branches with explicitly configured serving aggregation.
 
 No training/report imports, label lookup or patient/source metadata at runtime.
-Vote shares are agreement scores, never calibrated disease probabilities.
+Vote shares and ensemble evidence are never calibrated disease probabilities.
 """
 from dataclasses import dataclass, field
 import base64
@@ -89,13 +89,18 @@ def route_fold(parents, weights, protected, stack=None, gate=None, specialist_pr
     return decision, reference, bc, ensemble
 
 
-def aggregate(decisions, references, bc):
-    """Serving-only rule, fixed before evaluation: protected plurality vote.
+def serving_scores(parents, bc, reference, protected, winner):
+    """Keep raw evidence for the routed label; never swap or invent scores."""
+    scores = bc[0] if reference in protected else (.75 * bc + .25 * parents[2])[0]
+    ranked = sorted(range(8), key=lambda c: (-float(scores[c]), c))
+    order = [winner] + [c for c in ranked if c != winner]
+    override = winner != ranked[0]
+    tied = np.count_nonzero(scores == scores.max()) > 1
+    return order, scores, override, tied
 
-    Ties use mean BC score, then canonical class order. Cancer membership is
-    fixed to the BC vote. Returned shares stay raw counts even on override;
-    they are not moved or renormalized to disguise disagreement.
-    """
+
+def aggregate(decisions, references, bc):
+    """Original protected plurality vote; keep raw shares even on override."""
     decisions, references = np.asarray(decisions), np.asarray(references)
     if decisions.shape != (5,) or references.shape != (5,) or np.asarray(bc).shape != (5, 8):
         raise ValueError("Exactly five fold decisions required")
@@ -144,6 +149,8 @@ class ResearchBundle:
     version: str
     classes: list[str]
     device: torch.device
+    serving_fold: int | None
+    aggregation: str = 'single_fold_v1'
     lock: RLock = field(default_factory=RLock)
 
 
@@ -163,10 +170,14 @@ def checked_path(root, entry):
 def load_research(manifest_path):
     manifest_path = Path(manifest_path)
     m = json.loads(manifest_path.read_text(encoding='utf-8'))
-    if m.get('schema_version') != 1 or m.get('classes') != CLASSES or m.get('aggregation') != 'protected_fold_vote_v1':
+    mode = m.get('aggregation')
+    if m.get('classes') != CLASSES or (m.get('schema_version'), mode) not in [(1, 'protected_fold_vote_v1'), (2, 'single_fold_v1')]:
         raise ValueError("Unsupported research serving manifest")
-    if [f['fold'] for f in m['folds']] != list(range(5)):
+    selected = m.get('serving_fold')
+    if mode == 'protected_fold_vote_v1' and [f['fold'] for f in m['folds']] != list(range(5)):
         raise ValueError("Five ordered folds required")
+    if mode == 'single_fold_v1' and (type(selected) is not int or selected not in range(5) or [f['fold'] for f in m['folds']] != [selected]):
+        raise ValueError("Exactly one fixed serving fold required")
     root = manifest_path.parent
     # Verify ALL package files before loading any tensors; no silent B0 fallback.
     for entry in m['assets'].values():
@@ -204,7 +215,7 @@ def load_research(manifest_path):
             specialist.load_state_dict(ck['model_state_dict'])
             specialist = specialist.to(ood.device).eval()
         folds.append(FoldBundle(members, weights, f['protected'], stack, gate, specialist, scaler))
-    return ResearchBundle(tuple(folds), ood, m['name'], CLASSES.copy(), ood.device)
+    return ResearchBundle(tuple(folds), ood, m['name'], CLASSES.copy(), ood.device, selected, mode)
 
 
 def predict_research(bundle, image, confidence_threshold=.7, confidence_margin_threshold=.2, normalized_entropy_threshold=.65):
@@ -213,6 +224,11 @@ def predict_research(bundle, image, confidence_threshold=.7, confidence_margin_t
 
 
 def _predict_locked(bundle, image, confidence_threshold, margin_threshold, entropy_threshold):
+    mode = getattr(bundle, 'aggregation', 'single_fold_v1')
+    if mode not in ['single_fold_v1', 'protected_fold_vote_v1']:
+        raise ValueError("Unsupported serving aggregation")
+    if len(bundle.folds) != (5 if mode == 'protected_fold_vote_v1' else 1):
+        raise ValueError("Fold count does not match configured serving aggregation")
     x, base = preprocess_image(image)
     x = x.unsqueeze(0).to(bundle.device)
     embedding = bundle.ood_gate.extract_embeddings(x)[0].cpu().numpy()
@@ -239,11 +255,17 @@ def _predict_locked(bundle, image, confidence_threshold, margin_threshold, entro
                 handle.remove()
         d, ref, bc, _ = route_fold(pp, f.weights, f.protected, f.stack, f.gate, sp)
         decisions.append(int(d[0])); references.append(int(ref[0])); bcs.append(bc[0])
-    winner, order, shares, override, tied = aggregate(decisions, references, bcs)
+    if mode == 'protected_fold_vote_v1':
+        winner, order, shares, override, tied = aggregate(decisions, references, bcs)
+        cam_fold = 0
+    else:
+        winner = int(d[0])
+        order, shares, override, tied = serving_scores(pp, bc, int(ref[0]), f.protected, winner)
+        cam_fold = bundle.serving_fold
     entropy = float(-np.sum(shares * np.log(np.clip(shares, 1e-12, 1))) / np.log(8))
     other = max(shares[c] for c in range(8) if c != winner)
     uncertain = bool(override or tied or shares[winner] < confidence_threshold or shares[winner] - other < margin_threshold or entropy > entropy_threshold)
-    # Display an illustrative parent CAM, not a false gradient of discrete voting.
+    # An illustrative parent CAM, not a gradient of the full decision policy.
     cam_member = bundle.folds[0].members[0]
     with GradCam(cam_member.model, cam_member.target_layer) as cam:
         heat = cam.create(x, winner)
@@ -256,6 +278,6 @@ def _predict_locked(bundle, image, confidence_threshold, margin_threshold, entro
                 top3=[dict(label=CLASSES[c], probability=round(float(shares[c]), 6)) for c in order[:3]],
                 gradcam_image='data:image/png;base64,' + base64.b64encode(stream.getvalue()).decode(),
                 model_version=bundle.version, uncertain=uncertain, disclaimer=DISCLAIMER,
-                score_type='fold_vote_fraction', confidence_is_calibrated=False,
-                decision_policy_applied=override, gradcam_method='illustrative_b0_fold0',
-                fold_decisions=[CLASSES[d] for d in decisions])
+                score_type='fold_vote_fraction' if mode == 'protected_fold_vote_v1' else 'ensemble_evidence', confidence_is_calibrated=False,
+                decision_policy_applied=override, gradcam_method=f'illustrative_b0_fold{cam_fold}',
+                **(dict(fold_decisions=[CLASSES[d] for d in decisions]) if mode == 'protected_fold_vote_v1' else dict(serving_fold=bundle.serving_fold)))

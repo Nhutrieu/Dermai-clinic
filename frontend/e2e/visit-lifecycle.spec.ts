@@ -12,6 +12,7 @@ import {
   findBookingCandidate,
   loginAs,
   openBooking,
+  openAppointmentHistory,
   patientSnapshot,
   responseBody,
   roleCredentialsFromEnvironment,
@@ -438,7 +439,8 @@ test.describe("complete clinic visit lifecycle", () => {
       await expect(medicalDetail.getByText("Hydrocortisone E2E", { exact: true })).toBeVisible();
       await expect(medicalDetail.getByRole("button", { name: "Xem và in đơn thuốc", exact: true })).toBeVisible();
 
-      await openBooking(page);
+      await openAppointmentHistory(page);
+      await page.getByRole("tab", { name: /^Lịch sử đặt lịch/ }).click();
       const patientRow = page.locator(`.patient-appointment-row[data-appointment-id="${appointmentId}"]`);
       await expect(patientRow).toBeVisible({ timeout: 15_000 });
       await patientRow.getByRole("button", { name: "Đánh giá phòng khám", exact: true }).click();

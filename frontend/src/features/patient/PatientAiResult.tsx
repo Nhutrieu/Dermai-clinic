@@ -7,8 +7,8 @@ import {
 } from "lucide-react";
 import type { AiAssessment, AiDiseaseGuidance, AiPrediction } from "../../core/types";
 import {
-  formatAiPercentage,
   aiScoreExplanation,
+  formatAiPercentage,
   patientAiDoctorReviewState,
   patientAiLabel,
 } from "./patientAiPresentation";
@@ -58,7 +58,6 @@ function AiObservationSummary({ prediction }: { prediction: AiPrediction }) {
     <section className="patient-ai-observation" aria-labelledby="patient-ai-observation-title">
       <div className="patient-ai-result-section-heading">
         <h3 id="patient-ai-observation-title">Tóm tắt kết quả hỗ trợ</h3>
-        <p>{aiScoreExplanation(prediction.model_version)}</p>
       </div>
       <p className="patient-ai-observation-lead">
         Hệ thống nhận thấy các đặc điểm hình ảnh có thể liên quan đến <strong>{patientAiLabel(prediction.disease)}</strong>.
@@ -75,6 +74,7 @@ function AiObservationSummary({ prediction }: { prediction: AiPrediction }) {
               </li>
             ))}
           </ol>
+          <p>{aiScoreExplanation(prediction.model_version)}</p>
         </div>
         <div>
           <h4>Điều AI chưa thể đánh giá</h4>

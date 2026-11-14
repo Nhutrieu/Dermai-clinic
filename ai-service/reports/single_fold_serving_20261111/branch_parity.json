@@ -1,0 +1,11 @@
+{
+  "status": "PASS",
+  "serving_fold": 4,
+  "images": 1161,
+  "exact_retained_branch": true,
+  "exact_cancer_mask": true,
+  "unmodified_scores": true,
+  "voting": false,
+  "manifest_sha256": "99c7ef9a532e6279cff06f5b1210a995b67acf3213f2813bbe4445234200dd33",
+  "scope": "Implementation parity on existing held-out fold-4 scores only; not a new test or full API accuracy evaluation."
+}

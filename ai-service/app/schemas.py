@@ -32,6 +32,7 @@ class PredictionResponse(BaseModel):
     decision_policy_applied: bool = False
     gradcam_method: str = "single_model"
     fold_decisions: list[str] | None = None
+    serving_fold: int | None = None
 
 
 class ChatRequest(BaseModel):

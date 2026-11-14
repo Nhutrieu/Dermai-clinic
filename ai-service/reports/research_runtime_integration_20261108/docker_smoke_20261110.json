@@ -1,0 +1,16 @@
+{
+  "status": "PASS",
+  "health": {
+    "status": "up",
+    "modelReady": true,
+    "modelVersion": "dermai-eight-esg-v1-20261108",
+    "modelMode": "research_pipeline",
+    "ragReady": true
+  },
+  "predict_http_status": 200,
+  "seconds": 1.192,
+  "model_version": "dermai-eight-esg-v1-20261108",
+  "gradcam_present": true,
+  "guidance_present": true,
+  "accuracy_estimated": false
+}

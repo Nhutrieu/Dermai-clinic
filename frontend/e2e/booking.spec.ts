@@ -13,6 +13,7 @@ import {
   findBookingCandidate,
   loginPatient,
   openBooking,
+  openAppointmentHistory,
   patientSnapshot,
   responseBody,
   runtimeUnavailable,
@@ -96,6 +97,7 @@ test.describe("critical patient booking journey", () => {
         reason,
       });
       await expect(page.getByRole("heading", { name: "Đặt lịch khám da liễu", exact: true })).toBeVisible();
+      await openAppointmentHistory(page);
       const bookedRow = page.locator(`.patient-appointment-row[data-appointment-id="${appointmentId}"]`);
       await expect(bookedRow.getByText("Đã cọc · Chờ lễ tân xác nhận", { exact: true })).toBeVisible();
       await expect(bookedRow.getByText(reason, { exact: true })).toBeVisible();

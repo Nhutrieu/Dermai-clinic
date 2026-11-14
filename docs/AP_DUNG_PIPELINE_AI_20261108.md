@@ -1,6 +1,16 @@
 # Bản AI được tích hợp vào đồ án ngày 08/11/2026
 
+> **Trạng thái cuối 11/11/2026:** nhóm yêu cầu quay lại biểu quyết năm fold; API đã khôi phục bản đó. [Cấu hình đang dùng](KHOI_PHUC_BIEU_QUYET_NAM_FOLD_20261111.md). Cập nhật chuyển sang một fold bên dưới là lịch sử.
+
+> **Trạng thái mới 11/11/2026:** đã bỏ biểu quyết năm fold; API phục vụ một bộ cố định fold 4. Xem [cấu hình và giới hạn hiện tại](BO_BIEU_QUYET_NAM_FOLD_20261111.md). Các mô tả triển khai bên dưới là lịch sử; số liệu OOF vẫn mô tả nghiên cứu nhiều fold.
+
 API mặc định được cấu hình nạp **`dermai-eight-esg-v1-20261108`**, thay cho B0 đơn. Bản này dùng các thành phần đã được giữ trong nghiên cứu; không dùng hai nhánh bổ sung ảnh Lupus của pilot 305 vừa bị loại.
+
+**Cập nhật ngày 10/11/2026:** đã đo đúng API Docker trên dữ liệu test lịch sử sau
+rà trùng, có ghi nhận ảnh từ chối và một sự cố timeout/thử lại. Xem [báo cáo đánh giá
+bản phục vụ](../ai-service/reports/application_evaluation_20261110/summary.md).
+Các ghi chú “chưa có điểm riêng” bên dưới là trạng thái ngày 08/11; hiện đã có
+đánh giá hồi cứu, nhưng vẫn chưa có tập test mù độc lập mới.
 
 ## Thành phần được nạp
 

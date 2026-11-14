@@ -1,7 +1,7 @@
 import { renderToStaticMarkup } from "react-dom/server";
 import { describe, expect, it, vi } from "vitest";
 import type { Appointment } from "../core/types";
-import PatientAppointmentList, { canHideAppointmentFromHistory } from "./PatientAppointmentList";
+import PatientAppointmentList, { canHideAppointmentFromHistory, isUpcomingPatientAppointment } from "./PatientAppointmentList";
 
 function appointment(id: string, status: string): Appointment {
     return {
@@ -17,6 +17,29 @@ function appointment(id: string, status: string): Appointment {
 }
 
 describe("patient appointment history", () => {
+    it.each(["PROPOSED", "PENDING", "ASSIGNED", "PENDING_PAYMENT", "PENDING_CONFIRMATION", "CONFIRMED", "CHECKED_IN", "IN_PROGRESS"])("keeps %s in upcoming appointments", status => {
+        expect(isUpcomingPatientAppointment(status)).toBe(true);
+    });
+
+    it.each(["COMPLETED", "CANCELLED", "CANCELLED_EXPIRED", "NO_SHOW", "FOLLOW_UP_REQUIRED"])("keeps %s only in booking history", status => {
+        expect(isUpcomingPatientAppointment(status)).toBe(false);
+    });
+
+    it("defaults to ongoing appointments even when their scheduled time has passed", () => {
+        const html = renderToStaticMarkup(<PatientAppointmentList grouped appointments={[
+            { ...appointment("ongoing", "IN_PROGRESS"), reason: "Ca đang khám" },
+            { ...appointment("paid", "PENDING_CONFIRMATION"), reason: "Ca đã cọc" },
+            { ...appointment("completed", "COMPLETED"), reason: "Ca đã hoàn tất" },
+            { ...appointment("cancelled", "CANCELLED"), startAt: "2099-01-01T08:00:00Z", reason: "Ca đã hủy" },
+        ]} />);
+        expect(html).toContain('role="tablist"');
+        expect(html).toContain('role="tabpanel"');
+        expect(html).toContain("Ca đang khám");
+        expect(html).toContain("Ca đã cọc");
+        expect(html).not.toContain("Ca đã hoàn tất");
+        expect(html).not.toContain("Ca đã hủy");
+    });
+
     it("allows soft deletion only for terminal history statuses", () => {
         expect(["CANCELLED", "COMPLETED", "NO_SHOW"].every(canHideAppointmentFromHistory)).toBe(true);
         expect([

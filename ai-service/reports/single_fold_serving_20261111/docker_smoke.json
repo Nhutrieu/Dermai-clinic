@@ -1,0 +1,18 @@
+{
+  "status": "PASS",
+  "requests": 8,
+  "health": {
+    "status": "up",
+    "modelReady": true,
+    "modelVersion": "dermai-eight-single-fold4-v1-20261111",
+    "modelMode": "research_pipeline",
+    "servingFold": 4,
+    "aggregation": "single_fold_v1",
+    "ragReady": true
+  },
+  "voting": false,
+  "score_type": "ensemble_evidence",
+  "gradcam_method": "illustrative_b0_fold4",
+  "manifest_sha256": "99c7ef9a532e6279cff06f5b1210a995b67acf3213f2813bbe4445234200dd33",
+  "scope": "Functional smoke only, selected from historical accepted images. No accuracy metrics or independent-test claim."
+}

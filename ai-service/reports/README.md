@@ -1,5 +1,9 @@
 # Báo cáo AI cần giữ
 
+**Trạng thái cuối 11/11/2026:** [API đã quay lại biểu quyết năm fold](../../docs/KHOI_PHUC_BIEU_QUYET_NAM_FOLD_20261111.md); [đối chiếu phản hồi Docker](restored_fold_vote_20261111/docker_smoke.json). Bản một fold bên dưới là giai đoạn trung gian.
+
+**Cập nhật 11/11/2026:** [bỏ biểu quyết năm fold, API dùng một bộ fold 4](single_fold_serving_20261111/summary.md). Điểm API biểu quyết ngày 10/11 là lịch sử.
+
 Bản GitHub chỉ chứa mã nguồn, báo cáo tổng hợp và biểu đồ chỉ số. Dự đoán
 từng ảnh, manifest chứa danh tính ảnh, dữ liệu rà nhãn và bản nén lịch sử
 được giữ cục bộ. Đường dẫn tới các tệp đó trong giao thức gốc phục vụ tái
@@ -18,6 +22,7 @@ Các mô tả API B0 trong protocol cũ là trạng thái lịch sử tại lúc
 - [Specialist đang giữ](teacher_dropout_specialist_seed42_20261023/summary.md).
 - [Cổng Macro F1](teacher_macro_f1_gate_seed42_20261023/summary.md).
 - [Ensemble có bảo vệ SkinCancer](original_eight_cancer_locked_resnet_fusion_seed42_20261021/summary.md).
+- [Đánh giá đúng API đang tích hợp, ngày 10/11/2026](application_evaluation_20261110/summary.md): 486 ảnh test lịch sử và 237 ảnh SCIN sau rà trùng; báo coverage, ảnh từ chối và sự cố thử lại; chưa phải test độc lập mới.
 - [Pilot bổ sung ba ảnh Lupus, hoàn thành 08/11/2026](teacher_new_case_lupus_pilot_20261106/summary.md): đủ hai nhánh sáu epoch; chưa vượt đối chứng, chưa thay mốc OOF.
 
 Các báo cáo OOF, audit trùng cảnh, kiểm nhãn và nguồn ảnh được giữ ở đường dẫn cũ.

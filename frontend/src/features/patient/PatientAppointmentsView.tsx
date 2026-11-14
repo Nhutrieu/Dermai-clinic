@@ -4,7 +4,6 @@ import { ApiError, request } from "../../core/api";
 import { formatVnd } from "../../core/currency";
 import { subscribeRealtime } from "../../core/realtime";
 import type { AiAssessment, Appointment, AvailabilityResponse, AvailabilitySlot, Doctor, Patient } from "../../core/types";
-import AppointmentList from "../../components/AppointmentList";
 import AccessibleDialog from "../../components/AccessibleDialog";
 import { formatAiPercentage, patientAiLabel } from "./patientAiPresentation";
 
@@ -14,9 +13,8 @@ type Feedback = { tone: "info" | "success" | "error"; text: string };
 
 function aiBookingSummary(assessment: AiAssessment) {
     const top = assessment.top3.map(item => `${patientAiLabel(item.label)} ${formatAiPercentage(item.probability)}`).join("; ");
-    return `Kết quả kiểm tra da bằng AI (tham khảo): ${top}. Phiên bản mô hình ${assessment.modelVersion}.${assessment.uncertain ? " AI đánh dấu kết quả chưa chắc chắn." : ""}`;
+    return `Kết quả kiểm tra da bằng AI (tham khảo): ${top}.${assessment.uncertain ? " AI đánh dấu kết quả chưa chắc chắn." : ""}`;
 }
-type RefundPayment = { id: string; bookingId: string; amount: number; refundAmount?: number; status: "CREATING" | "PENDING" | "CANCEL_REQUESTED" | "SUCCESS" | "REFUND_REQUESTED" | "REFUNDED" | "CANCELLED" | "EXPIRED" | "FAILED" };
 type BookingDialogProps = {
     title: string;
     descriptionId: string;
@@ -127,7 +125,6 @@ export default function PatientAppointmentsView({
     const [sharedAi, setSharedAi] = useState<AiAssessment | null>(null);
     const [items, setItems] = useState(appointments);
     const [feedback, setFeedback] = useState<Feedback | null>(null);
-    const [refundPayments, setRefundPayments] = useState<Record<string, RefundPayment>>({});
     const [depositConfirmationOpen, setDepositConfirmationOpen] = useState(false);
     const [depositAmount, setDepositAmount] = useState<number | null>(null);
     const [changedAmountPayment, setChangedAmountPayment] = useState<{ amount: number; checkoutUrl: string } | null>(null);
@@ -154,17 +151,6 @@ export default function PatientAppointmentsView({
         } catch {
             /* Bỏ qua thông báo cũ không hợp lệ. */
         }
-    }, []);
-
-    useEffect(() => {
-        if (sessionStorage.getItem("patient-appointments-focus") !== "history") return;
-        sessionStorage.removeItem("patient-appointments-focus");
-        const frame = window.requestAnimationFrame(() => {
-            const target = document.getElementById("appointment-history-title");
-            const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-            target?.scrollIntoView({ behavior: reducedMotion ? "auto" : "smooth", block: "start" });
-        });
-        return () => window.cancelAnimationFrame(frame);
     }, []);
 
     async function loadDoctors() {
@@ -574,53 +560,6 @@ export default function PatientAppointmentsView({
         }
     }
 
-    useEffect(() => {
-        const cancelled = items.filter(item => item.status === "CANCELLED");
-        if (!cancelled.length) { setRefundPayments({}); return; }
-        let active = true;
-        Promise.all(cancelled.map(async item => {
-            try {
-                const payment = await request<RefundPayment>("/payments/booking/" + item.id, token);
-                return [item.id, payment] as const;
-            } catch (error) {
-                if (error instanceof ApiError && error.status === 404) return [item.id, null] as const;
-                throw error;
-            }
-        })).then(entries => {
-            if (!active) return;
-            setRefundPayments(Object.fromEntries(entries.filter((entry): entry is readonly [string, RefundPayment] => entry[1] !== null)));
-        }).catch(() => { if (active) setRefundPayments({}); });
-        return () => { active = false; };
-    }, [items, token]);
-
-    async function requestDepositRefund(id: string) {
-        const payment = await request<RefundPayment>("/payments/booking/" + id + "/refunds/request", token, {
-            method: "POST",
-            body: JSON.stringify({ reason: "Bệnh nhân yêu cầu hoàn tiền cọc sau khi hủy lịch" })
-        });
-        setRefundPayments(current => ({ ...current, [id]: payment }));
-        setFeedback({ tone: "success", text: `Đã gửi yêu cầu hoàn ${formatVnd(payment.refundAmount ?? payment.amount)} đến lễ tân theo chính sách phòng khám.` });
-    }
-    async function cancel(id: string, cancelReason: string) {
-        const paid = ["PENDING_CONFIRMATION", "CONFIRMED"].includes(items.find(item => item.id === id)?.status || "");
-        await request("/appointments/" + id + "/cancel", token, {
-            method: "POST", body: JSON.stringify({ reason: cancelReason })
-        });
-        const latest = await request<Appointment[]>("/appointments/mine", token);
-        setItems(latest);
-        changed(latest);
-        setFeedback({ tone: "success", text: paid
-            ? "Đã hủy lịch. Tiền cọc chưa tự động hoàn; nếu muốn hoàn cọc, hãy bấm nút Yêu cầu hoàn tiền cọc tại lịch vừa hủy."
-            : "Đã hủy lịch và trả lại khung giờ. Không phát sinh hoàn tiền vì lịch chưa thanh toán cọc." });
-    }
-
-    async function hide(id: string) {
-        await request("/appointments/" + id + "/hide", token, { method: "PATCH" });
-        const latest = await request<Appointment[]>("/appointments/mine", token);
-        setItems(latest);
-        changed(latest);
-    }
-
     return (
         <>
             {depositConfirmationOpen && selected && holdId && (
@@ -977,21 +916,6 @@ export default function PatientAppointmentsView({
                         )}
                     </aside>
                 </section>
-
-                <AppointmentList
-                    token={token}
-                    appointments={items}
-                    cancel={cancel}
-                    refundPayments={refundPayments}
-                    requestRefund={requestDepositRefund}
-                    hide={hide}
-                    patientName={patient.fullName}
-                    onBookNew={() => {
-                        const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-                        document.querySelector(".booking-page-heading")?.scrollIntoView({ behavior: reducedMotion ? "auto" : "smooth", block: "start" });
-                        window.setTimeout(() => document.querySelector<HTMLButtonElement>(".booking-doctor-selector button")?.focus(), 250);
-                    }}
-                />
             </div>
         </>
     );

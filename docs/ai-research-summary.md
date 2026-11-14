@@ -7,17 +7,23 @@ rút gọn; giao thức, kết quả máy đọc và bằng chứng gốc vẫn 
 
 ## Model ứng dụng và bản nghiên cứu đang giữ
 
-API mặc định được cấu hình nạp **pipeline E/G/S năm fold**, phiên bản
-`dermai-eight-esg-v1-20261108`. Xem [bản tích hợp và kiểm chứng](AP_DUNG_PIPELINE_AI_20261108.md).
-B0 cũ giữ cho cổng OOD và phương án quay lại; [model card B0](model-card-scin-v1.md)
-mô tả checkpoint cũ. Docker hiện chưa được khởi chạy lại sau tích hợp.
+**Cập nhật 11/11/2026 — trạng thái cuối:** theo yêu cầu mới, API đã quay lại
+**biểu quyết năm fold**, phiên bản `dermai-eight-esg-v1-20261108`. Dùng đúng E/G/S
+được chọn trong từng fold: G ở 0/3, S ở 1/2, E ở 4. Không thay checkpoint.
+[Cấu hình khôi phục và giới hạn chỉ số](KHOI_PHUC_BIEU_QUYET_NAM_FOLD_20261111.md).
+Bản một fold là giai đoạn trung gian, không còn là mặc định. B0 cũ vẫn làm cổng OOD.
+
+**Cập nhật 10/11/2026:** đã chấm API **biểu quyết cũ** trong Docker trên các tập lịch sử sau
+rà trùng. Với 486 ảnh đủ tám lớp, API trả nhãn cho 420 ảnh, đúng 341 ảnh:
+độ đúng có điều kiện 81,19%, tỷ lệ nhận ảnh 86,42%; trả đúng trên tổng đầu vào
+70,16%, Macro F1 tám lớp tính cả từ chối 71,15%, Recall SkinCancer trên tổng
+73 ảnh là 82,19%. Có một timeout và thử lại; báo cáo giữ cả chẩn đoán lần đầu.
+Đây là hồi cứu, chưa phải test mù mới. [Báo cáo đầy đủ và hai ma trận](../ai-service/reports/application_evaluation_20261110/summary.md).
 
 Bản nghiên cứu tham chiếu có **4.687/5.937 ảnh đúng**, Accuracy **78,9456%**,
 Macro F1 **77,7287%**, Recall SkinCancer **88,0355%**. Ensemble kết hợp
 EfficientNet-B0, ConvNeXt-Tiny và ResNet50; một số fold có cổng chọn nhãn hoặc
-đầu specialist. Đây là đánh giá OOF phát triển. Bản phục vụ gộp quyết định
-năm cấu hình bằng biểu quyết và chưa có điểm test độc lập riêng; không dùng
-điểm OOF làm điểm của bản phục vụ. [Bản giải trình pipeline](GIAI_TRINH_PIPELINE_AI_CHO_THAY_20261108.md)
+đầu specialist. Đây là đánh giá OOF phát triển. API gộp năm nhánh bằng biểu quyết; không dùng điểm OOF tổng làm điểm của bộ biểu quyết. [Bản giải trình pipeline](GIAI_TRINH_PIPELINE_AI_CHO_THAY_20261108.md)
 giữ công thức, lựa chọn theo fold, pseudocode và bảng bỏ từng thành phần.
 
 ## Những kết luận cần giữ
