@@ -51,6 +51,10 @@ class SupportAssistantServiceTest {
   var result=fixture.service.process(patient,"PATIENT","Bearer token","Lịch bác sĩ Bình ngày 12/08/2026");
 
   assertThat(result.answer()).contains("09:00").contains("Bác sĩ Bình");
+  assertThat(result.bookingOptions()).containsExactly(new SupportBookingOption(doctor,"Bình",start,start.plusSeconds(1800)));
+  var saved=ArgumentCaptor.forClass(SupportMessage.class);
+  verify(fixture.messages,times(2)).save(saved.capture());
+  assertThat(saved.getAllValues().get(1).bookingOptions).isEqualTo(result.bookingOptions());
   assertThat(result.escalated()).isFalse();
  }
 
@@ -132,37 +136,45 @@ class SupportAssistantServiceTest {
   assertThat(result.escalated()).isFalse();
  }
 
- @Test void availabilityFollowUpKeepsDoctorFromThePreviousPatientTurn(){
-  var fixture=new Fixture();var patient=UUID.randomUUID();var previous=new SupportMessage();
-  previous.id=UUID.randomUUID();previous.patientIdentityId=patient;previous.senderIdentityId=patient;previous.senderRole="PATIENT";previous.body="Thông tin lịch bác sĩ Bình";previous.sentAt=Instant.now().minusSeconds(10);
-  when(fixture.conversations.lastIntent(patient)).thenReturn("DOCTOR_AVAILABILITY");
-  when(fixture.messages.findFirstByPatientIdentityIdAndSenderRoleOrderBySentAtDesc(patient,"PATIENT")).thenReturn(Optional.of(previous));
-  when(fixture.ai.classify("Thông tin lịch bác sĩ Bình\nNgày 14/8/2026 lúc 9h")).thenReturn(new SupportAiClient.Decision("Đang tra cứu","DOCTOR_AVAILABILITY",false,"Tra lịch",.94,false,"Bình","2026-08-14","09:00"));
-  when(fixture.conversations.failureCount(patient)).thenReturn(0);
+ @Test void availabilityFollowUpUsesStoredFieldsWithoutReplayingThePreviousQuestion(){
+  var fixture=new Fixture();var patient=UUID.randomUUID();
+  var context=new SupportLookupContext("DOCTOR_AVAILABILITY","Bình",null,"08:00");
+  when(fixture.conversations.lookupContext(patient)).thenReturn(context);
+  when(fixture.ai.classify("Ngày 14/8/2026",context)).thenReturn(new SupportAiClient.Decision("Đang tra cứu","DOCTOR_AVAILABILITY",false,"Tra lịch",.96,false,"Bình","2026-08-14","08:00"));
   when(fixture.scheduling.lookupAvailability("Bình",LocalDate.of(2026,8,14),patient,"Bearer token","PATIENT")).thenReturn(new SchedulingRecommendationService.AvailabilityLookup("NO_SLOTS","Bình",LocalDate.of(2026,8,14),List.of(),List.of()));
   when(fixture.conversations.recordAiTurn(eq(patient),anyString(),anyDouble(),eq(0),eq(false),anyString(),isNull())).thenReturn(fixture.state(patient,"AI_ACTIVE"));
-
-  var result=fixture.service.process(patient,"PATIENT","Bearer token","Ngày 14/8/2026 lúc 9h");
-
-  verify(fixture.ai).classify("Thông tin lịch bác sĩ Bình\nNgày 14/8/2026 lúc 9h");
-  assertThat(result.answer()).contains("09:00").contains("Bác sĩ Bình");
- }
-
- @Test void doctorLeaveFollowUpKeepsDoctorFromPreviousPatientTurn(){
-  var fixture=new Fixture();var patient=UUID.randomUUID();var previous=new SupportMessage();
-  previous.id=UUID.randomUUID();previous.patientIdentityId=patient;previous.senderIdentityId=patient;previous.senderRole="PATIENT";previous.body="Lich nghi bac si Binh";previous.sentAt=Instant.now().minusSeconds(10);
-  when(fixture.conversations.lastIntent(patient)).thenReturn("DOCTOR_LEAVE_SCHEDULE");
-  when(fixture.messages.findFirstByPatientIdentityIdAndSenderRoleOrderBySentAtDesc(patient,"PATIENT")).thenReturn(Optional.of(previous));
-  when(fixture.ai.classify("Lich nghi bac si Binh\nNgay 3/9/2026")).thenReturn(new SupportAiClient.Decision("Dang tra cuu","DOCTOR_AVAILABILITY",false,"Tra lich",.94,false,"Binh","2026-09-03",null));
-  when(fixture.conversations.failureCount(patient)).thenReturn(0);
-  when(fixture.scheduling.lookupAvailability("Binh",LocalDate.of(2026,9,3),patient,"Bearer token","PATIENT")).thenReturn(new SchedulingRecommendationService.AvailabilityLookup("NO_SLOTS","Binh",LocalDate.of(2026,9,3),List.of(),List.of()));
-  when(fixture.conversations.recordAiTurn(eq(patient),anyString(),anyDouble(),eq(0),eq(false),anyString(),isNull())).thenReturn(fixture.state(patient,"AI_ACTIVE"));
-
-  var result=fixture.service.process(patient,"PATIENT","Bearer token","Ngay 3/9/2026");
-
-  verify(fixture.ai).classify("Lich nghi bac si Binh\nNgay 3/9/2026");
+  var result=fixture.service.process(patient,"PATIENT","Bearer token","Ngày 14/8/2026");
+  verify(fixture.ai).classify("Ngày 14/8/2026",context);
+  verify(fixture.conversations).rememberLookupContext(patient,new SupportLookupContext("DOCTOR_AVAILABILITY","Bình","2026-08-14","08:00"));
+  assertThat(result.answer()).contains("08:00").contains("Bác sĩ Bình");
   assertThat(result.escalated()).isFalse();
  }
+
+ @Test void secondMissingFieldQuestionDoesNotEscalateOrCountAsFailure(){
+  var fixture=new Fixture();var patient=UUID.randomUUID();
+  when(fixture.conversations.failureCount(patient)).thenReturn(1);
+  when(fixture.ai.classify("Bác sĩ Bình vào lúc 8 giờ")).thenReturn(new SupportAiClient.Decision("Bạn cho mình biết ngày muốn khám nhé.","DOCTOR_AVAILABILITY",false,"Thiếu ngày khám",.88,true,"Bình",null,"08:00"));
+  when(fixture.conversations.recordAiTurn(eq(patient),eq("DOCTOR_AVAILABILITY"),anyDouble(),eq(0),eq(false),anyString(),isNull())).thenReturn(fixture.state(patient,"AI_ACTIVE"));
+  var result=fixture.service.process(patient,"PATIENT",null,"Bác sĩ Bình vào lúc 8 giờ");
+  assertThat(result.escalated()).isFalse();
+  assertThat(result.answer()).contains("ngày muốn khám").doesNotContain("chuyển");
+  verify(fixture.conversations).rememberLookupContext(patient,new SupportLookupContext("DOCTOR_AVAILABILITY","Bình",null,"08:00"));
+  verifyNoInteractions(fixture.scheduling);
+ }
+
+ @Test void unrelatedRequestClearsOldLookupContext(){
+  var fixture=new Fixture();var patient=UUID.randomUUID();
+  var context=new SupportLookupContext("DOCTOR_AVAILABILITY","Bình",null,"08:00");
+  when(fixture.conversations.lookupContext(patient)).thenReturn(context);
+  when(fixture.ai.classify("Lịch của tôi khi nào?",context)).thenReturn(new SupportAiClient.Decision("Đang kiểm tra","APPOINTMENT_STATUS",false,"Tra lịch của tôi",.96,false,null,null,null));
+  when(fixture.appointmentLookup.answer(patient,null)).thenReturn("Bạn chưa có lịch khám.");
+  when(fixture.conversations.recordAiTurn(eq(patient),eq("APPOINTMENT_STATUS"),anyDouble(),eq(0),eq(false),anyString(),isNull())).thenReturn(fixture.state(patient,"AI_ACTIVE"));
+  var result=fixture.service.process(patient,"PATIENT",null,"Lịch của tôi khi nào?");
+  assertThat(result.escalated()).isFalse();
+  verify(fixture.conversations).rememberLookupContext(patient,null);
+  verifyNoInteractions(fixture.scheduling);
+ }
+
  @Test void doctorInformationUsesActiveDoctorProfilesFromDoctorService(){
   var fixture=new Fixture();var patient=UUID.randomUUID();
   var binh=new SchedulingRecommendationService.DoctorProfile(UUID.randomUUID(),"Bình","DA LIỄU TỔNG QUÁT",6,"CCHN-BINH-001",new java.math.BigDecimal("150000"),"Khám và điều trị các bệnh da liễu thường gặp.");
@@ -234,13 +246,60 @@ class SupportAssistantServiceTest {
   verifyNoInteractions(fixture.messages);
  }
 
+ @Test void ownAppointmentsAreReadForAuthenticatedPatientWithoutEscalation(){
+  var fixture=new Fixture();var patient=UUID.randomUUID();
+  when(fixture.ai.classify(anyString())).thenReturn(new SupportAiClient.Decision("Đang tra cứu","APPOINTMENT_STATUS",false,"Tra lịch cá nhân",.95,false,null,null,null));
+  when(fixture.appointmentLookup.answer(patient,"Bearer patient-token")).thenReturn("Lịch khám sắp tới của bạn: Bác sĩ Bình · Đã cọc");
+  when(fixture.conversations.recordAiTurn(eq(patient),eq("APPOINTMENT_STATUS"),anyDouble(),eq(0),eq(false),anyString(),isNull())).thenReturn(fixture.state(patient,"AI_ACTIVE"));
+  var result=fixture.service.process(patient,"PATIENT","Bearer patient-token","Lịch của tôi khi nào?");
+  assertThat(result.answer()).contains("Bác sĩ Bình").contains("Đã cọc");
+  assertThat(result.escalated()).isFalse();
+  assertThat(result.bookingOptions()).isEmpty();
+  verify(fixture.appointmentLookup).answer(patient,"Bearer patient-token");
+ }
+
+ @Test void staffCannotUsePersonalAppointmentAssistant(){
+  var fixture=new Fixture();
+  org.assertj.core.api.Assertions.assertThatThrownBy(()->fixture.service.process(UUID.randomUUID(),"RECEPTIONIST",null,"Lịch của tôi"))
+   .isInstanceOf(org.springframework.web.server.ResponseStatusException.class).hasMessageContaining("403 FORBIDDEN");
+  verifyNoInteractions(fixture.appointmentLookup,fixture.ai);
+ }
+
+ @Test void clinicDayOffUsesActualReasonInsteadOfNoSlots(){
+  var result=closedDayAnswer("CLINIC_CLOSED","Phòng khám nghỉ Thứ Bảy.");
+  assertThat(result.answer()).contains("Phòng khám nghỉ ngày 21/11/2026","Phòng khám nghỉ Thứ Bảy.").doesNotContain("không còn trống","không còn khung giờ");
+  assertThat(result.bookingOptions()).isEmpty();assertThat(result.escalated()).isFalse();
+ }
+
+ @Test void approvedWholeShiftLeaveIsExplainedAsDoctorLeave(){
+  var result=closedDayAnswer("DOCTOR_ON_LEAVE",null);
+  assertThat(result.answer()).contains("Bác sĩ Bình nghỉ","admin duyệt","21/11/2026").doesNotContain("không còn trống","không còn khung giờ");
+  assertThat(result.bookingOptions()).isEmpty();assertThat(result.escalated()).isFalse();
+ }
+
+ @Test void missingDoctorShiftDoesNotClaimTheDayIsBooked(){
+  var result=closedDayAnswer("NO_WORK_SCHEDULE",null);
+  assertThat(result.answer()).contains("chưa có ca làm việc","21/11/2026").doesNotContain("không còn trống");
+  assertThat(result.escalated()).isFalse();
+ }
+
+ private SupportAssistantService.TurnResult closedDayAnswer(String status,String reason){
+  var fixture=new Fixture();var patient=UUID.randomUUID();var date=LocalDate.of(2026,11,21);
+  when(fixture.ai.classify(anyString())).thenReturn(new SupportAiClient.Decision("Đang tra lịch","DOCTOR_AVAILABILITY",false,"Tra lịch",.96,false,"Bình",date.toString(),"08:00"));
+  when(fixture.scheduling.lookupAvailability("Bình",date,patient,"Bearer token","PATIENT")).thenReturn(
+   new SchedulingRecommendationService.AvailabilityLookup(status,"Bình",date,List.of(),List.of(),"DOCTOR_ON_LEAVE".equals(status),List.of(),reason));
+  when(fixture.conversations.recordAiTurn(eq(patient),anyString(),anyDouble(),eq(0),eq(false),anyString(),isNull())).thenReturn(fixture.state(patient,"AI_ACTIVE"));
+  return fixture.service.process(patient,"PATIENT","Bearer token","Bác sĩ Bình ngày 21 lúc 8 giờ");
+ }
+
  private static class Fixture {
   final SupportAiClient ai=mock(SupportAiClient.class);
   final SupportMessageRepository messages=mock(SupportMessageRepository.class);
   final SupportConversationService conversations=mock(SupportConversationService.class);
   final SchedulingRecommendationService scheduling=mock(SchedulingRecommendationService.class);
   final SlotUpdateBroadcaster updates=mock(SlotUpdateBroadcaster.class);
-  final SupportAssistantService service=new SupportAssistantService(ai,messages,conversations,scheduling,updates);
+  final SupportAppointmentLookup appointmentLookup=mock(SupportAppointmentLookup.class);
+  final SupportAssistantService service=new SupportAssistantService(ai,messages,conversations,scheduling,updates,appointmentLookup);
   Fixture(){when(messages.save(any(SupportMessage.class))).thenAnswer(call->call.getArgument(0));when(conversations.aiActiveOrNew(any())).thenReturn(true);}
   SupportConversation state(UUID patient,String status){var value=new SupportConversation(patient);value.channelStatus=status;return value;}
  }

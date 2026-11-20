@@ -24,27 +24,21 @@ class SupportAssistantService {
  private final SupportConversationService conversations;
  private final SchedulingRecommendationService scheduling;
  private final SlotUpdateBroadcaster updates;
+ private final SupportAppointmentLookup appointmentLookup;
 
- SupportAssistantService(SupportAiClient ai,SupportMessageRepository messages,SupportConversationService conversations,SchedulingRecommendationService scheduling,SlotUpdateBroadcaster updates){
-  this.ai=ai;this.messages=messages;this.conversations=conversations;this.scheduling=scheduling;this.updates=updates;
+ SupportAssistantService(SupportAiClient ai,SupportMessageRepository messages,SupportConversationService conversations,SchedulingRecommendationService scheduling,SlotUpdateBroadcaster updates,SupportAppointmentLookup appointmentLookup){
+  this.ai=ai;this.messages=messages;this.conversations=conversations;this.scheduling=scheduling;this.updates=updates;this.appointmentLookup=appointmentLookup;
  }
 
  TurnResult process(UUID patientIdentityId,String role,String authorization,String question){
   if(!"PATIENT".equals(role))throw new ResponseStatusException(HttpStatus.FORBIDDEN,"Chỉ bệnh nhân được sử dụng trợ lý hỗ trợ.");
   if(!conversations.aiActiveOrNew(patientIdentityId))throw new ResponseStatusException(HttpStatus.CONFLICT,"Cuộc trò chuyện đã được chuyển đến lễ tân. Vui lòng tiếp tục nhắn trong kênh hỗ trợ hiện tại.");
-  String previousIntent=conversations.lastIntent(patientIdentityId);
-  String routedQuestion=question;
-  if("DOCTOR_AVAILABILITY".equals(previousIntent)||"DOCTOR_LEAVE_SCHEDULE".equals(previousIntent)||"CLINIC_CLOSURE".equals(previousIntent)){
-   // Keep the previous patient wording so a follow-up such as "14/8 lúc 9h"
-   // retains the doctor name without storing a separate synthetic profile.
-   routedQuestion=messages.findFirstByPatientIdentityIdAndSenderRoleOrderBySentAtDesc(patientIdentityId,"PATIENT")
-    .map(item->item.body+"\n"+question).orElse(question);
-  }
+  SupportLookupContext lookupContext=conversations.lookupContext(patientIdentityId);
   save(patientIdentityId,patientIdentityId,"PATIENT",question.trim());
 
   SupportAiClient.Decision decision;
   try{
-   decision=ai.classify(routedQuestion);
+   decision=lookupContext==null?ai.classify(question):ai.classify(question,lookupContext);
   }catch(RestClientException|IllegalStateException error){
    LOG.warn("AI support classification failed; escalating conversation safely: {}",error.getMessage());
    decision=new SupportAiClient.Decision(
@@ -54,11 +48,17 @@ class SupportAssistantService {
   }
 
   String answer=decision.answer();
-  boolean failed=decision.needsClarification();
+  List<SupportBookingOption> bookingOptions=List.of();
+  boolean collectingDetails=decision.needsClarification()&&lookupIntent(decision.category());
+  boolean failed=decision.needsClarification()&&!collectingDetails;
   String attempt="AI đã phân loại và trả lời hướng dẫn.";
   if("DOCTOR_AVAILABILITY".equals(decision.category())&&!decision.needsClarification()){
    var lookup=lookupAvailability(decision,patientIdentityId,authorization,role);
-   answer=lookup.answer();failed=lookup.failed();attempt=lookup.attempt();
+   answer=lookup.answer();failed=lookup.failed();attempt=lookup.attempt();bookingOptions=lookup.bookingOptions();
+  }
+  if("APPOINTMENT_STATUS".equals(decision.category())&&!decision.needsClarification()){
+   try{answer=appointmentLookup.answer(patientIdentityId,authorization);failed=false;attempt="Đã tra cứu lịch và trạng thái cọc của chính tài khoản đăng nhập.";}
+   catch(RuntimeException error){answer="Mình chưa tải được lịch đã đặt. Bạn thử lại sau hoặc mở Lịch đã đặt để kiểm tra.";failed=true;attempt="Tra cứu lịch cá nhân chưa thành công.";}
   }
   if("DOCTOR_LEAVE_SCHEDULE".equals(decision.category())&&!decision.needsClarification()){
    var lookup=lookupDoctorLeaveSchedule(decision,authorization,role);
@@ -85,16 +85,18 @@ class SupportAssistantService {
    answer=answer+"\n\nMình chưa thể xử lý chính xác trường hợp này. Mình sẽ chuyển cuộc trò chuyện cho bộ phận lễ tân hỗ trợ tiếp.";
   }
 
-  save(patientIdentityId,patientIdentityId,"AI",answer);
+  save(patientIdentityId,patientIdentityId,"AI",answer,escalate?List.of():bookingOptions);
   String summary=summary(question,decision,attempt,escalate?reason:null);
   var conversation=conversations.recordAiTurn(
    patientIdentityId,decision.category(),decision.intentConfidence(),failureCount,escalate,summary,reason
   );
+  conversations.rememberLookupContext(patientIdentityId,!escalate&&lookupIntent(decision.category())
+   ?new SupportLookupContext(decision.category(),decision.doctorName(),decision.requestedDate(),decision.requestedTime()):null);
   if(escalate){
    save(patientIdentityId,patientIdentityId,"SYSTEM","Đã tự động chuyển cuộc trò chuyện đến lễ tân. Lễ tân sẽ tiếp tục hỗ trợ bạn tại đây.");
   }
   updates.chatChanged();
-  return new TurnResult(answer,decision.category(),decision.intentConfidence(),escalate,conversation.channelStatus,escalate?reason:null);
+  return new TurnResult(answer,decision.category(),decision.intentConfidence(),escalate,conversation.channelStatus,escalate?reason:null,escalate?List.of():bookingOptions);
  }
 
  private AvailabilityAnswer lookupAvailability(SupportAiClient.Decision decision,UUID patientIdentityId,String authorization,String role){
@@ -103,6 +105,14 @@ class SupportAssistantService {
    var result=scheduling.lookupAvailability(decision.doctorName(),date,patientIdentityId,authorization,role);
    String displayDate=date.format(DateTimeFormatter.ofPattern("dd/MM/yyyy"));
    LocalTime requestedTime=decision.requestedTime()==null||decision.requestedTime().isBlank()?null:LocalTime.parse(decision.requestedTime());
+   if("CLINIC_CLOSED".equals(result.status())){
+    String reason=result.closureReason()==null||result.closureReason().isBlank()?"":" Lý do: "+result.closureReason();
+    return new AvailabilityAnswer("Phòng khám nghỉ ngày "+displayDate+" nên không thể đặt lịch với Bác sĩ "+result.doctorName()+" trong ngày này."+reason+" Bạn vui lòng chọn ngày khác.",false,"Đã xác nhận phòng khám nghỉ; giữ nguyên lý do đóng cửa.");
+   }
+   if("DOCTOR_ON_LEAVE".equals(result.status()))
+    return new AvailabilityAnswer("Bác sĩ "+result.doctorName()+" nghỉ theo lịch đã được admin duyệt trong các ca khám ngày "+displayDate+". Bạn vui lòng chọn ngày khác hoặc bác sĩ khác.",false,"Tất cả khung giờ khám trong ngày nằm trong lịch nghỉ đã được duyệt.");
+   if("NO_WORK_SCHEDULE".equals(result.status()))
+    return new AvailabilityAnswer("Bác sĩ "+result.doctorName()+" chưa có ca làm việc ngày "+displayDate+", nên chưa thể đặt lịch trong ngày này. Bạn vui lòng chọn ngày khác hoặc bác sĩ khác.",false,"Không có ca làm việc áp dụng cho ngày yêu cầu.");
    boolean requestedTimeOnLeave=requestedTime!=null&&result.leaveSlots().stream().anyMatch(item->item.startAt().atZone(CLINIC_ZONE).toLocalTime().equals(requestedTime));
    if(requestedTimeOnLeave){
     String displayTime=requestedTime.format(DateTimeFormatter.ofPattern("HH:mm"));
@@ -112,7 +122,7 @@ class SupportAssistantService {
     String displayTime=requestedTime.format(DateTimeFormatter.ofPattern("HH:mm"));
     boolean exact=result.items().stream().anyMatch(item->item.startAt().atZone(CLINIC_ZONE).toLocalTime().equals(requestedTime));
     if(exact){
-     return new AvailabilityAnswer("Khung giờ "+displayTime+" của Bác sĩ "+result.doctorName()+" ngày "+displayDate+" hiện còn trống. Bạn mở mục Lịch khám để chọn và xác nhận; khung giờ chỉ được giữ sau khi bạn chọn slot.",false,"Đã tra cứu availability thật và xác nhận đúng khung giờ "+displayTime+" còn trống.");
+     return new AvailabilityAnswer("Khung giờ "+displayTime+" của Bác sĩ "+result.doctorName()+" ngày "+displayDate+" hiện còn trống. Bạn mở mục Lịch khám để chọn và xác nhận; khung giờ chỉ được giữ sau khi bạn chọn slot.",false,"Đã tra cứu availability thật và xác nhận đúng khung giờ "+displayTime+" còn trống.",options(result.items(),requestedTime));
     }
     // Return nearby real slots instead of inventing an alternative time.
     String nearby=result.items().stream()
@@ -121,18 +131,20 @@ class SupportAssistantService {
      .map(item->item.startAt().atZone(CLINIC_ZONE).format(DateTimeFormatter.ofPattern("HH:mm")))
      .reduce((a,b)->a+", "+b).orElse("");
     String suggestion=nearby.isBlank()?"":" Các giờ còn trống gần nhất: "+nearby+".";
-    return new AvailabilityAnswer("Khung giờ "+displayTime+" của Bác sĩ "+result.doctorName()+" ngày "+displayDate+" hiện không còn trống hoặc không nằm trong ca làm việc."+suggestion,false,"Đã tra cứu availability thật; khung giờ "+displayTime+" không có trong danh sách slot trống.");
+    return new AvailabilityAnswer("Khung giờ "+displayTime+" của Bác sĩ "+result.doctorName()+" ngày "+displayDate+" hiện không còn trống hoặc không nằm trong ca làm việc."+suggestion,false,"Đã tra cứu availability thật; khung giờ "+displayTime+" không có trong danh sách slot trống.",options(result.items(),requestedTime));
    }
    return switch(result.status()){
     case "FOUND" -> {
      String slots=result.items().stream().limit(8).map(item->item.startAt().atZone(CLINIC_ZONE).format(DateTimeFormatter.ofPattern("HH:mm"))).reduce((a,b)->a+", "+b).orElse("");
      String leaveNotice=result.doctorOnLeave()?" Lưu ý: Bác sĩ có khoảng nghỉ đã được admin duyệt trong ngày này; các khung trên là thời gian còn làm việc.":"";
-     yield new AvailabilityAnswer("Bác sĩ "+result.doctorName()+" còn các khung giờ ngày "+displayDate+": "+slots+". Bạn mở mục Lịch khám để chọn và xác nhận giờ phù hợp."+leaveNotice,false,"Đã tra cứu availability thật và tìm thấy "+result.items().size()+" khung giờ."+(result.doctorOnLeave()?" Có khoảng nghỉ đã được admin duyệt trong ngày.":""));
+     yield new AvailabilityAnswer("Bác sĩ "+result.doctorName()+" còn các khung giờ ngày "+displayDate+": "+slots+". Bạn mở mục Lịch khám để chọn và xác nhận giờ phù hợp."+leaveNotice,false,"Đã tra cứu availability thật và tìm thấy "+result.items().size()+" khung giờ."+(result.doctorOnLeave()?" Có khoảng nghỉ đã được admin duyệt trong ngày.":""),options(result.items(),null));
     }
     case "NO_SLOTS" -> {
-     String timePrefix=requestedTime==null?"":"Khung giờ "+requestedTime.format(DateTimeFormatter.ofPattern("HH:mm"))+" không còn trống; ";
-     String leaveNotice=result.doctorOnLeave()?" Bác sĩ có lịch nghỉ đã được admin duyệt trong ngày này, nên bạn vui lòng chọn ngày khác hoặc bác sĩ khác.":" Bạn có thể hỏi một ngày khác để mình kiểm tra tiếp.";
-     yield new AvailabilityAnswer(timePrefix+"Bác sĩ "+result.doctorName()+" hiện không còn khung giờ trống ngày "+displayDate+"."+leaveNotice,false,"Đã tra cứu availability thật; ngày yêu cầu không còn slot."+(result.doctorOnLeave()?" Có lịch nghỉ đã được admin duyệt.":""));
+     String answer=result.doctorOnLeave()
+      ?"Bác sĩ "+result.doctorName()+" có khoảng nghỉ đã được admin duyệt ngày "+displayDate+". Các khung giờ còn lại hiện không có giờ có thể đặt. Bạn vui lòng chọn ngày khác hoặc bác sĩ khác."
+      :"Bác sĩ "+result.doctorName()+" hiện không còn khung giờ có thể đặt ngày "+displayDate+". Bạn có thể hỏi một ngày khác để mình kiểm tra tiếp.";
+     String timeNote=requestedTime==null?"":" Khung giờ "+requestedTime.format(DateTimeFormatter.ofPattern("HH:mm"))+" không thể đặt trong ngày này.";
+     yield new AvailabilityAnswer(answer+timeNote,false,"Đã tra cứu lịch thật; không còn giờ có thể đặt."+(result.doctorOnLeave()?" Có khoảng nghỉ đã được duyệt trong ngày.":""));
     }
     case "AMBIGUOUS" -> new AvailabilityAnswer("Mình tìm thấy nhiều bác sĩ phù hợp: "+String.join(", ",result.candidates())+". Bạn cho mình biết chính xác bác sĩ muốn xem nhé.",true,"Tên bác sĩ chưa đủ rõ để tra cứu.");
     default -> new AvailabilityAnswer("Mình chưa tìm thấy bác sĩ “"+decision.doctorName()+"”. Các bác sĩ hiện có: "+String.join(", ",result.candidates())+". Bạn kiểm tra lại tên giúp mình nhé.",true,"Không tìm thấy bác sĩ trong dữ liệu thật.");
@@ -312,6 +324,10 @@ class SupportAssistantService {
   return value.length()<=320?value:value.substring(0,317)+"...";
  }
 
+ private boolean lookupIntent(String intent){
+  return Set.of("DOCTOR_AVAILABILITY","DOCTOR_LEAVE_SCHEDULE","CLINIC_CLOSURE").contains(intent);
+ }
+
  private String escalationReason(SupportAiClient.Decision decision,boolean lowConfidence,int failureCount){
   if(decision.requiresHandoff())return "MANDATORY_"+decision.category();
   if(lowConfidence)return "LOW_CONFIDENCE";
@@ -326,12 +342,23 @@ class SupportAssistantService {
  }
 
  private SupportMessage save(UUID patientIdentityId,UUID senderIdentityId,String role,String body){
-  var item=new SupportMessage();item.id=UUID.randomUUID();item.patientIdentityId=patientIdentityId;item.senderIdentityId=senderIdentityId;item.senderRole=role;item.body=body.length()<=2000?body:body.substring(0,2000);item.sentAt=Instant.now();return messages.save(item);
+  return save(patientIdentityId,senderIdentityId,role,body,List.of());
+ }
+ private SupportMessage save(UUID patientIdentityId,UUID senderIdentityId,String role,String body,List<SupportBookingOption> options){
+  var item=new SupportMessage();item.bookingOptions=options;item.id=UUID.randomUUID();item.patientIdentityId=patientIdentityId;item.senderIdentityId=senderIdentityId;item.senderRole=role;item.body=body.length()<=2000?body:body.substring(0,2000);item.sentAt=Instant.now();return messages.save(item);
  }
 
- record AvailabilityAnswer(String answer,boolean failed,String attempt){}
+ private List<SupportBookingOption> options(List<SchedulingRecommendationService.AvailabilityItem> items,LocalTime requested){
+  return items.stream().filter(item->"AVAILABLE".equals(item.status()))
+   .sorted(requested==null?Comparator.comparing(SchedulingRecommendationService.AvailabilityItem::startAt):
+    Comparator.comparingLong(item->Math.abs(Duration.between(requested,item.startAt().atZone(CLINIC_ZONE).toLocalTime()).toMinutes())))
+   .limit(8).map(item->new SupportBookingOption(item.doctorId(),item.doctorName(),item.startAt(),item.endAt())).toList();
+ }
+ record AvailabilityAnswer(String answer,boolean failed,String attempt,List<SupportBookingOption> bookingOptions){
+  AvailabilityAnswer(String answer,boolean failed,String attempt){this(answer,failed,attempt,List.of());}
+ }
  record DoctorLeaveScheduleAnswer(String answer,boolean failed,String attempt){}
  record ClinicClosureAnswer(String answer,boolean failed,String attempt){}
  record DoctorInformationAnswer(String answer,boolean failed,String attempt){}
- record TurnResult(String answer,String intent,double intentConfidence,boolean escalated,String conversationStatus,String escalationReason){}
+ record TurnResult(String answer,String intent,double intentConfidence,boolean escalated,String conversationStatus,String escalationReason,List<SupportBookingOption> bookingOptions){}
 }

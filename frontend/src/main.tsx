@@ -11,6 +11,10 @@ import AppHeader from "./components/AppHeader";
 import AppFooter from "./components/AppFooter";
 import PasswordRequirements from "./components/PasswordRequirements";
 import { authErrorMessage, isPasswordValid, passwordValidationMessage, PASSWORD_MAX_LENGTH, PASSWORD_MIN_LENGTH } from "./core/passwordPolicy";
+import { doctorBookingUrl, resolveBookingReturn } from "./core/bookingReturn";
+import { SUPPORT_BOOKING_EVENT, chatBookingDate, validChatBooking, type ChatBookingRequest } from "./features/support/supportBooking";
+import { clearPatientNavigation, isPaymentReturn, patientLandingTab } from "./core/patientNavigation";
+import { effectiveDoctorSchedules, type ClinicSchedule } from "./core/clinicSchedule";
 import { NAVIGATION_BY_ROLE, ROLE_NAMES, type AppNavItemId } from "./core/appNavigation";
 import "./styles/design-system.css";
 import "./styles/global.css";
@@ -40,6 +44,7 @@ const DoctorRoute = lazy(() => import("./routes/DoctorRoute"));
 const ReceptionistRoute = lazy(() => import("./routes/ReceptionistRoute"));
 const AdminRoute = lazy(() => import("./routes/AdminRoute"));
 const PharmacyRoute = lazy(() => import("./routes/PharmacyRoute"));
+const AdminNotifications = lazy(() => import("./features/admin/AdminNotifications"));
 const AdminPanel = lazy(() => import("./features/admin/AdminPanel"));
 const ReceptionWorkspace = lazy(() => import("./features/reception/ReceptionWorkspace"));
 const PharmacyModule = lazy(() => import("./features/pharmacy/PharmacyModule"));
@@ -120,6 +125,7 @@ function App() {
     const [paymentReturnProcessing, setPaymentReturnProcessing] = useState(() => ["/payment/success", "/payment/cancel"].includes(window.location.pathname));
     const sessionRef = useRef(session);
     const sessionChannelRef = useRef<BroadcastChannel | null>(null);
+    const loginDestinationRef = useRef<"appointments" | "ai" | undefined>(undefined);
 
     function applySession(next: Tokens | null, notifyOtherTabs = false) {
         if (next) {
@@ -137,6 +143,7 @@ function App() {
             sessionStorage.removeItem(ACCOUNT_LOCKED_STORAGE_KEY);
             setAccountLocked(false);
         } else {
+            clearPatientNavigation();
             localStorage.removeItem(SESSION_STORAGE_KEY);
             sessionStorage.removeItem(SESSION_STORAGE_KEY);
         }
@@ -314,13 +321,18 @@ function App() {
         const cancelled = params.get("cancel") === "true" || params.get("status") === "CANCELLED";
 
         const pendingInvoicePayment = sessionStorage.getItem("dermai-pending-invoice-payment");
-        const finish = (notice: { tone: "info" | "success" | "error"; text: string }, destination: "appointments" | "billing" = "appointments") => {
+        const finish = async (notice: { tone: "info" | "success" | "error"; text: string }, destination: "appointments" | "billing" = "appointments", bookingId?: string) => {
+            if (!active) return;
+            const target = destination === "appointments" && /^[0-9]+$/.test(orderCode)
+                ? await resolveBookingReturn(sessionStorage.getItem("dermai-pending-payment"), orderCode, bookingId,
+                    id => request<Appointment>("/appointments/" + encodeURIComponent(id), session.accessToken))
+                : undefined;
             if (!active) return;
             sessionStorage.setItem("derm-home-intent", destination);
             sessionStorage.setItem("dermai-payment-notice", JSON.stringify(notice));
             sessionStorage.removeItem("dermai-pending-payment");
             sessionStorage.removeItem("dermai-pending-invoice-payment");
-            window.location.replace("/");
+            window.location.replace(doctorBookingUrl(target));
         };
 
         if (!/^[0-9]+$/.test(orderCode)) {
@@ -330,12 +342,12 @@ function App() {
 
         if (isSuccessReturn && !cancelled) {
             const endpoint = pendingInvoicePayment ? "/payments/invoices/" + orderCode + "/reconcile" : "/payments/" + orderCode + "/reconcile";
-            request<{ status: string; invoiceId?: string }>(endpoint, session.accessToken, { method: "POST" })
+            request<{ status: string; invoiceId?: string; bookingId?: string }>(endpoint, session.accessToken, { method: "POST" })
                 .then(result => {
                     const isInvoice = Boolean(pendingInvoicePayment || result.invoiceId);
-                    finish(result.status === "SUCCESS"
+                    return finish(result.status === "SUCCESS"
                         ? { tone: "success", text: isInvoice ? "Thanh toán hóa đơn thành công. Trạng thái hóa đơn đã được cập nhật." : "Thanh toán cọc thành công. Yêu cầu đang chờ lễ tân kiểm tra và xác nhận." }
-                        : { tone: "info", text: isInvoice ? "Hệ thống đang đối soát hóa đơn. Trạng thái sẽ tự cập nhật." : "Hệ thống đang đối soát giao dịch. Trạng thái lịch sẽ tự cập nhật." }, isInvoice ? "billing" : "appointments");
+                        : { tone: "info", text: isInvoice ? "Hệ thống đang đối soát hóa đơn. Trạng thái sẽ tự cập nhật." : "Hệ thống đang đối soát giao dịch. Trạng thái lịch sẽ tự cập nhật." }, isInvoice ? "billing" : "appointments", result.bookingId);
                 })
                 .catch(error => finish({ tone: "error", text: (error as Error).message }, pendingInvoicePayment ? "billing" : "appointments"));
             return () => { active = false };
@@ -346,25 +358,36 @@ function App() {
             return () => { active = false };
         }
 
-        request<{ status: string }>((pendingInvoicePayment ? "/payments/invoices/" : "/payments/") + orderCode + "/cancel", session.accessToken, { method: "POST" })
+        request<{ status: string; bookingId?: string }>((pendingInvoicePayment ? "/payments/invoices/" : "/payments/") + orderCode + "/cancel", session.accessToken, { method: "POST" })
             .then(result => finish({
                 tone: "success",
                 text: pendingInvoicePayment ? "Đã hủy thanh toán hóa đơn. Bạn có thể thanh toán lại khi cần."
                     : result.status === "EXPIRED"
                     ? "Đơn thanh toán đã hết hạn và khung giờ đã được trả lại."
                     : "Đã hủy thanh toán và trả lại khung giờ khám.",
-            }, pendingInvoicePayment ? "billing" : "appointments"))
+            }, pendingInvoicePayment ? "billing" : "appointments", result.bookingId))
             .catch(error => finish({ tone: "error", text: (error as Error).message }, pendingInvoicePayment ? "billing" : "appointments"));
 
         return () => { active = false };
     }, [session?.accessToken, session?.role, sessionRecoveryReady]);
+    function completeLogin(tokens: Tokens) {
+        if (!applySession(tokens, true)) return;
+        if (tokens.role === "PATIENT" && !isPaymentReturn(window.location.pathname)) {
+            const destination = loginDestinationRef.current || "profile";
+            clearPatientNavigation(destination === "appointments");
+            sessionStorage.setItem("derm-home-intent", destination);
+        }
+        loginDestinationRef.current = undefined;
+        setAuthNotice("");setAuthOpen(false);
+    }
     function openHomeAuth(destination?: "appointments" | "ai") {
+        loginDestinationRef.current = destination;
         if (destination) sessionStorage.setItem("derm-home-intent", destination);
         else sessionStorage.removeItem("derm-home-intent");
         setAuthNotice("");
         setAuthOpen(true);
     }
-    if (!session) return <Suspense fallback={<State text="Đang tải giao diện..." />}><PublicRoute>{accountLocked ? <LockedAccount onHome={() => { localStorage.removeItem(ACCOUNT_LOCKED_STORAGE_KEY); sessionStorage.removeItem(ACCOUNT_LOCKED_STORAGE_KEY); setAccountLocked(false); }} /> : forgotOpen ? <ForgotPassword close={() => setForgotOpen(false)} /> : authOpen ? <><button className="auth-home" onClick={() => setAuthOpen(false)}><X /> Về trang chủ</button><Login notice={authNotice} onForgotPassword={() => setForgotOpen(true)} onAccountLocked={() => lockAccount(true)} onLogin={tokens => { localStorage.removeItem(ACCOUNT_LOCKED_STORAGE_KEY); sessionStorage.removeItem(ACCOUNT_LOCKED_STORAGE_KEY); setAccountLocked(false); if (applySession(tokens, true)) setAuthNotice("") }} /></> : <HomePage openAuth={openHomeAuth} chat={<ChatBox openAuth={() => openHomeAuth("appointments")} />} />}</PublicRoute></Suspense>
+    if (!session) return <Suspense fallback={<State text="Đang tải giao diện..." />}><PublicRoute>{accountLocked ? <LockedAccount onHome={() => { localStorage.removeItem(ACCOUNT_LOCKED_STORAGE_KEY); sessionStorage.removeItem(ACCOUNT_LOCKED_STORAGE_KEY); setAccountLocked(false); }} /> : forgotOpen ? <ForgotPassword close={() => setForgotOpen(false)} /> : authOpen ? <><button className="auth-home" onClick={() => setAuthOpen(false)}><X /> Về trang chủ</button><Login notice={authNotice} onForgotPassword={() => setForgotOpen(true)} onAccountLocked={() => lockAccount(true)} onLogin={completeLogin} /></> : <HomePage openAuth={openHomeAuth} chat={<ChatBox openAuth={() => openHomeAuth("appointments")} />} />}</PublicRoute></Suspense>
     if (!sessionRecoveryReady) return <State text="Đang khôi phục phiên đăng nhập..." />;
 
     if (paymentReturnProcessing) return <State text="Đang đối soát trạng thái thanh toán..." />;
@@ -373,7 +396,8 @@ function App() {
         // Revoke the refresh token server-side, then clear the local session immediately.
         void request("/auth/logout", undefined, { method: "POST", body: JSON.stringify({ refreshToken: session!.refreshToken }) }).catch(() => undefined);
         applySession(null, true);
-        setAuthNotice("");
+        loginDestinationRef.current = undefined;
+        setAuthOpen(false);setForgotOpen(false);setAuthNotice("");
     }
 
     const workspace = <><Dashboard key={session.accessToken} session={session} logout={logout} />{session.role === "PATIENT" && <PatientNotifications session={session} />}{session.role === "RECEPTIONIST" && <><ReceptionNotifications session={session} /><ReceptionHotlineBooking session={session} /></>}{["PATIENT", "RECEPTIONIST"].includes(session.role) && <SupportChat session={session} />}</>;
@@ -608,12 +632,24 @@ function Login({ onLogin, onForgotPassword, onAccountLocked, notice = "" }: { on
     </form></div>;
 }
 function Dashboard({ session, logout }: { session: Tokens; logout: () => void }) {
+    const [chatBooking, setChatBooking] = useState<ChatBookingRequest | undefined>();
+    useEffect(() => {
+        if (session.role !== "PATIENT") return;
+        const choose = (event: Event) => {
+            const option = (event as CustomEvent<unknown>).detail;
+            if (!validChatBooking(option)) return;
+            sessionStorage.removeItem("derm-home-booking");
+            sessionStorage.removeItem("derm-home-intent");
+            window.history.replaceState(window.history.state, "", doctorBookingUrl({ doctorId: option.doctorId, date: chatBookingDate(option) }));
+            setChatBooking({ ...option, requestId: crypto.randomUUID() });
+            setTab("appointments");
+        };
+        window.addEventListener(SUPPORT_BOOKING_EVENT, choose);
+        return () => window.removeEventListener(SUPPORT_BOOKING_EVENT, choose);
+    }, [session.role]);
     const [tab, setTab] = useState<AppNavItemId>(() => {
         if (session.role !== "PATIENT") return "profile";
-        const intent = sessionStorage.getItem("derm-home-intent");
-        if (sessionStorage.getItem("derm-home-booking") || intent === "appointments") return "appointments";
-        if (intent === "billing") return "billing";
-        return intent === "ai" ? "ai" : "profile";
+        return patientLandingTab(window.location.search, sessionStorage.getItem("derm-home-intent"), Boolean(sessionStorage.getItem("derm-home-booking")));
     }); const [patient, setPatient] = useState<Patient | null>(null); const [doctor, setDoctor] = useState<Doctor | null>(null); const [appointments, setAppointments] = useState<Appointment[]>([]); const [records, setRecords] = useState<MedicalRecord[]>([]); const [prescriptions, setPrescriptions] = useState<Prescription[]>([]); const [patients, setPatients] = useState<Record<string, Patient>>({}); const [work, setWork] = useState<WorkSchedule[]>([]); const [leave, setLeave] = useState<LeavePeriod[]>([]); const [loading, setLoading] = useState(true); const [error, setError] = useState("");
     const [patientResourceState, setPatientResourceState] = useState({
         appointments: { loading: true, error: "" },
@@ -673,7 +709,8 @@ function Dashboard({ session, logout }: { session: Tokens; logout: () => void })
         const from = new Date(); from.setDate(from.getDate() - 90); from.setHours(0, 0, 0, 0); const to = new Date(); to.setFullYear(to.getFullYear() + 1);
         const [a, r] = await Promise.all([request<Appointment[]>(`/appointments/doctor/mine?from=${encodeURIComponent(from.toISOString())}&to=${encodeURIComponent(to.toISOString())}`, session.accessToken), request<MedicalRecord[]>("/medical-records/doctor/mine", session.accessToken)]);
         const unique = [...new Set(a.map(x => x.patientId))]; const entries = await Promise.all(unique.map(async id => [id, await request<Patient>(`/patients/${id}`, session.accessToken)] as const));
-        setDoctor(d); setWork(schedule.workSchedules); setLeave(schedule.leavePeriods); setAppointments(a); setRecords(r); setPatients(Object.fromEntries(entries));
+        const clinic = await request<ClinicSchedule>("/appointments/clinic-schedule/overview", session.accessToken, { cache: "no-store" });
+        setDoctor(d); setWork(effectiveDoctorSchedules(clinic, schedule.workSchedules)); setLeave(schedule.leavePeriods); setAppointments(a); setRecords(r); setPatients(Object.fromEntries(entries));
     }
     useEffect(() => {
         let live = true;
@@ -786,6 +823,10 @@ function Dashboard({ session, logout }: { session: Tokens; logout: () => void })
     }, [session]);
     async function transition(id: string, action: "start" | "complete") { setError(""); try { await request(`/appointments/${id}/${action}`, session.accessToken, { method: "POST" }); await loadDoctor() } catch (x) { setError((x as Error).message); throw x } }
     async function requireFollowUp(id: string, reason: string, notBefore: string) { setError(""); try { await request(`/appointments/${id}/require-follow-up`, session.accessToken, { method: "POST", body: JSON.stringify({ reason, notBefore }) }); await loadDoctor() } catch (x) { setError((x as Error).message); throw x } }
+    function navigate(destination: AppNavItemId) {
+        if (session.role === "PATIENT" && destination !== "appointments") { clearPatientNavigation();setChatBooking(undefined); }
+        setTab(destination);
+    }
     const roleName = ROLE_NAMES[session.role];
     const navItems = NAVIGATION_BY_ROLE[session.role];
     const displayName = session.role === "PATIENT"
@@ -803,11 +844,21 @@ function Dashboard({ session, logout }: { session: Tokens; logout: () => void })
             displayName={displayName}
             avatarSrc={headerAvatar}
             activeItem={tab}
+            notifications={session.role === "ADMIN" ? <AdminNotifications session={session} onNavigate={(destination, target) => {
+                setTab(destination);
+                let attempts = 0;
+                const reveal = () => {
+                    const section = document.getElementById(target);
+                    if (section) { section.scrollIntoView({ behavior: "smooth", block: "start" });section.focus({ preventScroll: true }); }
+                    else if (++attempts < 60) window.requestAnimationFrame(reveal);
+                };
+                window.requestAnimationFrame(reveal);
+            }} /> : undefined}
             items={navItems}
-            onNavigate={setTab}
+            onNavigate={navigate}
             onOpenAccount={session.role === "PATIENT" || session.role === "RECEPTIONIST"
                 ? (accountProfile ? () => setAccountDialogOpen(true) : undefined)
-                : session.role === "DOCTOR" ? () => setTab("profile") : undefined}
+                : session.role === "DOCTOR" ? () => navigate("profile") : undefined}
             onLogout={logout}
         />
         <main id="app-workspace-content" className="app-main" tabIndex={-1}>
@@ -819,12 +870,12 @@ function Dashboard({ session, logout }: { session: Tokens; logout: () => void })
             {!loading && !error && session.role === "RECEPTIONIST" && <ReceptionWorkspace token={session.accessToken} tab={tab} onNavigate={setTab} />}
             {!loading && !error && session.role === "PHARMACIST" && <PharmacyModule token={session.accessToken} tab={tab} onNavigate={setTab} />}
 
-            {!loading && !error && session.role === "PATIENT" && patient && tab === "profile" && <PatientDashboard token={session.accessToken} patient={patient} appointments={appointments} records={records} prescriptions={prescriptions} resourceState={patientResourceState} savedPatient={setPatient} changedAppointments={setAppointments} openAppointments={() => setTab("appointments")} openAppointmentHistory={() => setTab("appointment_history")} openAi={() => setTab("ai")} openRecords={() => setTab("records")} />}
-            {!loading && !error && session.role === "PATIENT" && patient && tab === "appointments" && <PatientAppointments token={session.accessToken} patient={patient} appointments={appointments} changed={setAppointments} />}
-            {!loading && !error && session.role === "PATIENT" && patient && tab === "appointment_history" && <PatientAppointmentHistory token={session.accessToken} patient={patient} appointments={appointments} changed={setAppointments} openBooking={() => setTab("appointments")} />}
-            {!loading && !error && session.role === "PATIENT" && patient && tab === "records" && <PatientMedicalRecords token={session.accessToken} patient={patient} appointments={appointments} records={records} prescriptions={prescriptions} resourceState={patientResourceState} openAppointments={() => setTab("appointments")} recordHidden={id => setRecords(current => current.filter(record => record.id !== id))} />}
+            {!loading && !error && session.role === "PATIENT" && patient && tab === "profile" && <PatientDashboard token={session.accessToken} patient={patient} appointments={appointments} records={records} prescriptions={prescriptions} resourceState={patientResourceState} savedPatient={setPatient} changedAppointments={setAppointments} openAppointments={() => navigate("appointments")} openAppointmentHistory={() => navigate("appointment_history")} openAi={() => navigate("ai")} openRecords={() => navigate("records")} />}
+            {!loading && !error && session.role === "PATIENT" && patient && tab === "appointments" && <PatientAppointments token={session.accessToken} patient={patient} appointments={appointments} changed={setAppointments} chatBooking={chatBooking} />}
+            {!loading && !error && session.role === "PATIENT" && patient && tab === "appointment_history" && <PatientAppointmentHistory token={session.accessToken} patient={patient} appointments={appointments} changed={setAppointments} openBooking={() => navigate("appointments")} />}
+            {!loading && !error && session.role === "PATIENT" && patient && tab === "records" && <PatientMedicalRecords token={session.accessToken} patient={patient} appointments={appointments} records={records} prescriptions={prescriptions} resourceState={patientResourceState} openAppointments={() => navigate("appointments")} recordHidden={id => setRecords(current => current.filter(record => record.id !== id))} />}
             {!loading && !error && session.role === "PATIENT" && patient && tab === "billing" && <PatientInvoices token={session.accessToken} />}
-            {!loading && !error && session.role === "PATIENT" && patient && tab === "ai" && <PatientAiScreen token={session.accessToken} patient={patient} openBooking={() => setTab("appointments")} />}
+            {!loading && !error && session.role === "PATIENT" && patient && tab === "ai" && <PatientAiScreen token={session.accessToken} patient={patient} openBooking={() => navigate("appointments")} />}
             {!loading && !error && session.role === "DOCTOR" && doctor && tab === "profile" && <DoctorProfile token={session.accessToken} doctor={doctor} work={work} leave={leave} saved={setDoctor} />}
             {!loading && !error && session.role === "DOCTOR" && doctor && tab === "appointments" && <DoctorView token={session.accessToken} doctor={doctor} appointments={appointments} records={records} patients={patients} work={work} leave={leave} transition={transition} requireFollowUp={requireFollowUp} recordSaved={record => setRecords(current => [...current.filter(item => item.id !== record.id), record])} />}
             {!loading && !error && session.role === "DOCTOR" && tab === "records" && <RecordList records={records} patients={patients} />}

@@ -18,6 +18,7 @@ gian thực và mô hình Computer Vision hỗ trợ bệnh nhân tham khảo �
 - Xem hồ sơ, mô tả, chuyên môn, kinh nghiệm, lịch trống và giá khám của bác sĩ.
 - Chọn bác sĩ, ngày, khung giờ, nhập lý do, thanh toán cọc qua PayOS và theo dõi
   bước lễ tân xác nhận lịch. Có thể yêu cầu hoàn cọc cho lịch đủ điều kiện.
+- Chat hỗ trợ trả nút giờ trống từ lịch thật; chọn giờ mở đúng bác sĩ/ngày/giờ và kiểm tra lại trước khi giữ chỗ. Hỏi “Lịch của tôi khi nào?” để xem lịch sắp tới, bác sĩ, trạng thái lịch và cọc của chính tài khoản đang đăng nhập.
 - Xem lịch sắp tới và lịch sử trong mục **Lịch đã đặt**, nhận thông báo. Trợ lý
   hỗ trợ tự động trả lời thủ tục đơn giản; yêu cầu cần thao tác được chuyển sang
   lễ tân realtime.
@@ -54,8 +55,11 @@ gian thực và mô hình Computer Vision hỗ trợ bệnh nhân tham khảo �
 
 ### Quản trị viên
 
+- Chuông thông báo ở thanh trên tổng hợp yêu cầu nghỉ phép, đánh giá chờ duyệt, hoàn tiền, thuốc sắp hết/gần hết hạn và lượt khám quá giờ. Bấm thông báo mở đúng mục xử lý; trạng thái đã đọc được lưu riêng cho từng admin.
+
 - Quản lý bệnh nhân, bác sĩ và tài khoản nhân sự.
-- Cấu hình giá khám từng bác sĩ và ngày phòng khám đóng cửa.
+- Cấu hình giá khám từng bác sĩ. Trong **Lịch phòng khám**, admin chọn ngày mở cửa (kể cả Chủ nhật), giờ làm việc từng ngày và ngày nghỉ riêng. Hệ thống chặn thay đổi nếu ảnh hưởng lịch khám đang hoạt động.
+- Khi admin lưu **Lịch phòng khám**, giờ làm việc tự áp dụng cho tất cả bác sĩ, kể cả bác sĩ tạo mới. Bệnh nhân thấy khung giờ của ngày vừa mở mà không cần cấu hình từng bác sĩ; nghỉ phép được duyệt, lịch đã đặt và ngày nghỉ riêng vẫn chặn đặt hẹn. Trước lần lưu đầu tiên, hệ thống dùng lịch bác sĩ hiện có.
 - Kiểm duyệt đánh giá, xem audit và giám sát hộp thư hỗ trợ.
 - Theo dõi dashboard vận hành và sửa trạng thái ca khám bị quên cập nhật.
 - Quản lý danh mục dịch vụ, mức cọc, đối soát hóa đơn/doanh thu và xem kho thuốc.

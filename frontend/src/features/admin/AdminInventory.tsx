@@ -282,7 +282,7 @@ export default function AdminInventory({ token }: { token: string }) {
         </div>
       </article>
 
-      <article className="admin-inventory__alert-card">
+      <article id="admin-low-stock-alerts" tabIndex={-1} className="admin-inventory__alert-card">
         <div className="admin-inventory__section-title"><div><span>CẢNH BÁO TỒN</span><h2>Thuốc cần nhập thêm</h2></div><b>{lowStock.length}</b></div>
         <div className="admin-inventory__alert-list">
           {lowStock.length === 0 ? <p className="admin-inventory__empty">Không có thuốc dưới định mức.</p> : lowStock.slice(0, 6).map(item => <div key={item.productId}>
@@ -292,7 +292,7 @@ export default function AdminInventory({ token }: { token: string }) {
         </div>
       </article>
 
-      <article className="admin-inventory__alert-card">
+      <article id="admin-expiring-alerts" tabIndex={-1} className="admin-inventory__alert-card">
         <div className="admin-inventory__section-title"><div><span>CẢNH BÁO HẠN DÙNG</span><h2>Lô cần ưu tiên xuất</h2></div><b>{expiring.length}</b></div>
         <div className="admin-inventory__alert-list">
           {expiring.length === 0 ? <p className="admin-inventory__empty">Không có lô sắp hết hạn.</p> : expiring.slice(0, 6).map(item => <div key={item.batchId}>

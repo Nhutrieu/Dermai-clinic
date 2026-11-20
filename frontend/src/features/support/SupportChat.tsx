@@ -7,6 +7,9 @@ import type { Appointment, AvailabilityResponse, AvailabilitySlot, Doctor, Patie
 import { newIncomingSupportMessages } from "./supportMessageModel";
 import SupportMessageText from "./SupportMessageText";
 import SupportMessageImage from "./SupportMessageImage";
+import SupportBookingOptions from "./SupportBookingOptions";
+import { SUPPORT_BOOKING_EVENT, validChatBooking } from "./supportBooking";
+import type { SupportBookingOption } from "../../core/types";
 import SupportAssistant, { type AssistantTurnResponse } from "./SupportAssistant";
 
 function tokenSubject(token: string) {
@@ -91,6 +94,10 @@ export default function SupportChat({ session }: { session: Tokens }) {
     const assignedToMe = receptionist && !!currentIdentityId && activeConversation?.assignedReceptionistIdentityId === currentIdentityId;
     const resolvedConversation = receptionist && activeConversation?.channelStatus === "AI_ACTIVE" && !!activeConversation.resolvedAt;
     const unread = admin ? [] : messages.filter(item => !item.readAt && (receptionist ? item.senderRole === "PATIENT" : item.senderRole !== "PATIENT"));
+    const waitingConversations = receptionist ? conversationStates.filter(item =>
+        item.channelStatus === "WAITING_RECEPTIONIST" && !item.assignedReceptionistIdentityId) : [];
+    const waitingIds = new Set(waitingConversations.map(item => item.patientIdentityId));
+    const notificationCount = waitingConversations.length + unread.filter(item => !waitingIds.has(item.patientIdentityId)).length;
     const showAssistant = !staffViewer && patientChannel === "assistant";
 
     function persistDismissedConversationSnapshots(snapshots: DismissedConversationSnapshots) {
@@ -205,6 +212,29 @@ export default function SupportChat({ session }: { session: Tokens }) {
             document.removeEventListener("visibilitychange", refresh);
         };
     }, [open, conversation]);
+
+    useEffect(() => {
+        if (!receptionist || open) return;
+        let live = true;
+        // Pending handoffs have no readable messages until claimed. Read the
+        // conversation states so the closed launcher still shows those requests.
+        const refresh = () => {
+            if (document.hidden) return;
+            void request<SupportConversation[]>("/appointments/support/conversations", session.accessToken)
+                .then(states => { if (live) setConversationStates(states); })
+                .catch(() => undefined);
+        };
+        refresh();
+        const timer = window.setInterval(refresh, 30_000);
+        window.addEventListener("focus", refresh);
+        document.addEventListener("visibilitychange", refresh);
+        return () => {
+            live = false;
+            window.clearInterval(timer);
+            window.removeEventListener("focus", refresh);
+            document.removeEventListener("visibilitychange", refresh);
+        };
+    }, [receptionist, open, session.accessToken]);
 
     useEffect(() => {
         // Browsers require a user gesture before Web Audio may play in a background update.
@@ -469,6 +499,12 @@ export default function SupportChat({ session }: { session: Tokens }) {
         }
     }
 
+    function openChatBooking(option: SupportBookingOption) {
+        if (!validChatBooking(option)) return;
+        window.dispatchEvent(new CustomEvent(SUPPORT_BOOKING_EVENT, { detail: option }));
+        setOpen(false);
+    }
+
     const patientLabel = (id: string) => patients[id]?.fullName || `Bệnh nhân · ${id.slice(0, 8)}`;
     const messageSender = (message: SupportMessage) => message.senderRole === "PATIENT"
         ? patientLabel(message.patientIdentityId)
@@ -488,16 +524,23 @@ export default function SupportChat({ session }: { session: Tokens }) {
     };
 
     return <div className={`support-chat ${staffViewer ? "receptionist-support-chat" : ""}`}>
-        <button className="support-launch" aria-label={open ? "Đóng hộp thư hỗ trợ" : admin ? "Giám sát hỗ trợ" : receptionist ? "Hộp thư hỗ trợ" : "Hỗ trợ"} aria-expanded={open} aria-controls="reception-support-panel" onClick={() => setOpen(!open)}>
+        <button className={"support-launch" + (waitingConversations.length ? " has-pending-handoff" : "")} aria-label={open ? "Đóng hộp thư hỗ trợ" : admin ? "Giám sát hỗ trợ" : receptionist ? "Hộp thư hỗ trợ" : "Hỗ trợ"}
+            aria-describedby={waitingConversations.length ? "support-handoff-status" : undefined}
+            title={waitingConversations.length ? `${waitingConversations.length} cuộc trò chuyện chờ lễ tân tiếp nhận` : undefined}
+            aria-expanded={open} aria-controls="reception-support-panel" onClick={() => {
+                if (!open && receptionist) restoreConversationCards([...waitingIds]);
+                setOpen(!open);
+            }}>
             {open ? <X aria-hidden="true" /> : <MessageCircle aria-hidden="true" />}
             <span className="support-launch-label">{open ? "Đóng" : admin ? "Giám sát hỗ trợ" : receptionist ? "Hộp thư hỗ trợ" : "Hỗ trợ"}</span>
-            {unread.length > 0 && <span className="support-badge">{unread.length > 99 ? "99+" : unread.length}</span>}
+            {notificationCount > 0 && <span className="support-badge">{notificationCount > 99 ? "99+" : notificationCount}</span>}
         </button>
+        <span id="support-handoff-status" className="sr-only" role="status">{waitingConversations.length ? `${waitingConversations.length} cuộc trò chuyện chờ lễ tân tiếp nhận` : ""}</span>
         {open && <section id="reception-support-panel" className="support-panel" aria-label={staffViewer ? "Hộp thư hỗ trợ bệnh nhân" : "Hỗ trợ Derm Clinic"}>
             <header>
                 <div>
                     <b>{admin ? "Giám sát hỗ trợ" : receptionist ? "Hỗ trợ bệnh nhân" : showAssistant ? "Trợ lý Derm" : "Lễ tân Derm"}</b>
-                    <small>{admin ? "Chế độ chỉ xem" : receptionist ? "Hộp thư chung của đội ngũ lễ tân" : showAssistant ? "Hỗ trợ thông tin trước khi kết nối nhân viên" : activeConversation?.assignedReceptionistIdentityId ? `Đang hỗ trợ: ${staffName(activeConversation.assignedReceptionistIdentityId)}` : "Đã chuyển yêu cầu · đang chờ lễ tân tiếp nhận"}</small>
+                    <small>{admin ? "Chế độ chỉ xem" : receptionist ? (waitingConversations.length ? `${waitingConversations.length} cuộc trò chuyện đang chờ tiếp nhận` : "Hộp thư chung của đội ngũ lễ tân") : showAssistant ? "Hỗ trợ thông tin trước khi kết nối nhân viên" : activeConversation?.assignedReceptionistIdentityId ? `Đang hỗ trợ: ${staffName(activeConversation.assignedReceptionistIdentityId)}` : "Đã chuyển yêu cầu · đang chờ lễ tân tiếp nhận"}</small>
                 </div>
                 {receptionist && conversation && assignedToMe && <button className="support-book-for" onClick={() => bookingOpen ? setBookingOpen(false) : openBooking()}>{bookingOpen ? "Quay lại chat" : "Đặt lịch hộ"}</button>}
             </header>
@@ -512,11 +555,13 @@ export default function SupportChat({ session }: { session: Tokens }) {
                     const state = conversationStates.find(item => item.patientIdentityId === id);
                     const mine = receptionist && state?.assignedReceptionistIdentityId === currentIdentityId;
                     const resolved = state?.channelStatus === "AI_ACTIVE" && !!state.resolvedAt;
-                    return <div className="support-conversation-card" key={id}>
+                    const waiting = waitingIds.has(id);
+                    const fromAi = waiting && !!state?.escalationReason && !["PATIENT_DIRECT_MESSAGE", "LEGACY_HUMAN_CONVERSATION"].includes(state.escalationReason);
+                    return <div className={"support-conversation-card" + (waiting ? " is-awaiting-reception" : "")} key={id}>
                         <button type="button" className={"support-conversation-select" + (conversation === id ? " active" : "")} onClick={() => { requestedConversationRef.current = id; setConversation(id); }}>
                         <b>{patientLabel(id)}</b>
                         <span>{patients[id]?.phone || "Chưa có số điện thoại"} · {messages.filter(item => item.patientIdentityId === id).length} tin{messages.some(item => item.patientIdentityId === id && item.senderRole === "PATIENT" && !item.readAt) && <i className="conversation-unread" />}</span>
-                        <em className={resolved ? "is-resolved" : !state?.assignedReceptionistIdentityId ? "is-unassigned" : mine ? "is-mine" : ""}>{resolved ? "Đã hoàn tất" : !state?.assignedReceptionistIdentityId ? "Chưa tiếp nhận" : mine ? "Bạn đang phụ trách" : staffName(state.assignedReceptionistIdentityId)}</em>
+                        <em className={resolved ? "is-resolved" : !state?.assignedReceptionistIdentityId ? "is-unassigned" : mine ? "is-mine" : ""}>{resolved ? "Đã hoàn tất" : waiting ? (fromAi ? "AI chuyển · Chờ tiếp nhận" : "Chờ tiếp nhận") : !state?.assignedReceptionistIdentityId ? "Chưa tiếp nhận" : mine ? "Bạn đang phụ trách" : staffName(state.assignedReceptionistIdentityId)}</em>
                         </button>
                         <button type="button" className="support-conversation-dismiss" aria-label={"\u0110\u00f3ng th\u1ebb h\u1ed9i tho\u1ea1i c\u1ee7a " + patientLabel(id)} title={"\u0110\u00f3ng th\u1ebb"} onClick={() => dismissConversationCard(id)}><X aria-hidden="true" /></button>
                     </div>;
@@ -532,7 +577,7 @@ export default function SupportChat({ session }: { session: Tokens }) {
                 </div>}
             </div>}
 
-            {showAssistant ? <SupportAssistant token={session.accessToken} messages={messages} onUpdated={assistantUpdated} /> : <>
+            {showAssistant ? <SupportAssistant token={session.accessToken} messages={messages} onUpdated={assistantUpdated} onBook={openChatBooking} /> : <>
             {handoffNotice && !staffViewer && <div className="support-handoff-confirmation" role="status" aria-live="polite">
                 <MessageCircle aria-hidden="true" />
                 <span><b>Đã chuyển yêu cầu của bạn đến lễ tân.</b><small>Lễ tân sẽ tiếp tục hỗ trợ trong cuộc trò chuyện này.</small></span>
@@ -549,7 +594,7 @@ export default function SupportChat({ session }: { session: Tokens }) {
             </form> : <>
                 <div ref={messageListRef} className="support-messages" role="log" aria-live="polite" aria-label="Nội dung trao đổi hỗ trợ">{visible.length === 0 ? <p>{staffViewer ? "Cuộc trò chuyện chưa có tin nhắn." : "Lễ tân chưa gửi tin nhắn mới. Bạn có thể bổ sung nội dung bên dưới."}</p> : visible.map(message => {
                     const mine=staffViewer ? message.senderIdentityId === currentIdentityId && message.senderRole === "RECEPTIONIST" : message.senderRole === "PATIENT";
-                    return <article className={message.senderRole === "SYSTEM" ? "system" : mine ? "mine" : "theirs"} key={message.id}><b>{messageSender(message)}</b><p><SupportMessageText body={messageBody(message)} /></p>{message.attachmentContentType && !admin && (!receptionist || assignedToMe) && <SupportMessageImage message={message} token={session.accessToken} />}<small>{new Date(message.sentAt).toLocaleString("vi-VN")}</small></article>;
+                    return <article className={message.senderRole === "SYSTEM" ? "system" : mine ? "mine" : "theirs"} key={message.id}><b>{messageSender(message)}</b><p><SupportMessageText body={messageBody(message)} /></p>{!staffViewer && message.senderRole === "AI" && <SupportBookingOptions options={message.bookingOptions} onChoose={openChatBooking} />}{message.attachmentContentType && !admin && (!receptionist || assignedToMe) && <SupportMessageImage message={message} token={session.accessToken} />}<small>{new Date(message.sentAt).toLocaleString("vi-VN")}</small></article>;
                 })}</div>
                 {admin ? <div className="support-monitor-note"><ShieldCheck aria-hidden="true" /><span><b>Chế độ giám sát</b><small>Admin có thể xem người phụ trách và nội dung nhưng không gửi tin thay lễ tân.</small></span></div> : receptionist && !assignedToMe ? <div className="support-reply-locked"><Headphones aria-hidden="true" /><span>{resolvedConversation ? "Yêu cầu đã hoàn tất. Bạn vẫn có thể xem lại toàn bộ lịch sử phía trên." : activeConversation?.assignedReceptionistIdentityId ? `Cuộc trò chuyện đang do ${staffName(activeConversation.assignedReceptionistIdentityId)} phụ trách.` : "Nhận xử lý để trả lời bệnh nhân."}</span></div> : <form className="support-composer" onSubmit={send}>
                     {imageFile && <div className="support-image-selection"><span>{imageFile.name} · {(imageFile.size / 1024 / 1024).toFixed(1)} MB</span><button type="button" onClick={() => setImageFile(null)} aria-label="Bỏ ảnh đã chọn"><X aria-hidden="true" /></button></div>}

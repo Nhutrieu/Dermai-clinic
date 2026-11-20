@@ -46,8 +46,16 @@ class ChatResponse(BaseModel):
     disclaimer: str
 
 
+class SupportLookupContext(BaseModel):
+    intent: str = Field(max_length=80)
+    doctor_name: str | None = Field(default=None, max_length=160)
+    requested_date: str | None = Field(default=None, max_length=10)
+    requested_time: str | None = Field(default=None, max_length=5)
+
+
 class SupportChatRequest(BaseModel):
     question: str = Field(min_length=1, max_length=1000)
+    lookup_context: SupportLookupContext | None = None
 
 
 class SupportChatResponse(BaseModel):

@@ -82,4 +82,24 @@ class SupportConversationServiceTest {
   assertThat(updated.aiSummary).isEqualTo("AI summary");
   assertThat(updated.escalationReason).isEqualTo("MANDATORY_CANCEL_APPOINTMENT");
  }
+ @Test void recentLookupContextSurvivesReloadButExpiredOrHandedOffContextIsIgnored(){
+  var repo=mock(SupportConversationRepository.class);var service=new SupportConversationService(repo);
+  var patient=UUID.randomUUID();var conversation=new SupportConversation(patient);
+  conversation.lookupContext=new SupportLookupContext("DOCTOR_AVAILABILITY","Bình",null,"08:00");
+  when(repo.findById(patient)).thenReturn(Optional.of(conversation));
+  assertThat(service.lookupContext(patient)).isEqualTo(conversation.lookupContext);
+  conversation.updatedAt=Instant.now().minusSeconds(1900);
+  assertThat(service.lookupContext(patient)).isNull();
+  conversation.updatedAt=Instant.now();conversation.channelStatus="WAITING_RECEPTIONIST";
+  assertThat(service.lookupContext(patient)).isNull();
+ }
+
+ @Test void escalationClearsTheLookupFields(){
+  var repo=mock(SupportConversationRepository.class);var service=new SupportConversationService(repo);
+  var patient=UUID.randomUUID();var conversation=new SupportConversation(patient);
+  conversation.lookupContext=new SupportLookupContext("DOCTOR_AVAILABILITY","Bình",null,"08:00");
+  when(repo.findById(patient)).thenReturn(Optional.of(conversation));when(repo.save(conversation)).thenReturn(conversation);
+  service.manualEscalate(patient);
+  assertThat(conversation.lookupContext).isNull();
+ }
 }

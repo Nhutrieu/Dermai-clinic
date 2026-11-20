@@ -27,9 +27,11 @@ class SupportAiClient {
   this.json=json;
  }
 
- Decision classify(String question){
+ Decision classify(String question){return classify(question,null);}
+
+ Decision classify(String question,SupportLookupContext context){
   try{
-   String payload=json.writeValueAsString(new Request(question));
+   String payload=json.writeValueAsString(new Request(question,context));
    var request=HttpRequest.newBuilder(endpoint)
     .header("Content-Type","application/json")
     .header("Accept","application/json")
@@ -53,7 +55,7 @@ class SupportAiClient {
   }
  }
 
- private record Request(String question){}
+ private record Request(String question,@JsonProperty("lookup_context") SupportLookupContext lookupContext){}
 
  @JsonIgnoreProperties(ignoreUnknown=true)
  record Decision(

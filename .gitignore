@@ -580,3 +580,6 @@ coverage/
 # Per-image identifiers from local evaluation runs; retain aggregate reports.
 /ai-service/reports/application_evaluation_20261110/execution_retries.json
 /ai-service/reports/frozen_test_comparison_20261113/protocol.json
+
+# Generated Vite dependency and build cache.
+.vite/

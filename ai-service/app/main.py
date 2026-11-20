@@ -175,7 +175,7 @@ async def support_chat(
     if x_user_role != "PATIENT":
         raise HTTPException(403, "Chỉ bệnh nhân được sử dụng trợ lý hỗ trợ.")
 
-    decision = classify_support_request(request.question)
+    decision = classify_support_request(request.question, request.lookup_context.model_dump() if request.lookup_context else None)
     if decision.category == "DERMATOLOGY_GENERAL":
         rag = state.get("rag")
         disease_key = rag_disease_key(request.question)
@@ -194,9 +194,9 @@ async def support_chat(
             answer = decision.answer
         else:
             answer = f"{rag_answer}\n\nThông tin trên chỉ mang tính tham khảo chung, không thay thế chẩn đoán hoặc chỉ định của bác sĩ."
-    elif decision.category == "DERMATOLOGY_VISIT_GUIDE":
-        # Preserve the reviewed care-seeking and emergency wording verbatim;
-        # generative polishing must not weaken a safety instruction.
+    elif decision.category in {"DERMATOLOGY_VISIT_GUIDE", "DOCTOR_AVAILABILITY", "DOCTOR_LEAVE_SCHEDULE", "CLINIC_CLOSURE", "APPOINTMENT_STATUS"}:
+        # Keep care guidance and missing-field questions deterministic. Lookup
+        # answers will be replaced by the appointment service using real data.
         answer = decision.answer
     else:
         answer = await polish_safe_answer(

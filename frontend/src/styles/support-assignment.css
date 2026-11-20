@@ -348,3 +348,29 @@ body:has(.receptionist-support-chat .support-panel) .reception-notification-laun
   opacity: 0 !important;
   pointer-events: none !important;
 }
+
+/* Keep waiting handoffs visible beside the notification bell until claimed. */
+.receptionist-support-chat .support-launch.has-pending-handoff {
+  background: #b91c1c !important;
+  color: #fff;
+  box-shadow: 0 0 0 4px #fee2e2, 0 10px 25px #991b1b33 !important;
+}
+
+.receptionist-support-chat .support-launch.has-pending-handoff:hover {
+  background: #991b1b !important;
+}
+
+.receptionist-support-chat .is-awaiting-reception .support-conversation-select {
+  border-color: #ef9a9a;
+  background: #fff1f2;
+}
+
+.receptionist-support-chat .is-awaiting-reception .support-conversation-select.active {
+  border-color: #b91c1c;
+  background: #fee2e2;
+}
+
+.receptionist-support-chat .is-awaiting-reception .support-conversation-select > b,
+.receptionist-support-chat .is-awaiting-reception .support-conversation-select > em {
+  color: #991b1b;
+}

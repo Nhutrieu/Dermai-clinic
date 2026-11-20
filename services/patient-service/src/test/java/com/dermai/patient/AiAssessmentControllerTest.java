@@ -100,6 +100,7 @@ class AiAssessmentControllerTest {
     entity.top3Json = "[{\"label\":\"Acne\",\"probability\":0.72}]";
     entity.modelVersion = "efficientnet-test";
     when(assessments.findByIdAndPatientIdentityIdAndDeletedAtIsNull(id, identity)).thenReturn(Optional.of(entity));
+    when(assessments.findFirstByPatientIdentityIdOrderByCreatedAtDesc(identity)).thenReturn(Optional.of(entity));
     when(assessments.findByPatientIdentityIdAndDeletedAtIsNullOrderByCreatedAtDesc(identity)).thenReturn(List.of(entity));
 
     var shared = controller.sharing(id, identity, "PATIENT", new AiAssessmentController.SharingBody(true, null));
@@ -131,6 +132,7 @@ class AiAssessmentControllerTest {
     entity.top3Json = "[{\"label\":\"Acne\",\"probability\":0.81}]";
     entity.modelVersion = "efficientnet-test";
     when(assessments.findByIdAndPatientIdentityIdAndDeletedAtIsNull(entity.id, identity)).thenReturn(Optional.of(entity));
+    when(assessments.findFirstByPatientIdentityIdOrderByCreatedAtDesc(identity)).thenReturn(Optional.of(entity));
     when(appointments.requireAccess(appointmentId, identity, "PATIENT"))
         .thenReturn(new AppointmentIdentityClient.AppointmentAccess(
             appointmentId, patient.id, identity, doctorIdentity, "ASSIGNED"));
@@ -150,4 +152,67 @@ class AiAssessmentControllerTest {
     assertEquals(HttpStatus.OK, doctorView.getStatusCode());
     assertEquals(entity.id, Objects.requireNonNull(doctorView.getBody()).id());
   }
+  @Test
+  void deletingNewestResultDoesNotPromoteAnOlderImageForBooking() {
+    var older = sampleAssessment();
+    var newest = sampleAssessment();
+    older.sharedWithDoctor = true;
+    when(assessments.findFirstByPatientIdentityIdOrderByCreatedAtDesc(identity)).thenReturn(Optional.of(newest));
+    when(assessments.findByPatientIdentityIdAndDeletedAtIsNullOrderByCreatedAtDesc(identity)).thenReturn(List.of(newest, older));
+    when(assessments.findByIdAndPatientIdentityIdAndDeletedAtIsNull(newest.id, identity)).thenReturn(Optional.of(newest));
+    var before = controller.mine(identity, "PATIENT");
+    assertTrue(before.get(0).latestForBooking());
+    assertFalse(before.get(1).latestForBooking());
+    controller.delete(newest.id, identity, "PATIENT");
+    when(assessments.findByPatientIdentityIdAndDeletedAtIsNullOrderByCreatedAtDesc(identity)).thenReturn(List.of(older));
+    var after = controller.mine(identity, "PATIENT");
+    assertEquals(1, after.size());
+    assertEquals(older.id, after.get(0).id());
+    assertFalse(after.get(0).latestForBooking());
+    assertTrue(after.get(0).sharedWithDoctor());
+  }
+
+  @Test
+  void refusesAttachingAnOlderResultAfterNewestWasDeleted() {
+    var older = sampleAssessment();
+    var deletedNewest = sampleAssessment();deletedNewest.deletedAt = java.time.Instant.now();
+    var appointmentId = UUID.randomUUID();
+    when(assessments.findFirstByPatientIdentityIdOrderByCreatedAtDesc(identity)).thenReturn(Optional.of(deletedNewest));
+    when(assessments.findByIdAndPatientIdentityIdAndDeletedAtIsNull(older.id, identity)).thenReturn(Optional.of(older));
+    var error = assertThrows(ResponseStatusException.class, () -> controller.sharing(older.id, identity, "PATIENT",
+        new AiAssessmentController.SharingBody(true, appointmentId)));
+    assertEquals(HttpStatus.CONFLICT, error.getStatusCode());
+    assertNull(older.appointmentId);
+    verifyNoInteractions(appointments);
+    verify(assessments, never()).save(any());
+  }
+
+  @Test
+  void olderResultCannotBeEnabledAsANewBookingDraft() {
+    var older = sampleAssessment();var newest = sampleAssessment();
+    when(assessments.findFirstByPatientIdentityIdOrderByCreatedAtDesc(identity)).thenReturn(Optional.of(newest));
+    when(assessments.findByIdAndPatientIdentityIdAndDeletedAtIsNull(older.id, identity)).thenReturn(Optional.of(older));
+    assertThrows(ResponseStatusException.class, () -> controller.sharing(older.id, identity, "PATIENT",
+        new AiAssessmentController.SharingBody(true, null)));
+    verify(assessments, never()).save(any());
+  }
+
+  @Test
+  void historicalResultCanStillBeSharedWithItsExistingAppointment() {
+    var historical = sampleAssessment();var newest = sampleAssessment();
+    historical.appointmentId = UUID.randomUUID();
+    when(assessments.findFirstByPatientIdentityIdOrderByCreatedAtDesc(identity)).thenReturn(Optional.of(newest));
+    when(assessments.findByIdAndPatientIdentityIdAndDeletedAtIsNull(historical.id, identity)).thenReturn(Optional.of(historical));
+    var enabled = controller.sharing(historical.id, identity, "PATIENT", new AiAssessmentController.SharingBody(true, null));
+    assertTrue(enabled.sharedWithDoctor());
+    assertEquals(historical.appointmentId, enabled.appointmentId());
+    assertFalse(enabled.latestForBooking());
+  }
+
+  private AiAssessment sampleAssessment() {
+    var value = new AiAssessment(patient.id, identity);
+    value.predictedLabel = "Acne";value.confidence = .8;value.top3Json = "[]";value.modelVersion = "test";
+    return value;
+  }
+
 }

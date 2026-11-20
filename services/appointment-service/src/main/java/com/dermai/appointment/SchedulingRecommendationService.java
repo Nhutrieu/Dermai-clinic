@@ -25,21 +25,19 @@ public class SchedulingRecommendationService {
  private final SchedulingEngine engine;
  private final RestClient doctors;
  private final ClinicClosureRepository closures;
- private final String weeklyClosureDay;
+ private final ClinicScheduleService clinicSchedule;
 
- @Autowired SchedulingRecommendationService(AppointmentRepository appointments,ClinicClosureRepository closures,@Value("${doctor-service.url}") String doctorUrl,@Value("${clinic.weekly-closure-day:SUNDAY}") String weeklyClosureDay){
-  this(appointments,closures,RestClient.builder().baseUrl(doctorUrl).build(),weeklyClosureDay);
+ @Autowired SchedulingRecommendationService(AppointmentRepository appointments,ClinicClosureRepository closures,@Value("${doctor-service.url}") String doctorUrl,ClinicScheduleService clinicSchedule){
+  this(appointments,closures,RestClient.builder().baseUrl(doctorUrl).build(),clinicSchedule);
  }
 
- SchedulingRecommendationService(AppointmentRepository appointments,ClinicClosureRepository closures,RestClient doctors){
-  this(appointments,closures,doctors,"SUNDAY");
- }
-
- SchedulingRecommendationService(AppointmentRepository appointments,ClinicClosureRepository closures,RestClient doctors,String weeklyClosureDay){
-  this.appointments=appointments;this.closures=closures;this.engine=new SchedulingEngine();this.doctors=doctors;this.weeklyClosureDay=weeklyClosureDay==null?"SUNDAY":weeklyClosureDay.trim().toUpperCase(Locale.ROOT);
+ SchedulingRecommendationService(AppointmentRepository appointments,ClinicClosureRepository closures,RestClient doctors,ClinicScheduleService clinicSchedule){
+  this.appointments=appointments;this.closures=closures;this.engine=new SchedulingEngine();this.doctors=doctors;this.clinicSchedule=clinicSchedule;
  }
 
  public Result recommend(Request request,String authorization,String role){
+  var clinicSettings=clinicSchedule.snapshot();
+  var clinicWeek=clinicSettings.days();
   Instant now=Instant.now(),bookingLimit=now.plus(BOOKING_WINDOW_DAYS,java.time.temporal.ChronoUnit.DAYS);
   if(request.preferredStart()==null||request.preferredStart().isBefore(now))throw new IllegalArgumentException("PREFERRED_START_MUST_BE_IN_FUTURE");
   if(request.preferredStart().isAfter(bookingLimit))throw new IllegalArgumentException("BOOKING_TOO_FAR_AHEAD");
@@ -55,18 +53,18 @@ public class SchedulingRecommendationService {
   for(var doctor:doctorData){
    if(request.preferredDoctorId()!=null&&!request.preferredDoctorId().equals(doctor.id()))continue;
    if(request.specialtyCode()!=null&&!request.specialtyCode().isBlank()&&!request.specialtyCode().equalsIgnoreCase(doctor.specialtyCode()))continue;
-   for(var schedule:doctor.workSchedules()){
+   for(var schedule:effectiveWorkSchedules(doctor,clinicSettings)){
     LocalDate first=request.preferredStart().atZone(CLINIC_ZONE).toLocalDate();
     for(int day=0;day<=7;day++){
      LocalDate date=first.plusDays(day);
-     if(isWeeklyClinicClosure(date)||closures.existsByClosureDate(date))continue;
+     if(isWeeklyClinicClosure(date,clinicWeek)||closures.existsByClosureDate(date))continue;
      if(date.getDayOfWeek().getValue()!=schedule.weekday())continue;
      int duration=slotMinutesFor(doctor,schedule,date);
      ZonedDateTime cursor=ZonedDateTime.of(date,schedule.startTime(),CLINIC_ZONE);
      ZonedDateTime workEnd=ZonedDateTime.of(date,schedule.endTime(),CLINIC_ZONE);
      while(!cursor.plusMinutes(duration).isAfter(workEnd)){
       Instant start=cursor.toInstant(),end=cursor.plusMinutes(duration).toInstant();
-      if(!start.isBefore(request.preferredStart())&&start.isBefore(horizon)&&!overlapsLunch(cursor,cursor.plusMinutes(duration))){
+      if(!start.isBefore(request.preferredStart())&&start.isBefore(horizon)&&!overlapsLunch(cursor,cursor.plusMinutes(duration))&&ClinicScheduleService.covers(clinicWeek,start,end)){
        boolean leave=doctor.leavePeriods().stream().anyMatch(x->start.isBefore(x.endAt())&&end.isAfter(x.startAt()));
        boolean conflict=busy.stream().anyMatch(x->doctor.id().equals(x.doctorId)&&ACTIVE.contains(x.status)&&start.isBefore(x.endAt)&&end.isAfter(x.startAt));
        double specialty=request.specialtyCode()==null||request.specialtyCode().isBlank()?0.8:1;
@@ -87,23 +85,25 @@ public class SchedulingRecommendationService {
  }
 
  public Availability availability(UUID doctorId,LocalDate date,int duration,UUID viewerIdentity,String authorization,String role){
+  var clinicSettings=clinicSchedule.snapshot();
+  var clinicWeek=clinicSettings.days();
   if(duration!=SLOT_MINUTES)throw new IllegalArgumentException("APPOINTMENT_DURATION_FIXED_AT_30_MINUTES");
   LocalDate today=LocalDate.now(CLINIC_ZONE);
   if(date.isBefore(today)||date.isAfter(today.plusDays(BOOKING_WINDOW_DAYS)))throw new IllegalArgumentException("DATE_OUTSIDE_BOOKING_WINDOW");
   var doctor=loadDoctors(authorization,role).stream().filter(x->doctorId.equals(x.id())).findFirst().orElseThrow(()->new IllegalArgumentException("DOCTOR_NOT_AVAILABLE"));
-  if(isWeeklyClinicClosure(date))return new Availability(List.of(),CLINIC_ZONE.getId(),"CLINIC_CLOSED",weeklyClinicClosureReason(date));
+  if(isWeeklyClinicClosure(date,clinicWeek))return new Availability(List.of(),CLINIC_ZONE.getId(),"CLINIC_CLOSED",weeklyClinicClosureReason(date,clinicWeek));
   var clinicClosure=closures.findByClosureDate(date);
   if(clinicClosure.isPresent())return new Availability(List.of(),CLINIC_ZONE.getId(),"CLINIC_CLOSED",clinicClosure.get().reason);
   Instant dayStart=date.atStartOfDay(CLINIC_ZONE).toInstant(),dayEnd=date.plusDays(1).atStartOfDay(CLINIC_ZONE).toInstant();
   var busy=appointments.findActiveOverlapping(dayStart,dayEnd);
   var items=new ArrayList<AvailabilityItem>();
-  for(var schedule:doctor.workSchedules()){
+  for(var schedule:effectiveWorkSchedules(doctor,clinicSettings)){
    if(date.getDayOfWeek().getValue()!=schedule.weekday())continue;
    int slotDuration=slotMinutesFor(doctor,schedule,date);
    ZonedDateTime cursor=ZonedDateTime.of(date,schedule.startTime(),CLINIC_ZONE),workEnd=ZonedDateTime.of(date,schedule.endTime(),CLINIC_ZONE);
    while(!cursor.plusMinutes(slotDuration).isAfter(workEnd)){
     Instant start=cursor.toInstant(),end=cursor.plusMinutes(slotDuration).toInstant();
-    if(start.isAfter(Instant.now())&&!overlapsLunch(cursor,cursor.plusMinutes(slotDuration))){
+    if(start.isAfter(Instant.now())&&!overlapsLunch(cursor,cursor.plusMinutes(slotDuration))&&ClinicScheduleService.covers(clinicWeek,start,end)){
      boolean onLeave=doctor.leavePeriods().stream().anyMatch(x->start.isBefore(x.endAt())&&end.isAfter(x.startAt()));
      var conflict=busy.stream().filter(x->doctorId.equals(x.doctorId)&&ACTIVE.contains(x.status)&&start.isBefore(x.endAt)&&end.isAfter(x.startAt)).findFirst();
      boolean ownHold=conflict.filter(x->x.status==AppointmentStatus.HELD&&viewerIdentity.equals(x.patientIdentityId)).isPresent();
@@ -134,14 +134,24 @@ public class SchedulingRecommendationService {
   // slots alongside available slots so the support assistant can explain why
   // a requested date/time cannot be booked instead of reporting a generic gap.
   var availability=availability(doctor.id(),date,30,viewerIdentity,authorization,role);
+  if("CLINIC_CLOSED".equals(availability.status()))
+   return new AvailabilityLookup("CLINIC_CLOSED",doctor.fullName(),date,List.of(),List.of(),false,List.of(),availability.closureReason());
   var leaveSlots=availability.items().stream().filter(item->"ON_LEAVE".equals(item.status())).toList();
   var available=availability.items().stream().filter(item->"AVAILABLE".equals(item.status())).toList();
   boolean doctorOnLeave=doctor.leavePeriods().stream().anyMatch(leave->leave.startAt().isBefore(dayEnd)&&leave.endAt().isAfter(dayStart));
-  return new AvailabilityLookup(available.isEmpty()?"NO_SLOTS":"FOUND",doctor.fullName(),date,available,List.of(),doctorOnLeave,leaveSlots);
+  String status="FOUND";
+  if(available.isEmpty()){
+   if(!availability.items().isEmpty()&&leaveSlots.size()==availability.items().size())status="DOCTOR_ON_LEAVE";
+   else if(effectiveWorkSchedules(doctor,clinicSchedule.snapshot()).stream().noneMatch(schedule->schedule.weekday()==date.getDayOfWeek().getValue()))status="NO_WORK_SCHEDULE";
+   else status="NO_SLOTS";
+  }
+  return new AvailabilityLookup(status,doctor.fullName(),date,available,List.of(),doctorOnLeave,leaveSlots);
  }
 
  public ClinicClosureLookup lookupClinicClosure(LocalDate date){
-  if(isWeeklyClinicClosure(date))return new ClinicClosureLookup(date,true,weeklyClinicClosureReason(date));
+  var clinicSettings=clinicSchedule.snapshot();
+  var clinicWeek=clinicSettings.days();
+  if(isWeeklyClinicClosure(date,clinicWeek))return new ClinicClosureLookup(date,true,weeklyClinicClosureReason(date,clinicWeek));
   var closure=closures.findByClosureDate(date);
   return new ClinicClosureLookup(date,closure.isPresent(),closure.map(item -> item.reason).orElse(null));
  }
@@ -208,13 +218,16 @@ public class SchedulingRecommendationService {
  }
 
  public BigDecimal assertAvailable(UUID doctorId,Instant start,Instant end,UUID excludedAppointmentId,String authorization,String role){
+  var clinicSettings=clinicSchedule.snapshot();
+  var clinicWeek=clinicSettings.days();
   if(doctorId==null)return null;
   if(start==null||end==null||!start.isBefore(end)||start.isBefore(Instant.now()))throw new IllegalArgumentException("INVALID_INTERVAL");
   if(start.isAfter(Instant.now().plus(BOOKING_WINDOW_DAYS,java.time.temporal.ChronoUnit.DAYS)))throw new SlotUnavailableException("BOOKING_TOO_FAR_AHEAD");
   var doctor=loadDoctors(authorization,role).stream().filter(x->doctorId.equals(x.id())).findFirst().orElseThrow(()->new IllegalArgumentException("DOCTOR_NOT_AVAILABLE"));
   ZonedDateTime localStart=start.atZone(CLINIC_ZONE),localEnd=end.atZone(CLINIC_ZONE);
-  if(isWeeklyClinicClosure(localStart.toLocalDate())||closures.existsByClosureDate(localStart.toLocalDate()))throw new SlotUnavailableException("CLINIC_CLOSED");
-  boolean inWorkSchedule=doctor.workSchedules().stream().anyMatch(x->{
+  if(isWeeklyClinicClosure(localStart.toLocalDate(),clinicWeek)||closures.existsByClosureDate(localStart.toLocalDate()))throw new SlotUnavailableException("CLINIC_CLOSED");
+  if(!ClinicScheduleService.covers(clinicWeek,start,end))throw new SlotUnavailableException("OUTSIDE_CLINIC_WORK_SCHEDULE");
+  boolean inWorkSchedule=effectiveWorkSchedules(doctor,clinicSettings).stream().anyMatch(x->{
    if(localStart.getDayOfWeek().getValue()!=x.weekday()||!localStart.toLocalDate().equals(localEnd.toLocalDate()))return false;
    int configuredMinutes=slotMinutesFor(doctor,x,localStart.toLocalDate());
    boolean within=!localStart.toLocalTime().isBefore(x.startTime())&&!localEnd.toLocalTime().isAfter(x.endTime());
@@ -240,8 +253,15 @@ public class SchedulingRecommendationService {
    throw new ResponseStatusException(HttpStatus.CONFLICT,"Mã bác sĩ và tài khoản bác sĩ không khớp.");
   return doctor.fullName();
  }
- private boolean isWeeklyClinicClosure(LocalDate date){return !"NONE".equals(weeklyClosureDay)&&date.getDayOfWeek().name().equals(weeklyClosureDay);}
- private String weeklyClinicClosureReason(LocalDate date){return isWeeklyClinicClosure(date)?"Phòng khám nghỉ "+displayWeekday(date.getDayOfWeek())+".":null;}
+ private List<ScheduleData> effectiveWorkSchedules(DoctorData doctor,ClinicScheduleService.Schedule settings){
+  // A saved clinic schedule is shared by every doctor, including doctors added later.
+  // Legacy personal schedules remain effective only until the first clinic-wide save.
+  if(!settings.configured())return doctor.workSchedules();
+  return settings.days().stream().filter(ClinicScheduleService.Day::open)
+   .map(day->new ScheduleData(null,doctor.id(),(short)day.weekday(),day.startTime(),day.endTime(),SLOT_MINUTES)).toList();
+ }
+ private boolean isWeeklyClinicClosure(LocalDate date,List<ClinicScheduleService.Day> clinicWeek){return !ClinicScheduleService.forDate(clinicWeek,date).open();}
+ private String weeklyClinicClosureReason(LocalDate date,List<ClinicScheduleService.Day> clinicWeek){return isWeeklyClinicClosure(date,clinicWeek)?"Phòng khám nghỉ "+displayWeekday(date.getDayOfWeek())+".":null;}
  private String displayWeekday(DayOfWeek day){return switch(day){case MONDAY->"Thứ Hai";case TUESDAY->"Thứ Ba";case WEDNESDAY->"Thứ Tư";case THURSDAY->"Thứ Năm";case FRIDAY->"Thứ Sáu";case SATURDAY->"Thứ Bảy";case SUNDAY->"Chủ nhật";};}
  private boolean overlapsLunch(ZonedDateTime start,ZonedDateTime end){return start.toLocalTime().isBefore(LUNCH_END)&&end.toLocalTime().isAfter(LUNCH_START);}
  private int slotMinutesFor(DoctorData doctor,ScheduleData schedule,LocalDate date){
@@ -259,9 +279,12 @@ public class SchedulingRecommendationService {
  public record Result(List<Item> items,String algorithmVersion,String timezone){}
  public record Item(UUID doctorId,UUID doctorIdentityId,String doctorName,String specialtyCode,Instant startAt,Instant endAt,double score,List<String> reasons){}
  public record Availability(List<AvailabilityItem> items,String timezone,String status,String closureReason){}
- public record AvailabilityLookup(String status,String doctorName,LocalDate date,List<AvailabilityItem> items,List<String> candidates,boolean doctorOnLeave,List<AvailabilityItem> leaveSlots){
+ public record AvailabilityLookup(String status,String doctorName,LocalDate date,List<AvailabilityItem> items,List<String> candidates,boolean doctorOnLeave,List<AvailabilityItem> leaveSlots,String closureReason){
   public AvailabilityLookup(String status,String doctorName,LocalDate date,List<AvailabilityItem> items,List<String> candidates){
-   this(status,doctorName,date,items,candidates,false,List.of());
+   this(status,doctorName,date,items,candidates,false,List.of(),null);
+  }
+  public AvailabilityLookup(String status,String doctorName,LocalDate date,List<AvailabilityItem> items,List<String> candidates,boolean doctorOnLeave,List<AvailabilityItem> leaveSlots){
+   this(status,doctorName,date,items,candidates,doctorOnLeave,leaveSlots,null);
   }
  }
  public record AvailabilityItem(UUID doctorId,UUID doctorIdentityId,String doctorName,String specialtyCode,Instant startAt,Instant endAt,String status,UUID holdId,Instant holdExpiresAt){}

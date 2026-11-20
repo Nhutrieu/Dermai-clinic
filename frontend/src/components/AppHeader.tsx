@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
 import { Activity, ChevronDown, LogOut, Menu, Settings, X } from "lucide-react";
 import type { AppNavItem } from "../core/appNavigation";
 
@@ -6,6 +6,7 @@ type AppHeaderProps = {
   roleName: string;
   displayName: string;
   avatarSrc?: string;
+  notifications?: ReactNode;
   activeItem: AppNavItem["id"];
   items: AppNavItem[];
   onNavigate: (id: AppNavItem["id"]) => void;
@@ -160,6 +161,7 @@ export default function AppHeader(props: AppHeaderProps) {
         </button>
         {navigation()}
         <div className="app-header-actions">
+          {props.notifications}
           <div className="app-user-menu" ref={userMenuRef}>
             <button ref={userButtonRef} type="button" className="app-user-trigger" aria-expanded={userOpen} aria-haspopup="menu" aria-controls="app-user-popover" onClick={() => setUserOpen(value => !value)}>
               {props.avatarSrc ? <img src={props.avatarSrc} alt="" /> : <span aria-hidden="true">{initial}</span>}

@@ -343,3 +343,163 @@ def test_emergency_wording_does_not_tell_patient_to_wait_for_chat():
     assert decision.requires_handoff is True
     assert "đừng chờ" in decision.answer
     assert "115" in decision.answer
+
+
+@pytest.mark.parametrize("message", [
+    "Lịch của tôi khi nào?", "Lịch khám của mình vào ngày nào?", "Tôi có lịch khám không?",
+    "Xem lịch đã đặt", "Trạng thái lịch của tôi", "Lịch hẹn của tui khi nào?",
+    "Lịch của tôi với bác sĩ Bình ngày mai", "Bác sĩ Bình còn lịch ngày mai không?\nLịch của tôi khi nào?",
+])
+def test_own_appointments_are_looked_up_without_handoff(message):
+    decision = classify_support_request(message)
+    assert decision.category == "APPOINTMENT_STATUS"
+    assert decision.requires_handoff is False
+    assert decision.needs_clarification is False
+
+
+def test_cancel_own_appointment_still_goes_to_reception():
+    decision = classify_support_request("Tôi muốn hủy lịch khám của tôi")
+    assert decision.category == "CANCEL_APPOINTMENT"
+    assert decision.requires_handoff is True
+
+
+
+def lookup_context(decision):
+    return {"intent": decision.category, "doctor_name": decision.doctor_name,
+            "requested_date": decision.requested_date, "requested_time": decision.requested_time}
+
+
+def test_doctor_and_time_without_date_asks_for_date_without_handoff():
+    decision = classify_support_request("Bác sĩ Bình vào lúc 8 giờ")
+    assert decision.category == "DOCTOR_AVAILABILITY"
+    assert decision.doctor_name == "Bình"
+    assert decision.requested_time == "08:00"
+    assert decision.requested_date is None
+    assert decision.needs_clarification is True
+    assert decision.requires_handoff is False
+
+
+def test_separate_name_time_and_date_replies_keep_all_lookup_fields():
+    first = classify_support_request("Tôi muốn biết lịch bác sĩ")
+    assert first.needs_clarification is True
+    name = classify_support_request("Bình á", lookup_context(first))
+    assert name.doctor_name == "Bình"
+    time = classify_support_request("8 giờ", lookup_context(name))
+    assert time.doctor_name == "Bình"
+    assert time.requested_time == "08:00"
+    assert time.needs_clarification is True
+    date = classify_support_request("Ngày mai", lookup_context(time))
+    assert date.category == "DOCTOR_AVAILABILITY"
+    assert date.doctor_name == "Bình"
+    assert date.requested_time == "08:00"
+    assert date.requested_date is not None
+    assert date.needs_clarification is False
+    assert date.requires_handoff is False
+
+
+@pytest.mark.parametrize("question, expected", [
+    ("Tôi muốn hủy lịch", "CANCEL_APPOINTMENT"),
+    ("Lịch của tôi khi nào?", "APPOINTMENT_STATUS"),
+    ("Tôi đang khó thở", "URGENT"),
+    ("Thông tin bác sĩ Linh", "DOCTOR_INFORMATION"),
+    ("Cảm ơn", "ACKNOWLEDGEMENT"),
+    ("Tôi muốn đổi lịch", "RESCHEDULE_APPOINTMENT"),
+])
+def test_explicit_new_intent_wins_over_previous_lookup(question, expected):
+    context = {"intent": "DOCTOR_AVAILABILITY", "doctor_name": "Bình", "requested_date": "2026-11-21", "requested_time": "08:00"}
+    decision = classify_support_request(question, context)
+    assert decision.category == expected
+
+
+def test_new_doctor_date_and_time_override_the_old_lookup_fields():
+    context = {"intent": "DOCTOR_AVAILABILITY", "doctor_name": "Bình", "requested_date": "2026-11-21", "requested_time": "08:00"}
+    decision = classify_support_request("Bác sĩ Linh ngày 22/11/2026 lúc 9h30", context)
+    assert decision.doctor_name == "Linh"
+    assert decision.requested_date == "2026-11-22"
+    assert decision.requested_time == "09:30"
+
+
+def test_date_followup_for_leave_schedule_checks_doctor_availability():
+    context = {"intent": "DOCTOR_LEAVE_SCHEDULE", "doctor_name": "Bình", "requested_date": None, "requested_time": None}
+    decision = classify_support_request("Ngày mai", context)
+    assert decision.category == "DOCTOR_AVAILABILITY"
+    assert decision.doctor_name == "Bình"
+    assert decision.needs_clarification is False
+
+
+def test_clinic_date_reply_does_not_require_a_doctor():
+    context = {"intent": "CLINIC_CLOSURE", "doctor_name": None, "requested_date": None, "requested_time": None}
+    decision = classify_support_request("Ngày 22/11/2026", context)
+    assert decision.category == "CLINIC_CLOSURE"
+    assert decision.requested_date == "2026-11-22"
+    assert decision.doctor_name is None
+    assert decision.needs_clarification is False
+
+
+@pytest.fixture
+def clinic_today(monkeypatch):
+    from datetime import datetime
+    import app.support_assistant as assistant
+
+    class FixedDateTime(datetime):
+        @classmethod
+        def now(cls, tz=None):
+            return cls(2026, 11, 20, 10, 0, tzinfo=tz)
+
+    monkeypatch.setattr(assistant, "datetime", FixedDateTime)
+
+
+@pytest.mark.parametrize("message", ["ngày 21", "ngay21", "21", "21 nha", "Ngày 21 nhé"])
+def test_day_only_reply_uses_current_month_when_it_is_not_past(message, clinic_today):
+    context = {"intent": "DOCTOR_AVAILABILITY", "doctor_name": "Bình", "requested_date": None, "requested_time": "08:00"}
+    decision = classify_support_request(message, context)
+    assert decision.category == "DOCTOR_AVAILABILITY"
+    assert decision.doctor_name == "Bình"
+    assert decision.requested_date == "2026-11-21"
+    assert decision.requested_time == "08:00"
+    assert decision.needs_clarification is False
+    assert decision.requires_handoff is False
+
+
+@pytest.mark.parametrize("message", ["ngày 5", "5", "ngày 31", "ngày 32", "ngày 0"])
+def test_unclear_or_invalid_day_asks_for_full_date_without_handoff(message, clinic_today):
+    context = {"intent": "DOCTOR_AVAILABILITY", "doctor_name": "Bình", "requested_date": "2026-11-21", "requested_time": "08:00"}
+    decision = classify_support_request(message, context)
+    assert decision.category == "DOCTOR_AVAILABILITY"
+    assert decision.requested_date is None
+    assert decision.doctor_name == "Bình"
+    assert decision.requested_time == "08:00"
+    assert decision.needs_clarification is True
+    assert decision.requires_handoff is False
+    assert "ngày/tháng" in decision.answer
+
+
+@pytest.mark.parametrize("message", ["Bác sĩ Bình ngày 21", "Bác sĩ Bình ngày 21 tháng 11", "Lịch bác sĩ Bình ngày 21 tháng 12 năm 2026 lúc 8 giờ"])
+def test_written_vietnamese_date_is_understood_in_a_direct_lookup(message, clinic_today):
+    decision = classify_support_request(message)
+    assert decision.category == "DOCTOR_AVAILABILITY"
+    assert decision.requested_date in {"2026-11-21", "2026-12-21"}
+    assert decision.needs_clarification is False
+    assert decision.requires_handoff is False
+
+
+def test_bare_day_is_not_treated_as_booking_without_lookup_context(clinic_today):
+    decision = classify_support_request("21")
+    assert decision.category != "DOCTOR_AVAILABILITY"
+
+
+def test_full_date_can_resolve_an_unclear_short_day(clinic_today):
+    context = {"intent": "DOCTOR_AVAILABILITY", "doctor_name": "Bình", "requested_date": None, "requested_time": "08:00"}
+    decision = classify_support_request("Ngày 5/12", context)
+    assert decision.requested_date == "2026-12-05"
+    assert decision.requested_time == "08:00"
+    assert decision.needs_clarification is False
+    assert decision.requires_handoff is False
+
+
+def test_short_day_also_answers_a_clinic_closure_question(clinic_today):
+    context = {"intent": "CLINIC_CLOSURE", "doctor_name": None, "requested_date": None, "requested_time": None}
+    decision = classify_support_request("ngày 21", context)
+    assert decision.category == "CLINIC_CLOSURE"
+    assert decision.requested_date == "2026-11-21"
+    assert decision.needs_clarification is False

@@ -60,15 +60,17 @@ public class AiAssessmentController {
       boolean sharedWithDoctor,
       UUID appointmentId,
       boolean imageAvailable,
-      Instant createdAt) {}
+      Instant createdAt,
+      boolean latestForBooking) {}
 
   @GetMapping("/me/ai-assessments")
   List<View> mine(
       @RequestHeader("X-User-Id") UUID identity,
       @RequestHeader("X-User-Role") String role) {
     requirePatient(role);
+    UUID latestId = latestAssessmentId(identity);
     List<View> result = assessments.findByPatientIdentityIdAndDeletedAtIsNullOrderByCreatedAtDesc(identity)
-        .stream().map(this::view).toList();
+        .stream().map(value -> view(value, latestId)).toList();
     privacy.audit(null, identity, identity, role, "LIST_OWN");
     return result;
   }
@@ -131,6 +133,18 @@ public class AiAssessmentController {
       @Valid @RequestBody SharingBody body) {
     requirePatient(role);
     AiAssessment assessment = own(id, identity);
+    if (body.sharedWithDoctor()) {
+      boolean keepingExistingLink = assessment.appointmentId != null
+          && (body.appointmentId() == null || assessment.appointmentId.equals(body.appointmentId()));
+      if (!keepingExistingLink) {
+        if (assessment.appointmentId != null) {
+          throw new ResponseStatusException(HttpStatus.CONFLICT, "Kết quả AI này đã được đính kèm vào một lịch khám khác.");
+        }
+        if (!assessment.id.equals(latestAssessmentId(identity))) {
+          throw new ResponseStatusException(HttpStatus.CONFLICT, "Chỉ có thể đặt lịch với kết quả AI mới nhất. Vui lòng phân tích ảnh mới hoặc đặt lịch không đính kèm ảnh.");
+        }
+      }
+    }
     if (body.sharedWithDoctor() && body.appointmentId() != null) {
       // Gắn kết quả với đúng lịch; bệnh nhân không thể chia sẻ ảnh vào lịch của tài khoản khác.
       var appointment = appointments.requireAccess(body.appointmentId(), identity, "PATIENT");
@@ -270,11 +284,20 @@ public class AiAssessmentController {
     }
   }
 
+  private UUID latestAssessmentId(UUID identity) {
+    // Include the deletion tombstone: deleting the latest result must not promote an older image for booking.
+    return assessments.findFirstByPatientIdentityIdOrderByCreatedAtDesc(identity).map(value -> value.id).orElse(null);
+  }
+
   private View view(AiAssessment value) {
+    return view(value, latestAssessmentId(value.patientIdentityId));
+  }
+
+  private View view(AiAssessment value, UUID latestId) {
     return new View(value.id, value.patientId, value.predictedLabel, value.confidence,
         readTop3(value.top3Json), value.uncertain, value.modelVersion,
         value.sharedWithDoctor, value.appointmentId, imageAvailable(value),
-        value.createdAt);
+        value.createdAt, value.deletedAt == null && value.id.equals(latestId));
   }
 
   private ResponseEntity<byte[]> image(AiAssessment assessment) {

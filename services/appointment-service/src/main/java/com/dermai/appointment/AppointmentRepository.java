@@ -13,6 +13,7 @@ public interface AppointmentRepository extends JpaRepository<Appointment,UUID>{
  boolean existsByPatientIdAndDoctorIdentityIdAndStatusIn(UUID patientId,UUID doctorIdentityId,Collection<AppointmentStatus> statuses);
  List<Appointment> findByDoctorIdAndStatusInAndEndAtAfterOrderByStartAt(UUID doctorId,Collection<AppointmentStatus> statuses,Instant from);
  List<Appointment> findByStatusInAndStartAtBetweenOrderByStartAt(Collection<AppointmentStatus> statuses,Instant from,Instant to);
+ List<Appointment> findByStatusInAndEndAtAfterOrderByStartAt(Collection<AppointmentStatus> statuses,Instant from);
  List<Appointment> findByStatusInAndEndAtBefore(Collection<AppointmentStatus> statuses,Instant cutoff);
  List<Appointment> findByStatusAndStartAtBefore(AppointmentStatus status,Instant cutoff);
  List<Appointment> findByStatusAndHoldExpiresAtBefore(AppointmentStatus status,Instant cutoff);

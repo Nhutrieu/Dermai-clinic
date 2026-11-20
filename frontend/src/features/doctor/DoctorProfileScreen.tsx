@@ -13,7 +13,7 @@ type Props = {
 
 type FeedbackScope = "overview" | "professional" | "bio" | "leave";
 type Feedback = { text: string; error: boolean };
-const CLINIC_WORKDAYS = [1, 2, 3, 4, 5, 6];
+const CLINIC_WORKDAYS = [1, 2, 3, 4, 5, 6, 7];
 
 function localDateValue(date = new Date()) {
   const offset = date.getTimezoneOffset() * 60_000;
@@ -61,10 +61,6 @@ export default function DoctorProfileScreen({ token, doctor, work, leave, saved 
   const [feedback, setFeedback] = useState<Feedback | null>(null);
   const [feedbackScope, setFeedbackScope] = useState<FeedbackScope>("professional");
 
-  const weekdaySchedule = useMemo(
-    () => schedules.find(item => item.weekday === 1) || schedules[0],
-    [schedules],
-  );
   const configuredWorkdays = useMemo(
     () => CLINIC_WORKDAYS.filter(day => schedules.some(item => item.weekday === day)).length,
     [schedules],
@@ -291,8 +287,11 @@ export default function DoctorProfileScreen({ token, doctor, work, leave, saved 
               <div><h2 id="doctor-schedule-title"><Clock3 aria-hidden="true" /> Lịch làm việc</h2></div>
             </header>
             <div className="doctor-profile-schedule-summary" role="status">
-              <div><span>Ngày làm việc</span><strong>{configuredWorkdays === 6 ? "Thứ Hai - Thứ Bảy" : `${configuredWorkdays}/6 ngày đã cấu hình`}</strong></div>
-              <div><span>Khung giờ hiện tại</span><strong>{weekdaySchedule ? `${weekdaySchedule.startTime.slice(0, 5)} - ${weekdaySchedule.endTime.slice(0, 5)}` : "Chưa thiết lập"}</strong></div>
+              <div><span>Ngày làm việc</span><strong>{configuredWorkdays === 7 ? "Thứ Hai - Chủ nhật" : `${configuredWorkdays}/7 ngày đã cấu hình`}</strong></div>
+              {CLINIC_WORKDAYS.map(day => {
+                const shifts = schedules.filter(item => item.weekday === day);
+                return <div key={day}><span>{["", "Thứ Hai", "Thứ Ba", "Thứ Tư", "Thứ Năm", "Thứ Sáu", "Thứ Bảy", "Chủ nhật"][day]}</span><strong>{shifts.length ? shifts.map(shift => `${shift.startTime.slice(0, 5)} - ${shift.endTime.slice(0, 5)}`).join(", ") : "Nghỉ"}</strong></div>;
+              })}
             </div>
           </section>
 

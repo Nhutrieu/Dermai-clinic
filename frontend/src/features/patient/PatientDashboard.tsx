@@ -17,6 +17,8 @@ import {
     TriangleAlert,
     UserRound,
 } from "lucide-react";
+import { readAiHistoryPreview, recentAiAssessment, rememberAiHistoryPreview } from "./aiHistoryPreview";
+import { canBookWithAi, clearAiBookingDraft } from "./aiBookingSelection";
 import { request, requestBlob } from "../../core/api";
 import {
     canPatientSelfManageAppointment,
@@ -196,6 +198,7 @@ export default function PatientDashboard({
     const [confirmDeleteAssessmentId, setConfirmDeleteAssessmentId] = useState("");
     const [deletingAssessmentId, setDeletingAssessmentId] = useState("");
     const [recentAssessmentDeleted, setRecentAssessmentDeleted] = useState(false);
+    const [historyPreviewId, setHistoryPreviewId] = useState("");
     const [aiActionFeedback, setAiActionFeedback] = useState<{ tone: "success" | "error"; text: string } | null>(null);
     const [feedback, setFeedback] = useState<{ tone: "success" | "error"; text: string } | null>(null);
     const [appointmentRefreshed, setAppointmentRefreshed] = useState(false);
@@ -216,10 +219,17 @@ export default function PatientDashboard({
     const loadAi = useCallback(() => {
         setAiState({ loading: true, error: "" });
         return request<AiAssessment[]>("/patients/me/ai-assessments", token)
-            .then(setAssessments)
+            .then(items => {
+                const preview = recentAiAssessment(items, readAiHistoryPreview(patient.identityId));
+                const previewId = preview && !preview.latestForBooking ? preview.id : "";
+                setAssessments(items);
+                setHistoryPreviewId(previewId);
+                rememberAiHistoryPreview(patient.identityId, previewId || undefined);
+                setRecentAssessmentDeleted(items.length > 0 && !preview);
+            })
             .catch(cause => setAiState({ loading: false, error: (cause as Error).message }))
             .finally(() => setAiState(current => ({ ...current, loading: false })));
-    }, [token]);
+    }, [token, patient.identityId]);
 
     const loadNotifications = useCallback(() => {
         return request<PatientNotification[]>("/appointments/notifications/mine", token)
@@ -284,8 +294,7 @@ export default function PatientDashboard({
         );
         return () => window.clearTimeout(timer);
     }, [nextAppointment, selfServiceNow]);
-    const latestAssessment = useMemo(() => recentAssessmentDeleted ? undefined : [...assessments]
-        .sort((left, right) => new Date(right.createdAt).getTime() - new Date(left.createdAt).getTime())[0], [assessments, recentAssessmentDeleted]);
+    const latestAssessment = useMemo(() => recentAssessmentDeleted ? undefined : recentAiAssessment(assessments, historyPreviewId), [assessments, recentAssessmentDeleted, historyPreviewId]);
     const latestRecord = useMemo(() => [...records]
         .sort((left, right) => new Date(right.signedAt).getTime() - new Date(left.signedAt).getTime())[0], [records]);
     const latestPrescription = useMemo(() => [...prescriptions]
@@ -363,6 +372,33 @@ export default function PatientDashboard({
         setFeedback({ tone: "success", text: "Đã chuyển lịch khám sang khung giờ mới." });
     }
 
+    async function bookWithAssessment(assessment: AiAssessment) {
+        setAiActionFeedback(null);
+        try {
+            const list = await request<AiAssessment[]>("/patients/me/ai-assessments", token, { cache: "no-store" });
+            const latest = list.find(item => item.id === assessment.id);
+            if (!canBookWithAi(latest)) {
+                setAiActionFeedback({ tone: "error", text: "Kết quả này không còn là kết quả AI mới nhất có thể đặt lịch. Vui lòng phân tích ảnh mới." });
+                return;
+            }
+            if (!latest.sharedWithDoctor) await request(`/patients/me/ai-assessments/${latest.id}/sharing`, token, {
+                method: "PATCH", body: JSON.stringify({ sharedWithDoctor: true }),
+            });
+            sessionStorage.setItem("dermai-ai-booking", JSON.stringify({ assessmentId: latest.id }));
+            openAppointments();
+        } catch (cause) {
+            setAiActionFeedback({ tone: "error", text: (cause as Error).message });
+        }
+    }
+
+    function viewPreviousAssessment() {
+        const previous = [...assessments].sort((left, right) => new Date(right.createdAt).getTime() - new Date(left.createdAt).getTime())[0];
+        if (!previous) return;
+        rememberAiHistoryPreview(patient.identityId, previous.id);
+        setHistoryPreviewId(previous.id);
+        setRecentAssessmentDeleted(false);
+    }
+
     async function deleteAssessment(assessment: AiAssessment) {
         if (confirmDeleteAssessmentId !== assessment.id) {
             setConfirmDeleteAssessmentId(assessment.id);
@@ -374,6 +410,9 @@ export default function PatientDashboard({
         setAiActionFeedback(null);
         try {
             await request(`/patients/me/ai-assessments/${assessment.id}`, token, { method: "DELETE" });
+            clearAiBookingDraft(assessment.id);
+            rememberAiHistoryPreview(patient.identityId);
+            setHistoryPreviewId("");
             setAssessments(items => items.filter(item => item.id !== assessment.id));
             setConfirmDeleteAssessmentId("");
             setRecentAssessmentDeleted(true);
@@ -577,7 +616,7 @@ export default function PatientDashboard({
                 ) : recentAssessmentDeleted ? (
                     <>
                         <DashboardState tone="empty" title="Đã xóa kết quả phân tích" description="Bạn có thể tải ảnh mới để thực hiện lần phân tích khác." action={openAi} actionLabel="Phân tích ảnh mới" />
-                        {assessments.length > 0 && <button type="button" className="patient-dashboard-text-action" onClick={() => setRecentAssessmentDeleted(false)}>Xem kết quả trước đó</button>}
+                        {assessments.length > 0 && <button type="button" className="patient-dashboard-text-action" onClick={viewPreviousAssessment}>Xem kết quả trước đó</button>}
                     </>
                 ) : !latestAssessment ? (
                     <DashboardState tone="empty" title="Chưa có lần phân tích da" description="Bạn có thể tải ảnh rõ nét để nhận gợi ý nhóm hình ảnh tham khảo." action={openAi} actionLabel="Kiểm tra da bằng AI" />
@@ -590,9 +629,9 @@ export default function PatientDashboard({
                         </div>
                         <h3>Phân tích hình ảnh đã hoàn tất</h3>
                         <p>Nhóm hình ảnh tham khảo: <strong>{AI_LABELS[latestAssessment.predictedLabel] || latestAssessment.predictedLabel}</strong>.</p>
-                        <p className="patient-dashboard-medical-note">Kết quả này không phải chẩn đoán cuối cùng. Bạn có thể đặt lịch để được bác sĩ đánh giá trực tiếp.</p>
+                        <p className="patient-dashboard-medical-note">Kết quả này không phải chẩn đoán cuối cùng.</p>
                         <div className="patient-dashboard-inline-actions">
-                            <button type="button" onClick={openAppointments}>Đặt lịch khám</button>
+                            {canBookWithAi(latestAssessment) && <button type="button" onClick={() => void bookWithAssessment(latestAssessment)}>Đặt lịch khám</button>}
                             {confirmDeleteAssessmentId === latestAssessment.id ? (
                                 <div className="patient-dashboard-delete-confirm" role="group" aria-label="Xác nhận xóa kết quả phân tích">
                                     <span>Xóa kết quả này?</span>

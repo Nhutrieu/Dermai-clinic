@@ -52,6 +52,19 @@ class SupportConversationService {
  String lastIntent(UUID patientIdentityId){return conversations.findById(patientIdentityId).map(item->item.lastIntent).orElse(null);}
 
  @Transactional(readOnly=true)
+ SupportLookupContext lookupContext(UUID patientIdentityId){
+  return conversations.findById(patientIdentityId)
+   .filter(item->"AI_ACTIVE".equals(item.channelStatus)&&item.updatedAt!=null
+    &&item.updatedAt.isAfter(java.time.Instant.now().minus(java.time.Duration.ofMinutes(30))))
+   .map(item->item.lookupContext).orElse(null);
+ }
+
+ @Transactional
+ void rememberLookupContext(UUID patientIdentityId,SupportLookupContext context){
+  conversations.findById(patientIdentityId).ifPresent(item->{item.lookupContext=context;conversations.save(item);});
+ }
+
+ @Transactional(readOnly=true)
  boolean aiActiveOrNew(UUID patientIdentityId){return conversations.findById(patientIdentityId).map(item->"AI_ACTIVE".equals(item.channelStatus)).orElse(true);}
 
  @Transactional(readOnly=true)
@@ -63,7 +76,7 @@ class SupportConversationService {
   item.lastIntent=intent;item.lastIntentConfidence=confidence;item.aiFailureCount=failureCount;item.aiSummary=summary;item.updatedAt=java.time.Instant.now();
   boolean alreadyHuman=!"AI_ACTIVE".equals(item.channelStatus);
   if(escalate&&!alreadyHuman){item.channelStatus="WAITING_RECEPTIONIST";item.escalatedAt=java.time.Instant.now();item.escalationReason=reason;}
-  if(escalate&&!alreadyHuman){item.resolvedAt=null;item.resolvedByIdentityId=null;}
+  if(escalate&&!alreadyHuman){item.resolvedAt=null;item.resolvedByIdentityId=null;item.lookupContext=null;}
   return conversations.save(item);
  }
 
@@ -72,7 +85,7 @@ class SupportConversationService {
   var item=conversations.findById(patientIdentityId).orElseGet(()->new SupportConversation(patientIdentityId));
   if("AI_ACTIVE".equals(item.channelStatus)){
    item.channelStatus="WAITING_RECEPTIONIST";item.escalatedAt=java.time.Instant.now();
-   item.resolvedAt=null;item.resolvedByIdentityId=null;
+   item.resolvedAt=null;item.resolvedByIdentityId=null;item.lookupContext=null;
    item.escalationReason="PATIENT_DIRECT_MESSAGE";item.lastIntent="HUMAN_SUPPORT";
    item.aiSummary="Bệnh nhân mở kênh hỗ trợ trực tiếp và đang chờ lễ tân tiếp nhận.";
   }

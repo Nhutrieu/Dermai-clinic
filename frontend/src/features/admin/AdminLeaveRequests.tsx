@@ -44,6 +44,7 @@ export default function AdminLeaveRequests({ token }: Props) {
         body: JSON.stringify({ decision }),
       });
       setItems(current => current.filter(candidate => candidate.id !== item.id));
+      window.dispatchEvent(new Event("admin-alerts-changed"));
       setMessage(decision === "APPROVED" ? "Đã duyệt yêu cầu nghỉ; lịch bệnh nhân sẽ được cập nhật." : "Đã từ chối yêu cầu nghỉ.");
     } catch (cause) {
       setError(true);
@@ -53,7 +54,7 @@ export default function AdminLeaveRequests({ token }: Props) {
     }
   }
 
-  return <section className="admin-leave-requests" aria-labelledby="admin-leave-requests-title">
+  return <section id="admin-leave-requests" tabIndex={-1} className="admin-leave-requests" aria-labelledby="admin-leave-requests-title">
     <header className="admin-leave-requests-heading">
       <div>
         <h3 id="admin-leave-requests-title"><CalendarClock aria-hidden="true" /> Yêu cầu nghỉ phép</h3>

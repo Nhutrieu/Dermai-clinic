@@ -1,103 +1,32 @@
-import { FormEvent, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { Clock3 } from "lucide-react";
 import { request } from "../../core/api";
-import type { WorkSchedule } from "../../core/types";
+import type { ClinicSchedule } from "../../core/clinicSchedule";
 
-type SchedulingDoctor = {
-  id: string;
-  workSchedules: WorkSchedule[];
-};
+const DAY_NAMES = ["", "Thứ Hai", "Thứ Ba", "Thứ Tư", "Thứ Năm", "Thứ Sáu", "Thứ Bảy", "Chủ nhật"];
 
-type Props = {
-  doctorId: string;
-  doctorName: string;
-  token: string;
-};
-
-const WORKDAYS = [1, 2, 3, 4, 5, 6];
+type Props = { doctorId: string; doctorName: string; token: string };
 
 export default function AdminDoctorScheduleEditor({ doctorId, doctorName, token }: Props) {
-  const [startTime, setStartTime] = useState("08:00");
-  const [endTime, setEndTime] = useState("17:00");
-  const [loading, setLoading] = useState(true);
-  const [busy, setBusy] = useState(false);
-  const [message, setMessage] = useState("");
+  const [schedule, setSchedule] = useState<ClinicSchedule | null>(null);
   const [error, setError] = useState("");
-
   useEffect(() => {
     let active = true;
-    setLoading(true);
-    setMessage("");
-    setError("");
-    request<SchedulingDoctor[]>("/doctors/scheduling-data", token)
-      .then(items => {
-        if (!active) return;
-        const schedules = items.find(item => item.id === doctorId)?.workSchedules || [];
-        const weekday = schedules.find(item => item.weekday === 1) || schedules[0];
-        setStartTime(weekday?.startTime.slice(0, 5) || "08:00");
-        setEndTime(weekday?.endTime.slice(0, 5) || "17:00");
-      })
-      .catch(reason => {
-        if (active) setError((reason as Error).message);
-      })
-      .finally(() => {
-        if (active) setLoading(false);
-      });
-    return () => {
-      active = false;
-    };
+    setSchedule(null);setError("");
+    request<ClinicSchedule>("/appointments/clinic-schedule/overview", token, { cache: "no-store" })
+      .then(value => { if (active) setSchedule(value); })
+      .catch(cause => { if (active) setError((cause as Error).message); });
+    return () => { active = false; };
   }, [doctorId, token]);
-
-  async function save(event: FormEvent) {
-    event.preventDefault();
-    setBusy(true);
-    setMessage("");
-    setError("");
-    try {
-      await request<WorkSchedule[]>(`/doctors/${doctorId}/schedule`, token, {
-        method: "PUT",
-        body: JSON.stringify(WORKDAYS.map(weekday => ({
-          weekday,
-          startTime,
-          endTime,
-          slotMinutes: 30,
-        }))),
-      });
-      setMessage(`Đã cập nhật giờ làm việc của BS. ${doctorName}.`);
-    } catch (reason) {
-      setError((reason as Error).message);
-    } finally {
-      setBusy(false);
-    }
-  }
-
-  return (
-    <section className="admin-doctor-schedule" aria-labelledby={`doctor-schedule-${doctorId}`}>
-      <header>
-        <span><Clock3 aria-hidden="true" /></span>
-        <div>
-          <h4 id={`doctor-schedule-${doctorId}`}>Lịch làm việc</h4>
-          <p>Áp dụng từ Thứ Hai đến Thứ Bảy. Hệ thống tự chia thành các lượt 30 phút.</p>
-        </div>
-      </header>
-      {loading ? <p className="admin-doctor-schedule-loading" role="status">Đang tải lịch làm việc…</p> : (
-        <form onSubmit={save}>
-          <label>
-            Bắt đầu
-            <input type="time" required value={startTime} onChange={event => setStartTime(event.target.value)} />
-          </label>
-          <label>
-            Kết thúc
-            <input type="time" required value={endTime} onChange={event => setEndTime(event.target.value)} />
-          </label>
-          <button type="submit" className="primary" disabled={busy || startTime >= endTime}>
-            {busy ? "Đang lưu…" : "Lưu giờ làm việc"}
-          </button>
-        </form>
-      )}
-      <small>Chỉ quản trị viên có thể thay đổi. Các lịch đang hoạt động luôn được kiểm tra trước khi lưu.</small>
-      {error && <p className="admin-doctor-schedule-feedback is-error" role="alert">{error}</p>}
-      {message && <p className="admin-doctor-schedule-feedback is-success" role="status" aria-live="polite">{message}</p>}
-    </section>
-  );
+  return <section className="admin-doctor-schedule" aria-labelledby={`doctor-schedule-${doctorId}`}>
+    <header>
+      <span><Clock3 aria-hidden="true" /></span>
+      <div><h4 id={`doctor-schedule-${doctorId}`}>Lịch làm việc</h4><p>BS. {doctorName} dùng lịch chung được thiết lập tại mục Lịch phòng khám. Không cần lưu lại lịch riêng cho bác sĩ.</p></div>
+    </header>
+    {error ? <p role="alert" className="admin-doctor-schedule-feedback is-error">{error}</p>
+      : !schedule ? <p role="status">Đang tải lịch phòng khám…</p>
+      : schedule.configured ? <dl className="admin-clinic-workday-list">{schedule.days.map(day => <div key={day.weekday}><dt>{DAY_NAMES[day.weekday]}</dt><dd>{day.open ? `${day.startTime.slice(0, 5)}–${day.endTime.slice(0, 5)}` : "Nghỉ"}</dd></div>)}</dl>
+      : <p>Admin hãy lưu lịch tại mục Lịch phòng khám để tự áp dụng cho tất cả bác sĩ. Trong lúc chưa thiết lập, hệ thống vẫn dùng lịch bác sĩ hiện có.</p>}
+    <small>Nghỉ phép được duyệt và các lịch đã đặt sẽ tự chặn khung giờ tương ứng.</small>
+  </section>;
 }

@@ -12,6 +12,8 @@ public class SupportMessage{
  @Column(name="attachment_content_type",length=50) public String attachmentContentType;
  @Column(name="attachment_original_name",length=255) public String attachmentOriginalName;
  @Column(name="attachment_size_bytes") public Long attachmentSizeBytes;
+ @org.hibernate.annotations.JdbcTypeCode(org.hibernate.type.SqlTypes.JSON)
+ @Column(name="booking_options",columnDefinition="jsonb") public List<SupportBookingOption> bookingOptions;
  @JsonIgnore @Basic(fetch=FetchType.LAZY) @Column(name="attachment_data") public byte[] attachmentData;
  protected SupportMessage(){}
 }

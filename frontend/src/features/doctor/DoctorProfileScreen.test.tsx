@@ -13,7 +13,7 @@ const doctor: Doctor = {
   consultationFee: 150000,
 };
 
-const work: WorkSchedule[] = [1, 2, 3, 4, 5, 6].map(weekday => ({
+const work: WorkSchedule[] = [1, 2, 3, 4, 5, 6, 7].map(weekday => ({
   id: `schedule-${weekday}`,
   weekday,
   startTime: "08:00:00",
@@ -28,7 +28,7 @@ describe("DoctorProfileScreen", () => {
 
     expect(html).toContain("Hồ sơ hiển thị với bệnh nhân");
     expect(html).toContain("150.000 đ");
-    expect(html).toContain("Thứ Hai - Thứ Bảy");
+    expect(html).toContain("Thứ Hai - Chủ nhật");
     expect(html).not.toContain("Giờ làm việc do quản trị viên thiết lập");
     expect(html).not.toContain('type="time"');
     expect(html).not.toContain("Lưu giờ làm việc");

@@ -995,3 +995,25 @@
   width: 17px;
   height: 17px;
 }
+
+.admin-staff-page .clinic-week-form { display: block; margin: 20px 0 12px; }
+.clinic-week-form fieldset { min-width: 0; margin: 0; padding: 0; border: 0; }
+.clinic-week-form legend { margin-bottom: 12px; font-weight: 700; }
+.clinic-week-row { display: grid; grid-template-columns: minmax(130px, 1fr) 1fr 1fr; gap: 16px; align-items: center; padding: 12px 0; border-bottom: 1px solid #dce5df; }
+.clinic-week-row label { display: grid; gap: 6px; }
+.clinic-week-row .clinic-week-toggle { display: flex; align-items: center; gap: 10px; font-weight: 600; }
+.admin-staff-page .clinic-schedule-panel .clinic-week-toggle input[type="checkbox"] { width: 18px; height: 18px; min-height: 0; margin: 0; padding: 0; accent-color: #123f35; }
+.admin-staff-page .clinic-schedule-panel .clinic-week-row input[type="time"] { width: 100%; min-width: 0; height: 44px; min-height: 44px; padding: 8px 12px; border: 1px solid #dce5df; border-radius: 10px; background: #fff; color: var(--color-ink); font: inherit; }
+.clinic-week-row input[type="time"]:disabled { opacity: .5; background: #f5f8f6; }
+.clinic-week-row input[type="time"]:focus-visible { outline: 3px solid #def5ed; border-color: #176b55; }
+.clinic-week-form button { margin-top: 16px; min-height: 44px; font-size: 14px; justify-content: center; }
+.admin-doctor-schedule button.primary { font-size: 14px; justify-content: center; }
+@media (max-width: 600px) {
+ .clinic-week-row { grid-template-columns: 1fr 1fr; gap: 12px; }
+ .clinic-week-row .clinic-week-toggle { grid-column: 1 / -1; }
+}
+
+.admin-doctor-schedule .admin-clinic-workday-list { display: grid; gap: 0; margin: 0 0 12px; }
+.admin-doctor-schedule .admin-clinic-workday-list > div { display: flex; justify-content: space-between; gap: 16px; padding: 10px 0; border-bottom: 1px solid #dce5df; }
+.admin-clinic-workday-list dt { font-weight: 600; }
+.admin-clinic-workday-list dd { margin: 0; }

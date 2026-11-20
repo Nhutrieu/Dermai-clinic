@@ -68,6 +68,26 @@ def rag_disease_key(question: str) -> str | None:
     return next((key for key, terms in disease_terms if _contains(normalized, terms)), None)
 
 
+def _short_lookup_date(question: str, today, allow_bare: bool = False) -> tuple[str | None, str | None]:
+    """Resolve a day in the current month; ask explicitly when its month is unclear."""
+    normalized = _normalize(question).strip(" .?!,")
+    match = re.search(r"(?<!\w)(?:ngay|hom)\s*(\d{1,2})(?!\d)(?!\s*(?:[/\-]|thang|nam))", normalized)
+    if not match and allow_bare:
+        match = re.fullmatch(r"(\d{1,2})(?:\s+(?:a|nha|nhe|nhe a|nha a))?", normalized)
+    if not match:
+        return None, None
+    day = int(match.group(1))
+    if not 1 <= day <= 31:
+        return None, "Ngày bạn nhập chưa hợp lệ. Bạn cho mình biết đầy đủ ngày/tháng muốn khám nhé, ví dụ 21/11."
+    try:
+        date = today.replace(day=day)
+    except ValueError:
+        return None, f"Tháng {today.month:02d} không có ngày {day}. Bạn nhập đầy đủ ngày/tháng muốn khám giúp mình nhé."
+    if date < today:
+        return None, f"Ngày {day:02d}/{today.month:02d} đã qua. Bạn nhập đầy đủ ngày/tháng muốn khám giúp mình nhé."
+    return date.isoformat(), None
+
+
 def _appointment_entities(question: str) -> tuple[str | None, str | None, str | None]:
     """Extract routing entities only; Appointment Service remains the scheduling source of truth."""
     doctor_matches = re.finditer(
@@ -113,8 +133,20 @@ def _appointment_entities(question: str) -> tuple[str | None, str | None, str | 
             date_candidates.append((date_match.start(), parsed))
         except ValueError:
             continue
+    # Also accept Vietnamese dates written as "ngày 21 tháng 11".
+    for date_match in re.finditer(r"(?<!\d)(\d{1,2})\s*thang\s*(\d{1,2})(?:\s*nam\s*(\d{4}))?(?!\d)", normalized):
+        day, month = int(date_match.group(1)), int(date_match.group(2))
+        year = int(date_match.group(3) or today.year)
+        try:
+            parsed = today.replace(year=year, month=month, day=day)
+            if date_match.group(3) is None and parsed < today:
+                parsed = parsed.replace(year=year + 1)
+            date_candidates.append((date_match.start(), parsed))
+        except ValueError:
+            continue
     if date_candidates:
         requested_date = max(date_candidates, key=lambda item: item[0])[1]
+    short_date, _ = _short_lookup_date(question, today) if requested_date is None else (None, None)
 
     # Accept the common Vietnamese time formats used in chat: 9h, 9h30,
     # 9 giờ and 09:00. The scheduling service validates whether it is a slot.
@@ -128,10 +160,10 @@ def _appointment_entities(question: str) -> tuple[str | None, str | None, str | 
         time_match = max(time_matches, key=lambda item: item.start())
         requested_time = f"{int(time_match.group(1)):02d}:{int(time_match.group(2) or 0):02d}"
 
-    return doctor_name, requested_date.isoformat() if requested_date else None, requested_time
+    return doctor_name, requested_date.isoformat() if requested_date else short_date, requested_time
 
 
-def classify_support_request(question: str) -> SupportDecision:
+def _classify_current_request(question: str) -> SupportDecision:
     """Keep operational decisions deterministic; generative AI may only polish safe FAQ wording."""
     clean = question.strip()
     normalized = _normalize(clean)
@@ -196,7 +228,7 @@ def classify_support_request(question: str) -> SupportDecision:
             0.95,
         )
 
-    personal_appointment = _contains(normalized, ("lich cua toi", "toi co lich", "lich da dat", "trang thai lich"))
+    personal_appointment = re.search(r"\blich(?: kham| hen)? cua (?:toi|minh|tui|em)\b", normalized) is not None or _contains(normalized, ("lich cua toi", "lich cua minh", "toi co lich", "minh co lich", "lich da dat", "trang thai lich", "toi dat lich", "minh dat lich", "toi kham luc", "minh kham luc", "lich hen cua toi"))
     doctor_reference = re.search(r"(?<!\w)(?:bac si|bs\.?)\b", normalized) is not None
     availability_wording = _contains(normalized, (
         "lich bac si", "lich bs", "gio trong bac si", "gio trong bs",
@@ -204,9 +236,9 @@ def classify_support_request(question: str) -> SupportDecision:
         "con lich", "co lich", "con trong", "co trong", "gio trong",
         "gio nao trong", "bac si ranh", "bs ranh", "bac si lam", "bs lam", "bac si nghi", "bs nghi", "ngay nghi",
     ))
-    natural_availability = requested_date is not None and _contains(
-        normalized, ("lich", "trong", "ranh", "gio", "lam", "nghi")
-    )
+    natural_availability = (requested_date is not None or requested_time is not None or re.search(r"\bngay\s*\d{1,2}\b", normalized)) and _contains(
+        normalized, ("lich", "trong", "ranh", "gio", "lam", "nghi", "ngay")
+    ) and not _contains(normalized, ("thong tin bac si", "thong tin ve bac si", "ho so bac si", "gioi thieu bac si"))
     doctor_leave_question = doctor_reference and _contains(normalized, ("nghi", "ngay nghi", "lich nghi"))
     if (availability_wording or natural_availability or doctor_leave_question) and doctor_reference and not personal_appointment:
         if doctor_leave_question and not requested_date:
@@ -366,11 +398,11 @@ def classify_support_request(question: str) -> SupportDecision:
             "Bệnh nhân cần lễ tân hỗ trợ đặt lịch.",
         )
 
-    if _contains(normalized, ("lich cua toi", "lich da dat", "da xac nhan", "trang thai lich", "kiem tra lich")):
+    if personal_appointment or _contains(normalized, ("da xac nhan", "kiem tra lich")):
         return SupportDecision(
             "APPOINTMENT_STATUS",
-            "Thông tin trạng thái lịch là dữ liệu cá nhân. Vui lòng mở mục Lịch khám; nếu thông tin chưa rõ, tôi sẽ chuyển bạn sang lễ tân để kiểm tra đúng hồ sơ.",
-            True,
+            "Mình đang kiểm tra lịch đã đặt và trạng thái cọc của tài khoản đang đăng nhập.",
+            False,
             "Bệnh nhân cần kiểm tra trạng thái lịch cá nhân.",
         )
 
@@ -488,6 +520,65 @@ def classify_support_request(question: str) -> SupportDecision:
         "Yêu cầu chưa thuộc nhóm hướng dẫn tự động; cần lễ tân tiếp nhận.",
         0.3,
     )
+
+
+LOOKUP_INTENTS = {"DOCTOR_AVAILABILITY", "DOCTOR_LEAVE_SCHEDULE", "CLINIC_CLOSURE"}
+
+
+def classify_support_request(question: str, lookup_context: dict | None = None) -> SupportDecision:
+    """Merge lookup fields only; the latest patient message always owns the intent."""
+    decision = _classify_current_request(question)
+    has_context = bool(lookup_context and lookup_context.get("intent") in LOOKUP_INTENTS)
+    if decision.category not in LOOKUP_INTENTS | {"OTHER"}:
+        return decision
+    if not has_context and decision.category not in LOOKUP_INTENTS:
+        return decision
+    doctor, date, time = _appointment_entities(question)
+    previous = lookup_context["intent"] if has_context else decision.category
+    if date is None:
+        short_date, date_question = _short_lookup_date(question, datetime.now(ZoneInfo("Asia/Ho_Chi_Minh")).date(), allow_bare=has_context)
+        date = short_date
+        if date_question:
+            intent = previous if decision.category == "OTHER" else decision.category
+            if intent == "DOCTOR_LEAVE_SCHEDULE":
+                intent = "DOCTOR_AVAILABILITY"
+            return SupportDecision(intent, date_question, False, "Cần làm rõ tháng của ngày muốn khám.", .9, True,
+                doctor or (lookup_context.get("doctor_name") if has_context else None), None,
+                time or (lookup_context.get("requested_time") if has_context else None))
+    if not has_context:
+        return decision
+    # Other explicit intents must not inherit a prior availability question.
+    if decision.category == "OTHER":
+        # Accept a bare name only when waiting for a doctor's name.
+        if not doctor and not date and not time and not lookup_context.get("doctor_name") and previous != "CLINIC_CLOSURE":
+            name = question.strip(" .?!,")
+            if 1 <= len(name.split()) <= 5 and all(part.isalpha() for part in name.split()):
+                doctor, _, _ = _appointment_entities("Bác sĩ " + name)
+        if not doctor and not date and not time:
+            return decision
+        intent = previous
+    else:
+        intent = decision.category
+    if intent == "DOCTOR_LEAVE_SCHEDULE" and date:
+        intent = "DOCTOR_AVAILABILITY"
+    if intent == "CLINIC_CLOSURE":
+        if not date:
+            return decision
+        return SupportDecision(intent, "Mình đang kiểm tra lịch nghỉ của phòng khám trên hệ thống.", False,
+            "Tra cứu ngày phòng khám nghỉ.", .96, False, None, date, None)
+    doctor = doctor or (lookup_context.get("doctor_name") if previous != "CLINIC_CLOSURE" else None)
+    date = date or lookup_context.get("requested_date")
+    time = time or lookup_context.get("requested_time")
+    missing = []
+    if not doctor:
+        missing.append("tên bác sĩ")
+    if intent == "DOCTOR_AVAILABILITY" and not date:
+        missing.append("ngày muốn khám")
+    if missing:
+        return SupportDecision(intent, f"Bạn cho mình biết {' và '.join(missing)} để mình kiểm tra khung giờ trống trên hệ thống nhé.",
+            False, "Đang bổ sung thông tin tra cứu lịch.", .88, True, doctor, date, time)
+    return SupportDecision(intent, "Mình đang kiểm tra lịch bác sĩ trên hệ thống.", False,
+        "Tra cứu lịch từ thông tin đã được bệnh nhân cung cấp.", .96, False, doctor, date, time)
 
 
 async def polish_safe_answer(decision: SupportDecision, api_key: str, preferred_model: str) -> str:

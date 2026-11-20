@@ -94,6 +94,12 @@ test.describe("payment cancellation and refund", () => {
 
       await page.goto(`/payment/cancel?orderCode=${orderCode}&cancel=true&status=CANCELLED`);
       await expect(page.getByRole("navigation", { name: "Điều hướng Bệnh nhân" })).toBeVisible({ timeout: 30_000 });
+      const bookedDate = new Intl.DateTimeFormat("en-CA", {
+        timeZone: "Asia/Ho_Chi_Minh", year: "numeric", month: "2-digit", day: "2-digit",
+      }).format(new Date(created.appointment.startAt));
+      await expect(page).toHaveURL(url => url.searchParams.get("doctorId") === created.appointment.doctorId
+        && url.searchParams.get("date") === bookedDate);
+      await expect(page.locator('input[type="date"]').first()).toHaveValue(bookedDate);
 
       await expect.poll(async () => {
         const current = await browserApi<Payment>(page, `/api/v1/payments/booking/${appointmentId}`);

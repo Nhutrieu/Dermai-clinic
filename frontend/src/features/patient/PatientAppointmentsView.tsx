@@ -1,10 +1,13 @@
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import { AlertTriangle, BrainCircuit, CalendarDays, CheckCircle2, Clock3, Stethoscope } from "lucide-react";
 import { ApiError, request } from "../../core/api";
+import { doctorBookingSelection, doctorBookingUrl } from "../../core/bookingReturn";
+import { chatBookingDate, type ChatBookingRequest } from "../support/supportBooking";
 import { formatVnd } from "../../core/currency";
 import { subscribeRealtime } from "../../core/realtime";
 import type { AiAssessment, Appointment, AvailabilityResponse, AvailabilitySlot, Doctor, Patient } from "../../core/types";
 import AccessibleDialog from "../../components/AccessibleDialog";
+import { bookingAiAssessment, canBookWithAi } from "./aiBookingSelection";
 import { formatAiPercentage, patientAiLabel } from "./patientAiPresentation";
 
 const ACTIVE_UPCOMING_STATUSES = new Set(["PROPOSED", "PENDING", "ASSIGNED", "PENDING_PAYMENT", "PENDING_CONFIRMATION", "CONFIRMED", "CHECKED_IN", "IN_PROGRESS"]);
@@ -100,18 +103,22 @@ function BookingDialog({
 }
 
 export default function PatientAppointmentsView({
-    token, patient, appointments, changed
+    token, patient, appointments, changed, chatBooking
 }: {
+    chatBooking?: ChatBookingRequest;
     token: string;
     patient: Patient;
     appointments: Appointment[];
     changed: (appointments: Appointment[]) => void;
 }) {
     const [doctors, setDoctors] = useState<Doctor[]>([]);
-    const [doctorId, setDoctorId] = useState("");
-    const [date, setDate] = useState(() => clinicDateInput());
+    const [doctorId, setDoctorId] = useState(() => chatBooking?.doctorId || doctorBookingSelection(window.location.search)?.doctorId || "");
+    const [date, setDate] = useState(() => chatBooking ? chatBookingDate(chatBooking) : doctorBookingSelection(window.location.search)?.date || clinicDateInput());
     const [clinicClosureReason, setClinicClosureReason] = useState<string | null>(null);
     const [clinicClosureNotice, setClinicClosureNotice] = useState<string | null>(null);
+    const [loadedSlotKey, setLoadedSlotKey] = useState("");
+    const handledChatBooking = useRef("");
+    const [chatReady, setChatReady] = useState("");
     const [slots, setSlots] = useState<AvailabilitySlot[]>([]);
     const [selected, setSelected] = useState<AvailabilitySlot | null>(null);
     const [pendingSlot, setPendingSlot] = useState<AvailabilitySlot | null>(null);
@@ -129,7 +136,10 @@ export default function PatientAppointmentsView({
     const [depositAmount, setDepositAmount] = useState<number | null>(null);
     const [changedAmountPayment, setChangedAmountPayment] = useState<{ amount: number; checkoutUrl: string } | null>(null);
     const [busy, setBusy] = useState(false);
-    const slotRequestInFlight = useRef(false);
+    const slotRequestInFlight = useRef("");
+    const currentSlotKey = useRef("");
+    currentSlotKey.current = doctorId + ":" + date;
+    const paymentNoticeRef = useRef<Feedback | null>(null);
     const clinicClosureNoticeKeyRef = useRef("");
 
     const doctor = doctors.find(item => item.id === doctorId);
@@ -147,11 +157,16 @@ export default function PatientAppointmentsView({
         sessionStorage.removeItem("dermai-payment-notice");
         try {
             const notice = JSON.parse(raw) as Feedback;
-            if (notice?.text && (notice.tone === "success" || notice.tone === "error" || notice.tone === "info")) setFeedback(notice);
+            if (notice?.text && (notice.tone === "success" || notice.tone === "error" || notice.tone === "info")) { paymentNoticeRef.current = notice;setFeedback(notice); }
         } catch {
             /* Bỏ qua thông báo cũ không hợp lệ. */
         }
     }, []);
+
+    useEffect(() => {
+        if (!doctor) return;
+        window.history.replaceState(window.history.state, "", doctorBookingUrl({ doctorId, date }));
+    }, [doctorId, date, doctors]);
 
     async function loadDoctors() {
         const list = await request<Doctor[]>("/doctors", token);
@@ -189,25 +204,11 @@ export default function PatientAppointmentsView({
     useEffect(() => {
         request<AiAssessment[]>("/patients/me/ai-assessments", token).then(list => {
             const draft = sessionStorage.getItem("dermai-ai-booking");
-            let draftId = "";
-            try {
-                const parsed = JSON.parse(draft || "{}");
-                draftId = parsed.assessmentId || "";
-            } catch {
-                /* Bỏ qua draft lỗi để luồng đặt lịch vẫn hoạt động. */
-            }
-            const requestedAssessment = draftId
-                ? list.find(item => item.id === draftId && item.sharedWithDoctor)
-                : undefined;
-            const latestAssessment = list[0];
-            const assessment = requestedAssessment
-                || (latestAssessment?.sharedWithDoctor && !latestAssessment.appointmentId
-                    ? latestAssessment
-                    : undefined);
+            sessionStorage.removeItem("dermai-ai-booking");
+            const assessment = bookingAiAssessment(list, draft);
             if (!assessment) return;
             setSharedAi(assessment);
             setReason(value => value.trim() ? value : aiBookingSummary(assessment));
-            sessionStorage.removeItem("dermai-ai-booking");
         }).catch(() => undefined);
     }, [token]);
 
@@ -225,16 +226,53 @@ export default function PatientAppointmentsView({
             sessionStorage.removeItem("derm-home-booking");
         }
     }, [doctors]);
+    useEffect(() => {
+        if (!chatBooking || !doctors.length || handledChatBooking.current === chatBooking.requestId) return;
+        let live = true;
+        void (async () => {
+            if (!doctors.some(item => item.id === chatBooking.doctorId)) {
+                handledChatBooking.current = chatBooking.requestId;
+                setFeedback({ tone: "error", text: "Bác sĩ này hiện không còn nhận lịch. Vui lòng chọn bác sĩ khác." });
+                return;
+            }
+            await releaseHold();
+            if (!live) return;
+            setDoctorId(chatBooking.doctorId);
+            setDate(chatBookingDate(chatBooking));
+            setLoadedSlotKey("");
+            setChatReady(chatBooking.requestId);
+        })();
+        return () => { live = false; };
+    }, [chatBooking?.requestId, doctors.length]);
+
+    useEffect(() => {
+        if (!chatBooking || chatReady !== chatBooking.requestId || busy
+            || handledChatBooking.current === chatBooking.requestId
+            || doctorId !== chatBooking.doctorId || date !== chatBookingDate(chatBooking)
+            || loadedSlotKey !== doctorId + ":" + date) return;
+        handledChatBooking.current = chatBooking.requestId;
+        const slot = slots.find(item => item.doctorId === chatBooking.doctorId
+            && Date.parse(item.startAt) === Date.parse(chatBooking.startAt)
+            && Date.parse(item.endAt) === Date.parse(chatBooking.endAt));
+        if (slot?.status === "HELD_BY_YOU") return;
+        if (!slot || slot.status !== "AVAILABLE") {
+            setFeedback({ tone: "error", text: "Giờ bạn chọn trong chat hiện không còn trống. Vui lòng chọn giờ khác bên dưới." });
+            return;
+        }
+        void chooseSlot(slot);
+    }, [chatBooking, chatReady, doctorId, date, loadedSlotKey, slots, busy]);
+
     useEffect(() => { setItems(appointments) }, [appointments]);
 
     async function findSlots(realtime = false) {
-        if (!doctorId || !date || slotRequestInFlight.current) return;
-        slotRequestInFlight.current = true;
+        const key = doctorId + ":" + date;
+        if (!doctorId || !date || slotRequestInFlight.current === key) return;
+        slotRequestInFlight.current = key;
         // Background refreshes must not toggle the whole booking form into a
         // loading state; that was causing a visible pulse every few seconds.
         if (!realtime) setBusy(true);
         if (!realtime) {
-            setFeedback(null);
+            if (!paymentNoticeRef.current) setFeedback(null);
             setClinicClosureReason(null);
             setSlots([]);
         }
@@ -244,6 +282,7 @@ export default function PatientAppointmentsView({
                 + "&date=" + encodeURIComponent(date),
                 token
             );
+            if (currentSlotKey.current !== key) return;
             const clinicClosed = result.status === "CLINIC_CLOSED";
             const closureReason = result.closureReason?.trim() || "Phòng khám tạm nghỉ.";
             setClinicClosureReason(clinicClosed ? closureReason : null);
@@ -264,6 +303,7 @@ export default function PatientAppointmentsView({
                 setClinicClosureNotice(null);
             }
             setSlots(result.items);
+            setLoadedSlotKey(doctorId + ":" + date);
             const own = result.items.find(item => item.status === "HELD_BY_YOU");
             if (own) {
                 setSelected(own);
@@ -289,23 +329,24 @@ export default function PatientAppointmentsView({
                 : "Bác sĩ chưa có lịch làm việc trong ngày đã chọn.";
             // Keep the user-facing feedback stable during a background sync.
             // The slot grid itself still reflects any real availability change.
-            if (!realtime) setFeedback({ tone: "info", text });
+            if (!realtime && !paymentNoticeRef.current) setFeedback({ tone: "info", text });
             return own;
         } catch (error) {
+            if (currentSlotKey.current !== key) return;
             clinicClosureNoticeKeyRef.current = "";
             setClinicClosureReason(null);
             setClinicClosureNotice(null);
             setFeedback({ tone: "error", text: (error as Error).message });
             return undefined;
         } finally {
-            slotRequestInFlight.current = false;
-            if (!realtime) setBusy(false);
+            if (slotRequestInFlight.current === key) slotRequestInFlight.current = "";
+            if (!realtime && currentSlotKey.current === key) setBusy(false);
         }
     }
 
     useEffect(() => {
         if (doctorId && date) void findSlots();
-    }, [doctorId, date]);
+    }, [doctorId, date, chatReady]);
 
     useEffect(() => {
         if (!doctorId || !date) return;
@@ -502,6 +543,16 @@ export default function PatientAppointmentsView({
         if (!selected || !holdId || !reason.trim()) return;
         setBusy(true);
         try {
+            if (sharedAi) {
+                const list = await request<AiAssessment[]>("/patients/me/ai-assessments", token, { cache: "no-store" });
+                const stillSelected = list.find(item => item.id === sharedAi.id);
+                if (!canBookWithAi(stillSelected) || !stillSelected.sharedWithDoctor) {
+                    setSharedAi(null);
+                    setReason(value => value.startsWith("Kết quả kiểm tra da bằng AI") ? "" : value);
+                    setFeedback({ tone: "info", text: "Kết quả AI đã bị xóa, tắt chia sẻ hoặc không còn là kết quả mới nhất. Hệ thống đã bỏ đính kèm; bạn có thể chọn ảnh mới nhất hoặc đặt lịch không kèm ảnh." });
+                    return;
+                }
+            }
             const booked = await request<Appointment>("/appointments/holds/" + holdId + "/confirm", token, {
                 method: "POST",
                 headers: { "Idempotency-Key": crypto.randomUUID() },
@@ -524,7 +575,7 @@ export default function PatientAppointmentsView({
             setSelected(null);
             setHoldId("");
             setHoldUntil("");
-            sessionStorage.setItem("dermai-pending-payment", JSON.stringify({ bookingId: booked.id, ...payment }));
+            sessionStorage.setItem("dermai-pending-payment", JSON.stringify({ bookingId: booked.id, ...payment, bookingSelection: { doctorId: selected.doctorId, date: clinicDate(selected.startAt) } }));
             if (payment.amount !== depositAmount) {
                 setDepositAmount(payment.amount);
                 setChangedAmountPayment({ amount: payment.amount, checkoutUrl: payment.checkoutUrl });
@@ -703,6 +754,7 @@ export default function PatientAppointmentsView({
                                                 setPendingSlot(null);
                                                 setDuplicateBooking(null);
                                                 setTimeConflict(null);
+                                                paymentNoticeRef.current = null;
                                                 setDoctorId(item.id);
                                                 void releaseHold();
                                             }}
@@ -759,6 +811,7 @@ export default function PatientAppointmentsView({
                                         setPendingSlot(null);
                                         setDuplicateBooking(null);
                                         setTimeConflict(null);
+                                        paymentNoticeRef.current = null;
                                         setDate(event.target.value);
                                         void releaseHold();
                                     }}

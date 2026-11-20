@@ -2,6 +2,7 @@ export { default } from "../../components/v2/skin-analysis/SkinAnalysisV2";
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { BrainCircuit, CalendarDays, Check, ImagePlus, Trash2 } from "lucide-react";
+import { canBookWithAi, clearAiBookingDraft } from "./aiBookingSelection";
 import { ApiError, request } from "../../core/api";
 import type { AiAnalysisResponse, AiAssessment, AiPrediction, Patient } from "../../core/types";
 import { EmptyState, ErrorState, StateSkeleton } from "../../components/Ui";
@@ -198,7 +199,13 @@ function LegacyPatientAiScreen({ token, patient, openBooking }: { token: string;
   async function book(assessment: AiAssessment) {
     setActionError("");
     try {
-      let selected = assessment;
+      const list = await request<AiAssessment[]>("/patients/me/ai-assessments", token, { cache: "no-store" });
+      const candidate = list.find(item => item.id === assessment.id);
+      if (!canBookWithAi(candidate)) {
+        setActionError("Chỉ có thể đặt lịch với kết quả AI mới nhất. Bạn có thể xem lại ảnh cũ hoặc phân tích ảnh mới.");
+        return;
+      }
+      let selected: AiAssessment = candidate;
       if (!selected.sharedWithDoctor) {
         selected = await request<AiAssessment>(`/patients/me/ai-assessments/${assessment.id}/sharing`, token, {
           method: "PATCH",
@@ -223,6 +230,7 @@ function LegacyPatientAiScreen({ token, patient, openBooking }: { token: string;
     setActionError("");
     try {
       await request(`/patients/me/ai-assessments/${assessment.id}`, token, { method: "DELETE" });
+      clearAiBookingDraft(assessment.id);
       setHistory(items => items.filter(item => item.id !== assessment.id));
       if (current?.id === assessment.id) {
         setCurrent(null);
@@ -285,8 +293,8 @@ function LegacyPatientAiScreen({ token, patient, openBooking }: { token: string;
             <p>{item.imageAvailable ? "Ảnh đã lưu" : "Không có ảnh đính kèm"}</p>
           </div>
           <div className="ai-history-actions">
-            <button type="button" className={item.sharedWithDoctor ? "shared" : ""} onClick={() => changeSharing(item, !item.sharedWithDoctor)}>{item.sharedWithDoctor ? "Đang chia sẻ" : "Chia sẻ khi đặt lịch"}</button>
-            <button type="button" className="ai-history-book" onClick={() => book(item)}><CalendarDays /> Đặt lịch</button>
+            {(canBookWithAi(item) || item.appointmentId) && <button type="button" className={item.sharedWithDoctor ? "shared" : ""} onClick={() => changeSharing(item, !item.sharedWithDoctor)}>{item.sharedWithDoctor ? "Đang chia sẻ" : item.appointmentId ? "Chia sẻ với bác sĩ" : "Chia sẻ khi đặt lịch"}</button>}
+            {canBookWithAi(item) && <button type="button" className="ai-history-book" onClick={() => book(item)}><CalendarDays /> Đặt lịch</button>}
             <button type="button" className={`ai-delete ${confirmDelete === item.id ? "confirm" : ""}`} aria-label={confirmDelete === item.id ? "Xác nhận xóa kết quả AI" : "Xóa kết quả AI"} aria-pressed={confirmDelete === item.id} onClick={() => remove(item)}><Trash2 />{confirmDelete === item.id && <span>Xác nhận xóa</span>}</button>
           </div>
         </article>)}</div>

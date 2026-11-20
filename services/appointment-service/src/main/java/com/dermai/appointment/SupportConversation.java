@@ -14,6 +14,8 @@ public class SupportConversation {
  @Column(name="ai_failure_count",nullable=false) public int aiFailureCount;
  @Column(name="last_intent") public String lastIntent;
  @Column(name="last_intent_confidence") public Double lastIntentConfidence;
+ @org.hibernate.annotations.JdbcTypeCode(org.hibernate.type.SqlTypes.JSON)
+ @Column(name="lookup_context",columnDefinition="jsonb") public SupportLookupContext lookupContext;
  @Column(name="ai_summary",length=4000) public String aiSummary;
  @Column(name="escalation_reason") public String escalationReason;
  @Column(name="escalated_at") public Instant escalatedAt;

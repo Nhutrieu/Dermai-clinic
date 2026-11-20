@@ -15,6 +15,8 @@ const API_ERROR_MESSAGES: Record<string, string> = {
   REFUND_NOT_ELIGIBLE_UNDER_6_HOURS: "Thời điểm yêu cầu còn dưới 6 giờ trước lịch khám nên tiền cọc không được hoàn.",
   REFUND_AMOUNT_MUST_MATCH_POLICY: "Số tiền hoàn phải đúng với mức hệ thống đã tính theo chính sách.",
   INVALID_DEPOSIT_AMOUNT: "Tiền cọc phải là số nguyên từ 1.000đ đến 100.000.000đ.",
+  OUTSIDE_CLINIC_WORK_SCHEDULE: "Khung giờ này nằm ngoài giờ hoạt động của phòng khám.",
+  CLINIC_CLOSED: "Phòng khám nghỉ trong ngày này. Vui lòng chọn ngày khác.",
   DOCTOR_SLOT_CONFLICT: "Bác sĩ đã có lịch trong khung giờ này.",
 };
 

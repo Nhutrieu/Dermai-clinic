@@ -9,6 +9,7 @@ import java.util.*;
 
 public interface AiAssessmentRepository extends JpaRepository<AiAssessment, UUID> {
   List<AiAssessment> findByPatientIdentityIdAndDeletedAtIsNullOrderByCreatedAtDesc(UUID patientIdentityId);
+  Optional<AiAssessment> findFirstByPatientIdentityIdOrderByCreatedAtDesc(UUID patientIdentityId);
   Optional<AiAssessment> findByIdAndPatientIdentityIdAndDeletedAtIsNull(UUID id, UUID patientIdentityId);
   Optional<AiAssessment> findFirstByAppointmentIdAndSharedWithDoctorTrueAndDeletedAtIsNullOrderByCreatedAtDesc(UUID appointmentId);
 

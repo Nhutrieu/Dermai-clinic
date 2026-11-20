@@ -36,6 +36,7 @@ interface SupportConversationRepository extends JpaRepository<SupportConversatio
       c.lastIntent=null,
       c.lastIntentConfidence=null,
       c.aiSummary=null,
+      c.lookupContext=null,
       c.escalationReason=null,
       c.escalatedAt=null,
       c.resolvedAt=CURRENT_TIMESTAMP,
@@ -57,8 +58,8 @@ interface SupportConversationRepository extends JpaRepository<SupportConversatio
 
  @Modifying
  @Query(value="""
-  INSERT INTO support_conversations(patient_identity_id,assigned_receptionist_identity_id,assigned_at,channel_status,ai_failure_count,last_intent,last_intent_confidence,ai_summary,escalation_reason,escalated_at,resolved_at,resolved_by_identity_id,updated_at)
-  SELECT :newIdentity,assigned_receptionist_identity_id,assigned_at,channel_status,ai_failure_count,last_intent,last_intent_confidence,ai_summary,escalation_reason,escalated_at,resolved_at,resolved_by_identity_id,updated_at
+  INSERT INTO support_conversations(patient_identity_id,assigned_receptionist_identity_id,assigned_at,channel_status,ai_failure_count,last_intent,last_intent_confidence,ai_summary,escalation_reason,escalated_at,resolved_at,resolved_by_identity_id,lookup_context,updated_at)
+  SELECT :newIdentity,assigned_receptionist_identity_id,assigned_at,channel_status,ai_failure_count,last_intent,last_intent_confidence,ai_summary,escalation_reason,escalated_at,resolved_at,resolved_by_identity_id,lookup_context,updated_at
   FROM support_conversations WHERE patient_identity_id=:oldIdentity
   ON CONFLICT (patient_identity_id) DO UPDATE
   SET assigned_receptionist_identity_id=COALESCE(support_conversations.assigned_receptionist_identity_id,EXCLUDED.assigned_receptionist_identity_id),
@@ -70,6 +71,7 @@ interface SupportConversationRepository extends JpaRepository<SupportConversatio
       ai_summary=COALESCE(EXCLUDED.ai_summary,support_conversations.ai_summary),
       escalation_reason=COALESCE(EXCLUDED.escalation_reason,support_conversations.escalation_reason),
       escalated_at=COALESCE(support_conversations.escalated_at,EXCLUDED.escalated_at),
+      lookup_context=CASE WHEN EXCLUDED.updated_at>support_conversations.updated_at THEN EXCLUDED.lookup_context ELSE support_conversations.lookup_context END,
       resolved_at=COALESCE(support_conversations.resolved_at,EXCLUDED.resolved_at),
       resolved_by_identity_id=COALESCE(support_conversations.resolved_by_identity_id,EXCLUDED.resolved_by_identity_id),
       updated_at=GREATEST(support_conversations.updated_at,EXCLUDED.updated_at)

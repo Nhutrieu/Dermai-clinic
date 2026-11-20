@@ -1,0 +1,52 @@
+.admin-notification-trigger { position: relative; display: grid; place-items: center; flex-shrink: 0; width: 42px; height: 42px; padding: 0; border: 1px solid #dce7e1; border-radius: 12px; background: #fff; color: #164c40; cursor: pointer; }
+.admin-notification-trigger:hover { background: #edf6f2; }
+.admin-notification-trigger:focus-visible { outline: 3px solid #b7dfd0; outline-offset: 2px; }
+.admin-notification-trigger > svg { width: 20px; height: 20px; }
+.admin-notification-badge { position: absolute; top: -6px; right: -6px; display: grid; place-items: center; min-width: 20px; height: 20px; padding: 0 4px; border: 2px solid #fff; border-radius: 999px; background: #bd443c; color: #fff; font-size: 10px; font-weight: 800; line-height: 1; }
+.admin-notification-backdrop { position: fixed; inset: 0; z-index: 180; display: flex; align-items: flex-start; justify-content: flex-end; padding: 80px 24px 24px; background: #0b292528; }
+.admin-notification-dialog { position: relative; display: flex; flex-direction: column; width: min(470px, 100%); max-width: 470px; max-height: calc(100dvh - 104px); padding: 24px; border: 1px solid #dce7e1; border-radius: 20px; background: #fff; color: #173e35; box-shadow: 0 24px 72px #0b292533; }
+.admin-notification-dialog:focus { outline: none; }
+.admin-notification-dialog > h2 { margin: 0 40px 20px 0; font-size: 22px; line-height: 1.3; }
+.admin-notification-dialog .booking-dialog-close { position: absolute; top: 16px; right: 16px; display: grid; place-items: center; width: 36px; height: 36px; padding: 0; border: 0; border-radius: 10px; background: #f2f6f4; color: #52736a; cursor: pointer; }
+.admin-notification-dialog .booking-dialog-close svg { width: 18px; height: 18px; }
+.admin-notification-dialog .booking-dialog-copy { min-height: 0; overflow-y: auto; overscroll-behavior: contain; }
+.admin-notification-toolbar { display: flex; justify-content: space-between; align-items: center; gap: 12px; margin-bottom: 14px; }
+.admin-notification-toolbar > div { display: flex; gap: 6px; }
+.admin-notification-toolbar button { padding: 8px 10px; border: 1px solid #dce7e1; border-radius: 9px; background: #fff; color: #52736a; font-family: inherit; font-size: 12px; font-weight: 600; line-height: 1.4; cursor: pointer; }
+.admin-notification-toolbar button[aria-pressed="true"] { border-color: #b5d8ca; background: #edf6f2; color: #164c40; }
+.admin-notification-toolbar .admin-notification-refresh { display: grid; place-items: center; width: 34px; height: 34px; padding: 0; }
+.admin-notification-refresh svg { width: 16px; height: 16px; }
+.admin-notification-list { display: grid; gap: 10px; }
+.admin-notification-list .admin-notification-item { display: block; width: 100%; padding: 14px; border: 1px solid #e1e9e5; border-radius: 12px; background: #fff; color: #173e35; text-align: left; cursor: pointer; }
+.admin-notification-list .admin-notification-item.is-unread { border-color: #c3dfd2; background: #f1f8f4; }
+.admin-notification-item:hover { box-shadow: 0 3px 12px #123f3510; }
+.admin-notification-category { display: flex; align-items: center; gap: 7px; margin-bottom: 8px; color: #477a68; font-size: 11px; font-weight: 700; }
+.admin-notification-category svg { width: 15px; height: 15px; }
+.admin-notification-category i { width: 7px; height: 7px; margin-left: auto; border-radius: 50%; background: #16846f; }
+.admin-notification-item.is-urgent .admin-notification-category { color: #b34b3e; }
+.admin-notification-item > strong { display: block; font-size: 14px; line-height: 1.5; }
+.admin-notification-item > p { margin: 5px 0 10px; color: #5b756d; font-size: 12px; line-height: 1.6; overflow-wrap: anywhere; }
+.admin-notification-link { display: inline-flex; align-items: center; gap: 3px; color: #27715b; font-size: 11px; font-weight: 700; }
+.admin-notification-link svg { width: 13px; height: 13px; }
+.admin-notification-dialog .booking-dialog-actions { display: block; margin-top: 14px; padding-top: 14px; border-top: 1px solid #e1e9e5; }
+.admin-notification-dialog .admin-notification-mark { display: flex; width: 100%; justify-content: center; align-items: center; gap: 8px; min-height: 40px; padding: 8px 12px; border: 1px solid #c6dfd4; border-radius: 10px; background: #edf6f2; color: #164c40; font-size: 13px; font-weight: 700; cursor: pointer; }
+.admin-notification-mark svg { width: 17px; height: 17px; }
+.admin-notification-dialog button:disabled { opacity: .5; cursor: default; }
+.admin-notification-empty { display: grid; justify-items: center; gap: 10px; padding: 28px 14px; color: #5b756d; text-align: center; font-size: 13px; }
+.admin-notification-empty > svg { width: 28px; height: 28px; color: #80ab99; }
+.admin-notification-empty p { max-width: 280px; margin: 0; font-size: 12px; line-height: 1.6; }
+.admin-notification-error { margin: 0 0 12px; padding: 10px 12px; border-radius: 9px; background: #fff4e7; color: #8c5f23; font-size: 12px; line-height: 1.6; }
+.admin-notification-updated { margin: 12px 0 0; color: #82978f; font-size: 11px; text-align: center; }
+@media (max-width: 600px) {
+ .admin-notification-backdrop { padding: 74px 12px 12px; }
+ .admin-notification-dialog { max-height: calc(100dvh - 86px); padding: 20px 16px; border-radius: 16px; }
+}
+
+/* Keep the admin navigation and bell from crowding the brand on laptop widths. */
+@media (min-width: 781px) and (max-width: 1399px) {
+ .role-admin .app-header-inner { column-gap: 16px; }
+ .role-admin .app-brand { white-space: nowrap; }
+ .role-admin .app-nav button { padding-inline: 8px; gap: 6px; font-size: 13px; }
+ .role-admin .app-user-copy { display: none; }
+ .role-admin .app-user-trigger { grid-template-columns: 36px 16px; }
+}

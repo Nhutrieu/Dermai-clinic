@@ -69,7 +69,7 @@ export default function AdminStaleConsultations({ token, appointments, doctors, 
   if (!stale.length) return null;
 
   return (
-    <section className="panel admin-stale-consultations" aria-labelledby="admin-stale-title">
+    <section id="admin-stale-consultations" tabIndex={-1} className="panel admin-stale-consultations" aria-labelledby="admin-stale-title">
       <header>
         <div>
           <ClockAlert aria-hidden="true" />

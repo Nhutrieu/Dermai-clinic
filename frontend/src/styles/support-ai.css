@@ -415,3 +415,11 @@
   .support-panel .support-composer-row > .support-attach-button { width: 42px; min-width: 42px; }
   .support-panel .support-composer-row > button { width: 58px; min-width: 58px; padding-inline: 5px; }
 }
+.support-booking-options { margin: 12px 0 4px; display: grid; gap: 8px; }
+.support-booking-options > span { font-size: .82rem; font-weight: 650; }
+.support-booking-options > div { display: flex; flex-wrap: wrap; gap: 8px; }
+.support-booking-options button { min-height: 40px; padding: 8px 13px; border: 1px solid #99d6cf; border-radius: 10px; background: #effbf8; color: #125e57; font-weight: 700; cursor: pointer; }
+.support-booking-options button:hover { background: #d8f3ed; }
+.support-booking-options button:focus-visible { outline: 3px solid #159c8e; outline-offset: 2px; }
+.support-booking-options button:disabled { opacity: .5; cursor: default; }
+.support-booking-options > small { line-height: 1.5; font-size: .75rem; color: #526c70; }

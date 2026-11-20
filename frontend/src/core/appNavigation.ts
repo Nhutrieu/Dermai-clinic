@@ -1,7 +1,7 @@
 import { AlertTriangle, Banknote, Boxes, BrainCircuit, CalendarDays, History, LayoutDashboard, MessageSquareCheck, PackageCheck, ReceiptText, Settings2, Stethoscope, UserRound, type LucideIcon } from "lucide-react";
 import type { Tokens } from "./types";
 
-export type AppNavItemId = "profile" | "patients" | "appointments" | "appointment_history" | "records" | "services" | "billing" | "refunds" | "reviews" | "ai" | "pharmacy_queue" | "inventory" | "inventory_alerts" | "inventory_logs";
+export type AppNavItemId = "profile" | "patients" | "appointments" | "appointment_history" | "records" | "services" | "billing" | "refunds" | "reviews" | "ai" | "pharmacy_queue" | "inventory" | "inventory_alerts" | "inventory_logs" | "clinic_schedule";
 
 export type AppNavItem = {
   id: AppNavItemId;
@@ -65,5 +65,6 @@ export const NAVIGATION_BY_ROLE: Record<Tokens["role"], AppNavItem[]> = {
     { id: "appointments", label: "Bác sĩ", icon: CalendarDays },
     { id: "services", label: "Dịch vụ", icon: Settings2 },
     { id: "records", label: "Nhân sự", icon: Stethoscope },
+    { id: "clinic_schedule", label: "Lịch phòng khám", icon: CalendarDays },
   ],
 };

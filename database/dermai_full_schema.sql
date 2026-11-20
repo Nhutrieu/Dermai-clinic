@@ -407,7 +407,7 @@ alter table appointment.appointments
     add column if not exists follow_up_not_before timestamptz;
 
 -- Source: services/appointment-service/src/main/resources/db/migration/V5__support_chat.sql
-CREATE TABLE support_messages(id uuid PRIMARY KEY,patient_identity_id uuid NOT NULL,sender_identity_id uuid NOT NULL,sender_role varchar(30) NOT NULL,body varchar(2000) NOT NULL,sent_at timestamptz NOT NULL,read_at timestamptz);
+CREATE TABLE support_messages(booking_options jsonb,id uuid PRIMARY KEY,patient_identity_id uuid NOT NULL,sender_identity_id uuid NOT NULL,sender_role varchar(30) NOT NULL,body varchar(2000) NOT NULL,sent_at timestamptz NOT NULL,read_at timestamptz);
 CREATE INDEX ix_support_patient_time ON support_messages(patient_identity_id,sent_at);
 
 -- Source: services/appointment-service/src/main/resources/db/migration/V6__clinic_reviews.sql
@@ -888,6 +888,24 @@ CREATE TABLE appointment_performed_services (
 CREATE INDEX ix_appointment_performed_services_appointment
     ON appointment_performed_services (appointment_id);
 
+-- Source: services/appointment-service/src/main/resources/db/migration/V31__clinic_weekly_schedule.sql
+CREATE TABLE clinic_workdays (
+    weekday integer PRIMARY KEY CHECK (weekday BETWEEN 1 AND 7),
+    open boolean NOT NULL,
+    start_time time NOT NULL,
+    end_time time NOT NULL,
+    CHECK (end_time - start_time >= interval '30 minutes')
+);
+
+-- Source: services/appointment-service/src/main/resources/db/migration/V32__admin_notification_reads.sql
+CREATE TABLE admin_notification_reads (
+    admin_identity_id uuid NOT NULL,
+    notification_key varchar(240) NOT NULL,
+    read_at timestamptz NOT NULL DEFAULT now(),
+    PRIMARY KEY (admin_identity_id, notification_key)
+);
+CREATE INDEX ix_admin_notification_reads_recent ON admin_notification_reads(admin_identity_id, read_at DESC);
+
 -- ============================================================================
 -- payment-service
 -- ============================================================================
@@ -1193,6 +1211,8 @@ SET search_path TO notification, public;
 -- Source: services/notification-service/src/main/resources/db/migration/V1__notification.sql
 CREATE TABLE deliveries(id uuid PRIMARY KEY,event_id uuid NOT NULL UNIQUE,event_type varchar(120) NOT NULL,recipient varchar(320) NOT NULL,subject varchar(300) NOT NULL,created_at timestamptz NOT NULL DEFAULT now(),sent_at timestamptz,last_error varchar(2000),attempts int NOT NULL DEFAULT 0);
 CREATE INDEX ix_delivery_unsent ON deliveries(created_at) WHERE sent_at IS NULL;
+
+ALTER TABLE appointment.support_conversations ADD COLUMN lookup_context jsonb;
 
 SET search_path TO public;
 COMMIT;

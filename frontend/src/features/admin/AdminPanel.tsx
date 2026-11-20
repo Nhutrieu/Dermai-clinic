@@ -11,6 +11,7 @@ import ReceptionRefundQueue from "../reception/ReceptionRefundQueue";
 import AdminBilling from "./AdminBilling";
 import AdminInventory from "./AdminInventory";
 import AdminServices from "./AdminServices";
+import AdminClinicSchedule from "./AdminClinicSchedule";
 import { authErrorMessage, isPasswordValid } from "../../core/passwordPolicy";
 
 export default function AdminPanel({ token, tab }: { token: string; tab: string }) {
@@ -89,10 +90,11 @@ export default function AdminPanel({ token, tab }: { token: string; tab: string 
             onSaved={updated => setDoctors(current => current.map(item => item.id === updated.id ? updated : item))}
         />;
     }
+    if (tab === "clinic_schedule") return <div className="admin-staff-page"><AdminClinicSchedule token={token} /><ClinicClosureManager token={token} /></div>;
     if (tab === "billing") return <div className="admin-module-page"><AdminBilling token={token} /></div>;
     if (tab === "inventory") return <div className="admin-module-page"><AdminInventory token={token} /></div>;
     if (tab === "services") return <div className="admin-module-page"><AdminServices token={token} doctors={doctors} /></div>;
-    if (tab === "refunds") return <div className="admin-module-page"><ReceptionRefundQueue token={token} readOnly /></div>;
+    if (tab === "refunds") return <div id="admin-refund-queue" tabIndex={-1} className="admin-module-page"><ReceptionRefundQueue token={token} readOnly /></div>;
     if (tab === "reviews") return <div className="admin-module-page"><AdminClinicReviews token={token} /></div>;
     if (tab !== "records") return renderOverview("dashboard");
     return <div className="admin-staff-page">
@@ -115,7 +117,6 @@ export default function AdminPanel({ token, tab }: { token: string; tab: string 
             onSubmit={create}
         />
         <AdminReceptionistAccounts token={token} revision={staffRevision} />
-        <ClinicClosureManager token={token} />
     </div>;
 }
 

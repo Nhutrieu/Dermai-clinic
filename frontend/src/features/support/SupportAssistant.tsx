@@ -1,8 +1,9 @@
 import { FormEvent, useEffect, useRef, useState } from "react";
 import { ArrowRight, Bot, CalendarDays, CircleHelp, ScanSearch } from "lucide-react";
 import { request } from "../../core/api";
-import type { SupportMessage } from "../../core/types";
+import type { SupportBookingOption, SupportMessage } from "../../core/types";
 import SupportMessageText from "./SupportMessageText";
+import SupportBookingOptions from "./SupportBookingOptions";
 
 export type AssistantTurnResponse = {
   answer: string;
@@ -17,7 +18,9 @@ export default function SupportAssistant({
   token,
   messages,
   onUpdated,
+  onBook,
 }: {
+  onBook: (option: SupportBookingOption) => void;
   token: string;
   messages: SupportMessage[];
   onUpdated: (result: AssistantTurnResponse) => Promise<void>;
@@ -80,9 +83,10 @@ export default function SupportAssistant({
     <div ref={messageListRef} className="support-messages support-ai-messages" role="log" aria-live="polite" aria-label="Nội dung trao đổi với trợ lý hỗ trợ">
       {transcript.length === 0 && <section className="support-ai-welcome" aria-labelledby="support-ai-welcome-title">
         <span className="support-ai-welcome-icon" aria-hidden="true"><Bot /></span>
-        <div><h3 id="support-ai-welcome-title">Bạn cần hỗ trợ điều gì?</h3><p>Trợ lý Derm có thể hướng dẫn đặt lịch, kiểm tra giờ trống, giá khám và cách sử dụng kiểm tra da bằng AI.</p></div>
+        <div><h3 id="support-ai-welcome-title">Bạn cần hỗ trợ điều gì?</h3><p>Trợ lý Derm có thể hướng dẫn đặt lịch, kiểm tra lịch đã đặt, giờ trống, giá khám và cách sử dụng kiểm tra da bằng AI.</p></div>
         <div className="support-ai-suggestions" aria-label="Câu hỏi gợi ý">
           <button type="button" onClick={() => useSuggestion("Tôi muốn đặt lịch khám")}><CalendarDays aria-hidden="true" />Tôi muốn đặt lịch</button>
+          <button type="button" onClick={() => useSuggestion("Lịch của tôi khi nào?")}><CalendarDays aria-hidden="true" />Xem lịch đã đặt</button>
           <button type="button" onClick={() => useSuggestion("Làm sao để đổi lịch khám?")}><CircleHelp aria-hidden="true" />Làm sao để đổi lịch?</button>
           <button type="button" onClick={() => useSuggestion("AI đánh giá da hoạt động thế nào?")}><ScanSearch aria-hidden="true" />AI đánh giá da hoạt động thế nào?</button>
         </div>
@@ -90,6 +94,7 @@ export default function SupportAssistant({
       {transcript.map(message => <article className={message.senderRole === "PATIENT" ? "mine" : message.senderRole === "SYSTEM" ? "system" : "theirs support-ai-message"} key={message.id}>
         <b>{message.senderRole === "PATIENT" ? "Bạn" : message.senderRole === "SYSTEM" ? "Hệ thống" : message.senderRole === "RECEPTIONIST" ? "Lễ tân Derm" : "Trợ lý Derm"}</b>
         <p><SupportMessageText body={message.body} /></p>
+        {message.senderRole === "AI" && <SupportBookingOptions options={message.bookingOptions} onChoose={onBook} />}
         <small>{new Date(message.sentAt).toLocaleTimeString("vi-VN", { hour: "2-digit", minute: "2-digit" })}</small>
       </article>)}
       {pendingQuestion && <article className="mine support-ai-pending" aria-label="Tin nhan dang gui">

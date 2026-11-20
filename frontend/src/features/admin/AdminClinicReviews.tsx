@@ -13,7 +13,7 @@ type ReviewListProps = {
 };
 
 export function AdminClinicReviewList({ reviews, error, loading = false, onRetry, onModerate }: ReviewListProps) {
-    return <section className="panel admin-reviews">
+    return <section id="admin-review-queue" tabIndex={-1} className="panel admin-reviews">
         <header className="admin-reviews-heading"><div><h2>Duyệt đánh giá phòng khám</h2><p>Kiểm tra nội dung trước khi đánh giá xuất hiện trên trang chủ.</p></div><span>{reviews.length} chờ duyệt</span></header>
         {loading && <StateSkeleton rows={2} label="Đang tải đánh giá phòng khám" />}
         {!loading && error && <ErrorState compact title="Không thể tải đánh giá" description={error} retry={onRetry} />}
@@ -65,6 +65,7 @@ export default function AdminClinicReviews({ token }: { token: string }) {
                 body: JSON.stringify({ status }),
             });
             await load();
+            window.dispatchEvent(new Event("admin-alerts-changed"));
         } catch (cause) {
             setError((cause as Error).message);
         }
